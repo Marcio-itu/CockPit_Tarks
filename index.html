@@ -3,47 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CockPit Tarks | Auditoria de Trade Marketing</title>
+    <title>CockPit Tarks | Auditoria</title>
     
-    <!-- Bibliotecas via CDN (serão usadas nas próximas Partes) -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- Fontes de Velocidade (F1) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
-    <style>
-     <style>
-      <style>
-    <style>
     <style>
         /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 02 — CSS F1 COCKPIT (Versão Definitiva e Testada)
+           SUBBLOCO 02 — CSS F1 PRATEADO (CockPit Tarks)
            ═══════════════════════════════════════════════════════════════ */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Rajdhani:wght@500;700&display=swap');
-
         :root {
-            /* Cores F1 Escuro */
-            --cor-primaria: #0A3D2E;       
-            --cor-destaque: #D4AF37;       
-            --cor-fundo: #0D1117;          /* Preto/Azul muito escuro */
-            --cor-fundo-card: #161B22;     /* Grafite escuro */
-            --cor-borda: #30363D;          
+            /* Fundo Prateado F1 */
+            --cor-fundo: #E0E5EC;
+            --cor-fundo-card: #FFFFFF;
             
-            --cor-texto: #C9D1D9;          /* Branco acinzentado */
-            --cor-texto-secundario: #8B949E; 
+            /* Cores Tarks */
+            --cor-primaria: #0A3D2E;       /* Verde Escuro */
+            --cor-destaque: #D4AF37;       /* Dourado */
+            --cor-perigo: #E74C3C;         /* Vermelho */
             
-            --cor-sucesso: #2EA043;        
-            --cor-alerta: #D29922;         
-            --cor-perigo: #DA3633;         
+            /* Textos */
+            --cor-texto: #2C3E50;          /* Azul Escuro (Quase Preto) */
+            --cor-texto-secundario: #7F8C8D; /* Cinza */
             
-            --fonte-titulo: 'Rajdhani', sans-serif;
-            --fonte-texto: 'Inter', sans-serif;
+            --fonte-titulo: 'Orbitron', sans-serif;
+            --fonte-dados: 'Rajdhani', sans-serif;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: var(--fonte-texto);
+            font-family: var(--fonte-dados);
             background-color: var(--cor-fundo);
+            background-image: linear-gradient(135deg, #E0E5EC 0%, #D1D9E6 100%);
             color: var(--cor-texto);
             display: flex;
             flex-direction: column;
@@ -51,23 +45,25 @@
             overflow: hidden;
         }
 
-        /* ── HEADER ────────────────────────────────────────────────── */
+        /* ── HEADER (Visual Cockpit) ───────────────────────────────── */
         header {
             background-color: var(--cor-primaria);
-            padding: 12px 16px;
+            padding: 12px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid var(--cor-destaque);
+            border-bottom: 4px solid var(--cor-destaque);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             flex-shrink: 0;
         }
 
         .logo-container {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 15px;
         }
 
+        /* Logo Placeholder (Círculo Dourado com T) */
         .logo-placeholder {
             width: 44px; height: 44px;
             background-color: var(--cor-destaque);
@@ -76,37 +72,38 @@
             align-items: center;
             justify-content: center;
             font-family: var(--fonte-titulo);
-            font-weight: 700;
+            font-weight: 900;
             color: var(--cor-primaria);
-            font-size: 24px;
-            border: 2px solid #FFF;
+            font-size: 22px;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
         }
 
         .titulo-header h1 {
             font-family: var(--fonte-titulo);
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: 2px;
+            font-size: 24px;
+            font-weight: 900;
             color: var(--cor-destaque);
             text-transform: uppercase;
+            letter-spacing: 2px;
             line-height: 1;
         }
 
         .titulo-header span {
-            font-size: 9px;
-            color: var(--cor-texto-secundario);
+            font-family: var(--fonte-dados);
+            font-size: 10px;
+            color: #A0A0A0;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
         }
 
-        /* ── NAV ────────────────────────────────────────────────────── */
+        /* ── NAV (Menu Superior) ───────────────────────────────────── */
         nav {
-            background-color: var(--cor-fundo-card);
+            background-color: #F8F9FA;
             display: flex;
             justify-content: space-around;
-            border-bottom: 1px solid var(--cor-borda);
+            border-bottom: 1px solid #CCCCCC;
             flex-shrink: 0;
-            overflow-x: auto;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
         nav button {
@@ -114,79 +111,113 @@
             border: none;
             color: var(--cor-texto-secundario);
             font-family: var(--fonte-titulo);
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
-            padding: 14px 12px;
+            padding: 15px 12px;
             cursor: pointer;
             white-space: nowrap;
             text-transform: uppercase;
             letter-spacing: 1px;
             border-bottom: 3px solid transparent;
+            transition: all 0.2s;
         }
 
         nav button.ativo {
-            color: var(--cor-destaque);
-            border-bottom: 3px solid var(--cor-destaque);
-            background-color: rgba(212, 175, 55, 0.05);
+            color: var(--cor-primaria);
+            border-bottom: 3px solid var(--cor-primaria);
         }
 
         /* ── MIOLO ──────────────────────────────────────────────────── */
         main {
             flex: 1;
             overflow-y: auto;
-            padding: 16px;
+            padding: 20px;
         }
 
         /* ── TELAS ──────────────────────────────────────────────────── */
         .tela { display: none; }
-        .tela.ativa { display: block; }
+        .tela.ativa { display: block; animation: fadeIn 0.4s ease; }
 
-        /* ── CARDS (Visual de Painel) ───────────────────────────────── */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── CARDS (Painéis de Instrumentos) ────────────────────────── */
         .card {
             background-color: var(--cor-fundo-card);
-            border-radius: 6px;
-            padding: 16px;
-            margin-bottom: 16px;
-            border: 1px solid var(--cor-borda);
-            border-left: 4px solid var(--cor-destaque);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8);
+            border-left: 5px solid var(--cor-primaria);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Detalhe dourado no canto (velocidade) */
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 60px; height: 60px;
+            background: linear-gradient(135deg, transparent 50%, rgba(212, 175, 55, 0.1) 50%);
+            border-radius: 0 0 0 60px;
+            pointer-events: none;
         }
 
         .card h2 {
             font-family: var(--fonte-titulo);
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 700;
-            color: var(--cor-destaque);
-            margin-bottom: 8px;
+            color: var(--cor-primaria);
+            margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .card p {
-            font-size: 13px;
+            font-family: var(--fonte-dados);
+            font-size: 15px;
             color: var(--cor-texto-secundario);
             line-height: 1.5;
+            font-weight: 500;
+        }
+
+        /* Números Grandes (Dashboard) */
+        .numero-destaque {
+            font-family: var(--fonte-titulo);
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--cor-texto);
+            line-height: 1;
+            margin: 10px 0;
         }
 
         /* ── FOOTER ─────────────────────────────────────────────────── */
         footer {
             background-color: var(--cor-primaria);
-            padding: 8px;
+            padding: 10px;
             text-align: center;
             font-family: var(--fonte-titulo);
-            font-size: 11px;
+            font-size: 10px;
             color: var(--cor-destaque);
-            border-top: 1px solid var(--cor-borda);
+            border-top: 2px solid var(--cor-destaque);
             flex-shrink: 0;
+            letter-spacing: 1px;
         }
 
-        /* ── RESPONSIVIDADE ────────────────────────────────────────── */
+        /* ── RESPONSIVIDADE (Notebook) ─────────────────────────────── */
         @media (min-width: 768px) {
-            nav button { font-size: 15px; padding: 15px 20px; }
-            .titulo-header h1 { font-size: 26px; }
-            main { padding: 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
-            .card { padding: 24px; }
+            nav button { font-size: 14px; padding: 20px 25px; }
+            .titulo-header h1 { font-size: 30px; }
+            .titulo-header span { font-size: 12px; }
+            main { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; }
+            .card { padding: 25px; }
+            .numero-destaque { font-size: 48px; }
         }
     </style>
+</head>
 
     <!-- ── HEADER ────────────────────────────────────────────────── -->
     <header>
