@@ -452,7 +452,7 @@
   }
 </script>
 <script>
-  // ═══ SUBBLOCO 05 — PARSER DE PDFs (FOTOS) ═══
+  // ═══ SUBBLOCO 05 — PARSER DE PDFs (FOTOS COMPRIMIDAS) ═══
   async function gerarHash(base64) {
     const msgBuffer = new TextEncoder().encode(base64);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -462,7 +462,14 @@
   function converterParaBase64(img) {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
-      canvas.width = img.width; canvas.height = img.height;
+      
+      // Reduz o tamanho da imagem para economizar memória
+      const maxLargura = 800;
+      const escala = img.width > maxLargura ? (maxLargura / img.width) : 1;
+      
+      canvas.width = Math.round(img.width * escala);
+      canvas.height = Math.round(img.height * escala);
+      
       const ctx = canvas.getContext('2d');
       const imageData = ctx.createImageData(img.width, img.height);
       
@@ -478,7 +485,14 @@
         }
       }
       ctx.putImageData(imageData, 0, 0);
-      resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+      
+      // Usa um canvas temporário para redimensionar e comprimir forte (0.5 = 50% de qualidade)
+      const canvasFinal = document.createElement('canvas');
+      canvasFinal.width = canvas.width;
+      canvasFinal.height = canvas.height;
+      canvasFinal.getContext('2d').drawImage(canvas, 0, 0, canvas.width, canvas.height);
+      
+      resolve(canvasFinal.toDataURL('image/jpeg', 0.5)); 
     });
   }
 
@@ -728,7 +742,6 @@
     }
     foto.revisaoManual = true; salvarEstado();
     
-    // Atualiza a auditoria de forma silenciosa
     window._silencioso = true;
     executarAuditoria();
     window._silencioso = false;
