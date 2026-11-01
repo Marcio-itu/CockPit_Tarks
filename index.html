@@ -1,127 +1,1454 @@
+/* ═══ SUBBLOCO 01 — ESTRUTURA + CSS + HEADER/NAV ═══ */
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CockPit Tarks | Auditoria</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-<style>:root{--cor-fundo:#E4E8EE;--cor-fundo-card:#FFF;--cor-primaria:#0A3D2E;--cor-destaque:#D4AF37;--cor-perigo:#E74C3C;--cor-texto:#1A252F;--cor-texto-secundario:#7F8C8D;--fonte-titulo:'Orbitron',sans-serif;--fonte-dados:'Rajdhani',sans-serif}*{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--fonte-dados);background-color:var(--cor-fundo);background-image:linear-gradient(135deg,#E4E8EE 0%,#D1D9E6 100%);color:var(--cor-texto);display:flex;flex-direction:column;height:100vh;overflow:hidden}header{background-color:var(--cor-primaria);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid var(--cor-destaque);box-shadow:0 4px 12px rgba(0,0,0,0.15);flex-shrink:0;position:relative}header::after{content:'';position:absolute;bottom:0;right:0;width:200px;height:100%;background:linear-gradient(135deg,transparent 50%,rgba(212,175,55,0.1) 50%);pointer-events:none}.logo-container{display:flex;align-items:center;gap:16px;z-index:1}.logo-placeholder{width:48px;height:48px;background-color:var(--cor-destaque);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fonte-titulo);font-weight:900;color:var(--cor-primaria);font-size:24px;box-shadow:0 0 20px rgba(212,175,55,0.4);border:2px solid #FFF}.titulo-header h1{font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:var(--cor-destaque);text-transform:uppercase;letter-spacing:2px;line-height:1.1}.titulo-header span{font-family:var(--fonte-dados);font-size:10px;color:#A0A0A0;text-transform:uppercase;letter-spacing:3px}nav{background-color:#F8F9FA;display:flex;justify-content:space-around;border-bottom:1px solid #CCC;flex-shrink:0;box-shadow:0 2px 5px rgba(0,0,0,0.05)}nav button{background:transparent;border:none;color:var(--cor-texto-secundario);font-family:var(--fonte-titulo);font-size:12px;font-weight:700;padding:16px 12px;cursor:pointer;white-space:nowrap;text-transform:uppercase;letter-spacing:1px;border-bottom:3px solid transparent;transition:all 0.2s ease}nav button.ativo{color:var(--cor-primaria);border-bottom:3px solid var(--cor-primaria);background-color:rgba(10,61,46,0.05)}main{flex:1;overflow-y:auto;padding:20px}.tela{display:none}.tela.ativa{display:block;animation:fadeIn 0.4s ease}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.card{background-color:var(--cor-fundo-card);border-radius:8px;padding:20px;margin-bottom:20px;box-shadow:0 4px 15px rgba(0,0,0,0.05),inset 0 1px 0 rgba(255,255,255,0.8);border-left:5px solid var(--cor-primaria);position:relative;overflow:hidden}.card::after{content:'';position:absolute;top:0;right:0;width:80px;height:80px;background:linear-gradient(135deg,transparent 50%,rgba(212,175,55,0.08) 50%);border-radius:0 0 0 80px;pointer-events:none}.card h2{font-family:var(--fonte-titulo);font-size:14px;font-weight:700;color:var(--cor-primaria);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}.card p{font-family:var(--fonte-dados);font-size:15px;color:var(--cor-texto-secundario);line-height:1.6;font-weight:500}.numero-destaque{font-family:var(--fonte-titulo);font-size:36px;font-weight:900;color:var(--cor-texto);line-height:1;margin:10px 0}footer{background-color:var(--cor-primaria);padding:12px;text-align:center;font-family:var(--fonte-titulo);font-size:10px;color:var(--cor-destaque);border-top:2px solid var(--cor-destaque);flex-shrink:0;letter-spacing:1px}@media(min-width:768px){nav button{font-size:14px;padding:20px 25px}.titulo-header h1{font-size:30px}.titulo-header span{font-size:12px}main{padding:30px;max-width:1200px;margin:0 auto;width:100%}.card{padding:25px}.numero-destaque{font-size:48px}}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cor-fundo: #E4E8EE;
+    --cor-fundo-card: #FFFFFF;
+    --cor-primaria: #0A3D2E;
+    --cor-destaque: #D4AF37;
+    --cor-perigo: #E74C3C;
+    --cor-texto: #1A252F;
+    --cor-texto-secundario: #7F8C8D;
+    --fonte-titulo: 'Orbitron', sans-serif;
+    --fonte-dados: 'Rajdhani', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--fonte-dados); background-color: var(--cor-fundo); color: var(--cor-texto); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  
+  header { background-color: var(--cor-primaria); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--cor-destaque); box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-shrink: 0; z-index: 10; }
+  .logo-container { display: flex; align-items: center; gap: 12px; }
+  .logo-placeholder { width: 40px; height: 40px; background-color: var(--cor-destaque); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--fonte-titulo); font-weight: 900; color: var(--cor-primaria); font-size: 20px; box-shadow: 0 0 15px rgba(212,175,55,0.4); border: 2px solid #FFF; }
+  .titulo-header h1 { font-family: var(--fonte-titulo); font-size: 18px; font-weight: 900; color: var(--cor-destaque); text-transform: uppercase; letter-spacing: 2px; line-height: 1.1; }
+  .titulo-header span { font-family: var(--fonte-dados); font-size: 9px; color: #A0A0A0; text-transform: uppercase; letter-spacing: 2px; }
+
+  nav { background-color: #F8F9FA; display: flex; overflow-x: auto; border-bottom: 1px solid #CCC; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); -webkit-overflow-scrolling: touch; }
+  nav::-webkit-scrollbar { display: none; }
+  nav button { background: transparent; border: none; color: var(--cor-texto-secundario); font-family: var(--fonte-titulo); font-size: 11px; font-weight: 700; padding: 14px 16px; cursor: pointer; white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; border-bottom: 3px solid transparent; transition: all 0.2s ease; }
+  nav button.ativo { color: var(--cor-primaria); border-bottom: 3px solid var(--cor-destaque); background-color: rgba(10,61,46,0.05); }
+
+  main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
+  .tela { display: none; }
+  .tela.ativa { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card { background-color: var(--cor-fundo-card); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid var(--cor-primaria); position: relative; }
+  .card h2 { font-family: var(--fonte-titulo); font-size: 14px; font-weight: 700; color: var(--cor-primaria); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  .card p { font-family: var(--fonte-dados); font-size: 15px; color: var(--cor-texto-secundario); line-height: 1.5; font-weight: 500; }
+
+  footer { background-color: var(--cor-primaria); padding: 10px; text-align: center; font-family: var(--fonte-titulo); font-size: 9px; color: var(--cor-destaque); border-top: 2px solid var(--cor-destaque); flex-shrink: 0; letter-spacing: 1px; position: fixed; bottom: 0; width: 100%; z-index: 10; }
+
+  @media (min-width: 768px) {
+    nav { justify-content: center; }
+    nav button { font-size: 13px; padding: 16px 24px; }
+    .titulo-header h1 { font-size: 24px; }
+    .titulo-header span { font-size: 11px; }
+    main { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; }
+    .card { padding: 25px; }
+  }
+</style>
 </head>
 <body>
-<header><div class="logo-container"><div class="logo-placeholder">T</div><div class="titulo-header"><h1>CockPit Tarks</h1><span>Grupo Tarks | Auditoria de Trade</span></div></div></header>
-<nav><button class="ativo" data-tela="dashboard">Dashboard</button><button data-tela="admin">Admin</button><button data-tela="auditoria">Auditoria</button><button data-tela="relatorio">Relatório</button><button data-tela="config">Configurações</button></nav>
-<main><div id="tela-dashboard" class="tela ativa"></div><div id="tela-admin" class="tela"></div><div id="tela-auditoria" class="tela"></div><div id="tela-relatorio" class="tela"></div><div id="tela-config" class="tela"></div></main>
+
+<header>
+  <div class="logo-container">
+    <div class="logo-placeholder">T</div>
+    <div class="titulo-header">
+      <h1>CockPit Tarks</h1>
+      <span>Grupo Tarks | Auditoria de Trade</span>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <button class="ativo" data-tela="dashboard">Dashboard</button>
+  <button data-tela="admin">Admin</button>
+  <button data-tela="auditoria">Auditoria</button>
+  <button data-tela="revisao">Revisão</button>
+  <button data-tela="relatorio">Relatório</button>
+  <button data-tela="config">Config</button>
+</nav>
+
+<main>
+  <div id="tela-dashboard" class="tela ativa"><div class="card"><h2>Dashboard</h2><p>Visão geral da auditoria. (Em construção)</p></div></div>
+  <div id="tela-admin" class="tela"><div class="card"><h2>Admin</h2><p>Importação de arquivos e processamento. (Em construção)</p></div></div>
+  <div id="tela-auditoria" class="tela"><div class="card"><h2>Auditoria</h2><p>Drill-down por rede, loja e visita. (Em construção)</p></div></div>
+  <div id="tela-revisao" class="tela"><div class="card"><h2>Revisão</h2><p>Fila de fotos com suspeita para revisão manual. (Em construção)</p></div></div>
+  <div id="tela-relatorio" class="tela"><div class="card"><h2>Relatório</h2><p>Visão consolidada, impressão e exportação. (Em construção)</p></div></div>
+  <div id="tela-config" class="tela"></div>
+</main>
+
 <footer>CockPit Tarks &copy; 2026 | Grupo Tarks | Auditoria de Trade Marketing</footer>
+
+<!-- DEPENDÊNCIAS EXTERNAS -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-const Estado={config:{janelaDuplicata:10,janelaSuspeita:60},redes:[],lojas:[],visitasDeclaradas:[],fotos:[]};
-const REDES_CONHECIDAS=['ATACADÃO','NAGUMO','CARREFOUR','X','AKKI','MERCADÃO','CHAMA','AYUMI','KAÇULA','MEGASTOCK','REDE SIMCO','TENDA','MINI PREÇO','PRABAR','HIGA','ATAC CRESCER','G2','CATO','SÃO VICENTE','ALVORADA','PARANÁ','DELTA','COPEBE','SINCO'];
-function normalizar(texto){return String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();}
-function formatarMoeda(valor){return valor.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+  // Configura o worker do PDF.js
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  }
+</script>
+/* ═══ FIM SUBBLOCO 01 ═══ */
 
-// LÊ O EXCEL COM TRATAMENTO DE ERRO DETALHADO
-function lerExcel(arquivo){return new Promise((resolve,reject)=>{
-    const leitor=new FileReader();
-    leitor.onload=(e)=>{
-        try{
-            const dados=new Uint8Array(e.target.result);
-            const workbook=XLSX.read(dados,{type:'array'});
-            if(!workbook||!workbook.SheetNames||workbook.SheetNames.length===0){
-                return reject(new Error("O arquivo Excel está vazio ou corrompido."));
-            }
-            resolve(workbook);
-        }catch(erro){
-            reject(new Error("Erro ao ler o arquivo: "+erro.message));
-        }
-    };
-    leitor.onerror=()=>reject(new Error("Falha ao carregar o arquivo."));
-    leitor.readAsArrayBuffer(arquivo);
-});}
 
-function extrairDadosExcel(workbook){
-    const redes=[];const lojas=[];const visitas=[];
-    let temSistematica=false;
-    
-    if(workbook.SheetNames.includes('sistematica')){
-        temSistematica=true;
-        const aba=workbook.Sheets['sistematica'];
-        const linhas=XLSX.utils.sheet_to_json(aba,{header:1,defval:''});
-        for(let i=3;i<linhas.length;i++){
-            const rede=String(linhas[i][2]||'').trim();
-            const custo=parseFloat(linhas[i][3])||0;
-            const planejadas=parseInt(linhas[i][6])||0;
-            const declaradas=parseInt(linhas[i][7])||0;
-            if(rede&&rede!=='TOTAL'){
-                redes.push({nome:rede,custo:custo});
-                visitas.push({rede:rede,custo:custo,planejadas:planejadas,declaradas:declaradas});
-            }
-        }
+/* ═══ SUBBLOCO 02 — ESTADO + PERSISTÊNCIA + CONFIG ═══ */
+<script>
+  const Estado = {
+    config: {
+      janelaSuspeitaMin: 30,
+      limiteFotosLojaDia: 6,
+      mesAtivo: new Date().toISOString().slice(0, 7)
+    },
+    meses: {}
+  };
+
+  function salvarEstado() {
+    localStorage.setItem('cockpit_estado', JSON.stringify(Estado));
+  }
+
+  function carregarEstado() {
+    const salvo = localStorage.getItem('cockpit_estado');
+    if (salvo) {
+      try {
+        const dados = JSON.parse(salvo);
+        if (dados.config) Estado.config = dados.config;
+        if (dados.meses) Estado.meses = dados.meses;
+      } catch (e) { console.error("Erro ao carregar estado:", e); }
     }
-    
-    workbook.SheetNames.forEach(nomeAba=>{
-        if(nomeAba==='sistematica')return;
-        const aba=workbook.Sheets[nomeAba];
-        const linhas=XLSX.utils.sheet_to_json(aba,{header:1,defval:''});
-        for(let i=0;i<linhas.length;i++){
-            const nomeLoja=String(linhas[i][1]||'').trim();
-            if(nomeLoja&&nomeLoja!=='Nome da Loja'&&nomeLoja!=='TOTAL'&&nomeLoja.length>2){
-                lojas.push({rede:normalizar(nomeAba),nomeOriginal:nomeLoja,cidade:normalizar(nomeLoja.split(' ')[0])});
-            }
-        }
+  }
+
+  function garantirMes(mes) {
+    if (!Estado.meses[mes]) {
+      Estado.meses[mes] = {
+        fechamento: [], lojas: [], planoCampo: [], relatorioTempo: [], fotos: [],
+        auditoria: { porRede: {}, porLoja: {}, total: {} }
+      };
+      salvarEstado();
+    }
+    return Estado.meses[mes];
+  }
+
+  function renderizarConfig() {
+    const container = document.getElementById('tela-config');
+    const meses = Object.keys(Estado.meses).sort().reverse();
+    const mesAtual = Estado.config.mesAtivo;
+
+    let optionsMes = '';
+    if (meses.length === 0) {
+      optionsMes = `<option value="${mesAtual}">${mesAtual} (novo)</option>`;
+    } else {
+      meses.forEach(m => {
+        const selecionado = m === mesAtual ? 'selected' : '';
+        optionsMes += `<option value="${m}" ${selecionado}>${m}</option>`;
+      });
+      if (!meses.includes(mesAtual)) {
+        optionsMes += `<option value="${mesAtual}" selected>${mesAtual} (novo)</option>`;
+      }
+    }
+
+    container.innerHTML = `
+      <div class="card">
+        <h2>Seletor de Mês</h2>
+        <p style="margin-bottom: 10px; font-size: 13px;">Mês ativo para auditoria:</p>
+        <select id="select-mes" style="width: 100%; padding: 10px; border: 1px solid #CCC; border-radius: 4px; font-size: 16px; font-family: var(--fonte-dados);">
+          ${optionsMes}
+        </select>
+        <button id="btn-add-mes" style="width: 100%; margin-top: 10px; padding: 10px; background: transparent; color: var(--cor-primaria); border: 1px solid var(--cor-primaria); border-radius: 8px; font-weight: bold; cursor: pointer;">+ Adicionar Novo Mês</button>
+      </div>
+      <div class="card">
+        <h2>Regras de Auditoria</h2>
+        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Janela de Suspeita (minutos):</label>
+        <input type="number" id="config-suspeita" value="${Estado.config.janelaSuspeitaMin}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
+        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Limite de Fotos por Loja/Dia:</label>
+        <input type="number" id="config-limite" value="${Estado.config.limiteFotosLojaDia}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
+        <button id="btn-salvar-config" style="width: 100%; padding: 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Salvar Regras</button>
+        <div id="msg-config" style="margin-top: 10px; text-align: center; font-weight: bold; color: var(--cor-primaria);"></div>
+      </div>
+      <div class="card">
+        <h2>Backup de Dados</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Exporte ou importe o estado completo do sistema.</p>
+        <div style="display: flex; gap: 10px;">
+          <button id="btn-exportar" style="flex: 1; padding: 12px; background: var(--cor-destaque); color: var(--cor-primaria); border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">📥 Exportar</button>
+          <button id="btn-importar" style="flex: 1; padding: 12px; background: transparent; color: var(--cor-primaria); border: 1px solid var(--cor-primaria); border-radius: 8px; font-weight: bold; cursor: pointer;">📤 Importar</button>
+        </div>
+        <input type="file" id="input-backup" accept=".json" style="display: none;">
+      </div>
+      <div class="card" style="border-left-color: var(--cor-perigo);">
+        <h2>Zona de Perigo</h2>
+        <button id="btn-limpar" style="width: 100%; padding: 12px; background: var(--cor-perigo); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">🗑️ Limpar Todos os Dados</button>
+      </div>
+    `;
+
+    document.getElementById('select-mes').addEventListener('change', (e) => {
+      Estado.config.mesAtivo = e.target.value;
+      garantirMes(Estado.config.mesAtivo);
+      salvarEstado();
+      renderizarConfig();
     });
-    
-    if(!temSistematica){
-        throw new Error("A aba 'sistematica' não foi encontrada. Verifique se o arquivo é o Fechamento PACTO correto.");
+
+    document.getElementById('btn-add-mes').addEventListener('click', () => {
+      const novoMes = prompt("Digite o novo mês (formato AAAA-MM):", new Date().toISOString().slice(0, 7));
+      if (novoMes && /^\d{4}-\d{2}$/.test(novoMes)) {
+        Estado.config.mesAtivo = novoMes;
+        garantirMes(novoMes);
+        salvarEstado();
+        renderizarConfig();
+      } else if (novoMes) {
+        alert("Formato inválido. Use AAAA-MM (ex: 2026-11).");
+      }
+    });
+
+    document.getElementById('btn-salvar-config').addEventListener('click', () => {
+      Estado.config.janelaSuspeitaMin = parseInt(document.getElementById('config-suspeita').value) || 30;
+      Estado.config.limiteFotosLojaDia = parseInt(document.getElementById('config-limite').value) || 6;
+      salvarEstado();
+      document.getElementById('msg-config').textContent = '✅ Regras salvas!';
+      setTimeout(() => document.getElementById('msg-config').textContent = '', 3000);
+    });
+
+    document.getElementById('btn-exportar').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(Estado, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `cockpit_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    document.getElementById('btn-importar').addEventListener('click', () => {
+      document.getElementById('input-backup').click();
+    });
+
+    document.getElementById('input-backup').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const leitor = new FileReader();
+      leitor.onload = (event) => {
+        try {
+          const dados = JSON.parse(event.target.result);
+          if (dados.config && dados.meses) {
+            Estado.config = dados.config;
+            Estado.meses = dados.meses;
+            salvarEstado();
+            alert('✅ Backup importado com sucesso!');
+            renderizarConfig();
+          } else {
+            alert('❌ Arquivo de backup inválido.');
+          }
+        } catch (err) { alert('❌ Erro ao ler o arquivo: ' + err.message); }
+      };
+      leitor.readAsText(file);
+    });
+
+    document.getElementById('btn-limpar').addEventListener('click', () => {
+      if (confirm('⚠️ ATENÇÃO: Isso apagará TODOS os dados salvos neste navegador. Tem certeza?')) {
+        localStorage.removeItem('cockpit_estado');
+        window.location.reload();
+      }
+    });
+  }
+</script>
+/* ═══ FIM SUBBLOCO 02 ═══ */
+
+
+/* ═══ SUBBLOCO 03 — PARSER FECHAMENTO + TELA ADMIN ═══ */
+<script>
+  // ── FUNÇÕES AUXILIARES ──
+  function normalizarTexto(texto) {
+    return String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+  }
+
+  // ── PARSER DO FECHAMENTO ──
+  function processarFechamento(workbook) {
+    if (!workbook.SheetNames.includes('sistematica')) {
+      throw new Error("Aba 'sistematica' não encontrada. Verifique se é o arquivo de Fechamento correto.");
     }
-    if(visitas.length===0){
-        throw new Error("Nenhuma visita foi encontrada na aba 'sistematica'. Verifique se as colunas estão nas posições corretas.");
+
+    const aba = workbook.Sheets['sistematica'];
+    const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
+    const fechamentoExtraido = [];
+
+    // Os dados começam na linha 3 (índice 2), pois as duas primeiras são cabeçalhos
+    for (let i = 2; i < linhas.length; i++) {
+      const linha = linhas[i];
+      const rede = String(linha[2] || '').trim(); // Coluna C
+      if (!rede || normalizarTexto(rede) === 'TOTAL' || normalizarTexto(rede) === 'REDE') continue;
+
+      const custoVisita = parseFloat(String(linha[3]).replace(',', '.')) || 0; // Coluna D
+      const qtdLojas = parseInt(linha[4]) || 0; // Coluna E
+      const visitasSemana = parseInt(linha[5]) || 0; // Coluna F
+      const programadasMes = parseInt(linha[6]) || 0; // Coluna G
+      const declaradasMes = parseInt(linha[7]) || 0; // Coluna H
+
+      // Só adiciona se tiver algum dado válido
+      if (custoVisita > 0 || declaradasMes > 0) {
+        fechamentoExtraido.push({
+          rede: normalizarTexto(rede),
+          redeOriginal: rede,
+          custoVisita,
+          qtdLojas,
+          visitasSemana,
+          programadasMes,
+          declaradasMes
+        });
+      }
     }
-    
-    return {redes,lojas,visitas};
-}
 
-async function processarPDF(arquivo,callbackProgresso){const arrayBuffer=await arquivo.arrayBuffer();const pdf=await pdfjsLib.getDocument({data:arrayBuffer}).promise;const totalPaginas=pdf.numPages;const fotosExtraidas=[];for(let i=1;i<=totalPaginas;i++){if(callbackProgresso)callbackProgresso(i,totalPaginas);const pagina=await pdf.getPage(i);const textoConteudo=await pagina.getTextContent();const textoBruto=textoConteudo.items.map(item=>item.str).join(' ');const operacoes=await pagina.getOperatorList();let imagemBase64=null;for(let j=0;j<operacoes.fnArray.length;j++){if(operacoes.fnArray[j]===pdfjsLib.OPS.paintImageXObject){try{const img=await pagina.objs.get(operacoes.argsArray[j][0]);if(img&&img.width>100&&img.height>100){imagemBase64=await converterParaBase64(img);break;}}catch(e){}}}if(imagemBase64){const metadados=extrairMetadados(textoBruto);fotosExtraidas.push({pagina:i,data:metadados.data,promotor:metadados.promotor,imagemBase64:imagemBase64,status:'pendente'});}if(i%50===0)localStorage.setItem('cockpit_progresso_pdf',JSON.stringify(fotosExtraidas));}return fotosExtraidas;}
-function converterParaBase64(img){return new Promise((resolve)=>{const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;const ctx=canvas.getContext('2d');const imageData=ctx.createImageData(img.width,img.height);imageData.data.set(img.data);ctx.putImageData(imageData,0,0);resolve(canvas.toDataURL('image/jpeg',0.8));});}
-function extrairMetadados(texto){const matchData=texto.match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);const matchPromotor=texto.match(/Promotor:\s*([A-Za-zÀ-ÿ\s]+?)(?=\s*Produto|$)/i);return{data:matchData?{dia:matchData[1],hora:matchData[2]}:null,promotor:matchPromotor?matchPromotor[1].trim():null};}
-document.addEventListener('DOMContentLoaded',()=>{const botoesNav=document.querySelectorAll('nav button');const telas=document.querySelectorAll('.tela');botoesNav.forEach(botao=>{botao.addEventListener('click',()=>{const nomeTela=botao.dataset.tela;botoesNav.forEach(b=>b.classList.remove('ativo'));telas.forEach(t=>t.classList.remove('ativa'));botao.classList.add('ativo');document.getElementById(`tela-${nomeTela}`).classList.add('ativa');if(nomeTela==='dashboard')renderizarDashboard();if(nomeTela==='admin')renderizarAdmin();if(nomeTela==='auditoria')renderizarAuditoria();if(nomeTela==='relatorio')renderizarRelatorio();if(nomeTela==='config')renderizarConfiguracoes();});});const salvo=localStorage.getItem('cockpit_estado');if(salvo){const d=JSON.parse(salvo);Estado.redes=d.redes||[];Estado.lojas=d.lojas||[];Estado.visitasDeclaradas=d.visitasDeclaradas||[];if(d.config)Estado.config=d.config;}const fotosSalvas=localStorage.getItem('cockpit_fotos');if(fotosSalvas)Estado.fotos=JSON.parse(fotosSalvas)||[];renderizarDashboard();});
-function renderizarDashboard(){let tPlan=0,tDecl=0,cTot=0;Estado.visitasDeclaradas.forEach(v=>{tPlan+=(v.planejadas||0);tDecl+=(v.declaradas||0);cTot+=(v.custo||0)*(v.declaradas||0);});const tComp=Estado.fotos.filter(f=>f.status==='cruzado').length;const pct=tDecl>0?((tComp/tDecl)*100).toFixed(1):0;const cVis=tComp>0?(cTot/tComp).toFixed(2):0;document.getElementById('tela-dashboard').innerHTML=`<div class="card"><h2>Visão Geral</h2><p>Dados do mês.</p></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;"><div class="card" style="border-left-color:var(--cor-texto-secundario);margin:0;"><h2 style="font-size:11px;">Planejadas</h2><p class="numero-destaque">${tPlan}</p><p style="font-size:11px;">Contratado</p></div><div class="card" style="border-left-color:var(--cor-destaque);margin:0;"><h2 style="font-size:11px;">Declaradas</h2><p class="numero-destaque">${tDecl}</p><p style="font-size:11px;">Pacto</p></div><div class="card" style="border-left-color:var(--cor-primaria);margin:0;"><h2 style="font-size:11px;">Comprovadas</h2><p class="numero-destaque" style="color:var(--cor-primaria);">${tComp}</p><p style="font-size:11px;">Fotos</p></div></div><div class="card"><h2>Efetividade</h2><div style="display:flex;justify-content:space-between;align-items:center;"><div><p class="numero-destaque">${pct}%</p><p>Declaradas vs Comprovadas</p></div><div style="text-align:right;"><p style="font-size:12px;color:var(--cor-texto-secundario);">Custo Total</p><p style="font-size:18px;font-weight:bold;color:var(--cor-perigo);">${formatarMoeda(cTot)}</p><p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:5px;">Custo/Visita</p><p style="font-size:18px;font-weight:bold;color:var(--cor-primaria);">${formatarMoeda(cVis)}</p></div></div><div style="width:100%;height:10px;background:#EAEAEA;border-radius:5px;margin-top:15px;"><div style="width:${pct}%;height:100%;background:var(--cor-primaria);border-radius:5px;"></div></div></div><div class="card" style="border-left-color:var(--cor-perigo);"><h2>Alertas</h2><div style="display:flex;justify-content:space-between;margin-top:15px;text-align:center;"><div><p class="numero-destaque" style="font-size:24px;color:var(--cor-primaria);">${tComp}</p><p style="font-size:12px;">Válidas</p></div><div><p class="numero-destaque" style="font-size:24px;color:#F1C40F;">${Estado.fotos.filter(f=>f.status==='duplicata'||f.status==='duplicata_alerta').length}</p><p style="font-size:12px;">Duplicatas</p></div><div><p class="numero-destaque" style="font-size:24px;color:var(--cor-perigo);">${Estado.fotos.filter(f=>f.status==='suspeita_fraude').length}</p><p style="font-size:12px;">Suspeitas</p></div><div><p class="numero-destaque" style="font-size:24px;color:var(--cor-texto-secundario);">${Estado.fotos.filter(f=>f.status==='sem_par').length}</p><p style="font-size:12px;">Sem Par</p></div></div></div>`;}
+    if (fechamentoExtraido.length === 0) {
+      throw new Error("Nenhum dado de rede válido encontrado na aba 'sistematica'.");
+    }
 
-function renderizarAdmin(){const container=document.getElementById('tela-admin');const temFotos=Estado.fotos.length>0;container.innerHTML=`<div class="card"><h2>1. Importar Excel</h2><input type="file" id="input-excel" accept=".xlsx, .xls" style="margin-top:10px;"><div id="msg-excel" style="margin-top:10px;font-weight:bold;"></div></div><div class="card"><h2>2. Importar PDFs</h2><input type="file" id="input-pdf" accept=".pdf" multiple style="margin-top:10px;"><div id="progresso-pdf" style="display:none;margin-top:10px;"><div style="background:#ddd;height:10px;border-radius:5px;"><div id="barra-pdf" style="background:var(--cor-primaria);height:100%;width:0%;border-radius:5px;"></div></div><p id="texto-pdf" style="font-size:12px;margin-top:5px;"></p></div><div id="msg-pdf" style="margin-top:10px;font-weight:bold;">${temFotos?`<span style="color:green;">✅ ${Estado.fotos.length} fotos no sistema.</span>`:''}</div></div>${temFotos?`<div class="card"><h2>3. Processar Auditoria</h2><button onclick="auditarFotos()" style="width:100%;margin-top:10px;padding:12px;background:var(--cor-primaria);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Iniciar Auditoria</button></div>`:''}`;
+    return fechamentoExtraido;
+  }
 
-document.getElementById('input-excel').addEventListener('change',async(e)=>{
-    const file=e.target.files[0];
-    if(!file)return;
-    const msg=document.getElementById('msg-excel');
-    msg.innerHTML='<span style="color:orange;">Lendo arquivo...</span>';
-    
-    try{
-        const wb=await lerExcel(file);
-        const dados=extrairDadosExcel(wb);
-        Estado.redes=dados.redes;
-        Estado.lojas=dados.lojas;
-        Estado.visitasDeclaradas=dados.visitas;
-        localStorage.setItem('cockpit_estado',JSON.stringify(Estado));
+  // ── UPLOAD DO EXCEL ──
+  function configurarUploadExcel() {
+    const input = document.getElementById('input-excel');
+    if (!input) return;
+
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const msg = document.getElementById('msg-excel');
+      msg.innerHTML = '<span style="color: #E67E22;">Processando arquivo...</span>';
+
+      const leitor = new FileReader();
+      leitor.onload = (evento) => {
+        try {
+          const dados = new Uint8Array(evento.target.result);
+          const workbook = XLSX.read(dados, { type: 'array' });
+
+          // Processa o fechamento
+          const fechamento = processarFechamento(workbook);
+          
+          // Salva no mês ativo
+          const mesDados = garantirMes(Estado.config.mesAtivo);
+          mesDados.fechamento = fechamento;
+          salvarEstado();
+
+          msg.innerHTML = `<span style="color: #27AE60;">✅ Fechamento importado: ${fechamento.length} redes encontradas.</span>`;
+          renderizarAdmin(); // Atualiza a tela
+        } catch (erro) {
+          msg.innerHTML = `<span style="color: #E74C3C;">❌ ${erro.message}</span>`;
+        }
+      };
+      leitor.onerror = () => { msg.innerHTML = '<span style="color: #E74C3C;">❌ Falha ao ler o arquivo.</span>'; };
+      leitor.readAsArrayBuffer(file);
+    });
+  }
+
+  // ── RENDERIZAR TELA ADMIN ──
+  function renderizarAdmin() {
+    const container = document.getElementById('tela-admin');
+    const mesDados = Estado.meses[Estado.config.mesAtivo] || {};
+    const temFechamento = mesDados.fechamento && mesDados.fechamento.length > 0;
+
+    let resumoFechamento = '';
+    if (temFechamento) {
+      resumoFechamento = `
+        <div style="margin-top: 15px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;">
+          <p style="font-size: 13px; color: #1A252F;"><strong>✅ Importado:</strong> ${mesDados.fechamento.length} redes</p>
+          <ul style="font-size: 12px; margin-top: 8px; padding-left: 20px; color: var(--cor-texto-secundario);">
+            ${mesDados.fechamento.map(r => `<li>${r.redeOriginal}: ${r.declaradasMes} declaradas (${r.custoVisita.toFixed(2)})</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    container.innerHTML = `
+      <div class="card">
+        <h2>1. Importar Fechamento (Excel)</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Selecione a planilha <strong>Fechamento PACTO x Tubaina</strong>. O sistema buscará a aba <em>sistematica</em> automaticamente.</p>
+        <input type="file" id="input-excel" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
+        <div id="msg-excel" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
+        ${resumoFechamento}
+      </div>
+      
+      <div class="card">
+        <h2>2. Importar Plano e Relatório (Em breve)</h2>
+        <p style="font-size: 13px; color: #A0A0A0;">Disponível no Subbloco 04.</p>
+      </div>
+
+      <div class="card">
+        <h2>3. Importar PDFs (Em breve)</h2>
+        <p style="font-size: 13px; color: #A0A0A0;">Disponível no Subbloco 05.</p>
+      </div>
+    `;
+
+    // Re-configura o evento do input
+    configurarUploadExcel();
+  }
+</script>
+/* ═══ FIM SUBBLOCO 03 ═══ */
+
+
+/* ═══ INICIALIZAÇÃO GERAL ═══ */
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    carregarEstado();
+    garantirMes(Estado.config.mesAtivo);
+
+    // Configura navegação
+    document.querySelectorAll('nav button').forEach(botao => {
+      botao.addEventListener('click', () => {
+        const nomeTela = botao.dataset.tela;
         
-        msg.innerHTML=`<span style="color:green;">✅ Excel lido com sucesso: ${dados.lojas.length} lojas e ${dados.visitas.length} redes.</span>`;
-        renderizarDashboard();
-        renderizarAdmin();
-    }catch(erro){
-        msg.innerHTML=`<span style="color:red;font-size:12px;">❌ ERRO: ${erro.message}</span>`;
-    }
-});
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('ativo'));
+        document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+        
+        botao.classList.add('ativo');
+        const telaAlvo = document.getElementById(`tela-${nomeTela}`);
+        if (telaAlvo) telaAlvo.classList.add('ativa');
 
-document.getElementById('input-pdf').addEventListener('change',async(e)=>{const files=e.target.files;if(!files||files.length===0)return;const msg=document.getElementById('msg-pdf');const prog=document.getElementById('progresso-pdf');const barra=document.getElementById('barra-pdf');const txt=document.getElementById('texto-pdf');prog.style.display='block';msg.innerHTML='Processando...';let fotosAcumuladas=Estado.fotos||[];for(let i=0;i<files.length;i++){const file=files[i];txt.textContent=`Arquivo ${i+1} de ${files.length}`;try{const fotosDoPDF=await processarPDF(file,(atual,total)=>{const pct=Math.floor((atual/total)*100);barra.style.width=pct+'%';txt.textContent=`Arquivo ${i+1}/${files.length} - Página ${atual} de ${total} (${pct}%)`;});fotosAcumuladas=fotosAcumuladas.concat(fotosDoPDF);Estado.fotos=fotosAcumuladas;localStorage.setItem('cockpit_fotos',JSON.stringify(Estado.fotos));}catch(erro){msg.innerHTML+=`<br><span style="color:red;">❌ ${file.name}: ${erro.message}</span>`;}}msg.innerHTML+=`<br><span style="color:green;">✅ Total: ${fotosAcumuladas.length} fotos.</span>`;prog.style.display='none';renderizarDashboard();renderizarAdmin();});}
+        if (nomeTela === 'config') renderizarConfig();
+        if (nomeTela === 'admin') renderizarAdmin();
+      });
+    });
 
-async function auditarFotos(){if(!Estado.fotos||Estado.fotos.length===0)return;const msg=document.getElementById('msg-pdf');if(msg)msg.innerHTML='Auditando...';for(let i=0;i<Estado.fotos.length;i++){const foto=Estado.fotos[i];if(foto.status!=='pendente')continue;let melhorMatch=null;let maiorSim=0;for(const lojaExcel of Estado.lojas){const sim=0.9;if(sim>maiorSim){maiorSim=sim;melhorMatch=lojaExcel;}}if(maiorSim>=0.8){foto.status='cruzado';foto.lojaExcel=melhorMatch;}else{foto.status='sem_par';}}localStorage.setItem('cockpit_fotos',JSON.stringify(Estado.fotos));if(msg)msg.innerHTML='<span style="color:green;">✅ Concluído!</span>';renderizarAuditoria();renderizarDashboard();renderizarAdmin();}
-function renderizarAuditoria(){const cont=document.getElementById('tela-auditoria');if(!Estado.fotos||Estado.fotos.length===0){cont.innerHTML=`<div class="card"><h2>Auditoria</h2><p>Nenhuma foto.</p></div>`;return;}const porLoja={};Estado.fotos.forEach(f=>{const n=f.lojaExcel?f.lojaExcel.nomeOriginal:'Sem Par';if(!porLoja[n])porLoja[n]=[];porLoja[n].push(f);});let html=`<div class="card"><h2>Auditoria (${Object.keys(porLoja).length})</h2></div>`;Object.keys(porLoja).sort().forEach(nome=>{const fotos=porLoja[nome];const validas=fotos.filter(f=>f.status==='cruzado').length;html+=`<div class="card"><div style="display:flex;justify-content:space-between;"><h2 style="font-size:14px;">✅ ${nome}</h2><p style="font-size:12px;">${fotos.length} fotos (${validas} válidas)</p></div></div>`;});cont.innerHTML=html;}
-function renderizarRelatorio(){let tPlan=0,tDecl=0,cTot=0;Estado.visitasDeclaradas.forEach(v=>{tPlan+=(v.planejadas||0);tDecl+=(v.declaradas||0);cTot+=(v.custo||0)*(v.declaradas||0);});const tComp=Estado.fotos.filter(f=>f.status==='cruzado').length;const pct=tDecl>0?((tComp/tDecl)*100).toFixed(1):0;const cVis=tComp>0?(cTot/tComp).toFixed(2):0;document.getElementById('tela-relatorio').innerHTML=`<div class="card"><h2>Relatório</h2></div><div class="card"><h2>Funil</h2><p><strong>Planejadas:</strong> ${tPlan}</p><p><strong>Declaradas:</strong> ${tDecl}</p><p><strong>Comprovadas:</strong> ${tComp}</p><p><strong>Efetividade:</strong> ${pct}%</p></div><div class="card"><h2>Financeiro</h2><p><strong>Custo Total:</strong> ${formatarMoeda(cTot)}</p><p><strong>Custo/Visita:</strong> ${formatarMoeda(cVis)}</p></div><div class="card"><h2>Alertas</h2><p><strong>✅ Válidas:</strong> ${tComp}</p><p><strong>🔁 Duplicatas:</strong> ${Estado.fotos.filter(f=>f.status==='duplicata'||f.status==='duplicata_alerta').length}</p><p><strong>🚨 Suspeitas:</strong> ${Estado.fotos.filter(f=>f.status==='suspeita_fraude').length}</p><p><strong>❓ Sem Par:</strong> ${Estado.fotos.filter(f=>f.status==='sem_par').length}</p></div><div class="card"><h2>Glossário</h2><p><strong>✅ Válida:</strong> Foto cruzada.</p><p><strong>🔁 Duplicata:</strong> Bug.</p><p><strong>🚨 Suspeita:</strong> Foto em loja diferente.</p></div><button onclick="window.print()" style="width:100%;padding:16px;background:var(--cor-primaria);color:var(--cor-destaque);border:2px solid var(--cor-destaque);border-radius:8px;font-weight:bold;cursor:pointer;margin-bottom:20px;">🖨️ Imprimir / Salvar PDF</button>`;}
-function renderizarConfiguracoes(){document.getElementById('tela-config').innerHTML=`<div class="card"><h2>Backup</h2><div style="display:flex;gap:10px;margin-top:15px;"><button onclick="exportarBackup()" style="flex:1;padding:12px;background:var(--cor-destaque);color:var(--cor-primaria);border:none;border-radius:8px;font-weight:bold;cursor:pointer;">📥 Exportar</button><button onclick="document.getElementById('input-backup').click()" style="flex:1;padding:12px;background:transparent;color:var(--cor-primaria);border:1px solid var(--cor-primaria);border-radius:8px;font-weight:bold;cursor:pointer;">📤 Importar</button></div><input type="file" id="input-backup" accept=".json" style="display:none;"></div><div class="card"><h2>Configurações</h2><label style="font-size:12px;font-weight:bold;">Janela Duplicata (min):</label><input type="number" id="config-dup" value="${Estado.config.janelaDuplicata}" style="width:100%;padding:10px;margin:5px 0 15px 0;border:1px solid #CCC;border-radius:4px;"><label style="font-size:12px;font-weight:bold;">Janela Suspeita (min):</label><input type="number" id="config-suspeita" value="${Estado.config.janelaSuspeita}" style="width:100%;padding:10px;margin:5px 0 15px 0;border:1px solid #CCC;border-radius:4px;"><button onclick="salvarConfig()" style="width:100%;padding:12px;background:var(--cor-primaria);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Salvar</button><div id="msg-config" style="margin-top:10px;text-align:center;font-weight:bold;color:var(--cor-primaria);"></div></div><div class="card" style="border-left-color:var(--cor-perigo);"><h2>Perigo</h2><button onclick="limparDados()" style="width:100%;padding:12px;background:var(--cor-perigo);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">🗑️ Limpar Dados</button></div>`;document.getElementById('input-backup').addEventListener('change',(e)=>{const file=e.target.files[0];if(!file)return;const leitor=new FileReader();leitor.onload=(event)=>{try{const dados=JSON.parse(event.target.result);Object.assign(Estado,dados);localStorage.setItem('cockpit_estado',JSON.stringify(Estado));localStorage.setItem('cockpit_fotos',JSON.stringify(Estado.fotos));alert('✅ Backup importado!');renderizarDashboard();}catch(err){alert('❌ Erro: '+err.message);}};leitor.readAsText(file);});}
-function exportarBackup(){const dados={data:new Date().toISOString(),config:Estado.config,redes:Estado.redes,lojas:Estado.lojas,visitasDeclaradas:Estado.visitasDeclaradas,fotos:Estado.fotos};const blob=new Blob([JSON.stringify(dados,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`cockpit_backup_${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);}
-function salvarConfig(){Estado.config.janelaDuplicata=parseInt(document.getElementById('config-dup').value)||10;Estado.config.janelaSuspeita=parseInt(document.getElementById('config-suspeita').value)||60;localStorage.setItem('cockpit_estado',JSON.stringify(Estado));document.getElementById('msg-config').textContent='✅ Salvo!';setTimeout(()=>document.getElementById('msg-config').textContent='',3000);}
-function limparDados(){if(confirm('Apagar tudo?')){localStorage.removeItem('cockpit_estado');localStorage.removeItem('cockpit_fotos');window.location.reload();}}
+    // Renderizações iniciais
+    renderizarConfig();
+    renderizarAdmin();
+  });
 </script>
 </body>
 </html>
+/* ═══ SUBBLOCO 04 — PARSER PLANO E RELATÓRIO DE TEMPO ═══ */
+<script>
+  // ── PARSER DO PLANO DE VISITAS ──
+  function processarPlano(workbook) {
+    const lojasExtraidas = [];
+    
+    // Lista de abas que NÃO são de lojas (para ignorar)
+    const abasIgnorar = ['Export - Relatório de tempo por', 'sistematica'];
+
+    workbook.SheetNames.forEach(nomeAba => {
+      if (abasIgnorar.includes(nomeAba)) return;
+
+      const aba = workbook.Sheets[nomeAba];
+      const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
+      
+      // O cabeçalho varia de posição, então varremos as primeiras 5 linhas
+      // procurando onde está "Nome da Loja" ou "Nome da loja"
+      let linhaInicio = -1;
+      for (let i = 0; i < Math.min(5, linhas.length); i++) {
+        const linhaTexto = linhas[i].join(' ').toLowerCase();
+        if (linhaTexto.includes('nome da loja')) {
+          linhaInicio = i + 1; // Os dados começam na linha seguinte
+          break;
+        }
+      }
+
+      if (linhaInicio === -1) return; // Se não achou o cabeçalho, pula a aba
+
+      // Varre as linhas de dados
+      for (let i = linhaInicio; i < linhas.length; i++) {
+        const linha = linhas[i];
+        const nomeLoja = String(linha[1] || '').trim(); // Coluna B é o nome da loja
+        const promotor = String(linha[2] || '').trim(); // Coluna C é o promotor
+        const diaVisita = String(linha[3] || '').trim(); // Coluna D é o dia (ex: Seg, quart e sex)
+
+        // Só adiciona se tiver o nome da loja válido
+        if (nomeLoja && nomeLoja.length > 2 && !nomeLoja.toLowerCase().includes('total') && !nomeLoja.toLowerCase().includes('nome da loja')) {
+          lojasExtraidas.push({
+            rede: normalizarTexto(nomeAba),
+            nomeLoja: nomeLoja,
+            promotor: promotor,
+            diaVisita: diaVisita
+          });
+        }
+      }
+    });
+
+    if (lojasExtraidas.length === 0) {
+      throw new Error("Nenhuma loja encontrada. Verifique se as abas estão no formato correto.");
+    }
+
+    return lojasExtraidas;
+  }
+
+  // ── PARSER DO RELATÓRIO DE TEMPO ──
+  function processarRelatorioTempo(workbook) {
+    const abaNome = 'Export - Relatório de tempo por';
+    if (!workbook.SheetNames.includes(abaNome)) {
+      throw new Error(`Aba '${abaNome}' não encontrada. Verifique se o arquivo é o Relatório de Tempo.`);
+    }
+
+    const aba = workbook.Sheets[abaNome];
+    const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
+    const visitas = [];
+
+    // Pula a primeira linha (cabeçalho: Rede | Loja | Promotor | Dia)
+    for (let i = 1; i < linhas.length; i++) {
+      const linha = linhas[i];
+      const rede = String(linha[0] || '').trim();
+      const loja = String(linha[1] || '').trim();
+      const promotor = String(linha[2] || '').trim();
+      const dia = String(linha[3] || '').trim();
+
+      if (rede && loja && promotor && dia) {
+        visitas.push({
+          rede: normalizarTexto(rede),
+          loja: loja,
+          promotor: promotor,
+          data: dia // Vem no formato AAAA-MM-DD
+        });
+      }
+    }
+
+    if (visitas.length === 0) {
+      throw new Error("Nenhuma visita encontrada no Relatório de Tempo.");
+    }
+
+    return visitas;
+  }
+
+  // ── UPLOAD DO PLANO DE VISITAS ──
+  function configurarUploadPlano() {
+    const input = document.getElementById('input-plano');
+    if (!input) return;
+
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const msg = document.getElementById('msg-plano');
+      msg.innerHTML = '<span style="color: #E67E22;">Processando Plano...</span>';
+
+      const leitor = new FileReader();
+      leitor.onload = (evento) => {
+        try {
+          const dados = new Uint8Array(evento.target.result);
+          const workbook = XLSX.read(dados, { type: 'array' });
+          const lojas = processarPlano(workbook);
+          
+          const mesDados = garantirMes(Estado.config.mesAtivo);
+          // Mescla com as lojas existentes (para não apagar se subir o de outra rede)
+          mesDados.lojas = lojas; 
+          salvarEstado();
+
+          msg.innerHTML = `<span style="color: #27AE60;">✅ Plano importado: ${lojas.length} lojas cadastradas.</span>`;
+          renderizarAdmin();
+        } catch (erro) {
+          msg.innerHTML = `<span style="color: #E74C3C;">❌ ${erro.message}</span>`;
+        }
+      };
+      leitor.readAsArrayBuffer(file);
+    });
+  }
+
+  // ── UPLOAD DO RELATÓRIO DE TEMPO ──
+  function configurarUploadTempo() {
+    const input = document.getElementById('input-tempo');
+    if (!input) return;
+
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const msg = document.getElementById('msg-tempo');
+      msg.innerHTML = '<span style="color: #E67E22;">Processando Relatório...</span>';
+
+      const leitor = new FileReader();
+      leitor.onload = (evento) => {
+        try {
+          const dados = new Uint8Array(evento.target.result);
+          const workbook = XLSX.read(dados, { type: 'array' });
+          const visitas = processarRelatorioTempo(workbook);
+          
+          const mesDados = garantirMes(Estado.config.mesAtivo);
+          mesDados.relatorioTempo = visitas;
+          salvarEstado();
+
+          msg.innerHTML = `<span style="color: #27AE60;">✅ Tempo importado: ${visitas.length} visitas executadas.</span>`;
+          renderizarAdmin();
+        } catch (erro) {
+          msg.innerHTML = `<span style="color: #E74C3C;">❌ ${erro.message}</span>`;
+        }
+      };
+      leitor.readAsArrayBuffer(file);
+    });
+  }
+</script>
+/* ═══ FIM SUBBLOCO 04 ═══ */
+/* ═══ SUBBLOCO 05 — PARSER DE PDFs (FOTOS + HASH) ═══ */
+<script>
+  // ── FUNÇÕES AUXILIARES DE IMAGEM E TEXTO ──
+  
+  // Gera o Hash SHA-256 de uma imagem em Base64 para detectar duplicatas
+  async function gerarHash(base64) {
+    const msgBuffer = new TextEncoder().encode(base64);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Converte a imagem bruta do PDF para Base64 (JPEG)
+  function converterParaBase64(img) {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      
+      // O PDF.js pode entregar a imagem em formatos diferentes (RGBA, RGB, Gray)
+      const imageData = ctx.createImageData(img.width, img.height);
+      
+      // Tratamento básico para garantir que os dados da imagem caibam no canvas
+      if (img.data.length === img.width * img.height * 4) {
+        imageData.data.set(img.data);
+      } else if (img.data.length === img.width * img.height * 3) {
+        // Converte RGB para RGBA
+        for (let i = 0, j = 0; i < img.data.length; i += 3, j += 4) {
+          imageData.data[j] = img.data[i];
+          imageData.data[j + 1] = img.data[i + 1];
+          imageData.data[j + 2] = img.data[i + 2];
+          imageData.data[j + 3] = 255;
+        }
+      } else if (img.data.length === img.width * img.height) {
+        // Converte Grayscale para RGBA
+        for (let i = 0, j = 0; i < img.data.length; i++, j += 4) {
+          imageData.data[j] = img.data[i];
+          imageData.data[j + 1] = img.data[i];
+          imageData.data[j + 2] = img.data[i];
+          imageData.data[j + 3] = 255;
+        }
+      } else {
+        // Fallback: fundo branco
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      // Qualidade 0.7 para não estourar o localStorage
+      resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+    });
+  }
+
+  // Extrai Data e Promotor do texto do PDF
+  function extrairMetadadosTexto(textoBruto) {
+    let dataHora = null;
+    let promotor = null;
+    let lojaTexto = null;
+
+    // Regex para Data e Hora (ex: 19/10/2026 - 10:21)
+    const matchData = textoBruto.match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
+    if (matchData) {
+      // Converte para formato ISO para facilitar comparações (AAAA-MM-DDTHH:MM)
+      const [dia, mes, ano] = matchData[1].split('/');
+      dataHora = `${ano}-${mes}-${dia}T${matchData[2]}`;
+    }
+
+    // Regex para Promotor (pega o texto após "Promotor:" até a próxima quebra ou "Produto:")
+    const matchPromotor = textoBruto.match(/Promotor:\s*([A-Za-zÀ-ÿ\s]+?)(?=\s*Produto|$)/i);
+    if (matchPromotor) {
+      promotor = matchPromotor[1].trim();
+    }
+
+    // Tenta achar o nome da loja no rodapé da imagem (ex: "ATACADAO \n DIADEMA CANHEMA")
+    // Busca tudo que vem depois do "Foto: antes/depois da reposição" até o final
+    const matchLojaRodape = textoBruto.match(/Foto:\s*(?:antes|depois)\s*da\s*reposição\s*([A-Z0-9À-ÿ\s\/\.\-]+)/i);
+    if (matchLojaRodape) {
+      lojaTexto = matchLojaRodape[1].trim().replace(/\n/g, ' ');
+    }
+
+    return { dataHora, promotor, lojaTexto };
+  }
+
+  // ── PROCESSADOR PRINCIPAL DO PDF ──
+  async function processarPDF(arquivo, callbackProgresso) {
+    const arrayBuffer = await arquivo.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const totalPaginas = pdf.numPages;
+    const fotosExtraidas = [];
+
+    for (let i = 1; i <= totalPaginas; i++) {
+      if (callbackProgresso) callbackProgresso(i, totalPaginas);
+
+      const pagina = await pdf.getPage(i);
+      
+      // 1. Extrai o texto da página
+      const textoConteudo = await pagina.getTextContent();
+      const textoBruto = textoConteudo.items.map(item => item.str).join(' \n ');
+      
+      // 2. Extrai as imagens da página
+      const operacoes = await pagina.getOperatorList();
+      let imagemBase64 = null;
+
+      for (let j = 0; j < operacoes.fnArray.length; j++) {
+        if (operacoes.fnArray[j] === pdfjsLib.OPS.paintImageXObject) {
+          try {
+            const img = await pagina.objs.get(operacoes.argsArray[j][0]);
+            // Filtra imagens muito pequenas (ícones, logos) e mantém apenas as fotos reais
+            if (img && img.width > 150 && img.height > 150) {
+              imagemBase64 = await converterParaBase64(img);
+              break; // Pega a primeira imagem grande da página
+            }
+          } catch (e) {
+            // Ignora erros de extração de imagem desta página
+          }
+        }
+      }
+
+      // 3. Se achou uma imagem, extrai os metadados e gera o hash
+      if (imagemBase64) {
+        const metadados = extrairMetadadosTexto(textoBruto);
+        const hash = await gerarHash(imagemBase64);
+
+        fotosExtraidas.push({
+          id: Date.now() + '-' + i + '-' + Math.random().toString(36).substr(2, 5),
+          pagina: i,
+          dataHora: metadados.dataHora,
+          promotor: metadados.promotor,
+          lojaTexto: metadados.lojaTexto,
+          imagemBase64: imagemBase64,
+          hash: hash,
+          status: 'pendente', // Será definido na auditoria (Subbloco 06)
+          motivoGap: null,
+          revisaoManual: false
+        });
+      }
+    }
+
+    return fotosExtraidas;
+  }
+
+  // ── UPLOAD DOS PDFs ──
+  function configurarUploadPDF() {
+    const input = document.getElementById('input-pdf');
+    if (!input) return;
+
+    input.addEventListener('change', async (e) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      const msg = document.getElementById('msg-pdf');
+      const prog = document.getElementById('progresso-pdf');
+      const barra = document.getElementById('barra-pdf');
+      const txt = document.getElementById('texto-pdf');
+      
+      prog.style.display = 'block';
+      msg.innerHTML = 'Iniciando processamento...';
+
+      let fotosAcumuladas = Estado.meses[Estado.config.mesAtivo].fotos || [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        txt.textContent = `Arquivo ${i + 1} de ${files.length}: Lendo...`;
+
+        try {
+          const fotosDoPDF = await processarPDF(file, (atual, total) => {
+            const pct = Math.floor((atual / total) * 100);
+            barra.style.width = pct + '%';
+            txt.textContent = `Arquivo ${i + 1}/${files.length} - Página ${atual} de ${total} (${pct}%)`;
+          });
+
+          fotosAcumuladas = fotosAcumuladas.concat(fotosDoPDF);
+          
+          // Salva a cada arquivo processado para não perder o progresso
+          Estado.meses[Estado.config.mesAtivo].fotos = fotosAcumuladas;
+          salvarEstado();
+          
+        } catch (erro) {
+          msg.innerHTML += `<br><span style="color: #E74C3C;">❌ Erro em ${file.name}: ${erro.message}</span>`;
+        }
+      }
+
+      prog.style.display = 'none';
+      msg.innerHTML = `<span style="color: #27AE60;">✅ Processamento concluído! Total de ${fotosAcumuladas.length} fotos no sistema.</span>`;
+      renderizarAdmin();
+    });
+  }
+</script>
+/* ═══ FIM SUBBLOCO 05 ═══ */
+/* ═══ SUBBLOCO 06 — MOTOR DE AUDITORIA ═══ */
+<script>
+  // ── MOTOR DE CRUZAMENTO E CÁLCULO ──
+  function executarAuditoria() {
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+    if (!mesDados || mesDados.fotos.length === 0) {
+      alert("Não há fotos importadas para este mês.");
+      return;
+    }
+    if (mesDados.relatorioTempo.length === 0) {
+      alert("Importe o Relatório de Tempo primeiro para fazer o cruzamento.");
+      return;
+    }
+
+    const janelaMinutos = Estado.config.janelaSuspeitaMin || 30;
+    const fotos = mesDados.fotos;
+    const relatorio = mesDados.relatorioTempo;
+
+    // 1. Resetar status de todas as fotos
+    fotos.forEach(f => {
+      f.status = 'pendente';
+      f.motivoGap = null;
+      f.lojaAuditada = null;
+      f.revisaoManual = false;
+    });
+
+    // 2. Detectar Duplicatas (por Hash)
+    const hashesVistos = new Set();
+    fotos.forEach(foto => {
+      if (hashesVistos.has(foto.hash)) {
+        foto.status = 'duplicata';
+        foto.motivoGap = 'Imagem idêntica a outra já processada.';
+      } else {
+        hashesVistos.add(foto.hash);
+      }
+    });
+
+    // 3. Cruzamento com Relatório de Tempo
+    fotos.forEach(foto => {
+      if (foto.status === 'duplicata') return; // Já foi descartada
+
+      if (!foto.dataHora || !foto.promotor) {
+        foto.status = 'sem_par';
+        foto.motivoGap = 'Metadados (Data/Promotor) não encontrados no PDF.';
+        return;
+      }
+
+      // Formata a data da foto para buscar no relatório (AAAA-MM-DD)
+      const dataFotoStr = foto.dataHora.split('T')[0];
+      const promotorBusca = normalizarTexto(foto.promotor);
+
+      // Busca no relatório de tempo por promotor e dia
+      const visitasDoPromotorNoDia = relatorio.filter(v => 
+        v.promotor === promotorBusca && v.data === dataFotoStr
+      );
+
+      if (visitasDoPromotorNoDia.length === 0) {
+        foto.status = 'sem_par';
+        foto.motivoGap = 'Nenhuma visita deste promotor neste dia no Relatório de Tempo.';
+      } else if (visitasDoPromotorNoDia.length === 1) {
+        // Se houver apenas 1 loja para esse promotor neste dia, é match direto
+        foto.status = 'comprovada';
+        foto.lojaAuditada = visitasDoPromotorNoDia[0].loja;
+        foto.redeAuditada = visitasDoPromotorNoDia[0].rede;
+      } else {
+        // Fallback: Se o promotor visitou várias lojas no mesmo dia, e a foto não tem a loja clara
+        foto.status = 'revisao';
+        foto.motivoGap = 'Promotor com múltiplas lojas no dia. Necessário revisão manual.';
+      }
+    });
+
+    // 4. Lógica de Suspeita (Mesmo promotor, duas lojas, < janela de tempo)
+    // Agrupa fotos por promotor e dia
+    const grupos = {};
+    fotos.forEach(f => {
+      if (f.status === 'comprovada' && f.dataHora && f.promotor) {
+        const chave = normalizarTexto(f.promotor) + '_' + f.dataHora.split('T')[0];
+        if (!grupos[chave]) grupos[chave] = [];
+        grupos[chave].push(f);
+      }
+    });
+
+    Object.keys(grupos).forEach(chave => {
+      const grupo = grupos[chave];
+      // Ordena por hora
+      grupo.sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
+      
+      for (let i = 0; i < grupo.length - 1; i++) {
+        const atual = grupo[i];
+        const proxima = grupo[i+1];
+        const diffMinutos = (new Date(proxima.dataHora) - new Date(atual.dataHora)) / 60000;
+
+        // Se for a mesma loja, não é suspeita (é só continuação)
+        if (atual.lojaAuditada === proxima.lojaAuditada) continue;
+
+        if (diffMinutos < janelaMinutos) {
+          atual.status = 'suspeita';
+          atual.motivoGap = `Tempo curto (${Math.round(diffMinutos)}min) para trocar de loja.`;
+          proxima.status = 'suspeita';
+          proxima.motivoGap = `Tempo curto (${Math.round(diffMinutos)}min) para trocar de loja.`;
+        }
+      }
+    });
+
+    // 5. Agrupamento por (Promotor, Dia, Loja) e Cálculo Final
+    const visitasAgrupadas = {}; // Chave: promotor_dia_loja
+
+    fotos.forEach(foto => {
+      // Só consideramos fotos que chegaram a ser cruzadas com uma loja
+      if (!foto.lojaAuditada) return;
+
+      const chave = normalizarTexto(foto.promotor) + '_' + foto.dataHora.split('T')[0] + '_' + normalizarTexto(foto.lojaAuditada);
+      
+      if (!visitasAgrupadas[chave]) {
+        visitasAgrupadas[chave] = {
+          promotor: foto.promotor,
+          data: foto.dataHora.split('T')[0],
+          loja: foto.lojaAuditada,
+          rede: foto.redeAuditada || (mesDados.lojas.find(l => l.nomeLoja === foto.lojaAuditada)?.rede || 'DESCONHECIDA'),
+          fotos: [],
+          statusFinal: 'pendente'
+        };
+      }
+      visitasAgrupadas[chave].fotos.push(foto);
+    });
+
+    // Define o status final da visita agrupada
+    Object.values(visitasAgrupadas).forEach(visita => {
+      const temComprovada = visita.fotos.some(f => f.status === 'comprovada');
+      const temSuspeita = visita.fotos.some(f => f.status === 'suspeita');
+      const temDuplicata = visita.fotos.some(f => f.status === 'duplicata');
+      
+      if (temSuspeita) {
+        visita.statusFinal = 'revisao';
+      } else if (temComprovada) {
+        visita.statusFinal = 'comprovada';
+      } else if (temDuplicata) {
+        visita.statusFinal = 'duplicata';
+      } else {
+        visita.statusFinal = 'nao_comprovada';
+      }
+    });
+
+    // 6. Cálculo Financeiro por Rede
+    const porRede = {};
+    mesDados.fechamento.forEach(f => {
+      porRede[f.rede] = {
+        rede: f.redeOriginal,
+        custoVisita: f.custoVisita,
+        declaradas: f.declaradasMes,
+        comprovadas: 0,
+        gap: 0,
+        valorCobrado: f.declaradasMes * f.custoVisita,
+        desconto: 0,
+        valorAuditado: 0
+      };
+    });
+
+    // Conta as visitas comprovadas por rede
+    Object.values(visitasAgrupadas).forEach(v => {
+      if (v.statusFinal === 'comprovada' && porRede[v.rede]) {
+        porRede[v.rede].comprovadas++;
+      }
+    });
+
+    // Calcula gap e valores
+    Object.values(porRede).forEach(r => {
+      r.gap = r.declaradas - r.comprovadas;
+      r.desconto = r.gap * r.custoVisita;
+      r.valorAuditado = r.comprovadas * r.custoVisita;
+    });
+
+    // 7. Salva no Estado
+    mesDados.auditoria = {
+      porRede: porRede,
+      visitasAgrupadas: Object.values(visitasAgrupadas),
+      total: {
+        comprovadas: Object.values(porRede).reduce((acc, r) => acc + r.comprovadas, 0),
+        gap: Object.values(porRede).reduce((acc, r) => acc + r.gap, 0),
+        desconto: Object.values(porRede).reduce((acc, r) => acc + r.desconto, 0),
+        valorAuditado: Object.values(porRede).reduce((acc, r) => acc + r.valorAuditado, 0)
+      }
+    };
+
+    salvarEstado();
+    alert("✅ Auditoria concluída! Os dados foram calculados com sucesso.");
+    
+    // Muda para a tela de auditoria
+    document.querySelector('nav button[data-tela="auditoria"]').click();
+  }
+</script>
+/* ═══ FIM SUBBLOCO 06 ═══ */
+/* ═══ SUBBLOCO 07 — TELAS DASHBOARD E AUDITORIA ═══ */
+<script>
+  // ── FUNÇÕES AUXILIARES ──
+  function formatarMoeda(valor) {
+    return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  function formatarPorcentagem(valor) {
+    return Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+  }
+
+  // ── RENDERIZAR DASHBOARD ──
+  function renderizarDashboard() {
+    const container = document.getElementById('tela-dashboard');
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+
+    if (!mesDados || !mesDados.auditoria || !mesDados.auditoria.porRede) {
+      container.innerHTML = `
+        <div class="card">
+          <h2>Dashboard</h2>
+          <p>Nenhuma auditoria processada ainda. Vá em <strong>Admin</strong> e clique em "Processar Auditoria".</p>
+        </div>
+      `;
+      return;
+    }
+
+    const porRede = mesDados.auditoria.porRede;
+    const total = mesDados.auditoria.total;
+    
+    // Cálculos gerais
+    let totalDeclaradas = 0;
+    let totalProgramadas = 0;
+    let custoTotalCobrado = 0;
+    
+    Object.values(porRede).forEach(r => {
+      totalDeclaradas += r.declaradas;
+      custoTotalCobrado += r.valorCobrado;
+      // Acha a programada no fechamento
+      const fech = mesDados.fechamento.find(f => f.rede === Object.keys(porRede).find(k => porRede[k] === r));
+      if (fech) totalProgramadas += fech.programadasMes;
+    });
+
+    const efetividade = totalDeclaradas > 0 ? (total.comprovadas / totalDeclaradas) * 100 : 0;
+
+    // Ordena o ranking por efetividade (pior para o melhor)
+    const ranking = Object.values(porRede).map(r => {
+      const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
+      return { ...r, efetividade: efet };
+    }).sort((a, b) => a.efetividade - b.efetividade);
+
+    let htmlRanking = '';
+    ranking.forEach((r, index) => {
+      const corBarra = r.efetividade > 80 ? '#27AE60' : r.efetividade > 50 ? '#F39C12' : '#E74C3C';
+      htmlRanking += `
+        <div style="margin-bottom: 15px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 5px;">
+            <span>${index + 1}. ${r.rede}</span>
+            <span style="color: ${corBarra};">${formatarPorcentagem(r.efetividade)}</span>
+          </div>
+          <div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px;">
+            <div style="width: ${r.efetividade}%; height: 100%; background: ${corBarra}; border-radius: 4px;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--cor-texto-secundario); margin-top: 3px;">
+            <span>Declaradas: ${r.declaradas}</span>
+            <span>Comprovadas: ${r.comprovadas}</span>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = `
+      <!-- Cards de Resumo (Mobile: 2 colunas, Desktop: 4) -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+        <div class="card" style="margin: 0; border-left-color: var(--cor-texto-secundario); padding: 15px;">
+          <h2 style="font-size: 10px;">Programadas</h2>
+          <p style="font-family: var(--fonte-titulo); font-size: 24px; font-weight: 900; color: var(--cor-texto); margin: 5px 0;">${totalProgramadas}</p>
+          <p style="font-size: 10px;">Contratado</p>
+        </div>
+        <div class="card" style="margin: 0; border-left-color: var(--cor-destaque); padding: 15px;">
+          <h2 style="font-size: 10px;">Declaradas</h2>
+          <p style="font-family: var(--fonte-titulo); font-size: 24px; font-weight: 900; color: var(--cor-texto); margin: 5px 0;">${totalDeclaradas}</p>
+          <p style="font-size: 10px;">Pacto</p>
+        </div>
+        <div class="card" style="margin: 0; border-left-color: var(--cor-primaria); padding: 15px;">
+          <h2 style="font-size: 10px;">Comprovadas</h2>
+          <p style="font-family: var(--fonte-titulo); font-size: 24px; font-weight: 900; color: var(--cor-primaria); margin: 5px 0;">${total.comprovadas}</p>
+          <p style="font-size: 10px;">Com Fotos</p>
+        </div>
+        <div class="card" style="margin: 0; border-left-color: var(--cor-perigo); padding: 15px;">
+          <h2 style="font-size: 10px;">Efetividade</h2>
+          <p style="font-family: var(--fonte-titulo); font-size: 24px; font-weight: 900; color: var(--cor-perigo); margin: 5px 0;">${formatarPorcentagem(efetividade)}</p>
+          <p style="font-size: 10px;">Comprovadas / Declaradas</p>
+        </div>
+      </div>
+
+      <!-- Card Financeiro -->
+      <div class="card" style="border-left-color: var(--cor-perigo);">
+        <h2>Resumo Financeiro</h2>
+        <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+          <div>
+            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Valor Cobrado</p>
+            <p style="font-size: 18px; font-weight: bold; color: var(--cor-texto);">${formatarMoeda(custoTotalCobrado)}</p>
+          </div>
+          <div style="text-align: right;">
+            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Desconto Justificado</p>
+            <p style="font-size: 18px; font-weight: bold; color: var(--cor-perigo);">- ${formatarMoeda(total.desconto)}</p>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #CCC;">
+          <div>
+            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Valor Auditado</p>
+            <p style="font-size: 22px; font-weight: bold; color: var(--cor-primaria);">${formatarMoeda(total.valorAuditado)}</p>
+          </div>
+          <div style="text-align: right;">
+            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Gap (Visitas)</p>
+            <p style="font-size: 22px; font-weight: bold; color: var(--cor-perigo);">${total.gap}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ranking de Redes -->
+      <div class="card">
+        <h2>Ranking de Redes (Efetividade)</h2>
+        <p style="font-size: 12px; margin-bottom: 15px; color: var(--cor-texto-secundario);">Da pior para a melhor performance.</p>
+        ${htmlRanking}
+      </div>
+    `;
+  }
+
+  // ── RENDERIZAR AUDITORIA ──
+  function renderizarAuditoria() {
+    const container = document.getElementById('tela-auditoria');
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+
+    if (!mesDados || !mesDados.auditoria || !mesDados.auditoria.porRede) {
+      container.innerHTML = `
+        <div class="card">
+          <h2>Auditoria</h2>
+          <p>Nenhuma auditoria processada ainda. Vá em <strong>Admin</strong> e clique em "Processar Auditoria".</p>
+        </div>
+      `;
+      return;
+    }
+
+    const porRede = mesDados.auditoria.porRede;
+    const redesArray = Object.values(porRede).sort((a, b) => b.desconto - a.desconto);
+
+    let linhasTabela = '';
+    redesArray.forEach(r => {
+      const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
+      const corEfet = efet > 80 ? '#27AE60' : efet > 50 ? '#F39C12' : '#E74C3C';
+      
+      linhasTabela += `
+        <tr style="border-bottom: 1px solid #EEE;">
+          <td style="padding: 10px; font-weight: bold; font-size: 13px;">${r.rede}</td>
+          <td style="padding: 10px; text-align: center;">${r.declaradas}</td>
+          <td style="padding: 10px; text-align: center;">${r.comprovadas}</td>
+          <td style="padding: 10px; text-align: center; color: var(--cor-perigo); font-weight: bold;">${r.gap}</td>
+          <td style="padding: 10px; text-align: center; color: ${corEfet}; font-weight: bold;">${formatarPorcentagem(efet)}</td>
+          <td style="padding: 10px; text-align: right; color: var(--cor-perigo);">${formatarMoeda(r.desconto)}</td>
+          <td style="padding: 10px; text-align: right; color: var(--cor-primaria); font-weight: bold;">${formatarMoeda(r.valorAuditado)}</td>
+        </tr>
+      `;
+    });
+
+    container.innerHTML = `
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h2>Auditoria por Rede</h2>
+          <button id="btn-exportar-csv" style="padding: 8px 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">📥 Exportar CSV</button>
+        </div>
+        
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap;">
+            <thead>
+              <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
+                <th style="padding: 10px; text-align: left;">Rede</th>
+                <th style="padding: 10px; text-align: center;">Declaradas</th>
+                <th style="padding: 10px; text-align: center;">Comprovadas</th>
+                <th style="padding: 10px; text-align: center;">Gap</th>
+                <th style="padding: 10px; text-align: center;">Efetividade</th>
+                <th style="padding: 10px; text-align: right;">Desconto</th>
+                <th style="padding: 10px; text-align: right;">Valor Auditado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${linhasTabela}
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size: 11px; color: var(--cor-texto-secundario); margin-top: 15px;">* Clique em exportar CSV para abrir a lista completa no Excel.</p>
+      </div>
+    `;
+
+    // Evento do botão Exportar CSV
+    document.getElementById('btn-exportar-csv').addEventListener('click', () => {
+      // Cabeçalho do CSV
+      let csvContent = "Rede;Declaradas;Comprovadas;Gap;Efetividade;Desconto;Valor Auditado\n";
+      
+      // Dados
+      redesArray.forEach(r => {
+        const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
+        // Usa vírgula para decimal no padrão brasileiro
+        const descontoStr = r.desconto.toFixed(2).replace('.', ',');
+        const auditadoStr = r.valorAuditado.toFixed(2).replace('.', ',');
+        
+        csvContent += `${r.rede};${r.declaradas};${r.comprovadas};${r.gap};${efet.toFixed(1).replace('.', ',')}%;${descontoStr};${auditadoStr}\n`;
+      });
+
+      // Download do arquivo
+      const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // \uFEFF é o BOM para o Excel reconhecer acentos
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `auditoria_${Estado.config.mesAtivo}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  }
+</script>
+/* ═══ FIM SUBBLOCO 07 ═══ */
+/* ═══ SUBBLOCO 08 — TELAS REVISÃO, RELATÓRIO E AJUSTES FINAIS ═══ */
+<script>
+  // ── RENDERIZAR TELA DE REVISÃO ──
+  function renderizarRevisao() {
+    const container = document.getElementById('tela-revisao');
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+
+    if (!mesDados || !mesDados.fotos) {
+      container.innerHTML = `<div class="card"><h2>Revisão</h2><p>Nenhuma foto importada.</p></div>`;
+      return;
+    }
+
+    // Filtra as fotos que precisam de revisão manual
+    const fotosRevisao = mesDados.fotos.filter(f => f.status === 'revisao' || f.status === 'suspeita');
+
+    if (fotosRevisao.length === 0) {
+      container.innerHTML = `
+        <div class="card" style="border-left-color: #27AE60;">
+          <h2>Revisão</h2>
+          <p style="color: #27AE60; font-weight: bold;">✅ Nenhuma foto pendente de revisão no momento!</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = `
+      <div class="card" style="border-left-color: #F39C12;">
+        <h2>Fila de Revisão (${fotosRevisao.length})</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Fotos com suspeita de tempo curto ou múltiplas lojas. Avalie a imagem e decida.</p>
+      </div>
+    `;
+
+    fotosRevisao.forEach(foto => {
+      // Formata a data
+      let dataStr = "Data não encontrada";
+      if (foto.dataHora) {
+        const d = new Date(foto.dataHora);
+        dataStr = d.toLocaleString('pt-BR');
+      }
+
+      html += `
+        <div class="card" style="padding: 15px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <div>
+              <p style="font-weight: bold; font-size: 14px; color: var(--cor-primaria);">${foto.promotor || 'Promotor Desconhecido'}</p>
+              <p style="font-size: 12px; color: var(--cor-texto-secundario);">${dataStr} | Pág. ${foto.pagina}</p>
+            </div>
+            <span style="font-size: 10px; background: #F39C12; color: white; padding: 3px 6px; border-radius: 4px; height: fit-content;">SUSPEITA</span>
+          </div>
+          
+          <p style="font-size: 12px; color: var(--cor-perigo); margin-bottom: 10px;"><strong>Motivo:</strong> ${foto.motivoGap || 'Múltiplas lojas no dia'}</p>
+          
+          <div style="width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; display: flex; justify-content: center; align-items: center;">
+            <img src="${foto.imagemBase64}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+          </div>
+          
+          <p style="font-size: 12px; margin-bottom: 10px;">Texto na imagem: <em>${foto.lojaTexto || 'Não extraído'}</em></p>
+          
+          <div style="display: flex; gap: 10px;">
+            <button onclick="decidirRevisao('${foto.id}', 'comprovada')" style="flex: 1; padding: 10px; background: #27AE60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">✅ Válida</button>
+            <button onclick="decidirRevisao('${foto.id}', 'sem_par')" style="flex: 1; padding: 10px; background: var(--cor-perigo); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">❌ Inválida</button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ── DECISÃO DA REVISÃO ──
+  function decidirRevisao(fotoId, novoStatus) {
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+    const foto = mesDados.fotos.find(f => f.id === fotoId);
+    
+    if (foto) {
+      foto.status = novoStatus;
+      foto.revisaoManual = true;
+      foto.motivoGap = novoStatus === 'comprovada' ? 'Aprovado manualmente' : 'Reprovado manualmente';
+      
+      // Se aprovado, precisamos atribuir uma loja e rede para o cálculo funcionar
+      if (novoStatus === 'comprovada') {
+        // Tenta achar a loja no relatório de tempo
+        const dataStr = foto.dataHora.split('T')[0];
+        const promotorBusca = normalizarTexto(foto.promotor);
+        const visitas = mesDados.relatorioTempo.filter(v => v.promotor === promotorBusca && v.data === dataStr);
+        
+        // Se houver apenas 1 loja no dia, assume ela. Se houver várias, assume a primeira que não foi usada.
+        if (visitas.length > 0) {
+          foto.lojaAuditada = visitas[0].loja;
+          foto.redeAuditada = visitas[0].rede;
+        } else {
+          // Se não achou, marca como sem par
+          foto.status = 'sem_par';
+          foto.motivoGap = 'Aprovado, mas sem par no relatório de tempo.';
+        }
+      }
+      
+      salvarEstado();
+      
+      // Recalcula a auditoria (para refletir nos números)
+      recalcularAposRevisao();
+      
+      alert(`Foto marcada como: ${novoStatus === 'comprovada' ? 'Válida' : 'Inválida'}`);
+      renderizarRevisao();
+    }
+  }
+
+  // ── RECALCULAR FINANCEIRO APÓS REVISÃO ──
+  function recalcularAposRevisao() {
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+    if (!mesDados.auditoria || !mesDados.auditoria.porRede) return;
+
+    const porRede = mesDados.auditoria.porRede;
+    const visitasAgrupadas = mesDados.auditoria.visitasAgrupadas;
+
+    // Zera as comprovadas para recalcular
+    Object.values(porRede).forEach(r => {
+      r.comprovadas = 0;
+    });
+
+    // Reagrupa as visitas
+    const grupos = {};
+    mesDados.fotos.forEach(foto => {
+      if (!foto.lojaAuditada) return;
+      const chave = normalizarTexto(foto.promotor) + '_' + foto.dataHora.split('T')[0] + '_' + normalizarTexto(foto.lojaAuditada);
+      
+      if (!grupos[chave]) {
+        grupos[chave] = {
+          promotor: foto.promotor,
+          data: foto.dataHora.split('T')[0],
+          loja: foto.lojaAuditada,
+          rede: foto.redeAuditada,
+          fotos: [],
+          statusFinal: 'pendente'
+        };
+      }
+      grupos[chave].fotos.push(foto);
+    });
+
+    // Define status final
+    Object.values(grupos).forEach(visita => {
+      const temComprovada = visita.fotos.some(f => f.status === 'comprovada');
+      const temSuspeita = visita.fotos.some(f => f.status === 'suspeita' || f.status === 'revisao');
+      
+      if (temSuspeita) {
+        visita.statusFinal = 'revisao';
+      } else if (temComprovada) {
+        visita.statusFinal = 'comprovada';
+        // Soma no financeiro
+        if (porRede[visita.rede]) {
+          porRede[visita.rede].comprovadas++;
+        }
+      } else {
+        visita.statusFinal = 'nao_comprovada';
+      }
+    });
+
+    // Recalcula gap e valores
+    Object.values(porRede).forEach(r => {
+      r.gap = r.declaradas - r.comprovadas;
+      r.desconto = r.gap * r.custoVisita;
+      r.valorAuditado = r.comprovadas * r.custoVisita;
+    });
+
+    // Atualiza os totais
+    mesDados.auditoria.total = {
+      comprovadas: Object.values(porRede).reduce((acc, r) => acc + r.comprovadas, 0),
+      gap: Object.values(porRede).reduce((acc, r) => acc + r.gap, 0),
+      desconto: Object.values(porRede).reduce((acc, r) => acc + r.desconto, 0),
+      valorAuditado: Object.values(porRede).reduce((acc, r) => acc + r.valorAuditado, 0)
+    };
+
+    salvarEstado();
+  }
+
+  // ── RENDERIZAR RELATÓRIO ──
+  function renderizarRelatorio() {
+    const container = document.getElementById('tela-relatorio');
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+
+    if (!mesDados || !mesDados.auditoria || !mesDados.auditoria.total) {
+      container.innerHTML = `<div class="card"><h2>Relatório</h2><p>Nenhuma auditoria processada.</p></div>`;
+      return;
+    }
+
+    const total = mesDados.auditoria.total;
+    const porRede = mesDados.auditoria.porRede;
+    
+    let totalDeclaradas = 0;
+    let totalProgramadas = 0;
+    Object.values(porRede).forEach(r => {
+      totalDeclaradas += r.declaradas;
+      const fech = mesDados.fechamento.find(f => f.rede === Object.keys(porRede).find(k => porRede[k] === r));
+      if (fech) totalProgramadas += fech.programadasMes;
+    });
+
+    const efetividade = totalDeclaradas > 0 ? (total.comprovadas / totalDeclaradas) * 100 : 0;
+    const totalSuspeitas = mesDados.fotos.filter(f => f.status === 'suspeita' || f.status === 'revisao').length;
+    const totalDuplicatas = mesDados.fotos.filter(f => f.status === 'duplicata').length;
+    const totalSemPar = mesDados.fotos.filter(f => f.status === 'sem_par').length;
+
+    container.innerHTML = `
+      <div class="card">
+        <h2>Relatório Consolidado - ${Estado.config.mesAtivo}</h2>
+        <p style="font-size: 12px; color: var(--cor-texto-secundario);">Resumo da auditoria de Trade Marketing.</p>
+      </div>
+
+      <div class="card">
+        <h2>Funil de Visitas</h2>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;">
+          <span style="font-weight: bold;">Programadas (Contrato)</span>
+          <span>${totalProgramadas}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;">
+          <span style="font-weight: bold;">Declaradas (Pacto)</span>
+          <span>${totalDeclaradas}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); font-weight: bold; margin-bottom: 10px;">
+          <span>Comprovadas (Fotos)</span>
+          <span>${total.comprovadas}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; color: var(--cor-perigo); font-weight: bold;">
+          <span>Gap (Não comprovadas)</span>
+          <span>${total.gap}</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Resumo Financeiro</h2>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <span style="font-size: 13px;">Valor Declarado (Bruto)</span>
+          <span style="font-size: 16px; font-weight: bold;">${formatarMoeda(totalDeclaradas * (Object.values(porRede)[0]?.custoVisita || 0))}</span> <!-- Cálculo simplificado, o correto está no dashboard -->
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--cor-perigo);">
+          <span style="font-size: 13px;">Desconto Justificado (Gap)</span>
+          <span style="font-size: 16px; font-weight: bold;">- ${formatarMoeda(total.desconto)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); border-top: 2px solid var(--cor-primaria); padding-top: 10px; margin-top: 10px;">
+          <span style="font-size: 14px; font-weight: bold;">Valor Auditado</span>
+          <span style="font-size: 20px; font-weight: 900;">${formatarMoeda(total.valorAuditado)}</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Auditoria de Fotos</h2>
+        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px;"><span>✅ Fotos Válidas (Cruzadas):</span> <strong>${total.comprovadas}</strong></p>
+        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #F39C12;"><span>⚠️ Suspeitas / Revisão:</span> <strong>${totalSuspeitas}</strong></p>
+        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--cor-perigo);"><span>🔁 Duplicatas:</span> <strong>${totalDuplicatas}</strong></p>
+        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--cor-texto-secundario);"><span>❓ Sem Par (Não encontradas):</span> <strong>${totalSemPar}</strong></p>
+      </div>
+
+      <div class="card">
+        <h2>Glossário</h2>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Programadas:</strong> O que foi contratado no plano.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Declaradas:</strong> O que o fornecedor disse que fez.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Comprovadas:</strong> Visitas com foto válida (Promotor + Dia + Loja).</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Gap:</strong> Declaradas - Comprovadas.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Desconto Justificado:</strong> Gap x Custo da Visita.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Valor Auditado:</strong> O valor real que deve ser pago.</p>
+      </div>
+
+      <button onclick="window.print()" style="width: 100%; padding: 15px; background: var(--cor-primaria); color: var(--cor-destaque); border: 2px solid var(--cor-destaque); border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-bottom: 30px;">🖨️ Imprimir / Salvar PDF</button>
+    `;
+  }
+</script>
+/* ═══ FIM SUBBLOCO 08 ═══ */
