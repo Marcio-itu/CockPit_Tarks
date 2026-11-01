@@ -130,8 +130,6 @@
 
   const Estado = {
     config: {
-      janelaSuspeitaMin: 15,
-      limiteFotosLojaDia: 6,
       maxVisitasDia: 7,
       mesAtivo: mesAtualLocal() // Formato AAAA-MM
     },
@@ -305,12 +303,8 @@
       </div>
       <div class="card">
         <h2>Regras de Auditoria</h2>
-        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Mesmo horário em lojas diferentes (minutos):</label>
-        <input type="number" id="config-suspeita" value="${Estado.config.janelaSuspeitaMin}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
         <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Máximo de visitas por promotor no mesmo dia (acima disso, alerta):</label>
         <input type="number" id="config-max-dia" value="${Estado.config.maxVisitasDia || 7}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
-        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Limite de Fotos por Loja/Dia:</label>
-        <input type="number" id="config-limite" value="${Estado.config.limiteFotosLojaDia}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
         <button id="btn-salvar-config" style="width: 100%; padding: 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Salvar Regras</button>
         <div id="msg-config" style="margin-top: 10px; text-align: center; font-weight: bold; color: var(--cor-primaria);"></div>
       </div>
@@ -360,9 +354,7 @@
     });
 
     document.getElementById('btn-salvar-config').addEventListener('click', () => {
-      Estado.config.janelaSuspeitaMin = parseInt(document.getElementById('config-suspeita').value) || 15;
       Estado.config.maxVisitasDia = parseInt(document.getElementById('config-max-dia').value) || 7;
-      Estado.config.limiteFotosLojaDia = parseInt(document.getElementById('config-limite').value) || 6;
       salvarEstado();
       executarAuditoriaSilencioso(); // aplica as regras novas ao mês ativo
       document.getElementById('msg-config').textContent = '✅ Regras salvas e auditoria recalculada!';
@@ -1087,9 +1079,7 @@
   }
   
   function calcularAuditoria(mesDados, config) {
-    const janela = (config && config.janelaSuspeitaMin) || 15;
     const maxVisitasDia = (config && config.maxVisitasDia) || 7;
-    const decisoesVisita = mesDados.decisoesVisita || {};
     // Período auditado do mês (opcional). Ex.: outubro/2026 só vale de 18 a 24/10, porque o sistema começou a ser usado no meio do mês.
     const periodo = mesDados.periodoAuditado && mesDados.periodoAuditado.inicio && mesDados.periodoAuditado.fim ? mesDados.periodoAuditado : null;
     const noPeriodo = d => !periodo || (d >= periodo.inicio && d <= periodo.fim);
@@ -1136,16 +1126,17 @@
     // 1. Reset (preserva decisões manuais da tela de Revisão)
     fotos.forEach(f => {
       if (f.revisaoManual) return;
-      f.status = 'pendente'; f.motivoGap = null; f.lojaAuditada = null; f.redeAuditada = null; f.candidatas = null; f.conflitos = null; f.assoc = null; f.assocScore = null;
+      f.status = 'pendente'; f.motivoGap = null; f.lojaAuditada = null; f.redeAuditada = null; f.candidatas = null; f.assoc = null; f.assocScore = null;
     });
   
     // 2. Duplicatas por hash
-    const hashes = new Set();
+    const hashes = new Map();
     fotos.forEach(f => {
       if (!f.hash) return;
-      if (f.revisaoManual) { hashes.add(f.hash); return; }
-      if (hashes.has(f.hash)) { f.status = 'duplicata'; f.motivoGap = 'Imagem idêntica a outra já processada.'; }
-      else hashes.add(f.hash);
+      if (f.revisaoManual) { if (!hashes.has(f.hash)) hashes.set(f.hash, f); return; }
+      const orig = hashes.get(f.hash);
+      if (orig) { f.status = 'duplicata'; f.motivoGap = `Mesma imagem já usada como prova na pág. ${orig.pagina}${orig.arquivoOrigem ? ' de ' + orig.arquivoOrigem : ''} (${[orig.redeTexto, orig.lojaTexto].filter(Boolean).map(t => t.replace(/\s+/g, '')).join(' › ') || 'sem legenda'}). Uma foto só comprova uma visita.`; }
+      else hashes.set(f.hash, f);
     });
   
     // 3. Cruzamento com o Relatório de Tempo
@@ -1192,30 +1183,6 @@
       f.motivoGap = `Promotor visitou ${cands.length} lojas neste dia e a foto não identifica a loja. Escolha a loja.`;
     });
   
-    // 4. Suspeita: mesmo promotor, lojas diferentes, intervalo menor que a janela
-    const grupos = {};
-    fotos.forEach(f => {
-      if (f.revisaoManual || f.status !== 'comprovada') return;
-      const k = pk(f) + '_' + diaDe(f);
-      (grupos[k] = grupos[k] || []).push(f);
-    });
-    Object.values(grupos).forEach(g => {
-      if (g.length < 2) return;
-      g.sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
-      for (let i = 0; i < g.length - 1; i++) {
-        const a = g[i], b = g[i + 1];
-        if (a.lojaAuditada === b.lojaAuditada && a.redeAuditada === b.redeAuditada) continue;
-        const dif = (new Date(b.dataHora) - new Date(a.dataHora)) / 60000;
-        if (dif >= 0 && dif < janela) {
-          const msg = `Promotor em lojas diferentes no mesmo horário (${Math.round(dif)} min de diferença; limite ${janela} min).`;
-          a.status = 'suspeita'; a.motivoGap = msg; b.status = 'suspeita'; b.motivoGap = msg;
-          const ref = (o, antes) => ({ id: o.id, pagina: o.pagina, arquivo: o.arquivoOrigem, dataHora: o.dataHora, rede: o.redeAuditada, loja: o.lojaAuditada, min: Math.round(dif), antes });
-          (a.conflitos = a.conflitos || []).push(ref(b, false)); // b veio depois de a
-          (b.conflitos = b.conflitos || []).push(ref(a, true));  // a veio antes de b
-        }
-      }
-    });
-  
     // 5. Agrupamento final (promotor + dia + loja)
     const visitas = {};
     fotos.forEach(f => {
@@ -1231,27 +1198,14 @@
       visitas[k]._st = (visitas[k]._st || []).concat(f.status);
     });
     Object.values(visitas).forEach(v => {
-      // Regra: >=1 foto comprovada => visita comprovada; senão suspeita/revisão pendentes
+      // Regra: >=1 foto comprovada => visita comprovada; senão revisão pendente
       if (v._st.includes('comprovada')) v.statusFinal = 'comprovada';
-      else if (v._st.includes('suspeita')) v.statusFinal = 'suspeita';
       else if (v._st.includes('revisao')) v.statusFinal = 'revisao';
       else v.statusFinal = 'nao_comprovada';
       delete v._st;
 
-      const hh = d => (d || '').split('T')[1] || '?';
-      const alertas = []; // (regra de antes/depois removida a pedido)
-      v.alertas = alertas;
-      v.alertasFoto = [];
-      v._fo.forEach(f => {
-        if (f.status === 'suspeita' && f.conflitos) f.conflitos.forEach(c => v.alertasFoto.push(
-          `${hh(f.dataHora)}: ${f.redeAuditada} › ${f.lojaAuditada} (pág. ${f.pagina}) e, ${c.min} min ${c.antes ? 'depois de' : 'antes de'} isso, ${hh(c.dataHora)}: ${c.rede} › ${c.loja} (pág. ${c.pagina}). Mesmo promotor, mesmo horário, lojas diferentes.`));
-      });
       v.provas = v._fo.slice().sort((a, b) => (a.dataHora || '').localeCompare(b.dataHora || '')).map(f => ({
         id: f.id, pagina: f.pagina, arquivo: f.arquivoOrigem, tipo: f.tipoFoto || null, dataHora: f.dataHora, status: f.status, temImagem: !!f.temImagem }));
-      if (alertas.length) {
-        if (decisoesVisita[v.chave] === 'aceita') v.aceita = true;
-        else if (v.statusFinal === 'comprovada') { v.statusFinal = 'suspeita'; v.motivoSuspeita = alertas.map(a => a.texto).join(' '); }
-      }
       delete v._fo;
     });
   
@@ -1372,10 +1326,9 @@
         comprovadas: soma('comprovadas'), gap: soma('gap'), desconto: soma('desconto'),
         valorAuditado: soma('valorAuditado'), valorCobrado: soma('valorCobrado'),
         totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
-        visitasPendentes: todas.filter(v => v.statusFinal === 'suspeita' || v.statusFinal === 'revisao').length,
-        fotosPendentes: fotos.filter(f => f.status === 'suspeita' || f.status === 'revisao').length
+        fotosPendentes: fotos.filter(f => f.status === 'revisao').length
       },
-      versaoCalculo: 5,
+      versaoCalculo: 6,
       associacoes,
       volumeAlertas, maxVisitasDia,
       dataProcessamento: new Date().toISOString()
@@ -1670,27 +1623,6 @@
         <p style="font-size: 12px; margin-bottom: 15px; color: var(--cor-texto-secundario);">Planejadas = 0. Se houver visitas declaradas aqui, foram feitas fora do plano.</p>
         ${semPlano.map(r => linhaRede(r, '')).join('')}
       </div>` : '';
-    ranking.forEach((r, index) => {
-      return; // (layout antigo, substituído por linhaRede)
-      const corBarra = r.efetividade > 80 ? '#27AE60' : r.efetividade > 50 ? '#F39C12' : '#E74C3C';
-      htmlRanking += `
-        <div style="margin-bottom: 15px;">
-          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 5px;">
-            <span>${index + 1}. ${esc(r.rede)}</span>
-            <span style="color: ${corBarra};">${formatarPorcentagem(r.efetividade)}</span>
-          </div>
-          <div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px;">
-            <div style="width: ${Math.min(100, r.efetividade)}%; height: 100%; background: ${corBarra}; border-radius: 4px;"></div>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--cor-texto-secundario); margin-top: 3px;">
-            <span>Declaradas: ${r.declaradas}</span>
-            <span>Comprovadas: ${r.comprovadas}</span>
-            <span>Desconto: ${formatarMoeda(r.desconto)}</span>
-          </div>
-        </div>
-      `;
-    });
-
     container.innerHTML = `
       ${htmlAvisoCobertura(mesDados.auditoria)}
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
@@ -1906,7 +1838,7 @@
         if (!porLoja[v.loja]) porLoja[v.loja] = { loja: v.loja, declaradas: 0, comprovadas: 0, pendentes: 0, semFoto: 0, gap: 0 };
         porLoja[v.loja].declaradas++;
         if (v.statusFinal === 'comprovada') porLoja[v.loja].comprovadas++;
-        else if (v.statusFinal === 'suspeita' || v.statusFinal === 'revisao') porLoja[v.loja].pendentes++;
+        else if (v.statusFinal === 'revisao') porLoja[v.loja].pendentes++;
         else porLoja[v.loja].semFoto++;
       });
       Object.values(porLoja).forEach(l => { l.gap = l.declaradas - l.comprovadas; });
@@ -2026,12 +1958,6 @@
       catch (e) { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e2) {} ta.remove(); }
       bc.textContent = '✅ Copiado!'; setTimeout(() => { bc.textContent = '📋 Copiar resumo para a agência'; }, 2000);
     });
-    const ba = trEv.querySelector('.btn-aceitar');
-    if (ba) ba.addEventListener('click', () => {
-      mesDados.decisoesVisita = mesDados.decisoesVisita || {};
-      if (ba.dataset.acao === 'aceitar') mesDados.decisoesVisita[v.chave] = 'aceita'; else delete mesDados.decisoesVisita[v.chave];
-      salvarEstado(); executarAuditoriaSilencioso(); renderizarAuditoria();
-    });
   }
 
   function montarConferenciaNomes(container, aud) {
@@ -2092,7 +2018,7 @@
     // 2) o que o promotor fez no mesmo dia
     const outras = todasV.filter(o => o !== v && o.data === v.data && chaveCompacta(o.promotor || '') === kProm);
     const fotosDoDia = fotos.filter(f => mesmoProm(f) && diaDeF(f) === v.data);
-    const soltas = fotosDoDia.filter(f => !f.lojaAuditada || f.status === 'revisao' || f.status === 'suspeita' || f.status === 'sem_par');
+    const soltas = fotosDoDia.filter(f => !f.lojaAuditada || f.status === 'revisao' || f.status === 'sem_par');
     let mesmoDia;
     if (outras.length) {
       mesmoDia = `No mesmo dia, ${esc(v.promotor)} tem ${outras.length} outra(s) visita(s) declarada(s): ` +
@@ -2116,14 +2042,10 @@
     const per = (aud.periodos || []).map(p => `${formatarDataBR(p.inicio)} a ${formatarDataBR(p.fim)}`).join(' | ') || 'não identificado';
     const cobertura = `Cobertura do Book importado: ${esc(per)}. Em ${esc(formatarDataBR(v.data))} o Book tem <strong>${doDia.length}</strong> foto(s) de <strong>${proms.size}</strong> promotor(es) no total.`;
 
-    const conclusao = (v.statusFinal === 'suspeita' && (v.alertas || []).length)
-      ? 'Conclusão: há foto da visita, mas os motivos de suspeita acima exigem sua decisão. Se o Book foi importado só em parte, a foto que falta pode estar em outro PDF.'
-      : (v.statusFinal === 'sem_foto' || v.statusFinal === 'nao_comprovada')
+    const conclusao = (v.statusFinal === 'sem_foto' || v.statusFinal === 'nao_comprovada')
       ? (soltas.length ? 'Conclusão: ainda há fotos soltas do promotor neste dia; revise antes de cobrar o desconto.'
         : (doDia.length ? 'Conclusão: o Book cobre este dia e não há foto desta visita.' : 'Atenção: o Book não tem nenhuma foto neste dia. Pode faltar parte do PDF; confirme antes de contestar.'))
       : 'Conclusão: esta visita tem foto vinculada.';
-    // Alertas desta visita (antes/depois e mesmo horário) + fotos com arquivo/página
-    const alertas = (v.alertas || []).map(a => li('⚠️ ' + esc(a.texto))).join('') + (v.alertasFoto || []).map(t => li('⚠️ ' + esc(t))).join('');
     const hh = d => (d || '').split('T')[1] || '?';
     const local = Modo === 'local';
     const provas = (v.provas || []).map(pf => `<tr style="border-top:1px solid #E5E5E5;">
@@ -2133,17 +2055,11 @@
         <td style="padding:6px;">${local ? `<button type="button" class="btn-original" data-foto="${pf.id}" style="padding:6px 8px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:11px;">🔍 Original</button>` : ''}</td></tr>`).join('');
     const tabelaProvas = provas ? `<p style="font-weight:bold;margin:8px 0 4px;">Fotos desta visita no Book</p>
       <table style="width:100%;border-collapse:collapse;font-size:11px;">${provas}</table>` : '';
-    const temAlertaVisita = (v.alertas || []).length > 0;
     const botoes = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
       <button type="button" class="btn-copiar-ev" style="padding:8px 12px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:12px;">📋 Copiar resumo para a agência</button>
-      ${local && temAlertaVisita ? (v.aceita
-        ? `<button type="button" class="btn-aceitar" data-acao="desfazer" style="padding:8px 12px;border:1px solid #999;background:transparent;border-radius:4px;cursor:pointer;font-size:12px;">↩ Desfazer aceite</button>`
-        : `<button type="button" class="btn-aceitar" data-acao="aceitar" style="padding:8px 12px;border:none;background:#27AE60;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;">✅ Aceitar esta visita mesmo assim</button>`) : ''}</div>`;
-    const aviso = v.aceita ? '<p style="color:#27AE60;font-weight:bold;margin-bottom:6px;">✅ Visita aceita manualmente apesar dos alertas abaixo.</p>' : '';
+</div>`;
     return `<div class="ev-painel" style="margin:6px 0 10px;padding:12px 14px;background:#F8F9FA;border-left:4px solid var(--cor-destaque);font-size:12px;line-height:1.5;">
       <p style="font-weight:bold;margin-bottom:6px;">🧾 Evidência — ${esc(nomeRede)} › ${esc(v.loja)} · ${esc(formatarDataBR(v.data))} · ${esc(v.promotor)}</p>
-      ${aviso}
-      ${alertas ? `<p style="font-weight:bold;margin-bottom:2px;">Motivos de suspeita</p><ul style="padding-left:18px;margin:0 0 8px;">${alertas}</ul>` : ''}
       <ul style="padding-left:18px;margin:0 0 8px;">${li(declarado)}${li(mesmoDia)}${li(poss)}${outrosDias ? li(outrosDias) : ''}${li(cobertura)}</ul>
       ${tabelaProvas}
       <p style="font-weight:bold;margin-top:8px;">${esc(conclusao)}</p>
@@ -2171,7 +2087,7 @@
         <h2>🔎 Visitas sem comprovação (${todas.length})</h2>
         <p style="font-size:12px;margin-bottom:10px;">Toque numa linha para abrir a loja. Gap do período: <strong>${aud.total.gap}</strong> (as visitas "em revisão" ou "suspeitas" ainda podem virar comprovadas).</p>
         <select id="filtro-nc" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #CCC;border-radius:4px;font-size:14px;">
-          ${opt('todas', 'Todas (' + todas.length + ')')}${opt('sem_foto', 'Sem foto (' + cont('sem_foto') + ')')}${opt('nao_comprovada', 'Não comprovada (' + cont('nao_comprovada') + ')')}${opt('suspeita', 'Suspeita (' + cont('suspeita') + ')')}${opt('revisao', 'Em revisão (' + cont('revisao') + ')')}
+          ${opt('todas', 'Todas (' + todas.length + ')')}${opt('sem_foto', 'Sem foto (' + cont('sem_foto') + ')')}${opt('nao_comprovada', 'Não comprovada (' + cont('nao_comprovada') + ')')}${opt('revisao', 'Em revisão (' + cont('revisao') + ')')}
         </select>
         <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
           <thead><tr style="background:#F8F9FA;border-bottom:2px solid var(--cor-primaria);"><th style="padding:8px;text-align:left;font-size:12px;">Dia</th><th style="padding:8px;text-align:left;font-size:12px;">Rede › Loja</th><th style="padding:8px;text-align:left;font-size:12px;">Promotor</th><th style="padding:8px;text-align:left;font-size:12px;">Status</th></tr></thead>
@@ -2208,7 +2124,7 @@
       return;
     }
 
-    const fotosRevisao = mesDados.fotos.filter(f => f.status === 'revisao' || f.status === 'suspeita');
+    const fotosRevisao = mesDados.fotos.filter(f => f.status === 'revisao');
     const fotosSemLegenda = mesDados.fotos.filter(f => f.status === 'sem_legenda');
 
     if (fotosRevisao.length === 0 && fotosSemLegenda.length === 0) {
@@ -2253,8 +2169,8 @@
     visiveis.forEach(foto => {
       let dataStr = "Data não encontrada";
       if (foto.dataHora) dataStr = new Date(foto.dataHora).toLocaleString('pt-BR');
-      const tagCor = foto.status === 'suspeita' ? '#E74C3C' : '#3498DB';
-      const tagTexto = foto.status === 'suspeita' ? 'SUSPEITA' : 'REVISÃO';
+      const tagCor = '#3498DB';
+      const tagTexto = 'REVISÃO';
 
       let blocoLoja = '';
       if (foto.lojaAuditada) {
@@ -2279,7 +2195,6 @@
           </div>
 
           <p style="font-size: 12px; color: var(--cor-perigo); margin-bottom: 10px;"><strong>Motivo:</strong> ${esc(foto.motivoGap || 'Múltiplas lojas no dia')}</p>
-          ${htmlConflitosFoto(foto, mesDados)}
 
           <div style="width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; display: flex; justify-content: center; align-items: center;">
             <img id="img-${foto.id}" alt="Carregando imagem..." style="max-width: 100%; max-height: 100%; object-fit: contain; color: #999; font-size: 12px;">
@@ -2301,7 +2216,6 @@
     configurarControlesRotacao(container);
 
     // As imagens ficam no IndexedDB: carrega depois de desenhar a tela
-    carregarMiniaturasConflito(visiveis);
     visiveis.concat(visSL).forEach(foto => {
       carregarFotoOrientada(foto);
     });
@@ -2350,7 +2264,6 @@
 
     const total = mesDados.auditoria.total;
     const fotos = mesDados.fotos || [];
-    const totalSuspeitas = fotos.filter(f => f.status === 'suspeita').length;
     const totalRevisao = fotos.filter(f => f.status === 'revisao').length;
     const totalDuplicatas = fotos.filter(f => f.status === 'duplicata').length;
     const totalSemPar = fotos.filter(f => f.status === 'sem_par').length;
@@ -2404,7 +2317,6 @@
       <div class="card">
         <h2>Auditoria de Fotos</h2>
         <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px;"><span>✅ Fotos Comprovadas (várias por visita):</span> <strong>${totalFotosComprovadas}</strong></p>
-        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #E74C3C;"><span>⚠️ Suspeitas:</span> <strong>${totalSuspeitas}</strong></p>
         <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #3498DB;"><span>🔍 Em Revisão:</span> <strong>${totalRevisao}</strong></p>
         <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--cor-perigo);"><span>🔁 Duplicatas:</span> <strong>${totalDuplicatas}</strong></p>
         <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--cor-texto-secundario);"><span>❓ Sem Par:</span> <strong>${totalSemPar}</strong></p>
@@ -2651,7 +2563,7 @@
       auditoria: Object.assign({}, a, {
         visitasAgrupadas: (a.visitasAgrupadas || []).map(v => ({
           promotor: v.promotor, data: v.data, loja: v.loja, rede: v.rede, qtdFotos: v.qtdFotos || 0, statusFinal: v.statusFinal,
-          chave: v.chave, alertas: v.alertas, alertasFoto: v.alertasFoto, provas: v.provas, aceita: v.aceita, motivoSuspeita: v.motivoSuspeita
+          chave: v.chave, provas: v.provas
         }))
       }),
       fotos: (m.fotos || []).map(f => ({ id: f.id, pagina: f.pagina, status: f.status })) // só o status: serve para as contagens do Relatório
@@ -2755,7 +2667,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 5) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 6) executarAuditoriaSilencioso();
   }
 
 
@@ -2823,7 +2735,7 @@
   }
   function mesLiberadoParaImportar(m) { return !!m && (temDadosNoMes(m) || m.mesConfirmado === true); }
   function escolherMesInicial() {
-    if (Estado.config.janelaSuspeitaMin === 30) Estado.config.janelaSuspeitaMin = 15; // antigo padrão de "tempo para trocar de loja"
+    delete Estado.config.janelaSuspeitaMin;
     if (!Estado.config.maxVisitasDia) Estado.config.maxVisitasDia = 7;
     const ativo = Estado.config.mesAtivo, ms = Estado.meses || {};
     if (!(ativo in ms) || (!temDadosNoMes(ms[ativo]) && !ms[ativo].mesConfirmado)) {
@@ -3006,33 +2918,6 @@
       auditoriaDrillState = { rede: null, loja: null };
       const ativoBtn = document.querySelector('nav button.ativo') || document.querySelector('nav button[data-tela="dashboard"]');
       ativoBtn.click();
-    }));
-  }
-
-
-  // Suspeita de tempo curto: mostra ONDE o mesmo promotor estava antes/depois (rede, loja, hora, página, miniatura)
-  function htmlConflitosFoto(foto, mesDados) {
-    const lista = (foto.conflitos || []).slice().sort((a, b) => a.dataHora.localeCompare(b.dataHora));
-    if (!lista.length) return '';
-    const porRede = (mesDados.auditoria && mesDados.auditoria.porRede) || {};
-    const hora = d => (d || '').split('T')[1] || '?';
-    const itens = lista.slice(0, 4).map(c => {
-      const rede = porRede[c.rede] ? porRede[c.rede].rede : (c.rede || '?');
-      const tem = !!(mesDados.fotos || []).find(f => f.id === c.id && f.temImagem);
-      return `<div style="display:flex;gap:10px;align-items:center;margin-top:6px;">
-        ${tem ? `<img id="img-c-${c.id}-${foto.id}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:4px;background:#000;flex-shrink:0;">` : ''}
-        <span>${c.antes ? '⬅️ <strong>Antes</strong>' : '➡️ <strong>Depois</strong>'}: às <strong>${esc(hora(c.dataHora))}</strong> (${c.min} min ${c.antes ? 'antes' : 'depois'}) o mesmo promotor fotografou em <strong>${esc(rede)} › ${esc(c.loja || '?')}</strong> <span style="color:var(--cor-texto-secundario);">(${esc(c.arquivo || '')} · pág. ${c.pagina})</span></span>
-      </div>`;
-    }).join('');
-    return `<div style="font-size:12px;margin-bottom:10px;padding:10px;background:#FFF8E1;border-left:4px solid #F39C12;border-radius:4px;">
-      <strong>Por que é suspeita:</strong> esta foto é de <strong>${esc(porRede[foto.redeAuditada] ? porRede[foto.redeAuditada].rede : (foto.redeAuditada || '?'))} › ${esc(foto.lojaAuditada || '?')}</strong> às <strong>${esc(hora(foto.dataHora))}</strong>.${itens}</div>`;
-  }
-  function carregarMiniaturasConflito(fotos) {
-    fotos.forEach(foto => (foto.conflitos || []).slice(0, 4).forEach(async c => {
-      const el = document.getElementById(`img-c-${c.id}-${foto.id}`); if (!el) return;
-      const src = await BancoImagens.ler(c.id); if (!src) { el.remove(); return; }
-      const outra = ((Estado.meses[Estado.config.mesAtivo] || {}).fotos || []).find(f => f.id === c.id);
-      el.src = await girarDataURL(src, rotacaoDaFoto(outra));
     }));
   }
 
