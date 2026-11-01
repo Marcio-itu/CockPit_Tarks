@@ -133,8 +133,6 @@
       janelaSuspeitaMin: 15,
       limiteFotosLojaDia: 6,
       maxVisitasDia: 7,
-      intervaloAntesDepoisMin: 5,
-      exigirAntesDepois: true,
       mesAtivo: mesAtualLocal() // Formato AAAA-MM
     },
     meses: {}
@@ -309,9 +307,6 @@
         <h2>Regras de Auditoria</h2>
         <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Mesmo horário em lojas diferentes (minutos):</label>
         <input type="number" id="config-suspeita" value="${Estado.config.janelaSuspeitaMin}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
-        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Intervalo mínimo entre foto ANTES e DEPOIS (minutos):</label>
-        <input type="number" id="config-intervalo-ad" value="${Estado.config.intervaloAntesDepoisMin != null ? Estado.config.intervaloAntesDepoisMin : 5}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
-        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto); display:block; margin-bottom:15px;"><input type="checkbox" id="config-exigir-ad" ${Estado.config.exigirAntesDepois !== false ? 'checked' : ''}> Exigir foto ANTES e DEPOIS na mesma visita<br><span style="font-weight:normal;color:var(--cor-texto-secundario);">Desmarque se o Book ainda estiver incompleto (a outra foto pode estar numa parte do PDF não importada).</span></label>
         <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Máximo de visitas por promotor no mesmo dia (acima disso, alerta):</label>
         <input type="number" id="config-max-dia" value="${Estado.config.maxVisitasDia || 7}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
         <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Limite de Fotos por Loja/Dia:</label>
@@ -366,9 +361,7 @@
 
     document.getElementById('btn-salvar-config').addEventListener('click', () => {
       Estado.config.janelaSuspeitaMin = parseInt(document.getElementById('config-suspeita').value) || 15;
-      const ad = parseInt(document.getElementById('config-intervalo-ad').value); Estado.config.intervaloAntesDepoisMin = isNaN(ad) ? 5 : ad;
       Estado.config.maxVisitasDia = parseInt(document.getElementById('config-max-dia').value) || 7;
-      Estado.config.exigirAntesDepois = document.getElementById('config-exigir-ad').checked;
       Estado.config.limiteFotosLojaDia = parseInt(document.getElementById('config-limite').value) || 6;
       salvarEstado();
       executarAuditoriaSilencioso(); // aplica as regras novas ao mês ativo
@@ -794,8 +787,7 @@
     const ctx = origem.getContext('2d', { willReadFrequently: true });
 
     if (img.bitmap) {
-      ctx.drawImage(img.bitmap, 0, 0);
-      if (img.bitmap.close) img.bitmap.close();
+      ctx.drawImage(img.bitmap, 0, 0); // não fecha o bitmap: a mesma imagem pode ser reutilizada em outra página (objeto compartilhado)
     } else if (img.data) {
       const n = w * h, d = img.data;
       const imageData = ctx.createImageData(w, h);
@@ -874,7 +866,12 @@
       const t = semEsp(ne[iFoto]).toUpperCase();
       tipoFoto = t.includes('DEPOIS') ? 'depois' : (t.includes('ANTES') ? 'antes' : null);
       // Rodapé: [rede, ...pedaços da loja..., promotor]. A loja pode vir quebrada (ex.: "0 2" "-" "G U A R U J A").
-      const resto = ne.slice(iFoto + 1);
+      let inicioResto = iFoto + 1;
+      if (!tipoFoto && ne[iFoto + 1]) { // às vezes o tipo vem num item à parte: "F o t o :" | "a n t e s d a r e p o s i ç ã o"
+        const t2 = semEsp(ne[iFoto + 1]).toUpperCase();
+        if (/^(ANTES|DEPOIS)DA/.test(t2)) { tipoFoto = t2.startsWith('DEPOIS') ? 'depois' : 'antes'; inicioResto = iFoto + 2; }
+      }
+      const resto = ne.slice(inicioResto);
       if (resto.length >= 2) {
         redeTexto = resto[0].replace(/\s+/g, ' ');
         promotorRodape = resto[resto.length - 1].replace(/\s+/g, ' ');
@@ -922,6 +919,7 @@
     const totalPaginas = pdf.numPages;
     const fotosExtraidas = [];
     let periodo = null, ignoradas = 0;
+    const paginasIgnoradas = [];
 
     for (let i = 1; i <= totalPaginas; i++) {
       if (callbackProgresso) callbackProgresso(i, totalPaginas);
@@ -938,7 +936,7 @@
         // Página sem rodapé: se tiver foto grande, guarda como "sem legenda" (não some); senão é capa/divisória
         let imgSL = null;
         try { imgSL = await extrairImagemPrincipal(pagina); } catch (e) {}
-        if (!imgSL || Math.max(imgSL.width, imgSL.height) < 500 || Math.min(imgSL.width, imgSL.height) < 250) { ignoradas++; pagina.cleanup(); continue; } // logos/capas são pequenos
+        if (!imgSL || Math.max(imgSL.width, imgSL.height) < 500 || Math.min(imgSL.width, imgSL.height) < 250) { ignoradas++; paginasIgnoradas.push({ pagina: i, motivo: imgSL ? `sem legenda e imagem pequena (${imgSL.width}×${imgSL.height})` : 'sem legenda e sem imagem' }); pagina.cleanup(); continue; } // logos/capas são pequenos
         const idSL = Date.now() + '-' + i + '-' + Math.random().toString(36).slice(2, 7);
         let hashSL = null, temImgSL = false;
         try {
@@ -978,7 +976,7 @@
     }
 
     if (pdf.destroy) pdf.destroy();
-    return { fotos: fotosExtraidas, periodo, ignoradas };
+    return { fotos: fotosExtraidas, periodo, ignoradas, totalPaginas, paginasIgnoradas };
   }
 
   // ── UPLOAD DOS PDFs (MÚLTIPLOS) ──
@@ -1028,6 +1026,8 @@
           mesDados.fotos = (mesDados.fotos || []).filter(f => f.arquivoOrigem !== file.name).concat(r.fotos);
           await BancoImagens.apagar(antigas.map(f => f.id));
 
+          mesDados.controleImportacao = mesDados.controleImportacao || {};
+          mesDados.controleImportacao[file.name] = { totalPaginas: r.totalPaginas, paginasIgnoradas: r.paginasIgnoradas, importadoEm: new Date().toISOString() };
           mesDados.periodosPDF = (mesDados.periodosPDF || []).filter(p => p.arquivo !== file.name);
           if (r.periodo) mesDados.periodosPDF.push({ arquivo: file.name, ...r.periodo });
 
@@ -1060,9 +1060,7 @@
   
   function calcularAuditoria(mesDados, config) {
     const janela = (config && config.janelaSuspeitaMin) || 15;
-    const intervaloAD = (config && config.intervaloAntesDepoisMin != null) ? config.intervaloAntesDepoisMin : 5;
     const maxVisitasDia = (config && config.maxVisitasDia) || 7;
-    const exigirAD = !config || config.exigirAntesDepois !== false;
     const decisoesVisita = mesDados.decisoesVisita || {};
     // Período auditado do mês (opcional). Ex.: outubro/2026 só vale de 18 a 24/10, porque o sistema começou a ser usado no meio do mês.
     const periodo = mesDados.periodoAuditado && mesDados.periodoAuditado.inicio && mesDados.periodoAuditado.fim ? mesDados.periodoAuditado : null;
@@ -1192,19 +1190,8 @@
       else v.statusFinal = 'nao_comprovada';
       delete v._st;
 
-      // Regras de antes/depois (só vale com foto de tipo identificado no rodapé)
       const hh = d => (d || '').split('T')[1] || '?';
-      const comTipo = v._fo.filter(f => f.tipoFoto && f.dataHora && f.status !== 'duplicata');
-      const antes = comTipo.filter(f => f.tipoFoto === 'antes').map(f => f.dataHora).sort();
-      const depois = comTipo.filter(f => f.tipoFoto === 'depois').map(f => f.dataHora).sort();
-      const alertas = [];
-      if (exigirAD && antes.length && !depois.length) alertas.push({ tipo: 'sem_depois', texto: `Só existe foto ANTES da reposição (${hh(antes[0])}). Falta a foto DEPOIS.` });
-      if (exigirAD && depois.length && !antes.length) alertas.push({ tipo: 'sem_antes', texto: `Só existe foto DEPOIS da reposição (${hh(depois[0])}). Não existe DEPOIS sem ANTES.` });
-      if (antes.length && depois.length) {
-        const gap = (new Date(depois[0]) - new Date(antes[0])) / 60000;
-        if (gap < 0) alertas.push({ tipo: 'ordem', texto: `A foto DEPOIS (${hh(depois[0])}) é anterior à foto ANTES (${hh(antes[0])}).` });
-        else if (gap < intervaloAD) alertas.push({ tipo: 'intervalo', texto: `Só ${Math.round(gap)} min entre a foto ANTES (${hh(antes[0])}) e a foto DEPOIS (${hh(depois[0])}); mínimo esperado: ${intervaloAD} min.` });
-      }
+      const alertas = []; // (regra de antes/depois removida a pedido)
       v.alertas = alertas;
       v.alertasFoto = [];
       v._fo.forEach(f => {
@@ -1316,7 +1303,7 @@
         visitasPendentes: todas.filter(v => v.statusFinal === 'suspeita' || v.statusFinal === 'revisao').length,
         fotosPendentes: fotos.filter(f => f.status === 'suspeita' || f.status === 'revisao').length
       },
-      versaoCalculo: 3,
+      versaoCalculo: 4,
       volumeAlertas, maxVisitasDia,
       dataProcessamento: new Date().toISOString()
     };
@@ -1485,6 +1472,7 @@
         <div id="msg-pdf" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
         ${resumoFotos}
       </div>
+      ${htmlCardConferencia(mesDados)}
 
       <div class="card" style="border-left-color: ${podeAuditar ? 'var(--cor-destaque)' : '#CCC'}; background: ${podeAuditar ? '#FFFDF5' : 'white'};">
         <h2>5. Processar Auditoria</h2>
@@ -1500,6 +1488,7 @@
     configurarUploadTempo();
     configurarUploadPDF();
     configurarCardMesAdmin();
+    configurarConferencia();
 
     if (podeAuditar) {
       document.getElementById('btn-auditar').addEventListener('click', executarAuditoria);
@@ -2603,7 +2592,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 3) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 4) executarAuditoriaSilencioso();
   }
 
 
@@ -2673,8 +2662,6 @@
   function escolherMesInicial() {
     if (Estado.config.janelaSuspeitaMin === 30) Estado.config.janelaSuspeitaMin = 15; // antigo padrão de "tempo para trocar de loja"
     if (!Estado.config.maxVisitasDia) Estado.config.maxVisitasDia = 7;
-    if (Estado.config.exigirAntesDepois == null) Estado.config.exigirAntesDepois = true;
-    if (Estado.config.intervaloAntesDepoisMin == null) Estado.config.intervaloAntesDepoisMin = 5;
     const ativo = Estado.config.mesAtivo, ms = Estado.meses || {};
     if (!(ativo in ms) || (!temDadosNoMes(ms[ativo]) && !ms[ativo].mesConfirmado)) {
       const comDados = Object.keys(ms).filter(k => temDadosNoMes(ms[k])).sort();
@@ -2884,6 +2871,84 @@
       const outra = ((Estado.meses[Estado.config.mesAtivo] || {}).fotos || []).find(f => f.id === c.id);
       el.src = await girarDataURL(src, rotacaoDaFoto(outra));
     }));
+  }
+
+
+  // ── CONFERÊNCIA DA IMPORTAÇÃO: garante que todas as fotos do Book tiveram a legenda lida ──
+  function camposFaltando(f) {
+    if (f.semLegenda) return ['legenda inteira'];
+    const l = [];
+    if (!f.dataHora) l.push('data/hora');
+    if (!f.promotor) l.push('promotor');
+    if (!f.redeTexto) l.push('rede');
+    if (!f.lojaTexto) l.push('loja');
+    if (!f.tipoFoto) l.push('tipo (antes/depois)');
+    if (!f.temImagem) l.push('imagem da foto');
+    return l;
+  }
+  function montarConferencia(mesDados) {
+    const fotos = mesDados.fotos || [], ctrl = mesDados.controleImportacao || {};
+    const nomes = Array.from(new Set(fotos.map(f => f.arquivoOrigem || '?').concat(Object.keys(ctrl))));
+    const arquivos = nomes.map(nome => {
+      const fs = fotos.filter(f => (f.arquivoOrigem || '?') === nome), c = ctrl[nome] || null;
+      const problemas = fs.map(f => ({ f, falta: camposFaltando(f) })).filter(x => x.falta.length);
+      const ign = c ? c.paginasIgnoradas : [];
+      const inesperadas = c ? ign.filter(x => x.pagina !== 1 && x.pagina !== c.totalPaginas) : [];
+      const bate = c ? (c.totalPaginas === fs.length + ign.length) : null;
+      return { nome, total: c ? c.totalPaginas : null, fotos: fs.length, ignoradas: ign, inesperadas, problemas, completas: fs.length - problemas.length, bate, semControle: !c };
+    });
+    const soma = k => arquivos.reduce((a, x) => a + (x[k] || 0), 0);
+    const tudoOk = arquivos.length > 0 && arquivos.every(x => !x.semControle && x.bate && !x.inesperadas.length && !x.problemas.length);
+    return { arquivos, totalFotos: soma('fotos'), completas: soma('completas'), tudoOk };
+  }
+  function htmlCardConferencia(mesDados) {
+    if (!mesDados || !(mesDados.fotos || []).length) return '';
+    const c = montarConferencia(mesDados);
+    const nf = n => Number(n).toLocaleString('pt-BR');
+    const linhas = c.arquivos.map(x => {
+      const ok = !x.semControle && x.bate && !x.inesperadas.length && !x.problemas.length;
+      const pags = x.semControle ? '<span style="color:#E67E22;">reimporte para contar as páginas</span>' : `${nf(x.total)} págs. = ${nf(x.fotos)} fotos + ${x.ignoradas.length} ignorada(s)`;
+      return `<tr style="border-top:1px solid #EEE;">
+        <td style="padding:8px;word-break:break-all;">${ok ? '✅' : '⚠️'} ${esc(x.nome)}</td>
+        <td style="padding:8px;">${pags}</td>
+        <td style="padding:8px;text-align:center;"><strong>${nf(x.completas)}</strong> / ${nf(x.fotos)}</td></tr>`;
+    }).join('');
+    const detalhes = [];
+    c.arquivos.forEach(x => {
+      x.inesperadas.forEach(i => detalhes.push(`<li>📄 ${esc(x.nome)} · página <strong>${i.pagina}</strong>: <strong>página ignorada que não é capa nem contracapa</strong> (${esc(i.motivo)}). Pode ser uma foto não lida.</li>`));
+      if (x.bate === false) detalhes.push(`<li>📄 ${esc(x.nome)}: a soma de páginas não fecha (${x.total} ≠ ${x.fotos} + ${x.ignoradas.length}).</li>`);
+      x.problemas.slice(0, 200).forEach(p => detalhes.push(`<li>📄 ${esc(x.nome)} · página <strong>${p.f.pagina}</strong>: não foi lido(a) <strong>${esc(p.falta.join(', '))}</strong></li>`));
+    });
+    const falhas = c.totalFotos - c.completas;
+    const veredito = c.tudoOk
+      ? `<p style="font-size:14px;font-weight:bold;color:#27AE60;margin-bottom:10px;">✅ Tudo conferido: ${nf(c.totalFotos)} de ${nf(c.totalFotos)} fotos com legenda completa (data/hora, promotor, rede, loja, tipo) e imagem.</p>`
+      : `<p style="font-size:14px;font-weight:bold;color:#E67E22;margin-bottom:10px;">⚠️ ${nf(c.completas)} de ${nf(c.totalFotos)} fotos com leitura completa${falhas ? ` — ${nf(falhas)} com problema` : ''}${c.arquivos.some(x => x.inesperadas.length || x.semControle || x.bate === false) ? ' e há avisos de páginas' : ''}.</p>`;
+    return `<div class="card" style="border-left-color:${c.tudoOk ? '#27AE60' : '#E67E22'};">
+      <h2>🧮 Conferência da importação</h2>
+      <p style="font-size:12px;margin-bottom:10px;">Cada Book deve ter só <strong>capa e contracapa</strong> como páginas ignoradas. Todas as outras páginas são fotos e precisam ter a legenda lida.</p>
+      ${veredito}
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#F8F9FA;"><th style="padding:8px;text-align:left;">Arquivo</th><th style="padding:8px;text-align:left;">Páginas</th><th style="padding:8px;text-align:center;">Legenda completa</th></tr></thead>
+        <tbody>${linhas}
+          <tr style="border-top:2px solid var(--cor-primaria);font-weight:bold;"><td style="padding:8px;">TOTAL (${c.arquivos.length} arquivo${c.arquivos.length > 1 ? 's' : ''})</td><td style="padding:8px;">${nf(c.totalFotos)} fotos</td><td style="padding:8px;text-align:center;">${nf(c.completas)} / ${nf(c.totalFotos)}</td></tr>
+        </tbody></table></div>
+      ${detalhes.length ? `<details style="margin-top:10px;" ${c.tudoOk ? '' : 'open'}><summary style="cursor:pointer;font-size:12px;font-weight:bold;">Páginas com problema (${detalhes.length})</summary><ul style="padding-left:18px;font-size:12px;line-height:1.6;margin-top:6px;">${detalhes.slice(0, 150).join('')}</ul>${detalhes.length > 150 ? '<p style="font-size:11px;">Mostrando 150; a lista completa está no CSV do índice.</p>' : ''}</details>` : ''}
+      <button type="button" id="btn-indice-csv" style="margin-top:12px;padding:10px 14px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:6px;cursor:pointer;font-weight:bold;">📥 Baixar índice de todas as fotos (CSV)</button>
+    </div>`;
+  }
+  function configurarConferencia() {
+    const b = document.getElementById('btn-indice-csv'); if (!b) return;
+    b.addEventListener('click', () => {
+      const m = Estado.meses[Estado.config.mesAtivo];
+      let csv = 'Arquivo;Página;Data/hora;Promotor;Rede;Loja;Tipo;Imagem lida;Leitura;Campos não lidos\n';
+      (m.fotos || []).slice().sort((a, b) => (a.arquivoOrigem || '').localeCompare(b.arquivoOrigem || '') || a.pagina - b.pagina).forEach(f => {
+        const falta = camposFaltando(f);
+        csv += [csvCampo(f.arquivoOrigem), f.pagina, csvCampo((f.dataHora || '').replace('T', ' ')), csvCampo(f.promotor), csvCampo(limparSelo(f.redeTexto)), csvCampo(limparSelo(f.lojaTexto)), csvCampo(f.tipoFoto || ''), f.temImagem ? 'sim' : 'não', falta.length ? 'INCOMPLETA' : 'completa', csvCampo(falta.join(', '))].join(';') + '\n';
+      });
+      const ctrl = m.controleImportacao || {};
+      Object.keys(ctrl).forEach(n => (ctrl[n].paginasIgnoradas || []).forEach(i => { csv += [csvCampo(n), i.pagina, '', '', '', '', '', '', 'PÁGINA IGNORADA', csvCampo(i.motivo)].join(';') + '\n'; }));
+      baixarCSV(`indice_fotos_${Estado.config.mesAtivo}.csv`, csv);
+    });
   }
 
   function configurarPublicacao() {
