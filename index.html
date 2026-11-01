@@ -915,7 +915,24 @@
       }
 
       const meta = extrairMetadadosPagina(texto.items);
-      if (!meta.temRodape) { ignoradas++; pagina.cleanup(); continue; } // capa/páginas sem foto com selo
+      if (!meta.temRodape) {
+        // Página sem rodapé: se tiver foto grande, guarda como "sem legenda" (não some); senão é capa/divisória
+        let imgSL = null;
+        try { imgSL = await extrairImagemPrincipal(pagina); } catch (e) {}
+        if (!imgSL || Math.max(imgSL.width, imgSL.height) < 500 || Math.min(imgSL.width, imgSL.height) < 250) { ignoradas++; pagina.cleanup(); continue; } // logos/capas são pequenos
+        const idSL = Date.now() + '-' + i + '-' + Math.random().toString(36).slice(2, 7);
+        let hashSL = null, temImgSL = false;
+        try {
+          const prep = await prepararImagem(imgSL);
+          if (prep) { hashSL = prep.hash; await BancoImagens.salvar(idSL, prep.url); temImgSL = true; }
+        } catch (e) { console.warn(`Pág. ${i} de ${arquivo.name}: falha ao ler a imagem`, e); }
+        fotosExtraidas.push({
+          id: idSL, pagina: i, arquivoOrigem: arquivo.name, semLegenda: true,
+          dataHora: null, promotor: null, promotorKey: null, redeTexto: null, lojaTexto: null, tipoFoto: null,
+          temImagem: temImgSL, hash: hashSL, status: 'pendente', motivoGap: null, revisaoManual: false
+        });
+        pagina.cleanup(); continue;
+      }
 
       const id = Date.now() + '-' + i + '-' + Math.random().toString(36).slice(2, 7);
       let hash = null, temImagem = false;
@@ -1072,6 +1089,7 @@
     // 3. Cruzamento com o Relatório de Tempo
     fotos.forEach(f => {
       if (f.revisaoManual || f.status === 'duplicata') return;
+      if (f.semLegenda) { f.status = 'sem_legenda'; f.motivoGap = 'Foto sem legenda (rodapé com data/rede/loja/promotor) no PDF.'; return; }
       if (!f.dataHora || !pk(f)) {
         f.status = 'sem_par'; f.motivoGap = 'Metadados (Data/Promotor) não encontrados no PDF.'; return;
       }
@@ -1593,6 +1611,7 @@
       container.querySelectorAll('tr[data-rede]').forEach(tr => {
         tr.addEventListener('click', () => abrirDrillRede(tr.dataset.rede));
       });
+      montarListaNaoComprovadas(container, aud);
 
       document.getElementById('btn-exportar-csv').addEventListener('click', () => {
         let csv = "Rede;Declaradas;Comprovadas;Gap;Efetividade;Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
@@ -1714,6 +1733,40 @@
     document.getElementById('btn-voltar-lojas').addEventListener('click', () => { auditoriaDrillState.loja = null; renderizarAuditoria(); });
   }
 
+  let filtroNaoComp = 'todas';
+  function montarListaNaoComprovadas(container, aud) {
+    const nome = r => (aud.porRede[r] ? aud.porRede[r].rede : r);
+    const todas = (aud.visitasAgrupadas || []).filter(v => v.statusFinal !== 'comprovada');
+    const cont = st => todas.filter(v => v.statusFinal === st).length;
+    const lista = todas.filter(v => filtroNaoComp === 'todas' || v.statusFinal === filtroNaoComp)
+      .sort((a, b) => a.data.localeCompare(b.data) || (nome(a.rede) + a.loja).localeCompare(nome(b.rede) + b.loja));
+    const MAX = 150;
+    const opt = (v, t) => `<option value="${v}" ${filtroNaoComp === v ? 'selected' : ''}>${t}</option>`;
+    const linhas = lista.slice(0, MAX).map((v, i) => `
+      <tr data-nc="${i}" style="border-bottom:1px solid #EEE;cursor:pointer;">
+        <td style="padding:8px;font-size:12px;">${esc(formatarDataBR(v.data))}</td>
+        <td style="padding:8px;font-size:12px;">${esc(nome(v.rede))} › ${esc(v.loja)}</td>
+        <td style="padding:8px;font-size:12px;">${esc(v.promotor)}</td>
+        <td style="padding:8px;font-size:11px;font-weight:bold;color:${COR_STATUS[v.statusFinal] || '#E74C3C'};text-transform:uppercase;">${ROTULO_STATUS[v.statusFinal] || esc(v.statusFinal)}</td>
+      </tr>`).join('');
+    container.insertAdjacentHTML('beforeend', `
+      <div class="card" id="card-nao-comp">
+        <h2>🔎 Visitas sem comprovação (${todas.length})</h2>
+        <p style="font-size:12px;margin-bottom:10px;">Toque numa linha para abrir a loja. Gap do período: <strong>${aud.total.gap}</strong> (as visitas "em revisão" ou "suspeitas" ainda podem virar comprovadas).</p>
+        <select id="filtro-nc" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #CCC;border-radius:4px;font-size:14px;">
+          ${opt('todas', 'Todas (' + todas.length + ')')}${opt('sem_foto', 'Sem foto (' + cont('sem_foto') + ')')}${opt('nao_comprovada', 'Não comprovada (' + cont('nao_comprovada') + ')')}${opt('suspeita', 'Suspeita (' + cont('suspeita') + ')')}${opt('revisao', 'Em revisão (' + cont('revisao') + ')')}
+        </select>
+        <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="background:#F8F9FA;border-bottom:2px solid var(--cor-primaria);"><th style="padding:8px;text-align:left;font-size:12px;">Dia</th><th style="padding:8px;text-align:left;font-size:12px;">Rede › Loja</th><th style="padding:8px;text-align:left;font-size:12px;">Promotor</th><th style="padding:8px;text-align:left;font-size:12px;">Status</th></tr></thead>
+          <tbody>${linhas || '<tr><td colspan="4" style="padding:12px;font-size:12px;">Nenhuma visita neste filtro.</td></tr>'}</tbody>
+        </table></div>
+        ${lista.length > MAX ? `<p style="font-size:11px;margin-top:8px;">Mostrando ${MAX} de ${lista.length}. Use o botão de exportar CSV de visitas para a lista completa.</p>` : ''}
+      </div>`);
+    document.getElementById('filtro-nc').addEventListener('change', e => { filtroNaoComp = e.target.value; renderizarAuditoria(); });
+    container.querySelectorAll('tr[data-nc]').forEach(tr => tr.addEventListener('click', () => {
+      const v = lista[+tr.dataset.nc]; auditoriaDrillState = { rede: v.rede, loja: v.loja }; renderizarAuditoria();
+    }));
+  }
   function abrirDrillRede(chave) { auditoriaDrillState = { rede: chave, loja: null }; renderizarAuditoria(); }
   function abrirDrillLoja(loja) { auditoriaDrillState.loja = loja; renderizarAuditoria(); }
 
@@ -1739,8 +1792,9 @@
     }
 
     const fotosRevisao = mesDados.fotos.filter(f => f.status === 'revisao' || f.status === 'suspeita');
+    const fotosSemLegenda = mesDados.fotos.filter(f => f.status === 'sem_legenda');
 
-    if (fotosRevisao.length === 0) {
+    if (fotosRevisao.length === 0 && fotosSemLegenda.length === 0) {
       container.innerHTML = `
         <div class="card" style="border-left-color: #27AE60;">
           <h2>Revisão</h2>
@@ -1752,7 +1806,24 @@
 
     const LIMITE = 30;
     const visiveis = fotosRevisao.slice(0, LIMITE);
-    let html = `
+    const visSL = fotosSemLegenda.slice(0, LIMITE);
+    let html = '';
+    if (fotosSemLegenda.length) {
+      html += `<div class="card" style="border-left-color: #8E44AD;">
+        <h2>🏷️ Fotos sem legenda (${fotosSemLegenda.length})</h2>
+        <p style="font-size: 13px;">Páginas do book com foto, mas sem o rodapé de data/rede/loja/promotor. Não entram como comprovação. ${fotosSemLegenda.length > LIMITE ? `Mostrando as ${LIMITE} primeiras (a lista completa está no CSV de fotos sem legenda, na aba Auditoria).` : ''}</p>
+      </div>`;
+      visSL.forEach(foto => {
+        html += `<div class="card" style="padding: 15px;">
+          <p style="font-size: 12px; margin-bottom: 8px;"><strong>${esc(foto.arquivoOrigem || '')}</strong> · Pág. ${foto.pagina}</p>
+          <div style="width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; display: flex; justify-content: center; align-items: center;">
+            <img id="img-${foto.id}" alt="Carregando imagem..." style="max-width: 100%; max-height: 100%; object-fit: contain; color: #999; font-size: 12px;">
+          </div>
+          <button type="button" class="btn-original" data-foto="${foto.id}" style="width:100%;padding:8px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;">🔍 Ver original</button>
+        </div>`;
+      });
+    }
+    html += `
       <div class="card" style="border-left-color: #F39C12;">
         <h2>Fila de Revisão (${fotosRevisao.length})</h2>
         <p style="font-size: 13px; margin-bottom: 5px;">Avalie cada foto e decida. Ao decidir, a auditoria é recalculada automaticamente.</p>
@@ -1794,6 +1865,7 @@
             <img id="img-${foto.id}" alt="Carregando imagem..." style="max-width: 100%; max-height: 100%; object-fit: contain; color: #999; font-size: 12px;">
           </div>
 
+          <button type="button" class="btn-original" data-foto="${foto.id}" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;">🔍 Ver original</button>
           <p style="font-size: 12px; margin-bottom: 10px;">Selo na foto: <em>${esc(limparSelo(foto.redeTexto) || '?')} / ${esc(limparSelo(foto.lojaTexto) || 'não extraído')}</em></p>
           ${blocoLoja}
           <div style="display: flex; gap: 10px;">
@@ -1805,9 +1877,10 @@
     });
 
     container.innerHTML = html;
+    configurarBotoesOriginal(container);
 
     // As imagens ficam no IndexedDB: carrega depois de desenhar a tela
-    visiveis.forEach(foto => {
+    visiveis.concat(visSL).forEach(foto => {
       BancoImagens.ler(foto.id).then(src => {
         const el = document.getElementById('img-' + foto.id);
         if (!el) return;
@@ -1863,6 +1936,7 @@
     const totalRevisao = fotos.filter(f => f.status === 'revisao').length;
     const totalDuplicatas = fotos.filter(f => f.status === 'duplicata').length;
     const totalSemPar = fotos.filter(f => f.status === 'sem_par').length;
+    const totalSemLegenda = fotos.filter(f => f.status === 'sem_legenda').length;
     const totalFotosComprovadas = fotos.filter(f => f.status === 'comprovada').length;
     const efetividade = total.totalDeclaradas > 0 ? (total.comprovadas / total.totalDeclaradas) * 100 : 0;
 
@@ -1916,6 +1990,7 @@
         <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #3498DB;"><span>🔍 Em Revisão:</span> <strong>${totalRevisao}</strong></p>
         <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--cor-perigo);"><span>🔁 Duplicatas:</span> <strong>${totalDuplicatas}</strong></p>
         <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--cor-texto-secundario);"><span>❓ Sem Par:</span> <strong>${totalSemPar}</strong></p>
+        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--cor-texto-secundario);"><span>🏷️ Sem legenda:</span> <strong>${totalSemLegenda}</strong></p>
       </div>
 
       <div class="card">
@@ -2361,6 +2436,64 @@
     });
     document.querySelectorAll('.btn-mes-hist').forEach(b => b.addEventListener('click', () => {
       Estado.config.mesAtivo = b.dataset.mes; salvarEstado(); renderizarAdmin();
+    }));
+  }
+
+
+  // ── VER ORIGINAL: reabre o PDF e extrai só a página pedida em alta resolução (não grava nada) ──
+  const PDFsEmSessao = {}; // nome do arquivo -> File escolhido nesta sessão
+  async function renderizarPaginaOriginal(file, numPagina) {
+    const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+    try {
+      const pagina = await pdf.getPage(numPagina);
+      const img = await extrairImagemPrincipal(pagina);
+      if (!img) throw new Error('Esta página não tem foto.');
+      const w = img.width, h = img.height;
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      const ctx = cv.getContext('2d');
+      if (img.bitmap) ctx.drawImage(img.bitmap, 0, 0);
+      else if (img.data) {
+        const n = w * h, d = img.data, id = ctx.createImageData(w, h), o = id.data;
+        if (d.length === n * 4) o.set(d);
+        else if (d.length === n * 3) { for (let i = 0, j = 0; i < d.length; i += 3, j += 4) { o[j] = d[i]; o[j+1] = d[i+1]; o[j+2] = d[i+2]; o[j+3] = 255; } }
+        else if (d.length === n) { for (let i = 0, j = 0; i < d.length; i++, j += 4) { o[j] = o[j+1] = o[j+2] = d[i]; o[j+3] = 255; } }
+        else throw new Error('Formato de imagem não suportado.');
+        ctx.putImageData(id, 0, 0);
+      } else throw new Error('Imagem indisponível.');
+      const url = cv.toDataURL('image/jpeg', 0.92);
+      cv.width = cv.height = 0;
+      return { url, w, h };
+    } finally { if (pdf.destroy) pdf.destroy(); }
+  }
+  function mostrarOriginal(foto, r) {
+    const old = document.getElementById('modal-original'); if (old) old.remove();
+    const d = document.createElement('div'); d.id = 'modal-original';
+    d.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;flex-direction:column;';
+    d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:#fff;font-size:13px;"><span>Pág. ${foto.pagina} · ${r.w}×${r.h}px (toque na imagem para ampliar/reduzir)</span><button type="button" id="fechar-original" style="padding:8px 14px;border:none;border-radius:4px;font-weight:bold;cursor:pointer;">Fechar</button></div><div id="area-original" style="flex:1;overflow:auto;text-align:center;"><img src="${r.url}" id="img-original" style="max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in;"></div>`;
+    document.body.appendChild(d);
+    d.querySelector('#fechar-original').onclick = () => d.remove();
+    const im = d.querySelector('#img-original'); let zoom = false;
+    im.onclick = () => { zoom = !zoom; im.style.maxWidth = zoom ? 'none' : '100%'; im.style.maxHeight = zoom ? 'none' : '100%'; im.style.cursor = zoom ? 'zoom-out' : 'zoom-in'; };
+  }
+  function configurarBotoesOriginal(container) {
+    container.querySelectorAll('.btn-original').forEach(btn => btn.addEventListener('click', async () => {
+      const m = Estado.meses[Estado.config.mesAtivo];
+      const foto = (m.fotos || []).find(f => f.id === btn.dataset.foto);
+      if (!foto) return;
+      const executar = async file => {
+        const txt = btn.textContent; btn.disabled = true; btn.textContent = 'Abrindo original...';
+        try { mostrarOriginal(foto, await renderizarPaginaOriginal(file, foto.pagina)); }
+        catch (e) { alert('Não foi possível abrir o original: ' + e.message); }
+        btn.disabled = false; btn.textContent = txt;
+      };
+      if (PDFsEmSessao[foto.arquivoOrigem]) return executar(PDFsEmSessao[foto.arquivoOrigem]);
+      const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.pdf,application/pdf';
+      inp.onchange = () => {
+        const f = inp.files && inp.files[0]; if (!f) return;
+        if (f.name !== foto.arquivoOrigem && !confirm(`Esta foto veio do arquivo "${foto.arquivoOrigem}", mas você escolheu "${f.name}".\n\nOK = usar mesmo assim\nCancelar = escolher outro`)) return;
+        PDFsEmSessao[foto.arquivoOrigem] = f; executar(f);
+      };
+      inp.click();
     }));
   }
 
