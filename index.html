@@ -1,3 +1,4 @@
+<!-- ═══ SUBBLOCO 01 — ESTRUTURA + CSS + HEADER/NAV ═══ -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -9,37 +10,63 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --cor-fundo: #E4E8EE; --cor-fundo-card: #FFFFFF; --cor-primaria: #0A3D2E;
-    --cor-destaque: #D4AF37; --cor-perigo: #E74C3C; --cor-texto: #1A252F;
-    --cor-texto-secundario: #7F8C8D; --fonte-titulo: 'Orbitron', sans-serif; --fonte-dados: 'Rajdhani', sans-serif;
+    --cor-fundo: #E4E8EE;
+    --cor-fundo-card: #FFFFFF;
+    --cor-primaria: #0A3D2E;
+    --cor-destaque: #D4AF37;
+    --cor-perigo: #E74C3C;
+    --cor-texto: #1A252F;
+    --cor-texto-secundario: #7F8C8D;
+    --fonte-titulo: 'Orbitron', sans-serif;
+    --fonte-dados: 'Rajdhani', sans-serif;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: var(--fonte-dados); background-color: var(--cor-fundo); color: var(--cor-texto); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  body { font-family: var(--fonte-dados); background-color: var(--cor-fundo); color: var(--cor-texto); display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+  
   header { background-color: var(--cor-primaria); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--cor-destaque); box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-shrink: 0; z-index: 10; }
   .logo-container { display: flex; align-items: center; gap: 12px; }
   .logo-placeholder { width: 40px; height: 40px; background-color: var(--cor-destaque); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--fonte-titulo); font-weight: 900; color: var(--cor-primaria); font-size: 20px; box-shadow: 0 0 15px rgba(212,175,55,0.4); border: 2px solid #FFF; }
   .titulo-header h1 { font-family: var(--fonte-titulo); font-size: 18px; font-weight: 900; color: var(--cor-destaque); text-transform: uppercase; letter-spacing: 2px; line-height: 1.1; }
   .titulo-header span { font-family: var(--fonte-dados); font-size: 9px; color: #A0A0A0; text-transform: uppercase; letter-spacing: 2px; }
+
   nav { background-color: #F8F9FA; display: flex; overflow-x: auto; border-bottom: 1px solid #CCC; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); -webkit-overflow-scrolling: touch; }
   nav::-webkit-scrollbar { display: none; }
   nav button { background: transparent; border: none; color: var(--cor-texto-secundario); font-family: var(--fonte-titulo); font-size: 11px; font-weight: 700; padding: 14px 16px; cursor: pointer; white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; border-bottom: 3px solid transparent; transition: all 0.2s ease; }
   nav button.ativo { color: var(--cor-primaria); border-bottom: 3px solid var(--cor-destaque); background-color: rgba(10,61,46,0.05); }
+
   main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
   .tela { display: none; }
   .tela.ativa { display: block; animation: fadeIn 0.3s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
   .card { background-color: var(--cor-fundo-card); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid var(--cor-primaria); position: relative; }
   .card h2 { font-family: var(--fonte-titulo); font-size: 14px; font-weight: 700; color: var(--cor-primaria); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
   .card p { font-family: var(--fonte-dados); font-size: 15px; color: var(--cor-texto-secundario); line-height: 1.5; font-weight: 500; }
+
   footer { background-color: var(--cor-primaria); padding: 10px; text-align: center; font-family: var(--fonte-titulo); font-size: 9px; color: var(--cor-destaque); border-top: 2px solid var(--cor-destaque); flex-shrink: 0; letter-spacing: 1px; position: fixed; bottom: 0; width: 100%; z-index: 10; }
+
   @media (min-width: 768px) {
-    nav { justify-content: center; } nav button { font-size: 13px; padding: 16px 24px; }
-    .titulo-header h1 { font-size: 24px; } .titulo-header span { font-size: 11px; }
-    main { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; } .card { padding: 25px; }
+    nav { justify-content: center; }
+    nav button { font-size: 13px; padding: 16px 24px; }
+    .titulo-header h1 { font-size: 24px; }
+    .titulo-header span { font-size: 11px; }
+    main { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; }
+    .card { padding: 25px; }
+  }
+
+  /* Impressão / Salvar PDF: libera a rolagem e esconde a navegação */
+  @media print {
+    body { display: block; height: auto; overflow: visible; background: #FFF; }
+    header, nav, footer, button, input, select { display: none !important; }
+    main { overflow: visible; padding: 0; max-width: none; }
+    .tela { display: none !important; }
+    .tela.ativa { display: block !important; animation: none; }
+    .card { box-shadow: none; break-inside: avoid; }
   }
 </style>
 </head>
 <body>
+
 <header>
   <div class="logo-container">
     <div class="logo-placeholder">T</div>
@@ -49,6 +76,7 @@
     </div>
   </div>
 </header>
+
 <nav>
   <button class="ativo" data-tela="dashboard">Dashboard</button>
   <button data-tela="admin">Admin</button>
@@ -57,54 +85,140 @@
   <button data-tela="relatorio">Relatório</button>
   <button data-tela="config">Config</button>
 </nav>
+
 <main>
-  <div id="tela-dashboard" class="tela ativa"></div>
-  <div id="tela-admin" class="tela"></div>
-  <div id="tela-auditoria" class="tela"></div>
-  <div id="tela-revisao" class="tela"></div>
-  <div id="tela-relatorio" class="tela"></div>
+  <div id="tela-dashboard" class="tela ativa"><div class="card"><h2>Dashboard</h2><p>Visão geral da auditoria. (Em construção)</p></div></div>
+  <div id="tela-admin" class="tela"><div class="card"><h2>Admin</h2><p>Importação de arquivos e processamento. (Em construção)</p></div></div>
+  <div id="tela-auditoria" class="tela"><div class="card"><h2>Auditoria</h2><p>Drill-down por rede, loja e visita. (Em construção)</p></div></div>
+  <div id="tela-revisao" class="tela"><div class="card"><h2>Revisão</h2><p>Fila de fotos com suspeita para revisão manual. (Em construção)</p></div></div>
+  <div id="tela-relatorio" class="tela"><div class="card"><h2>Relatório</h2><p>Visão consolidada, impressão e exportação. (Em construção)</p></div></div>
   <div id="tela-config" class="tela"></div>
 </main>
+
 <footer>CockPit Tarks &copy; 2026 | Grupo Tarks | Auditoria de Trade Marketing</footer>
 
+<!-- DEPENDÊNCIAS EXTERNAS -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
-</script>
 <script>
-  // ═══ SUBBLOCO 01 e 02 — CONFIGURAÇÕES E ESTADO ═══
+  // Configura o worker do PDF.js
   if (typeof pdfjsLib !== 'undefined') {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
   }
+</script>
+<!-- ═══ FIM SUBBLOCO 01 ═══ -->
+  <!-- ═══ SUBBLOCO 02 — ESTADO + PERSISTÊNCIA + CONFIG ═══ -->
+<script>
+  // Mês no horário LOCAL (toISOString usa UTC: depois das 21h em Brasília viraria o mês seguinte)
+  function mesAtualLocal() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
 
   const Estado = {
-    config: { janelaSuspeitaMin: 30, limiteFotosLojaDia: 6, mesAtivo: new Date().toISOString().slice(0, 7) },
+    config: {
+      janelaSuspeitaMin: 30,
+      limiteFotosLojaDia: 6,
+      mesAtivo: mesAtualLocal() // Formato AAAA-MM
+    },
     meses: {}
   };
 
+  // ── ARMAZENAMENTO DE IMAGENS (IndexedDB) ──
+  // As fotos NÃO ficam no localStorage (limite ~5 MB estoura com poucas dezenas de fotos).
+  // O Estado guarda só os dados da foto; a imagem fica aqui, buscada pelo id da foto.
+  const BancoImagens = {
+    _db: null, _mem: new Map(),
+    abrir() {
+      if (this._db) return Promise.resolve(this._db);
+      return new Promise((resolve) => {
+        if (!window.indexedDB) return resolve(null);
+        try {
+          const req = indexedDB.open('cockpit_imagens', 1);
+          req.onupgradeneeded = () => req.result.createObjectStore('imgs');
+          req.onsuccess = () => { this._db = req.result; resolve(this._db); };
+          req.onerror = () => resolve(null);
+        } catch (e) { resolve(null); }
+      });
+    },
+    async salvar(id, dataUrl) {
+      const db = await this.abrir();
+      if (!db) { this._mem.set(id, dataUrl); return; }
+      return new Promise((res) => {
+        const tx = db.transaction('imgs', 'readwrite');
+        tx.objectStore('imgs').put(dataUrl, id);
+        tx.oncomplete = () => res();
+        tx.onerror = () => { this._mem.set(id, dataUrl); res(); };
+      });
+    },
+    async ler(id) {
+      if (this._mem.has(id)) return this._mem.get(id);
+      const db = await this.abrir();
+      if (!db) return null;
+      return new Promise((res) => {
+        const rq = db.transaction('imgs', 'readonly').objectStore('imgs').get(id);
+        rq.onsuccess = () => res(rq.result || null);
+        rq.onerror = () => res(null);
+      });
+    },
+    async apagar(ids) {
+      ids.forEach(id => this._mem.delete(id));
+      const db = await this.abrir();
+      if (!db || !ids.length) return;
+      return new Promise((res) => {
+        const tx = db.transaction('imgs', 'readwrite');
+        ids.forEach(id => tx.objectStore('imgs').delete(id));
+        tx.oncomplete = () => res(); tx.onerror = () => res();
+      });
+    },
+    async todas() {
+      const saida = {};
+      this._mem.forEach((v, k) => { saida[k] = v; });
+      const db = await this.abrir();
+      if (!db) return saida;
+      return new Promise((res) => {
+        const tx = db.transaction('imgs', 'readonly');
+        const cur = tx.objectStore('imgs').openCursor();
+        cur.onsuccess = () => {
+          const c = cur.result;
+          if (c) { saida[c.key] = c.value; c.continue(); } else res(saida);
+        };
+        cur.onerror = () => res(saida);
+      });
+    },
+    async limpar() {
+      this._mem.clear();
+      const db = await this.abrir();
+      if (!db) return;
+      return new Promise((res) => {
+        const tx = db.transaction('imgs', 'readwrite');
+        tx.objectStore('imgs').clear();
+        tx.oncomplete = () => res(); tx.onerror = () => res();
+      });
+    }
+  };
+
+  // Backups/estados antigos podem ter a imagem dentro da foto (imagemBase64): move para o IndexedDB.
+  async function migrarImagensLegadas(meses) {
+    let mudou = false;
+    for (const m of Object.values(meses || {})) {
+      for (const f of (m.fotos || [])) {
+        if (f.imagemBase64) {
+          await BancoImagens.salvar(f.id, f.imagemBase64);
+          delete f.imagemBase64; f.temImagem = true; mudou = true;
+        }
+      }
+    }
+    return mudou;
+  }
+
   function salvarEstado() {
     try {
-      // Cria uma cópia do estado APENAS para salvar no disco
-      const estadoParaSalvar = JSON.parse(JSON.stringify(Estado));
-      
-      // Remove as imagens Base64 da cópia para não estourar a memória (5MB)
-      // Mantém apenas os metadados (promotor, data, status, etc)
-      if (estadoParaSalvar.meses) {
-        Object.keys(estadoParaSalvar.meses).forEach(mes => {
-          if (estadoParaSalvar.meses[mes].fotos) {
-            estadoParaSalvar.meses[mes].fotos = estadoParaSalvar.meses[mes].fotos.map(f => {
-              return { ...f, imagemBase64: null }; // Zera a imagem no backup
-            });
-          }
-        });
-      }
-      
-      localStorage.setItem('cockpit_estado', JSON.stringify(estadoParaSalvar)); 
-    }
-    catch (e) { 
-      console.error(e);
-      alert("⚠️ Erro ao salvar. O armazenamento do navegador está cheio."); 
+      localStorage.setItem('cockpit_estado', JSON.stringify(Estado));
+    } catch (e) {
+      console.error("Erro ao salvar estado:", e);
+      alert("⚠️ Erro ao salvar dados. O armazenamento do navegador pode estar cheio. Exporte um backup e limpe os dados antigos.");
     }
   }
 
@@ -115,30 +229,28 @@
         const dados = JSON.parse(salvo);
         if (dados.config) Estado.config = { ...Estado.config, ...dados.config };
         if (dados.meses) Estado.meses = dados.meses;
-      } catch (e) { console.error("Erro ao carregar:", e); }
+        migrarImagensLegadas(Estado.meses).then(mudou => { if (mudou) salvarEstado(); }).catch(() => {});
+      } catch (e) { 
+        console.error("Erro ao carregar estado:", e); 
+      }
     }
   }
 
   function garantirMes(mes) {
     if (!Estado.meses[mes]) {
-      Estado.meses[mes] = { fechamento: [], lojas: [], relatorioTempo: [], fotos: [], auditoria: null };
+      Estado.meses[mes] = {
+        fechamento: [], 
+        lojas: [], 
+        relatorioTempo: [], 
+        fotos: [],
+        periodosPDF: [],
+        auditoria: null // Inicia como nulo até ser processada
+      };
       salvarEstado();
     }
     return Estado.meses[mes];
   }
 
-  function normalizarTexto(texto) {
-    if (!texto) return '';
-    return String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
-  }
-
-  function formatarMoeda(v) { return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
-  function formatarPorcentagem(v) { return Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'; }
-</script>
-<script>
-  // ═══ SUBBLOCO 03 e 04 — CONFIG E ADMIN (UPLOADS MÚLTIPLOS) ═══
-  
-  // ── RENDERIZAR CONFIG ──
   function renderizarConfig() {
     const container = document.getElementById('tela-config');
     const meses = Object.keys(Estado.meses).sort().reverse();
@@ -149,7 +261,8 @@
       optionsMes = `<option value="${mesAtual}">${mesAtual} (novo)</option>`;
     } else {
       meses.forEach(m => {
-        optionsMes += `<option value="${m}" ${m === mesAtual ? 'selected' : ''}>${m}</option>`;
+        const selecionado = m === mesAtual ? 'selected' : '';
+        optionsMes += `<option value="${m}" ${selecionado}>${m}</option>`;
       });
       if (!meses.includes(mesAtual)) {
         optionsMes += `<option value="${mesAtual}" selected>${mesAtual} (novo)</option>`;
@@ -167,15 +280,16 @@
       </div>
       <div class="card">
         <h2>Regras de Auditoria</h2>
-        <label style="font-size: 12px; font-weight: bold;">Janela de Suspeita (minutos):</label>
+        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Janela de Suspeita (minutos):</label>
         <input type="number" id="config-suspeita" value="${Estado.config.janelaSuspeitaMin}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
-        <label style="font-size: 12px; font-weight: bold;">Limite de Fotos por Loja/Dia:</label>
+        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Limite de Fotos por Loja/Dia:</label>
         <input type="number" id="config-limite" value="${Estado.config.limiteFotosLojaDia}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
         <button id="btn-salvar-config" style="width: 100%; padding: 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Salvar Regras</button>
         <div id="msg-config" style="margin-top: 10px; text-align: center; font-weight: bold; color: var(--cor-primaria);"></div>
       </div>
       <div class="card">
         <h2>Backup de Dados</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Exporte ou importe o estado completo do sistema (incluindo imagens).</p>
         <div style="display: flex; gap: 10px;">
           <button id="btn-exportar" style="flex: 1; padding: 12px; background: var(--cor-destaque); color: var(--cor-primaria); border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">📥 Exportar</button>
           <button id="btn-importar" style="flex: 1; padding: 12px; background: transparent; color: var(--cor-primaria); border: 1px solid var(--cor-primaria); border-radius: 8px; font-weight: bold; cursor: pointer;">📤 Importar</button>
@@ -191,15 +305,20 @@
     document.getElementById('select-mes').addEventListener('change', (e) => {
       Estado.config.mesAtivo = e.target.value;
       garantirMes(Estado.config.mesAtivo);
-      salvarEstado(); renderizarConfig();
+      salvarEstado();
+      renderizarConfig();
     });
 
     document.getElementById('btn-add-mes').addEventListener('click', () => {
-      const novoMes = prompt("Digite o novo mês (formato AAAA-MM):", new Date().toISOString().slice(0, 7));
+      const novoMes = prompt("Digite o novo mês (formato AAAA-MM):", mesAtualLocal());
       if (novoMes && /^\d{4}-\d{2}$/.test(novoMes)) {
-        Estado.config.mesAtivo = novoMes; garantirMes(novoMes);
-        salvarEstado(); renderizarConfig();
-      } else if (novoMes) alert("Formato inválido. Use AAAA-MM.");
+        Estado.config.mesAtivo = novoMes;
+        garantirMes(novoMes);
+        salvarEstado();
+        renderizarConfig();
+      } else if (novoMes) {
+        alert("Formato inválido. Use AAAA-MM (ex: 2026-11).");
+      }
     });
 
     document.getElementById('btn-salvar-config').addEventListener('click', () => {
@@ -210,177 +329,928 @@
       setTimeout(() => document.getElementById('msg-config').textContent = '', 3000);
     });
 
-    document.getElementById('btn-exportar').addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify(Estado, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-      a.download = `cockpit_backup_${new Date().toISOString().slice(0, 10)}.json`; a.click();
+    document.getElementById('btn-exportar').addEventListener('click', async () => {
+      const comImagens = confirm('Incluir as imagens das fotos no backup?\n\nOK = backup completo (arquivo grande)\nCancelar = só os dados, sem imagens');
+      const pacote = { config: Estado.config, meses: Estado.meses, imagens: comImagens ? await BancoImagens.todas() : {} };
+      const blob = new Blob([JSON.stringify(pacote)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `cockpit_backup_${new Date().toLocaleDateString('sv-SE')}.json`;
+      a.click();
       URL.revokeObjectURL(a.href);
     });
 
-    document.getElementById('btn-importar').addEventListener('click', () => document.getElementById('input-backup').click());
+    document.getElementById('btn-importar').addEventListener('click', () => {
+      document.getElementById('input-backup').click();
+    });
+
     document.getElementById('input-backup').addEventListener('change', (e) => {
-      const file = e.target.files[0]; if (!file) return;
+      const file = e.target.files[0];
+      if (!file) return;
       const leitor = new FileReader();
-      leitor.onload = (event) => {
+      leitor.onload = async (event) => {
         try {
           const dados = JSON.parse(event.target.result);
           if (dados.config && dados.meses) {
-            Estado.config = dados.config; Estado.meses = dados.meses;
-            salvarEstado(); alert('✅ Backup importado!'); renderizarConfig();
-          } else alert('❌ Arquivo inválido.');
-        } catch (err) { alert('❌ Erro ao ler: ' + err.message); }
+            Estado.config = { ...Estado.config, ...dados.config };
+            Estado.meses = dados.meses;
+            if (dados.imagens) {
+              for (const [id, url] of Object.entries(dados.imagens)) await BancoImagens.salvar(id, url);
+            }
+            await migrarImagensLegadas(Estado.meses);
+            salvarEstado();
+            alert('✅ Backup importado com sucesso!');
+            renderizarConfig();
+          } else {
+            alert('❌ Arquivo de backup inválido.');
+          }
+        } catch (err) { alert('❌ Erro ao ler o arquivo: ' + err.message); }
       };
       leitor.readAsText(file);
     });
 
     document.getElementById('btn-limpar').addEventListener('click', () => {
-      if (confirm('⚠️ ATENÇÃO: Isso apagará TODOS os dados salvos. Tem certeza?')) {
-        localStorage.removeItem('cockpit_estado'); window.location.reload();
+      if (confirm('⚠️ ATENÇÃO: Isso apagará TODOS os dados salvos neste navegador. Tem certeza?')) {
+        BancoImagens.limpar().then(() => {
+          localStorage.removeItem('cockpit_estado');
+          window.location.reload();
+        });
       }
     });
   }
-
-  // ── PARSERS DE ARQUIVOS (FECHAMENTO, PLANO E TEMPO) ──
+</script>
+<!-- ═══ FIM SUBBLOCO 02 ═══ -->
+  <!-- ═══ SUBBLOCO 03 — PARSER FECHAMENTO + TELA ADMIN ═══ -->
+<script>
+  /* ── NÚCLEO TESTÁVEL (helpers + parsers + extração + auditoria) ── */
+  function normalizarTexto(texto) {
+    if (!texto) return '';
+    return String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+  }
+  
+  // Chave compacta: só letras/números, sem acento. Resolve letras espaçadas ("M O G I") e variações de espaço.
+  function chaveCompacta(texto) {
+    return normalizarTexto(texto).replace(/[^A-Z0-9]/g, '');
+  }
+  
+  // Unifica o nome da rede entre Fechamento, Plano e Relatório de Tempo
+  // (ex.: "Atacadão" = "ATACADAO"; "Alvorada" = "SUPERMERCADO ALVORADA ITU"; "Rede Simco" = "REDE CINCO" = aba "SINCO")
+  function chaveRede(nome) {
+    const c = chaveCompacta(nome);
+    if (!c) return '';
+    const regras = [
+      [/ATACADAO/, 'ATACADAO'], [/NAGUMO/, 'NAGUMO'], [/CARREFOUR/, 'CARREFOUR'],
+      [/^(MERCADO)?X$/, 'X'], [/AKKI/, 'AKKI'], [/MERCADAO/, 'MERCADAO'], [/CHAMA/, 'CHAMA'],
+      [/AYUMI/, 'AYUMI'], [/KACULA/, 'KACULA'], [/MEGASTOCK/, 'MEGASTOCK'],
+      [/SIMCO|SINCO|CINCO/, 'SINCO'], [/TENDA/, 'TENDA'], [/MINIPRECO/, 'MINIPRECO'],
+      [/PRABAR/, 'PRABAR'], [/HIGA/, 'HIGA'], [/CRESCER/, 'CRESCER'], [/G2/, 'G2'],
+      [/CATO/, 'CATO'], [/SAOVICENTE/, 'SAOVICENTE'], [/ALVORADA/, 'ALVORADA'],
+      [/PARANA/, 'PARANA'], [/DELTA/, 'DELTA'], [/COPEBE/, 'COPEBE'], [/PISTONI/, 'PISTONI']
+    ];
+    for (const [rx, chave] of regras) if (rx.test(c)) return chave;
+    return c;
+  }
+  
+  function formatarDataISO(valor) {
+    if (valor === null || valor === undefined || valor === '') return '';
+    if (valor instanceof Date) {
+      return `${valor.getFullYear()}-${String(valor.getMonth() + 1).padStart(2, '0')}-${String(valor.getDate()).padStart(2, '0')}`;
+    }
+    const s = String(valor).trim();
+    if (/^\d+(\.\d+)?$/.test(s) && Number(s) > 40000) {
+      const d = XLSX.SSF.parse_date_code(Math.floor(Number(s)));
+      return `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`;
+    }
+    let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+    return s;
+  }
+  
+  /* ── FECHAMENTO ── */
   function processarFechamento(workbook) {
-    if (!workbook.SheetNames.includes('sistematica')) throw new Error("Aba 'sistematica' não encontrada.");
-    const aba = workbook.Sheets['sistematica'];
-    const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
-    const fechamentoExtraido = [];
-
+    if (!workbook.SheetNames.includes('sistematica')) {
+      throw new Error("Aba 'sistematica' não encontrada. Verifique se é o arquivo de Fechamento correto.");
+    }
+    const linhas = XLSX.utils.sheet_to_json(workbook.Sheets['sistematica'], { header: 1, defval: '' });
+    const extraido = [];
     for (let i = 2; i < linhas.length; i++) {
-      const linha = linhas[i]; if (!linha) continue;
+      const linha = linhas[i];
+      if (!linha) continue;
       const rede = String(linha[2] || '').trim();
       if (!rede || normalizarTexto(rede) === 'TOTAL' || normalizarTexto(rede) === 'REDE') continue;
-
       const custoVisita = parseFloat(String(linha[3]).replace(',', '.')) || 0;
       const qtdLojas = parseInt(linha[4]) || 0;
       const visitasSemana = parseInt(linha[5]) || 0;
       const programadasMes = parseInt(linha[6]) || 0;
       const declaradasMes = parseInt(linha[7]) || 0;
-
       if (custoVisita > 0 || declaradasMes > 0) {
-        fechamentoExtraido.push({ rede: normalizarTexto(rede), redeOriginal: rede, custoVisita, qtdLojas, visitasSemana, programadasMes, declaradasMes });
+        extraido.push({
+          rede: chaveRede(rede), redeOriginal: rede, custoVisita, qtdLojas,
+          visitasSemana, programadasMes, declaradasMes
+        });
       }
     }
-    if (fechamentoExtraido.length === 0) throw new Error("Nenhum dado válido na aba 'sistematica'.");
-    return fechamentoExtraido;
+    if (extraido.length === 0) throw new Error("Nenhum dado de rede válido encontrado na aba 'sistematica'.");
+    return extraido;
   }
 
-  function processarPlano(workbook) {
+  // Escapa texto antes de colocar em HTML (nomes de loja/promotor vêm das planilhas e dos PDFs)
+  function esc(t) {
+    return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function lerArquivoComoWorkbook(file) {
+    return new Promise((resolve, reject) => {
+      const leitor = new FileReader();
+      leitor.onload = (ev) => {
+        try { resolve(XLSX.read(new Uint8Array(ev.target.result), { type: 'array' })); }
+        catch (err) { reject(err); }
+      };
+      leitor.onerror = () => reject(new Error('Falha ao ler o arquivo.'));
+      leitor.readAsArrayBuffer(file);
+    });
+  }
+
+  // ── UPLOAD DO EXCEL ──
+  function configurarUploadExcel() {
+    const input = document.getElementById('input-excel');
+    if (!input) return;
+
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const msg = document.getElementById('msg-excel');
+      msg.innerHTML = '<span style="color: #E67E22;">Processando arquivo...</span>';
+
+      const leitor = new FileReader();
+      leitor.onload = (evento) => {
+        try {
+          const dados = new Uint8Array(evento.target.result);
+          const workbook = XLSX.read(dados, { type: 'array' });
+
+          // Processa o fechamento
+          const fechamento = processarFechamento(workbook);
+          
+          // Salva no mês ativo
+          const mesDados = garantirMes(Estado.config.mesAtivo);
+          mesDados.fechamento = fechamento;
+          // Invalida auditoria anterior, pois os dados base mudaram
+          mesDados.auditoria = null;
+          salvarEstado();
+
+          msg.innerHTML = `<span style="color: #27AE60;">✅ Fechamento importado: ${fechamento.length} redes encontradas.</span>`;
+          renderizarAdmin(); // Atualiza a tela
+        } catch (erro) {
+          msg.innerHTML = `<span style="color: #E74C3C;">❌ ${erro.message}</span>`;
+        }
+      };
+      leitor.onerror = () => { msg.innerHTML = '<span style="color: #E74C3C;">❌ Falha ao ler o arquivo.</span>'; };
+      leitor.readAsArrayBuffer(file);
+    });
+  }
+</script>
+<!-- ═══ FIM SUBBLOCO 03 ═══ -->
+  <!-- ═══ SUBBLOCO 04 — PARSER PLANO E RELATÓRIO DE TEMPO (V2 ROBUSTO) ═══ -->
+<script>
+  /* ── PLANO DE VISITAS ── */
+  function processarPlano(workbook, nomeArquivo) {
     const lojasExtraidas = [];
-    const abasIgnorar = ['sistematica'];
-
     workbook.SheetNames.forEach(nomeAba => {
-      if (abasIgnorar.includes(nomeAba)) return;
-      const aba = workbook.Sheets[nomeAba]; if (!aba) return;
-      const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
+      if (nomeAba === 'sistematica') return;
+      const linhas = XLSX.utils.sheet_to_json(workbook.Sheets[nomeAba], { header: 1, defval: '' });
       if (linhas.length < 3) return;
-
-      let idxNomeLoja = -1, idxPromotor = -1, idxDia = -1, linhaCabecalho = -1;
-      for (let i = 0; i < Math.min(15, linhas.length); i++) {
+  
+      // Acha a linha de cabeçalho. Prefere a linha que tenha "Nome da Loja" E "Promotor" juntos
+      // (a aba ATACADÃO tem "Nome da Loja" duas vezes, em linhas diferentes).
+      let melhor = null;
+      for (let i = 0; i < Math.min(12, linhas.length); i++) {
         const linha = linhas[i] || [];
-        let aNome = -1, aProm = -1, aDia = -1;
+        const idx = { nomeLoja: -1, promotor: -1, diaVisita: -1 };
         for (let c = 0; c < linha.length; c++) {
           const cel = normalizarTexto(linha[c]);
-          if (aNome === -1 && cel === 'NOME DA LOJA') aNome = c;
-          if (aProm === -1 && (cel === 'PROMOTOR (A)' || cel === 'PROMOTOR' || cel === 'PROMOTOR(A)')) aProm = c;
-          if (aDia === -1 && (cel === 'DIA DE VISITA' || cel === 'DIA DE VISITAS')) aDia = c;
+          if (cel === 'NOME DA LOJA' && idx.nomeLoja === -1) idx.nomeLoja = c;
+          if ((cel === 'PROMOTOR (A)' || cel === 'PROMOTOR' || cel === 'PROMOTOR(A)') && idx.promotor === -1) idx.promotor = c;
+          if (cel === 'DIA DE VISITA' && idx.diaVisita === -1) idx.diaVisita = c;
         }
-        if (aNome !== -1) { idxNomeLoja = aNome; idxPromotor = aProm; idxDia = aDia; linhaCabecalho = i; break; }
+        if (idx.nomeLoja === -1) continue;
+        const pontos = (idx.promotor !== -1 ? 2 : 0) + (idx.diaVisita !== -1 ? 1 : 0);
+        if (!melhor || pontos > melhor.pontos) melhor = { idx, linha: i, pontos };
+        if (pontos === 3) break;
       }
-      if (idxNomeLoja === -1) return;
-      if (idxPromotor === -1) idxPromotor = idxNomeLoja + 1;
-      if (idxDia === -1) idxDia = idxPromotor + 1;
-
-      for (let i = linhaCabecalho + 1; i < linhas.length; i++) {
+      if (!melhor) { console.warn(`Aba ${nomeAba}: "Nome da Loja" não encontrado. Pulando.`); return; }
+  
+      const indices = melhor.idx;
+      if (indices.promotor === -1) indices.promotor = indices.nomeLoja + 1;
+      if (indices.diaVisita === -1) indices.diaVisita = indices.nomeLoja + 2;
+  
+      // Rede: nome da aba. Se a aba for genérica ("TUBAÍNA"), usa o nome do arquivo (CARREFOUR / NAGUMO).
+      let redeOriginal = String(nomeAba).trim();
+      let rede = chaveRede(redeOriginal);
+      if (rede === 'TUBAINA' || rede === '') {
+        const doArquivo = chaveRede(String(nomeArquivo || '').replace(/\.[^.]+$/, ''));
+        const daCelula = chaveRede(linhas[0] && linhas[0][0]);
+        const achada = [doArquivo, daCelula].find(r => r && !r.includes('TUBAINA'));
+        if (achada) { rede = achada; redeOriginal = achada; }
+      }
+  
+      for (let i = melhor.linha + 1; i < linhas.length; i++) {
         const linha = linhas[i] || [];
-        const nomeLoja = String(linha[idxNomeLoja] || '').trim();
+        const nomeLoja = String(linha[indices.nomeLoja] || '').trim();
         if (!nomeLoja || nomeLoja.length < 2) continue;
-        const nomeNorm = normalizarTexto(nomeLoja);
-        if (nomeNorm === 'NOME DA LOJA' || nomeNorm === 'TOTAL' || nomeNorm === 'TOTAL GERAL' || nomeNorm.startsWith('TOTAL ')) continue;
-        if (/^\d+$/.test(nomeLoja)) continue;
-
-        lojasExtraidas.push({ rede: normalizarTexto(nomeAba), nomeLoja: nomeLoja, promotor: String(linha[idxPromotor] || '').trim(), diaVisita: String(linha[idxDia] || '').trim() });
+        const nn = normalizarTexto(nomeLoja);
+        if (nn.includes('TOTAL') || nn.includes('NOME DA LOJA')) continue;
+        lojasExtraidas.push({
+          rede, redeOriginal, nomeLoja,
+          promotor: String(linha[indices.promotor] || '').trim(),
+          diaVisita: String(linha[indices.diaVisita] || '').trim()
+        });
       }
     });
-    if (lojasExtraidas.length === 0) throw new Error("Nenhuma loja encontrada (verifique se há coluna 'Nome da Loja').");
+    if (lojasExtraidas.length === 0) {
+      throw new Error("Nenhuma loja encontrada. As abas do Plano de Visitas devem conter a coluna 'Nome da Loja'.");
+    }
     return lojasExtraidas;
   }
-
+  
+  /* ── RELATÓRIO DE TEMPO ── */
   function processarRelatorioTempo(workbook) {
-    let abaEncontrada = null;
-    for (const nome of workbook.SheetNames) {
-      const aba = workbook.Sheets[nome]; if (!aba) continue;
-      const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
-      if (linhas.length < 2) continue;
-      for (let i = 0; i < Math.min(3, linhas.length); i++) {
-        const linha = (linhas[i] || []).map(c => normalizarTexto(c));
-        if (linha.some(c=>c==='REDE') && linha.some(c=>c==='LOJA') && linha.some(c=>c==='PROMOTOR') && linha.some(c=>c==='DIA')) {
-          const prox = linhas[i + 1] || [];
-          if (prox.length >= 4 && String(prox[0]).trim() && String(prox[1]).trim()) {
-            abaEncontrada = { linhas, linhaCabecalho: i }; break;
-          }
-        }
-      }
-      if (abaEncontrada) break;
+    const nomeAba = workbook.SheetNames.find(n => normalizarTexto(n).includes('RELATORIO DE TEMPO'));
+    if (!nomeAba) throw new Error("Aba de 'Relatório de tempo' não encontrada. Verifique se é o arquivo correto.");
+    const linhas = XLSX.utils.sheet_to_json(workbook.Sheets[nomeAba], { header: 1, defval: '' });
+    let linhaCab = -1;
+    for (let i = 0; i < Math.min(5, linhas.length); i++) {
+      const t = (linhas[i] || []).map(c => normalizarTexto(c)).join('|');
+      if (t.includes('REDE') && t.includes('LOJA') && t.includes('PROMOTOR') && t.includes('DIA')) { linhaCab = i; break; }
     }
-    if (!abaEncontrada) throw new Error("Aba de 'Relatório de tempo' não encontrada (Rede | Loja | Promotor | Dia).");
-
-    const { linhas, linhaCabecalho } = abaEncontrada;
+    if (linhaCab === -1) throw new Error("Cabeçalho não encontrado na aba de Relatório de Tempo.");
     const visitas = [];
-    for (let i = linhaCabecalho + 1; i < linhas.length; i++) {
-      const linha = linhas[i] || [];
-      const rede = String(linha[0] || '').trim(), loja = String(linha[1] || '').trim(), promotor = String(linha[2] || '').trim(), dia = String(linha[3] || '').trim();
-      if (!rede || !loja || !promotor || !dia) continue;
-      if (normalizarTexto(rede) === 'TOTAL' || normalizarTexto(loja) === 'TOTAL') continue;
-
-      let dataF = dia;
-      if (!isNaN(dia) && Number(dia) > 40000) {
-        try { const d = XLSX.SSF.parse_date_code(Number(dia)); dataF = `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`; } catch(e) {}
+    for (let i = linhaCab + 1; i < linhas.length; i++) {
+      const l = linhas[i] || [];
+      const redeOriginal = String(l[0] || '').trim();
+      const loja = String(l[1] || '').trim();
+      const promotor = String(l[2] || '').trim();
+      const data = formatarDataISO(l[3]);
+      if (redeOriginal && loja && promotor && data) {
+        visitas.push({ rede: chaveRede(redeOriginal), redeOriginal, loja, promotor, data });
       }
-      if (dataF.includes(' ')) dataF = dataF.split(' ')[0];
-      const mBR = dataF.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-      if (mBR) dataF = `${mBR[3]}-${mBR[2]}-${mBR[1]}`;
-      visitas.push({ rede: normalizarTexto(rede), loja, promotor, data: dataF });
     }
-    if (visitas.length === 0) throw new Error("Nenhuma visita válida.");
+    if (visitas.length === 0) throw new Error("Nenhuma visita encontrada no Relatório de Tempo.");
     return visitas;
   }
 
-  // ── RENDERIZAR ADMIN ──
+  // ── UPLOAD DO PLANO DE VISITAS (aceita vários arquivos: TUBAÍNA, CARREFOUR, NAGUMO...) ──
+  function configurarUploadPlano() {
+    const input = document.getElementById('input-plano');
+    if (!input) return;
+
+    input.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+
+      const msg = document.getElementById('msg-plano');
+      msg.innerHTML = '<span style="color: #E67E22;">Processando Plano...</span>';
+
+      const mesDados = garantirMes(Estado.config.mesAtivo);
+      let lojasAtuais = mesDados.lojas || [];
+      const erros = [];
+      let importadas = 0;
+
+      for (const file of files) {
+        try {
+          const workbook = await lerArquivoComoWorkbook(file);
+          const novas = processarPlano(workbook, file.name);
+          // Substitui só as redes que vieram neste arquivo; as demais ficam como estavam
+          const redesNovas = new Set(novas.map(l => l.rede));
+          lojasAtuais = lojasAtuais.filter(l => !redesNovas.has(l.rede)).concat(novas);
+          importadas += novas.length;
+        } catch (erro) {
+          erros.push(`${esc(file.name)}: ${esc(erro.message)}`);
+        }
+      }
+
+      mesDados.lojas = lojasAtuais;
+      mesDados.auditoria = null;
+      salvarEstado();
+
+      const redesUnicas = [...new Set(lojasAtuais.map(l => l.rede))];
+      let html = importadas > 0
+        ? `<span style="color: #27AE60;">✅ Plano importado: ${importadas} lojas lidas. Total no mês: ${lojasAtuais.length} lojas em ${redesUnicas.length} redes.</span>`
+        : '';
+      if (erros.length) html += `<br><span style="color: #E74C3C;">❌ ${erros.join('<br>❌ ')}</span>`;
+      msg.innerHTML = html;
+      renderizarAdmin();
+      document.getElementById('msg-plano').innerHTML = html;
+    });
+  }
+
+  // ── UPLOAD DO RELATÓRIO DE TEMPO ──
+  function configurarUploadTempo() {
+    const input = document.getElementById('input-tempo');
+    if (!input) return;
+
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const msg = document.getElementById('msg-tempo');
+      msg.innerHTML = '<span style="color: #E67E22;">Processando Relatório...</span>';
+
+      const leitor = new FileReader();
+      leitor.onload = (evento) => {
+        try {
+          const dados = new Uint8Array(evento.target.result);
+          const workbook = XLSX.read(dados, { type: 'array' });
+          const visitas = processarRelatorioTempo(workbook);
+          
+          const mesDados = garantirMes(Estado.config.mesAtivo);
+          mesDados.relatorioTempo = visitas;
+          mesDados.auditoria = null;
+          salvarEstado();
+
+          const diasUnicos = [...new Set(visitas.map(v => v.data))].sort();
+          const primeiroDia = diasUnicos[0] || '?';
+          const ultimoDia = diasUnicos[diasUnicos.length - 1] || '?';
+          msg.innerHTML = `<span style="color: #27AE60;">✅ Tempo importado: ${visitas.length} visitas (${primeiroDia} a ${ultimoDia}).</span>`;
+          renderizarAdmin();
+        } catch (erro) {
+          msg.innerHTML = `<span style="color: #E74C3C;">❌ ${erro.message}</span>`;
+        }
+      };
+      leitor.readAsArrayBuffer(file);
+    });
+  }
+</script>
+<!-- ═══ FIM SUBBLOCO 04 ═══ -->
+  <!-- ═══ SUBBLOCO 05 — PARSER DE PDFs (FOTOS + HASH) ═══ -->
+<script>
+  // ── FUNÇÕES AUXILIARES DE IMAGEM ──
+
+  // Hash SHA-256 dos pixels originais da foto (não da versão reduzida), para achar imagens idênticas.
+  async function gerarHash(bytes) {
+    if (window.crypto && crypto.subtle) {
+      const buf = await crypto.subtle.digest('SHA-256', bytes);
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    // Reserva para contexto sem HTTPS (GitHub Pages é HTTPS, então normalmente não entra aqui)
+    let h1 = 0x811c9dc5, h2 = 0x9e3779b1;
+    for (let i = 0; i < bytes.length; i++) {
+      h1 = Math.imul(h1 ^ bytes[i], 16777619);
+      h2 = Math.imul(h2 + bytes[i], 2246822519);
+    }
+    return 'f' + (h1 >>> 0).toString(16) + (h2 >>> 0).toString(16) + '-' + bytes.length;
+  }
+
+  // Prepara a foto: desenha em canvas (o pdf.js entrega ImageBitmap no navegador, ou pixels crus em outros casos),
+  // calcula o hash dos pixels originais e gera um JPEG reduzido (lado maior 560 px) para o IndexedDB.
+  async function prepararImagem(img) {
+    const w = img.width, h = img.height;
+    const origem = document.createElement('canvas');
+    origem.width = w; origem.height = h;
+    const ctx = origem.getContext('2d', { willReadFrequently: true });
+
+    if (img.bitmap) {
+      ctx.drawImage(img.bitmap, 0, 0);
+      if (img.bitmap.close) img.bitmap.close();
+    } else if (img.data) {
+      const n = w * h, d = img.data;
+      const imageData = ctx.createImageData(w, h);
+      const out = imageData.data;
+      if (d.length === n * 4) {
+        out.set(d);
+      } else if (d.length === n * 3) {
+        for (let i = 0, j = 0; i < d.length; i += 3, j += 4) {
+          out[j] = d[i]; out[j + 1] = d[i + 1]; out[j + 2] = d[i + 2]; out[j + 3] = 255;
+        }
+      } else if (d.length === n) {
+        for (let i = 0, j = 0; i < d.length; i++, j += 4) {
+          out[j] = d[i]; out[j + 1] = d[i]; out[j + 2] = d[i]; out[j + 3] = 255;
+        }
+      } else {
+        return null; // formato não suportado (ex.: 1 bit por pixel)
+      }
+      ctx.putImageData(imageData, 0, 0);
+    } else {
+      return null;
+    }
+
+    const hash = await gerarHash(ctx.getImageData(0, 0, w, h).data);
+
+    const escala = Math.min(1, 560 / Math.max(w, h));
+    let alvo = origem;
+    if (escala < 1) {
+      alvo = document.createElement('canvas');
+      alvo.width = Math.max(1, Math.round(w * escala));
+      alvo.height = Math.max(1, Math.round(h * escala));
+      alvo.getContext('2d').drawImage(origem, 0, 0, alvo.width, alvo.height);
+    }
+    const url = alvo.toDataURL('image/jpeg', 0.6);
+    origem.width = origem.height = 0;
+    if (alvo !== origem) alvo.width = alvo.height = 0;
+    return { url, hash };
+  }
+
+  // Foto principal da página = maior imagem (a página também tem barra e logo pequenos).
+  // Imagens repetidas entre páginas ficam em commonObjs (nome "g_..."), por isso olhamos nos dois lugares.
+  async function extrairImagemPrincipal(pagina) {
+    const ops = await pagina.getOperatorList();
+    let melhor = null;
+    for (let j = 0; j < ops.fnArray.length; j++) {
+      if (ops.fnArray[j] !== pdfjsLib.OPS.paintImageXObject) continue;
+      const nome = ops.argsArray[j][0];
+      const lugares = String(nome).startsWith('g_') ? [pagina.commonObjs, pagina.objs] : [pagina.objs, pagina.commonObjs];
+      for (const lugar of lugares) {
+        try {
+          if (!lugar.has(nome)) continue;
+          const im = lugar.get(nome);
+          if (im && im.width > 150 && im.height > 150 && (!melhor || im.width * im.height > melhor.width * melhor.height)) melhor = im;
+          break;
+        } catch (e) { /* tenta o outro lugar */ }
+      }
+    }
+    return melhor;
+  }
+
+  /* ── PDF: METADADOS DA PÁGINA ──
+     O PDF (export do PowerPoint) vem com o texto quebrado em pedaços e, no rodapé da foto, com letras
+     espaçadas ("1 9 / 1 0 / 2 0 2 6 - 0 9 : 4 3 • F o t o : ..."). Por isso lemos item a item e
+     comparamos sempre por chave compacta (sem espaços). */
+  function extrairMetadadosPagina(itens) {
+    const strs = itens.map(i => i.str);
+    const ne = strs.map(s => s.trim()).filter(s => s.length);
+    const semEsp = s => s.replace(/\s+/g, '');
+  
+    let dataHora = null, redeTexto = null, lojaTexto = null, promotorRodape = null, tipoFoto = null;
+  
+    const iFoto = ne.findIndex(s => /F\s*O\s*T\s*O\s*:/i.test(s));
+    if (iFoto >= 0) {
+      const bloco = semEsp(ne.slice(Math.max(0, iFoto - 4), iFoto + 1).join(''));
+      const m = bloco.match(/(\d{2})\/(\d{2})\/(\d{4})-?(\d{2}):(\d{2})/);
+      if (m) dataHora = `${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}`;
+      const t = semEsp(ne[iFoto]).toUpperCase();
+      tipoFoto = t.includes('DEPOIS') ? 'depois' : (t.includes('ANTES') ? 'antes' : null);
+      // Rodapé: [rede, ...pedaços da loja..., promotor]. A loja pode vir quebrada (ex.: "0 2" "-" "G U A R U J A").
+      const resto = ne.slice(iFoto + 1);
+      if (resto.length >= 2) {
+        redeTexto = resto[0].replace(/\s+/g, ' ');
+        promotorRodape = resto[resto.length - 1].replace(/\s+/g, ' ');
+        if (resto.length >= 3) lojaTexto = resto.slice(1, -1).join(' ').replace(/\s+/g, ' ');
+      }
+    }
+  
+    // Cabeçalho (texto "normal"): serve de reserva para data/hora e para recuperar o nome do promotor com espaços.
+    const iFotoBruto = strs.findIndex(x => /F\s*O\s*T\s*O\s*:/i.test(x));
+    const corpo = (iFotoBruto >= 0 ? strs.slice(0, Math.max(0, iFotoBruto - 4)) : strs).join('');
+    if (!dataHora) {
+      const m = corpo.match(/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})/);
+      if (m) dataHora = `${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}`;
+    }
+  
+    let promotor = promotorRodape ? semEsp(promotorRodape) : null;
+    const promotorKey = promotorRodape ? chaveCompacta(promotorRodape) : null;
+    if (promotorKey) {
+      // procura no cabeçalho o trecho cujo texto compacto é igual ao do rodapé (traz o nome com espaços)
+      for (let s = 0; s < corpo.length && promotor === semEsp(promotorRodape); s++) {
+        if (!/[A-Za-zÀ-ÿ]/.test(corpo[s]) || (s > 0 && /[A-Za-zÀ-ÿ]/.test(corpo[s - 1]))) continue;
+        let acum = '';
+        for (let e = s; e < corpo.length && acum.length <= promotorKey.length; e++) {
+          acum = chaveCompacta(corpo.slice(s, e + 1));
+          if (acum === promotorKey) { promotor = corpo.slice(s, e + 1).replace(/\s+/g, ' ').trim(); break; }
+          if (!promotorKey.startsWith(acum)) break;
+        }
+      }
+    }
+  
+    return { dataHora, promotor, promotorKey, redeTexto, lojaTexto, tipoFoto, temRodape: iFoto >= 0 };
+  }
+  
+  function extrairPeriodoCapa(itens) {
+    const t = itens.map(i => i.str).join('').replace(/\s+/g, '');
+    const m = t.match(/(\d{2})\/(\d{2})\/(\d{4})at[ée]?(\d{2})\/(\d{2})\/(\d{4})/i);
+    if (!m) return null;
+    return { inicio: `${m[3]}-${m[2]}-${m[1]}`, fim: `${m[6]}-${m[5]}-${m[4]}` };
+  }
+
+  // ── PROCESSADOR PRINCIPAL DO PDF ──
+  async function processarPDF(arquivo, callbackProgresso) {
+    const arrayBuffer = await arquivo.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const totalPaginas = pdf.numPages;
+    const fotosExtraidas = [];
+    let periodo = null, ignoradas = 0;
+
+    for (let i = 1; i <= totalPaginas; i++) {
+      if (callbackProgresso) callbackProgresso(i, totalPaginas);
+
+      const pagina = await pdf.getPage(i);
+      const texto = await pagina.getTextContent();
+      if (i === 1 && !periodo) periodo = extrairPeriodoCapa(texto.items); // capa: "Período: dd/mm/aaaa até dd/mm/aaaa"
+
+      const meta = extrairMetadadosPagina(texto.items);
+      if (!meta.temRodape) { ignoradas++; pagina.cleanup(); continue; } // capa/páginas sem foto com selo
+
+      const id = Date.now() + '-' + i + '-' + Math.random().toString(36).slice(2, 7);
+      let hash = null, temImagem = false;
+      try {
+        const img = await extrairImagemPrincipal(pagina);
+        const prep = img ? await prepararImagem(img) : null;
+        if (prep) {
+          hash = prep.hash;
+          await BancoImagens.salvar(id, prep.url);
+          temImagem = true;
+        }
+      } catch (e) {
+        // Uma imagem com problema não derruba o PDF: a foto entra sem imagem (fica registrada no log)
+        console.warn(`Pág. ${i} de ${arquivo.name}: falha ao ler a imagem`, e);
+      }
+
+      fotosExtraidas.push({
+        id, pagina: i, arquivoOrigem: arquivo.name,
+        dataHora: meta.dataHora, promotor: meta.promotor, promotorKey: meta.promotorKey,
+        redeTexto: meta.redeTexto, lojaTexto: meta.lojaTexto, tipoFoto: meta.tipoFoto,
+        temImagem, hash, status: 'pendente', motivoGap: null, revisaoManual: false
+      });
+      pagina.cleanup();
+    }
+
+    if (pdf.destroy) pdf.destroy();
+    return { fotos: fotosExtraidas, periodo, ignoradas };
+  }
+
+  // ── UPLOAD DOS PDFs (MÚLTIPLOS) ──
+  function configurarUploadPDF() {
+    const input = document.getElementById('input-pdf');
+    if (!input) return;
+
+    input.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+
+      const msg = document.getElementById('msg-pdf');
+      const prog = document.getElementById('progresso-pdf');
+      const barra = document.getElementById('barra-pdf');
+      const txt = document.getElementById('texto-pdf');
+
+      prog.style.display = 'block';
+      msg.innerHTML = 'Iniciando processamento...';
+
+      const mesDados = garantirMes(Estado.config.mesAtivo);
+      const resumo = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        txt.textContent = `Arquivo ${i + 1} de ${files.length}: Lendo ${file.name}...`;
+
+        try {
+          const r = await processarPDF(file, (atual, total) => {
+            const pct = Math.floor((atual / total) * 100);
+            barra.style.width = pct + '%';
+            txt.textContent = `Arquivo ${i + 1}/${files.length} - Página ${atual} de ${total} (${pct}%)`;
+          });
+
+          // Reimportar o mesmo arquivo substitui as fotos dele (não duplica)
+          const antigas = (mesDados.fotos || []).filter(f => f.arquivoOrigem === file.name);
+          mesDados.fotos = (mesDados.fotos || []).filter(f => f.arquivoOrigem !== file.name).concat(r.fotos);
+          await BancoImagens.apagar(antigas.map(f => f.id));
+
+          mesDados.periodosPDF = (mesDados.periodosPDF || []).filter(p => p.arquivo !== file.name);
+          if (r.periodo) mesDados.periodosPDF.push({ arquivo: file.name, ...r.periodo });
+
+          mesDados.auditoria = null;
+          salvarEstado(); // salva a cada arquivo
+
+          resumo.push(`<span style="color:#27AE60;">✅ ${esc(file.name.slice(0, 40))}: ${r.fotos.length} fotos</span>`);
+        } catch (erro) {
+          resumo.push(`<span style="color: #E74C3C;">❌ Erro em ${esc(file.name)}: ${esc(erro.message)}</span>`);
+        }
+      }
+
+      prog.style.display = 'none';
+      barra.style.width = '0%';
+      renderizarAdmin();
+      document.getElementById('msg-pdf').innerHTML = resumo.join('<br>') + `<br><span style="color: #27AE60;">Total de ${mesDados.fotos.length} fotos no sistema.</span>`;
+    });
+  }
+</script>
+<!-- ═══ FIM SUBBLOCO 05 ═══ -->
+  <!-- ═══ SUBBLOCO 06 — MOTOR DE AUDITORIA (V2) ═══ -->
+<script>
+  /* ── MOTOR DE AUDITORIA (puro: recebe mesDados, devolve o objeto auditoria; ajusta o status das fotos) ── */
+  function lojaCombina(textoFoto, lojaRelatorio) {
+    const a = chaveCompacta(textoFoto), b = chaveCompacta(lojaRelatorio);
+    if (!a || !b) return false;
+    if (a === b) return true;
+    return Math.min(a.length, b.length) >= 5 && (a.includes(b) || b.includes(a));
+  }
+  
+  function calcularAuditoria(mesDados, config) {
+    const janela = (config && config.janelaSuspeitaMin) || 30;
+    const fotos = mesDados.fotos, relatorio = mesDados.relatorioTempo;
+    const pk = f => f.promotorKey || chaveCompacta(f.promotor);
+    const diaDe = f => f.dataHora.split('T')[0];
+  
+    // Índice do relatório: promotor|dia -> lojas únicas visitadas
+    const indice = {};
+    relatorio.forEach(v => {
+      const k = chaveCompacta(v.promotor) + '|' + v.data;
+      if (!indice[k]) indice[k] = {};
+      const kl = v.rede + '|' + chaveCompacta(v.loja);
+      if (!indice[k][kl]) indice[k][kl] = v;
+    });
+  
+    // 1. Reset (preserva decisões manuais da tela de Revisão)
+    fotos.forEach(f => {
+      if (f.revisaoManual) return;
+      f.status = 'pendente'; f.motivoGap = null; f.lojaAuditada = null; f.redeAuditada = null; f.candidatas = null;
+    });
+  
+    // 2. Duplicatas por hash
+    const hashes = new Set();
+    fotos.forEach(f => {
+      if (!f.hash) return;
+      if (f.revisaoManual) { hashes.add(f.hash); return; }
+      if (hashes.has(f.hash)) { f.status = 'duplicata'; f.motivoGap = 'Imagem idêntica a outra já processada.'; }
+      else hashes.add(f.hash);
+    });
+  
+    // 3. Cruzamento com o Relatório de Tempo
+    fotos.forEach(f => {
+      if (f.revisaoManual || f.status === 'duplicata') return;
+      if (!f.dataHora || !pk(f)) {
+        f.status = 'sem_par'; f.motivoGap = 'Metadados (Data/Promotor) não encontrados no PDF.'; return;
+      }
+      let cands = Object.values(indice[pk(f) + '|' + diaDe(f)] || {});
+      if (cands.length === 0) {
+        f.status = 'sem_par'; f.motivoGap = 'Nenhuma visita deste promotor neste dia no Relatório de Tempo.'; return;
+      }
+      f.candidatas = cands.map(c => ({ loja: c.loja, rede: c.rede, redeOriginal: c.redeOriginal, promotor: c.promotor }));
+      if (f.redeTexto) {
+        const rk = chaveRede(f.redeTexto);
+        const mesmaRede = cands.filter(c => c.rede === rk);
+        if (mesmaRede.length) cands = mesmaRede;
+      }
+      const escolher = c => {
+        f.status = 'comprovada'; f.lojaAuditada = c.loja; f.redeAuditada = c.rede; f.promotorNome = c.promotor;
+      };
+      if (f.lojaTexto) {
+        // Prefere nome idêntico; só usa "um contém o outro" se não houver idêntico
+        const alvo = chaveCompacta(f.lojaTexto);
+        let iguais = cands.filter(c => chaveCompacta(c.loja) === alvo);
+        if (iguais.length === 0) iguais = cands.filter(c => lojaCombina(f.lojaTexto, c.loja));
+        if (iguais.length === 1) { escolher(iguais[0]); return; }
+        f.status = 'revisao';
+        f.motivoGap = iguais.length > 1
+          ? 'Foto compatível com mais de uma loja do dia. Escolha a loja.'
+          : `Loja do selo da foto (${f.lojaTexto.replace(/\s+/g, ' ')}) não confere com as lojas do Relatório de Tempo neste dia. Escolha a loja.`;
+        return;
+      }
+      if (cands.length === 1) { escolher(cands[0]); return; }
+      f.status = 'revisao';
+      f.motivoGap = `Promotor visitou ${cands.length} lojas neste dia e a foto não identifica a loja. Escolha a loja.`;
+    });
+  
+    // 4. Suspeita: mesmo promotor, lojas diferentes, intervalo menor que a janela
+    const grupos = {};
+    fotos.forEach(f => {
+      if (f.revisaoManual || f.status !== 'comprovada') return;
+      const k = pk(f) + '_' + diaDe(f);
+      (grupos[k] = grupos[k] || []).push(f);
+    });
+    Object.values(grupos).forEach(g => {
+      if (g.length < 2) return;
+      g.sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
+      for (let i = 0; i < g.length - 1; i++) {
+        const a = g[i], b = g[i + 1];
+        if (a.lojaAuditada === b.lojaAuditada && a.redeAuditada === b.redeAuditada) continue;
+        const dif = (new Date(b.dataHora) - new Date(a.dataHora)) / 60000;
+        if (dif >= 0 && dif < janela) {
+          const msg = `Tempo curto (${Math.round(dif)} min) para trocar de loja.`;
+          a.status = 'suspeita'; a.motivoGap = msg; b.status = 'suspeita'; b.motivoGap = msg;
+        }
+      }
+    });
+  
+    // 5. Agrupamento final (promotor + dia + loja)
+    const visitas = {};
+    fotos.forEach(f => {
+      if (!f.lojaAuditada || !f.dataHora) return;
+      const k = pk(f) + '_' + diaDe(f) + '_' + f.redeAuditada + '_' + chaveCompacta(f.lojaAuditada);
+      if (!visitas[k]) {
+        visitas[k] = { promotor: f.promotorNome || f.promotor, data: diaDe(f), loja: f.lojaAuditada,
+                       rede: f.redeAuditada || 'DESCONHECIDA', fotos: [], qtdFotos: 0, statusFinal: 'pendente' };
+      }
+      visitas[k].fotos.push(f.id);
+      visitas[k].qtdFotos++;
+      visitas[k]._st = (visitas[k]._st || []).concat(f.status);
+    });
+    Object.values(visitas).forEach(v => {
+      // Regra: >=1 foto comprovada => visita comprovada; senão suspeita/revisão pendentes
+      if (v._st.includes('comprovada')) v.statusFinal = 'comprovada';
+      else if (v._st.includes('suspeita')) v.statusFinal = 'suspeita';
+      else if (v._st.includes('revisao')) v.statusFinal = 'revisao';
+      else v.statusFinal = 'nao_comprovada';
+      delete v._st;
+    });
+  
+    // 6. Visitas do Relatório de Tempo, dentro do período coberto pelos PDFs, que ficaram sem nenhuma foto
+    let periodos = (mesDados.periodosPDF || []).filter(p => p && p.inicio && p.fim);
+    const datasFotos = fotos.filter(f => f.dataHora).map(diaDe).sort();
+    if (periodos.length === 0 && datasFotos.length) periodos = [{ inicio: datasFotos[0], fim: datasFotos[datasFotos.length - 1] }];
+    const coberto = d => periodos.some(p => d >= p.inicio && d <= p.fim);
+    const jaTem = new Set(Object.keys(visitas));
+    const semFoto = {};
+    relatorio.forEach(v => {
+      if (!coberto(v.data)) return;
+      const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja);
+      if (jaTem.has(k) || semFoto[k]) return;
+      semFoto[k] = { promotor: v.promotor, data: v.data, loja: v.loja, rede: v.rede, fotos: [], qtdFotos: 0, statusFinal: 'sem_foto' };
+    });
+  
+    // 7. Financeiro por rede (várias linhas do fechamento da mesma rede são somadas)
+    const porRede = {};
+    mesDados.fechamento.forEach(f => {
+      const r = porRede[f.rede] || (porRede[f.rede] = {
+        chave: f.rede, rede: String(f.redeOriginal).trim(), custoVisita: 0, declaradas: 0, programadas: 0,
+        comprovadas: 0, gap: 0, valorCobrado: 0, desconto: 0, valorAuditado: 0, semFoto: 0
+      });
+      r.declaradas += f.declaradasMes;
+      r.programadas += f.programadasMes || 0;
+      r.valorCobrado += f.declaradasMes * f.custoVisita;
+      if (!r.custoVisita) r.custoVisita = f.custoVisita;
+    });
+    Object.values(porRede).forEach(r => {
+      if (r.declaradas > 0) r.custoVisita = r.valorCobrado / r.declaradas; // custo médio ponderado
+    });
+  
+    const redesNaoMapeadas = {};
+    Object.values(visitas).forEach(v => {
+      if (v.statusFinal !== 'comprovada') return;
+      if (porRede[v.rede]) porRede[v.rede].comprovadas++;
+      else redesNaoMapeadas[v.rede] = (redesNaoMapeadas[v.rede] || 0) + 1;
+    });
+    Object.values(semFoto).forEach(v => { if (porRede[v.rede]) porRede[v.rede].semFoto++; });
+    Object.values(porRede).forEach(r => {
+      r.gap = r.declaradas - r.comprovadas;
+      r.desconto = r.gap * r.custoVisita;
+      r.valorAuditado = r.comprovadas * r.custoVisita;
+    });
+  
+    const soma = campo => Object.values(porRede).reduce((a, r) => a + (r[campo] || 0), 0);
+    const todas = Object.values(visitas);
+    return {
+      porRede,
+      visitasAgrupadas: todas.concat(Object.values(semFoto)),
+      redesNaoMapeadas,
+      periodos,
+      total: {
+        comprovadas: soma('comprovadas'), gap: soma('gap'), desconto: soma('desconto'),
+        valorAuditado: soma('valorAuditado'), valorCobrado: soma('valorCobrado'),
+        totalDeclaradas: soma('declaradas'), totalProgramadas: soma('programadas'),
+        visitasPendentes: todas.filter(v => v.statusFinal === 'suspeita' || v.statusFinal === 'revisao').length,
+        fotosPendentes: fotos.filter(f => f.status === 'suspeita' || f.status === 'revisao').length
+      },
+      dataProcessamento: new Date().toISOString()
+    };
+  }
+
+  function validarDadosAuditoria(mesDados) {
+    if (!mesDados || !mesDados.fotos || mesDados.fotos.length === 0) return "Não há fotos importadas para este mês.";
+    if (!mesDados.relatorioTempo || mesDados.relatorioTempo.length === 0) return "Importe o Relatório de Tempo primeiro.";
+    if (!mesDados.fechamento || mesDados.fechamento.length === 0) return "Importe o Fechamento primeiro.";
+    return null;
+  }
+
+  function executarAuditoria() {
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+    const erro = validarDadosAuditoria(mesDados);
+    if (erro) { alert(erro); return; }
+
+    mesDados.auditoria = calcularAuditoria(mesDados, Estado.config);
+    salvarEstado();
+
+    const pend = mesDados.auditoria.total.fotosPendentes;
+    alert("✅ Auditoria concluída!" + (pend > 0 ? `\n\n${pend} foto(s) aguardam revisão manual (aba Revisão).` : ''));
+    document.querySelector('nav button[data-tela="dashboard"]').click();
+  }
+
+  // Recalcula sem alerta e sem trocar de tela (usado pela tela de Revisão)
+  function executarAuditoriaSilencioso() {
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+    if (validarDadosAuditoria(mesDados)) return;
+    mesDados.auditoria = calcularAuditoria(mesDados, Estado.config);
+    salvarEstado();
+  }
+</script>
+<!-- ═══ FIM SUBBLOCO 06 ═══ -->
+  <!-- ═══ SUBBLOCO 07 — ADMIN COMPLETO + DASHBOARD ═══ -->
+<script>
+  // ── FUNÇÕES AUXILIARES ──
+  function formatarMoeda(valor) {
+    return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  function formatarPorcentagem(valor) {
+    return Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+  }
+
+  function formatarDataBR(iso) {
+    const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso || '?');
+  }
+
+  // Aviso de cobertura: o fechamento é MENSAL; as fotos cobrem só os PDFs importados.
+  function htmlAvisoCobertura(aud) {
+    if (!aud) return '';
+    const per = (aud.periodos || []).map(p => `${formatarDataBR(p.inicio)} a ${formatarDataBR(p.fim)}`).join(' | ') || 'não identificado';
+    let extra = '';
+    if (aud.total && aud.total.fotosPendentes > 0) {
+      extra += `<p style="font-size: 12px; margin-top: 6px; color: #C0392B;">⚠️ ${aud.total.fotosPendentes} foto(s) aguardando revisão (aba Revisão). Ao decidir, as comprovadas podem subir.</p>`;
+    }
+    const naoMap = Object.entries(aud.redesNaoMapeadas || {});
+    if (naoMap.length) {
+      extra += `<p style="font-size: 12px; margin-top: 6px; color: #C0392B;">⚠️ Visitas comprovadas de rede(s) que não existem no Fechamento (ficaram fora dos totais): ${naoMap.map(([r, q]) => esc(r) + ' (' + q + ')').join(', ')}.</p>`;
+    }
+    return `<div class="card" style="border-left-color: #F39C12; padding: 15px;">
+      <p style="font-size: 12px; line-height: 1.4;"><strong>Cobertura das fotos:</strong> ${esc(per)}. O Fechamento é mensal: enquanto faltarem PDFs (ou partes do book) do mês, as comprovadas ficam abaixo do real e o gap/desconto ficam superestimados.</p>
+      ${extra}
+    </div>`;
+  }
+
+  // ── RENDERIZAR TELA ADMIN (V2 COMPLETA) ──
   function renderizarAdmin() {
     const container = document.getElementById('tela-admin');
     const mesDados = Estado.meses[Estado.config.mesAtivo] || {};
+    
     const temFechamento = mesDados.fechamento && mesDados.fechamento.length > 0;
     const temLojas = mesDados.lojas && mesDados.lojas.length > 0;
     const temTempo = mesDados.relatorioTempo && mesDados.relatorioTempo.length > 0;
     const temFotos = mesDados.fotos && mesDados.fotos.length > 0;
     const temAuditoria = mesDados.auditoria !== null && mesDados.auditoria !== undefined;
+
     const podeAuditar = temFechamento && temLojas && temTempo && temFotos;
 
-    let resumoFechamento = temFechamento ? `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;"><p style="font-size: 13px;"><strong>${mesDados.fechamento.length} redes</strong> | <strong>${mesDados.fechamento.reduce((acc, r) => acc + r.declaradasMes, 0)} visitas declaradas</strong>.</p></div>` : '';
-    let resumoLojas = temLojas ? `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;"><p style="font-size: 13px;"><strong>${mesDados.lojas.length} lojas</strong> em <strong>${[...new Set(mesDados.lojas.map(l => l.rede))].length} redes</strong>.</p></div>` : '';
-    let resumoTempo = temTempo ? `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;"><p style="font-size: 13px;"><strong>${mesDados.relatorioTempo.length} visitas</strong> registradas.</p></div>` : '';
-    let resumoFotos = temFotos ? `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;"><p style="font-size: 13px;"><strong>${mesDados.fotos.length} fotos</strong> extraídas.</p></div>` : '';
+    // Resumos
+    let resumoFechamento = '';
+    if (temFechamento) {
+      const totalDeclaradas = mesDados.fechamento.reduce((acc, r) => acc + r.declaradasMes, 0);
+      resumoFechamento = `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;">
+        <p style="font-size: 13px;"><strong>${mesDados.fechamento.length} redes</strong> | <strong>${totalDeclaradas} visitas declaradas</strong>.</p>
+      </div>`;
+    }
+
+    let resumoLojas = '';
+    if (temLojas) {
+      const redesUnicas = [...new Set(mesDados.lojas.map(l => l.rede))].length;
+      resumoLojas = `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;">
+        <p style="font-size: 13px;"><strong>${mesDados.lojas.length} lojas</strong> em <strong>${redesUnicas} redes</strong>.</p>
+      </div>`;
+    }
+
+    let resumoTempo = '';
+    if (temTempo) {
+      const diasUnicos = [...new Set(mesDados.relatorioTempo.map(v => v.data))].sort();
+      resumoTempo = `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;">
+        <p style="font-size: 13px;"><strong>${mesDados.relatorioTempo.length} visitas</strong> registradas (${diasUnicos[0] || '?'} a ${diasUnicos[diasUnicos.length - 1] || '?'}).</p>
+      </div>`;
+    }
+
+    let resumoFotos = '';
+    if (temFotos) {
+      resumoFotos = `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;">
+        <p style="font-size: 13px;"><strong>${mesDados.fotos.length} fotos</strong> extraídas dos PDFs${(mesDados.periodosPDF || []).length ? ' (períodos: ' + mesDados.periodosPDF.map(p => formatarDataBR(p.inicio) + ' a ' + formatarDataBR(p.fim)).join(' | ') + ')' : ''}.</p>
+      </div>`;
+    }
 
     container.innerHTML = `
       <div class="card">
-        <h2>1. Importar Fechamento</h2>
+        <h2>1. Importar Fechamento (Excel)</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Planilha de Fechamento PACTO (aba <em>sistematica</em>).</p>
         <input type="file" id="input-excel" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
-        <div id="msg-excel" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoFechamento}
+        <div id="msg-excel" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
+        ${resumoFechamento}
       </div>
+      
       <div class="card">
-        <h2>2. Importar Plano de Visitas (Pode selecionar vários)</h2>
+        <h2>2. Importar Plano de Visitas (Excel)</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Planilhas com as abas de cada rede. Pode selecionar vários arquivos de uma vez (TUBAÍNA, CARREFOUR, NAGUMO...).</p>
         <input type="file" id="input-plano" accept=".xlsx, .xls" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
-        <div id="msg-plano" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoLojas}
+        <div id="msg-plano" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
+        ${resumoLojas}
       </div>
+
       <div class="card">
-        <h2>3. Importar Relatório de Tempo</h2>
+        <h2>3. Importar Relatório de Tempo (Excel)</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Arquivo "Visitas - Outubro...".</p>
         <input type="file" id="input-tempo" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
-        <div id="msg-tempo" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoTempo}
+        <div id="msg-tempo" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
+        ${resumoTempo}
       </div>
+
       <div class="card">
         <h2>4. Importar PDFs (Fotos)</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Books de prestação de contas. Pode selecionar múltiplos.</p>
         <input type="file" id="input-pdf" accept=".pdf" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
         <div id="progresso-pdf" style="display: none; margin-top: 15px;">
           <div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px; overflow: hidden;">
@@ -388,525 +1258,548 @@
           </div>
           <p id="texto-pdf" style="font-size: 11px; text-align: center; margin-top: 5px; color: var(--cor-texto-secundario);"></p>
         </div>
-        <div id="msg-pdf" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoFotos}
+        <div id="msg-pdf" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
+        ${resumoFotos}
       </div>
+
       <div class="card" style="border-left-color: ${podeAuditar ? 'var(--cor-destaque)' : '#CCC'}; background: ${podeAuditar ? '#FFFDF5' : 'white'};">
         <h2>5. Processar Auditoria</h2>
-        ${!podeAuditar ? '<p style="font-size: 12px; color: var(--cor-perigo); font-weight: bold;">⚠️ Importe os 4 conjuntos de dados.</p>' : ''}
-        ${temAuditoria ? '<p style="font-size: 12px; color: #27AE60; font-weight: bold;">✅ Auditoria processada.</p>' : ''}
+        <p style="font-size: 13px; margin-bottom: 15px;">Cruza todos os dados e calcula os resultados financeiros.</p>
+        ${!podeAuditar ? '<p style="font-size: 12px; color: var(--cor-perigo); font-weight: bold;">⚠️ Importe os 4 conjuntos de dados para habilitar.</p>' : ''}
+        ${temAuditoria ? '<p style="font-size: 12px; color: #27AE60; font-weight: bold;">✅ Auditoria já processada. Clique para recalcular.</p>' : ''}
         <button id="btn-auditar" ${!podeAuditar ? 'disabled' : ''} style="width: 100%; padding: 15px; background: ${podeAuditar ? 'var(--cor-primaria)' : '#CCC'}; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: ${podeAuditar ? 'pointer' : 'not-allowed'}; margin-top: 10px;">⚙️ ${temAuditoria ? 'Recalcular' : 'Processar'} Auditoria</button>
       </div>
     `;
 
-    const bindUpload = (idInput, idMsg, parser, campo, extra) => {
-      const input = document.getElementById(idInput); if (!input) return;
-      input.addEventListener('change', (e) => {
-        const file = e.target.files[0]; if (!file) return;
-        const msg = document.getElementById(idMsg); msg.innerHTML = '<span style="color: #E67E22;">Processando...</span>';
-        const leitor = new FileReader();
-        leitor.onload = (ev) => {
-          try {
-            const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
-            const dados = parser(wb);
-            const mes = garantirMes(Estado.config.mesAtivo);
-            mes[campo] = dados; mes.auditoria = null; salvarEstado();
-            msg.innerHTML = `<span style="color: #27AE60;">✅ ${extra(dados)}</span>`;
-            renderizarAdmin();
-          } catch (err) { msg.innerHTML = `<span style="color: #E74C3C;">❌ ${err.message}</span>`; }
-        };
-        leitor.readAsArrayBuffer(file);
-      });
-    };
-
-    bindUpload('input-excel', 'msg-excel', processarFechamento, 'fechamento', d => `${d.length} redes importadas.`);
-
-    // UPLOAD MÚLTIPLO DO PLANO
-    const inputPlano = document.getElementById('input-plano');
-    if (inputPlano) {
-      inputPlano.addEventListener('change', async (e) => {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
-        
-        const msg = document.getElementById('msg-plano');
-        msg.innerHTML = '<span style="color: #E67E22;">Processando Plano(s)...</span>';
-        
-        let lojasAcumuladas = [];
-        const mesDadosAtual = garantirMes(Estado.config.mesAtivo);
-        mesDadosAtual.lojas = []; // Limpa as antigas para não duplicar
-
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          try {
-            const dados = await new Promise((resolve, reject) => {
-              const leitor = new FileReader();
-              leitor.onload = (ev) => resolve(new Uint8Array(ev.target.result));
-              leitor.onerror = reject;
-              leitor.readAsArrayBuffer(file);
-            });
-            
-            const wb = XLSX.read(dados, { type: 'array' });
-            const lojasDoArquivo = processarPlano(wb);
-            lojasAcumuladas = lojasAcumuladas.concat(lojasDoArquivo);
-            msg.innerHTML = `<span style="color: #E67E22;">Lendo ${i + 1} de ${files.length}: ${file.name}...</span>`;
-          } catch (erro) {
-            msg.innerHTML += `<br><span style="color: #E74C3C;">❌ Erro em ${file.name}: ${erro.message}</span>`;
-          }
-        }
-
-        if (lojasAcumuladas.length > 0) {
-          mesDadosAtual.lojas = lojasAcumuladas;
-          mesDadosAtual.auditoria = null;
-          salvarEstado();
-          const redesUnicas = [...new Set(lojasAcumuladas.map(l => l.rede))];
-          msg.innerHTML = `<span style="color: #27AE60;">✅ Plano(s) importado(s): ${lojasAcumuladas.length} lojas em ${redesUnicas.length} redes.</span>`;
-        } else {
-          msg.innerHTML = `<span style="color: #E74C3C;">❌ Nenhuma loja válida encontrada nos arquivos.</span>`;
-        }
-        renderizarAdmin();
-      });
-    }
-
-    bindUpload('input-tempo', 'msg-tempo', processarRelatorioTempo, 'relatorioTempo', d => `${d.length} visitas importadas.`);
-
+    configurarUploadExcel();
+    configurarUploadPlano();
+    configurarUploadTempo();
     configurarUploadPDF();
-    if (podeAuditar) document.getElementById('btn-auditar').addEventListener('click', executarAuditoria);
-  }
-</script>
-<script>
-  // ═══ SUBBLOCO 05 — PARSER DE PDFs (FOTOS COMPRIMIDAS) ═══
-  async function gerarHash(base64) {
-    const msgBuffer = new TextEncoder().encode(base64);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-  }
 
-  function converterParaBase64(img) {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      
-      // Reduz o tamanho da imagem para economizar memória
-      const maxLargura = 800;
-      const escala = img.width > maxLargura ? (maxLargura / img.width) : 1;
-      
-      canvas.width = Math.round(img.width * escala);
-      canvas.height = Math.round(img.height * escala);
-      
-      const ctx = canvas.getContext('2d');
-      const imageData = ctx.createImageData(img.width, img.height);
-      
-      if (img.data.length === img.width * img.height * 4) {
-        imageData.data.set(img.data);
-      } else if (img.data.length === img.width * img.height * 3) {
-        for (let i = 0, j = 0; i < img.data.length; i += 3, j += 4) {
-          imageData.data[j] = img.data[i]; imageData.data[j+1] = img.data[i+1]; imageData.data[j+2] = img.data[i+2]; imageData.data[j+3] = 255;
-        }
-      } else {
-        for (let i = 0, j = 0; i < img.data.length; i++, j += 4) {
-          imageData.data[j] = img.data[i]; imageData.data[j+1] = img.data[i]; imageData.data[j+2] = img.data[i]; imageData.data[j+3] = 255;
-        }
-      }
-      ctx.putImageData(imageData, 0, 0);
-      
-      // Usa um canvas temporário para redimensionar e comprimir forte (0.5 = 50% de qualidade)
-      const canvasFinal = document.createElement('canvas');
-      canvasFinal.width = canvas.width;
-      canvasFinal.height = canvas.height;
-      canvasFinal.getContext('2d').drawImage(canvas, 0, 0, canvas.width, canvas.height);
-      
-      resolve(canvasFinal.toDataURL('image/jpeg', 0.5)); 
-    });
-  }
-
-  function extrairMetadadosTexto(textoBruto) {
-    let dataHora = null, promotor = null, lojaTexto = null;
-    const matchData = textoBruto.match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
-    if (matchData) {
-      const [dia, mes, ano] = matchData[1].split('/');
-      dataHora = `${ano}-${mes}-${dia}T${matchData[2]}`;
+    if (podeAuditar) {
+      document.getElementById('btn-auditar').addEventListener('click', executarAuditoria);
     }
-    const matchPromotor = textoBruto.match(/Promotor:\s*([A-Za-zÀ-ÿ\s\.]+?)(?=\s*(?:Produto|$|\n))/i);
-    if (matchPromotor) promotor = matchPromotor[1].trim().replace(/\s+/g, ' ');
-    
-    const matchLojaRodape = textoBruto.match(/Foto:\s*(?:antes|depois)\s*da\s*reposição\s*\n?([A-Z0-9À-ÿ\s\/\.\-]+?)(?=\n|$)/i);
-    if (matchLojaRodape) lojaTexto = matchLojaRodape[1].trim().replace(/\n/g, ' ');
-    return { dataHora, promotor, lojaTexto };
   }
 
-  async function processarPDF(arquivo, callbackProgresso) {
-    const arrayBuffer = await arquivo.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const fotosExtraidas = [];
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      if (callbackProgresso) callbackProgresso(i, pdf.numPages);
-      const pagina = await pdf.getPage(i);
-      const textoConteudo = await pagina.getTextContent();
-      const textoBruto = textoConteudo.items.map(item => item.str).join(' \n ');
-      const operacoes = await pagina.getOperatorList();
-      let imagemBase64 = null;
-
-      for (let j = 0; j < operacoes.fnArray.length; j++) {
-        if (operacoes.fnArray[j] === pdfjsLib.OPS.paintImageXObject) {
-          try {
-            const img = await pagina.objs.get(operacoes.argsArray[j][0]);
-            if (img && img.width > 150 && img.height > 150) {
-              imagemBase64 = await converterParaBase64(img); break;
-            }
-          } catch (e) {}
-        }
-      }
-
-      if (imagemBase64) {
-        const meta = extrairMetadadosTexto(textoBruto);
-        const hash = await gerarHash(imagemBase64);
-        fotosExtraidas.push({
-          id: Date.now() + '-' + i + '-' + Math.random().toString(36).substr(2, 5),
-          pagina: i, arquivoOrigem: arquivo.name, dataHora: meta.dataHora, promotor: meta.promotor, lojaTexto: meta.lojaTexto,
-          imagemBase64, hash, status: 'pendente', motivoGap: null, revisaoManual: false
-        });
-      }
-    }
-    return fotosExtraidas;
-  }
-
-  function configurarUploadPDF() {
-    const input = document.getElementById('input-pdf'); if (!input) return;
-    input.addEventListener('change', async (e) => {
-      const files = e.target.files; if (!files || files.length === 0) return;
-      const msg = document.getElementById('msg-pdf'), prog = document.getElementById('progresso-pdf'), barra = document.getElementById('barra-pdf'), txt = document.getElementById('texto-pdf');
-      prog.style.display = 'block'; msg.innerHTML = 'Iniciando...';
-      let fotosAcumuladas = Estado.meses[Estado.config.mesAtivo].fotos || [];
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        try {
-          const fotosDoPDF = await processarPDF(file, (atual, total) => {
-            const pct = Math.floor((atual / total) * 100);
-            barra.style.width = pct + '%'; txt.textContent = `Arquivo ${i+1}/${files.length} - Pág ${atual}/${total}`;
-          });
-          fotosAcumuladas = fotosAcumuladas.concat(fotosDoPDF);
-          Estado.meses[Estado.config.mesAtivo].fotos = fotosAcumuladas;
-          Estado.meses[Estado.config.mesAtivo].auditoria = null; salvarEstado();
-        } catch (erro) { msg.innerHTML += `<br><span style="color: #E74C3C;">❌ Erro em ${file.name}: ${erro.message}</span>`; }
-      }
-      prog.style.display = 'none'; msg.innerHTML = `<span style="color: #27AE60;">✅ Total: ${fotosAcumuladas.length} fotos.</span>`;
-      renderizarAdmin();
-    });
-  }
-
-  // ═══ SUBBLOCO 06 — MOTOR DE AUDITORIA ═══
-  function executarAuditoria(opcoes) {
-    const silencioso = (opcoes && opcoes.silencioso) || window._silencioso === true;
-    const mesDados = Estado.meses[Estado.config.mesAtivo];
-    if (!mesDados || !mesDados.fotos || !mesDados.relatorioTempo || !mesDados.fechamento) return false;
-
-    const janelaMinutos = Estado.config.janelaSuspeitaMin || 30;
-    const fotos = mesDados.fotos, relatorio = mesDados.relatorioTempo;
-
-    fotos.forEach(f => { if (!f.revisaoManual) { f.status = 'pendente'; f.motivoGap = null; f.lojaAuditada = null; f.redeAuditada = null; } });
-
-    const hashesVistos = new Set();
-    fotos.forEach(foto => {
-      if (foto.revisaoManual || !foto.hash) return;
-      if (hashesVistos.has(foto.hash)) { foto.status = 'duplicata'; foto.motivoGap = 'Duplicata.'; }
-      else hashesVistos.add(foto.hash);
-    });
-
-    fotos.forEach(foto => {
-      if (foto.revisaoManual || foto.status === 'duplicata') return;
-      if (!foto.dataHora || !foto.promotor) { foto.status = 'sem_par'; foto.motivoGap = 'Sem metadados.'; return; }
-      
-      const dataFoto = foto.dataHora.split('T')[0], promBusca = normalizarTexto(foto.promotor);
-      const visitas = relatorio.filter(v => normalizarTexto(v.promotor) === promBusca && v.data === dataFoto);
-
-      if (visitas.length === 0) { foto.status = 'sem_par'; foto.motivoGap = 'Sem visita no relatório.'; return; }
-      if (visitas.length === 1) { foto.status = 'comprovada'; foto.lojaAuditada = visitas[0].loja; foto.redeAuditada = visitas[0].rede; return; }
-      
-      if (foto.lojaTexto) {
-        const txtNorm = normalizarTexto(foto.lojaTexto);
-        const match = visitas.find(v => txtNorm.includes(normalizarTexto(v.loja)) || normalizarTexto(v.loja).includes(txtNorm));
-        if (match) { foto.status = 'comprovada'; foto.lojaAuditada = match.loja; foto.redeAuditada = match.rede; return; }
-      }
-      foto.status = 'revisao'; foto.motivoGap = `${visitas.length} lojas no dia.`;
-    });
-
-    const grupos = {};
-    fotos.forEach(f => {
-      if (f.revisaoManual || !f.dataHora || !f.promotor || f.status === 'duplicata' || f.status === 'sem_par') return;
-      const chave = normalizarTexto(f.promotor) + '_' + f.dataHora.split('T')[0];
-      (grupos[chave] = grupos[chave] || []).push(f);
-    });
-
-    Object.values(grupos).forEach(grupo => {
-      if (grupo.length < 2) return;
-      grupo.sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
-      for (let i = 0; i < grupo.length - 1; i++) {
-        const a = grupo[i], b = grupo[i+1], diff = (new Date(b.dataHora) - new Date(a.dataHora)) / 60000;
-        if (a.lojaAuditada && b.lojaAuditada && a.lojaAuditada === b.lojaAuditada) continue;
-        if (!a.lojaAuditada || !b.lojaAuditada) continue;
-        if (diff >= 0 && diff < janelaMinutos) {
-          a.status = 'suspeita'; a.motivoGap = `Troca de loja em ${Math.round(diff)}min.`;
-          b.status = 'suspeita'; b.motivoGap = `Troca de loja em ${Math.round(diff)}min.`;
-        }
-      }
-    });
-
-    const visitasAgrupadas = {};
-    fotos.forEach(foto => {
-      if (!foto.lojaAuditada) return;
-      const chave = normalizarTexto(foto.promotor) + '_' + foto.dataHora.split('T')[0] + '_' + normalizarTexto(foto.lojaAuditada);
-      if (!visitasAgrupadas[chave]) visitasAgrupadas[chave] = { promotor: foto.promotor, data: foto.dataHora.split('T')[0], loja: foto.lojaAuditada, rede: foto.redeAuditada || 'DESCONHECIDA', fotos: [], statusFinal: 'pendente' };
-      visitasAgrupadas[chave].fotos.push(foto);
-    });
-
-    Object.values(visitasAgrupadas).forEach(v => {
-      if (v.fotos.some(f => f.status === 'suspeita')) v.statusFinal = 'suspeita';
-      else if (v.fotos.some(f => f.status === 'revisao')) v.statusFinal = 'revisao';
-      else if (v.fotos.some(f => f.status === 'comprovada')) v.statusFinal = 'comprovada';
-      else v.statusFinal = 'nao_comprovada';
-    });
-
-    const porRede = {};
-    mesDados.fechamento.forEach(f => {
-      porRede[f.rede] = { rede: f.redeOriginal, custoVisita: f.custoVisita, declaradas: f.declaradasMes, programadas: f.programadasMes, comprovadas: 0, gap: 0, valorCobrado: f.declaradasMes * f.custoVisita, desconto: 0, valorAuditado: 0 };
-    });
-
-    Object.values(visitasAgrupadas).forEach(v => { if (v.statusFinal === 'comprovada' && porRede[v.rede]) porRede[v.rede].comprovadas++; });
-    Object.values(porRede).forEach(r => { r.gap = r.declaradas - r.comprovadas; r.desconto = r.gap * r.custoVisita; r.valorAuditado = r.comprovadas * r.custoVisita; });
-
-    mesDados.auditoria = {
-      porRede: porRede, visitasAgrupadas: Object.values(visitasAgrupadas),
-      total: {
-        comprovadas: Object.values(porRede).reduce((a, r) => a + r.comprovadas, 0), gap: Object.values(porRede).reduce((a, r) => a + r.gap, 0),
-        desconto: Object.values(porRede).reduce((a, r) => a + r.desconto, 0), valorAuditado: Object.values(porRede).reduce((a, r) => a + r.valorAuditado, 0),
-        valorCobrado: Object.values(porRede).reduce((a, r) => a + r.valorCobrado, 0), totalDeclaradas: Object.values(porRede).reduce((a, r) => a + r.declaradas, 0),
-        totalProgramadas: Object.values(porRede).reduce((a, r) => a + (r.programadas || 0), 0)
-      },
-      dataProcessamento: new Date().toISOString()
-    };
-
-    salvarEstado();
-    if (!silencioso) { alert("✅ Auditoria concluída!"); document.querySelector('nav button[data-tela="dashboard"]').click(); }
-    return true;
-  }
-
-  // ═══ SUBBLOCO 07 — DASHBOARD E REVISÃO ═══
+  // ── RENDERIZAR DASHBOARD ──
   function renderizarDashboard() {
     const container = document.getElementById('tela-dashboard');
     const mesDados = Estado.meses[Estado.config.mesAtivo];
+
     if (!mesDados || !mesDados.auditoria || !mesDados.auditoria.porRede) {
-      container.innerHTML = `<div class="card"><h2>Dashboard</h2><p>Nenhuma auditoria processada.</p><p style="margin-top: 15px; font-size: 13px;">Vá em <strong>Admin</strong> e clique em <strong>Processar Auditoria</strong>.</p></div>`;
+      container.innerHTML = `
+        <div class="card">
+          <h2>Dashboard</h2>
+          <p>Nenhuma auditoria processada ainda.</p>
+          <p style="margin-top: 15px; font-size: 13px;">Vá em <strong>Admin</strong>, importe os arquivos e clique em <strong>Processar Auditoria</strong>.</p>
+        </div>
+      `;
       return;
     }
-    const total = mesDados.auditoria.total, porRede = mesDados.auditoria.porRede;
+
+    const porRede = mesDados.auditoria.porRede;
+    const total = mesDados.auditoria.total;
     const efetividade = total.totalDeclaradas > 0 ? (total.comprovadas / total.totalDeclaradas) * 100 : 0;
-    const ranking = Object.values(porRede).map(r => ({ ...r, efetividade: r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0 })).sort((a, b) => a.efetividade - b.efetividade);
-    
-    let htmlRanking = ranking.map((r, i) => {
-      const cor = r.efetividade > 80 ? '#27AE60' : r.efetividade > 50 ? '#F39C12' : '#E74C3C';
-      return `<div style="margin-bottom: 15px;"><div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 5px;"><span>${i+1}. ${r.rede}</span><span style="color: ${cor};">${formatarPorcentagem(r.efetividade)}</span></div><div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px;"><div style="width: ${r.efetividade}%; height: 100%; background: ${cor}; border-radius: 4px;"></div></div><div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--cor-texto-secundario); margin-top: 3px;"><span>Declaradas: ${r.declaradas}</span><span>Comprovadas: ${r.comprovadas}</span><span>Desconto: ${formatarMoeda(r.desconto)}</span></div></div>`;
-    }).join('');
+    const corEfetGeral = efetividade >= 80 ? '#27AE60' : efetividade >= 50 ? '#F39C12' : '#E74C3C';
+
+    // Ranking ordenado por efetividade (pior para o melhor)
+    const ranking = Object.values(porRede).map(r => {
+      const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
+      return { ...r, efetividade: efet };
+    }).sort((a, b) => a.efetividade - b.efetividade);
+
+    let htmlRanking = '';
+    ranking.forEach((r, index) => {
+      const corBarra = r.efetividade > 80 ? '#27AE60' : r.efetividade > 50 ? '#F39C12' : '#E74C3C';
+      htmlRanking += `
+        <div style="margin-bottom: 15px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 5px;">
+            <span>${index + 1}. ${esc(r.rede)}</span>
+            <span style="color: ${corBarra};">${formatarPorcentagem(r.efetividade)}</span>
+          </div>
+          <div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px;">
+            <div style="width: ${Math.min(100, r.efetividade)}%; height: 100%; background: ${corBarra}; border-radius: 4px;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--cor-texto-secundario); margin-top: 3px;">
+            <span>Declaradas: ${r.declaradas}</span>
+            <span>Comprovadas: ${r.comprovadas}</span>
+            <span>Desconto: ${formatarMoeda(r.desconto)}</span>
+          </div>
+        </div>
+      `;
+    });
 
     container.innerHTML = `
+      ${htmlAvisoCobertura(mesDados.auditoria)}
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-        <div class="card" style="margin: 0; border-left-color: #7F8C8D; padding: 15px;"><h2 style="font-size: 10px;">Programadas</h2><p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; margin: 5px 0;">${total.totalProgramadas || 0}</p></div>
-        <div class="card" style="margin: 0; border-left-color: var(--cor-destaque); padding: 15px;"><h2 style="font-size: 10px;">Declaradas</h2><p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; margin: 5px 0;">${total.totalDeclaradas || 0}</p></div>
-        <div class="card" style="margin: 0; border-left-color: var(--cor-primaria); padding: 15px;"><h2 style="font-size: 10px;">Comprovadas</h2><p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-primaria); margin: 5px 0;">${total.comprovadas || 0}</p></div>
-        <div class="card" style="margin: 0; border-left-color: var(--cor-perigo); padding: 15px;"><h2 style="font-size: 10px;">Efetividade</h2><p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-perigo); margin: 5px 0;">${formatarPorcentagem(efetividade)}</p></div>
+        <div class="card" style="margin: 0; border-left-color: var(--cor-texto-secundario); padding: 15px;">
+          <h2 style="font-size: 10px;">Programadas</h2>
+          <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-texto); margin: 5px 0;">${total.totalProgramadas || 0}</p>
+          <p style="font-size: 10px;">Contratado</p>
+        </div>
+        <div class="card" style="margin: 0; border-left-color: var(--cor-destaque); padding: 15px;">
+          <h2 style="font-size: 10px;">Declaradas</h2>
+          <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-texto); margin: 5px 0;">${total.totalDeclaradas || 0}</p>
+          <p style="font-size: 10px;">Pacto</p>
+        </div>
+        <div class="card" style="margin: 0; border-left-color: var(--cor-primaria); padding: 15px;">
+          <h2 style="font-size: 10px;">Comprovadas</h2>
+          <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-primaria); margin: 5px 0;">${total.comprovadas || 0}</p>
+          <p style="font-size: 10px;">Com Fotos</p>
+        </div>
+        <div class="card" style="margin: 0; border-left-color: var(--cor-perigo); padding: 15px;">
+          <h2 style="font-size: 10px;">Efetividade</h2>
+          <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: ${corEfetGeral}; margin: 5px 0;">${formatarPorcentagem(efetividade)}</p>
+          <p style="font-size: 10px;">Comprovadas / Declaradas</p>
+        </div>
       </div>
+
       <div class="card" style="border-left-color: var(--cor-perigo);">
         <h2>Resumo Financeiro</h2>
-        <div style="display: flex; justify-content: space-between; margin-top: 15px;"><div><p style="font-size: 12px;">Valor Cobrado</p><p style="font-size: 18px; font-weight: bold;">${formatarMoeda(total.valorCobrado)}</p></div><div style="text-align: right;"><p style="font-size: 12px;">Desconto Justificado</p><p style="font-size: 18px; font-weight: bold; color: var(--cor-perigo);">- ${formatarMoeda(total.desconto)}</p></div></div>
-        <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #CCC;"><div><p style="font-size: 12px;">Valor Auditado</p><p style="font-size: 22px; font-weight: bold; color: var(--cor-primaria);">${formatarMoeda(total.valorAuditado)}</p></div><div style="text-align: right;"><p style="font-size: 12px;">Gap (Visitas)</p><p style="font-size: 22px; font-weight: bold; color: var(--cor-perigo);">${total.gap}</p></div></div>
+        <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+          <div>
+            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Valor Cobrado</p>
+            <p style="font-size: 18px; font-weight: bold; color: var(--cor-texto);">${formatarMoeda(total.valorCobrado)}</p>
+          </div>
+          <div style="text-align: right;">
+            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Desconto Justificado</p>
+            <p style="font-size: 18px; font-weight: bold; color: var(--cor-perigo);">- ${formatarMoeda(total.desconto)}</p>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #CCC;">
+          <div>
+            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Valor Auditado</p>
+            <p style="font-size: 22px; font-weight: bold; color: var(--cor-primaria);">${formatarMoeda(total.valorAuditado)}</p>
+          </div>
+          <div style="text-align: right;">
+            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Gap (Visitas)</p>
+            <p style="font-size: 22px; font-weight: bold; color: var(--cor-perigo);">${total.gap}</p>
+          </div>
+        </div>
       </div>
-      <div class="card"><h2>Ranking de Redes (Efetividade)</h2><p style="font-size: 12px; margin-bottom: 15px;">Da pior para a melhor performance.</p>${htmlRanking || '<p>Nenhuma rede.</p>'}</div>
+
+      <div class="card">
+        <h2>Ranking de Redes (Efetividade)</h2>
+        <p style="font-size: 12px; margin-bottom: 15px; color: var(--cor-texto-secundario);">Da pior para a melhor performance.</p>
+        ${htmlRanking || '<p style="font-size: 13px;">Nenhuma rede processada.</p>'}
+      </div>
     `;
   }
-
-  function renderizarRevisao() {
-    const container = document.getElementById('tela-revisao');
-    const mesDados = Estado.meses[Estado.config.mesAtivo];
-    if (!mesDados || !mesDados.fotos) return container.innerHTML = `<div class="card"><h2>Revisão</h2><p>Nenhuma foto importada.</p></div>`;
-    const fotosRevisao = mesDados.fotos.filter(f => f.status === 'revisao' || f.status === 'suspeita');
-    if (fotosRevisao.length === 0) return container.innerHTML = `<div class="card" style="border-left-color: #27AE60;"><h2>Revisão</h2><p style="color: #27AE60; font-weight: bold;">✅ Nenhuma foto pendente de revisão!</p></div>`;
-
-    let html = `<div class="card" style="border-left-color: #F39C12;"><h2>Fila de Revisão (${fotosRevisao.length})</h2><p style="font-size: 13px; margin-bottom: 15px;">Avalie e decida. A auditoria será recalculada automaticamente.</p></div>`;
-    fotosRevisao.forEach(foto => {
-      const dataStr = foto.dataHora ? new Date(foto.dataHora).toLocaleString('pt-BR') : "Data não encontrada";
-      const tagCor = foto.status === 'suspeita' ? '#E74C3C' : '#3498DB';
-      const tagTexto = foto.status === 'suspeita' ? 'SUSPEITA' : 'REVISÃO';
-      html += `
-        <div class="card" style="padding: 15px;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><div><p style="font-weight: bold; font-size: 14px; color: var(--cor-primaria);">${foto.promotor || 'Desconhecido'}</p><p style="font-size: 12px; color: var(--cor-texto-secundario);">${dataStr} | Pág. ${foto.pagina}</p></div><span style="font-size: 10px; background: ${tagCor}; color: white; padding: 3px 6px; border-radius: 4px; height: fit-content;">${tagTexto}</span></div>
-          <p style="font-size: 12px; color: var(--cor-perigo); margin-bottom: 10px;"><strong>Motivo:</strong> ${foto.motivoGap || 'Múltiplas lojas'}</p>
-          <div style="width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; display: flex; justify-content: center; align-items: center;"><img src="${foto.imagemBase64}" style="max-width: 100%; max-height: 100%; object-fit: contain;"></div>
-          <p style="font-size: 12px; margin-bottom: 10px;">Texto na imagem: <em>${foto.lojaTexto || 'Não extraído'}</em></p>
-          <div style="display: flex; gap: 10px;"><button onclick="decidirRevisao('${foto.id}', 'comprovada')" style="flex: 1; padding: 10px; background: #27AE60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">✅ Válida</button><button onclick="decidirRevisao('${foto.id}', 'sem_par')" style="flex: 1; padding: 10px; background: var(--cor-perigo); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">❌ Inválida</button></div>
-        </div>`;
-    });
-    container.innerHTML = html;
-  }
-
-  function decidirRevisao(fotoId, novoStatus) {
-    const mesDados = Estado.meses[Estado.config.mesAtivo];
-    const foto = mesDados.fotos.find(f => f.id === fotoId); if (!foto) return;
-
-    if (novoStatus === 'comprovada') {
-      if (!foto.lojaAuditada && foto.dataHora && foto.promotor) {
-        const dataStr = foto.dataHora.split('T')[0], promBusca = normalizarTexto(foto.promotor);
-        const visitas = mesDados.relatorioTempo.filter(v => normalizarTexto(v.promotor) === promBusca && v.data === dataStr);
-        if (visitas.length > 0) { foto.lojaAuditada = visitas[0].loja; foto.redeAuditada = visitas[0].rede; }
-      }
-      foto.status = 'comprovada'; foto.motivoGap = 'Aprovado manualmente';
-    } else {
-      foto.status = 'sem_par'; foto.motivoGap = 'Reprovado manualmente'; foto.lojaAuditada = null; foto.redeAuditada = null;
-    }
-    foto.revisaoManual = true; salvarEstado();
-    
-    window._silencioso = true;
-    executarAuditoria();
-    window._silencioso = false;
-    
-    alert(`Foto marcada como ${novoStatus === 'comprovada' ? 'Válida' : 'Inválida'}.`);
-    renderizarRevisao();
-  }
 </script>
+<!-- ═══ FIM SUBBLOCO 07 ═══ -->
+  <!-- ═══ SUBBLOCO 08 — TELAS AUDITORIA, REVISÃO, RELATÓRIO + INIT ═══ -->
 <script>
-  // ═══ SUBBLOCO 08 — AUDITORIA, RELATÓRIO E INICIALIZAÇÃO ═══
-  
+  // ── TELA DE AUDITORIA COM DRILL-DOWN ──
   let auditoriaDrillState = { rede: null, loja: null };
+
+  const ROTULO_STATUS = { comprovada: 'Comprovada', suspeita: 'Suspeita', revisao: 'Em revisão', nao_comprovada: 'Não comprovada', sem_foto: 'Sem foto' };
+  const COR_STATUS = { comprovada: '#27AE60', suspeita: '#F39C12', revisao: '#3498DB', nao_comprovada: '#E74C3C', sem_foto: '#E74C3C' };
+
+  function csvCampo(t) { return '"' + String(t == null ? '' : t).replace(/"/g, '""') + '"'; }
+  function baixarCSV(nome, conteudo) {
+    const blob = new Blob(["\uFEFF" + conteudo], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = nome;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
 
   function renderizarAuditoria() {
     const container = document.getElementById('tela-auditoria');
     const mesDados = Estado.meses[Estado.config.mesAtivo];
 
     if (!mesDados || !mesDados.auditoria || !mesDados.auditoria.porRede) {
-      container.innerHTML = `<div class="card"><h2>Auditoria</h2><p>Nenhuma auditoria processada ainda. Vá em <strong>Admin</strong> e clique em "Processar Auditoria".</p></div>`;
+      container.innerHTML = `
+        <div class="card">
+          <h2>Auditoria</h2>
+          <p>Nenhuma auditoria processada ainda. Vá em <strong>Admin</strong> e clique em "Processar Auditoria".</p>
+        </div>
+      `;
       return;
     }
 
-    const porRede = mesDados.auditoria.porRede;
-    const visitasAgrupadas = mesDados.auditoria.visitasAgrupadas || [];
+    const aud = mesDados.auditoria;
+    const porRede = aud.porRede;
+    const visitasAgrupadas = aud.visitasAgrupadas || [];
 
-    if (!auditoriaDrillState.rede) {
+    // MODO VISÃO GERAL (por rede)
+    if (!auditoriaDrillState.rede || !porRede[auditoriaDrillState.rede]) {
+      auditoriaDrillState = { rede: null, loja: null };
       const redesArray = Object.values(porRede).sort((a, b) => b.desconto - a.desconto);
-      let linhas = redesArray.map(r => {
+      let linhasTabela = '';
+      redesArray.forEach(r => {
         const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
-        const cor = efet > 80 ? '#27AE60' : efet > 50 ? '#F39C12' : '#E74C3C';
-        return `<tr style="border-bottom: 1px solid #EEE; cursor: pointer;" onclick="abrirDrillRede('${r.rede}')"><td style="padding: 10px; font-weight: bold; font-size: 13px;">${r.rede} <span style="color: #AAA;">›</span></td><td style="padding: 10px; text-align: center;">${r.declaradas}</td><td style="padding: 10px; text-align: center;">${r.comprovadas}</td><td style="padding: 10px; text-align: center; color: var(--cor-perigo); font-weight: bold;">${r.gap}</td><td style="padding: 10px; text-align: center; color: ${cor}; font-weight: bold;">${formatarPorcentagem(efet)}</td><td style="padding: 10px; text-align: right; color: var(--cor-perigo);">${formatarMoeda(r.desconto)}</td></tr>`;
-      }).join('');
+        const corEfet = efet > 80 ? '#27AE60' : efet > 50 ? '#F39C12' : '#E74C3C';
+        linhasTabela += `
+          <tr data-rede="${esc(r.chave)}" style="border-bottom: 1px solid #EEE; cursor: pointer;">
+            <td style="padding: 10px; font-weight: bold; font-size: 13px;">${esc(r.rede)} <span style="color: #AAA;">›</span></td>
+            <td style="padding: 10px; text-align: center;">${r.declaradas}</td>
+            <td style="padding: 10px; text-align: center;">${r.comprovadas}</td>
+            <td style="padding: 10px; text-align: center; color: var(--cor-perigo); font-weight: bold;">${r.gap}</td>
+            <td style="padding: 10px; text-align: center; color: ${corEfet}; font-weight: bold;">${formatarPorcentagem(efet)}</td>
+            <td style="padding: 10px; text-align: right; color: var(--cor-perigo);">${formatarMoeda(r.desconto)}</td>
+          </tr>
+        `;
+      });
+
+      container.innerHTML = `
+        ${htmlAvisoCobertura(aud)}
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 8px;">
+            <h2 style="margin: 0;">Auditoria por Rede</h2>
+            <div style="display: flex; gap: 6px;">
+              <button id="btn-exportar-csv" style="padding: 8px 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">📥 CSV Redes</button>
+              <button id="btn-exportar-csv-visitas" style="padding: 8px 12px; background: transparent; color: var(--cor-primaria); border: 1px solid var(--cor-primaria); border-radius: 4px; font-size: 12px; cursor: pointer;">📥 CSV Visitas</button>
+            </div>
+          </div>
+          <p style="font-size: 11px; color: var(--cor-texto-secundario); margin-bottom: 10px;">Clique em uma rede para ver o detalhamento por loja.</p>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap;">
+              <thead>
+                <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
+                  <th style="padding: 10px; text-align: left;">Rede</th>
+                  <th style="padding: 10px; text-align: center;">Declar.</th>
+                  <th style="padding: 10px; text-align: center;">Comprov.</th>
+                  <th style="padding: 10px; text-align: center;">Gap</th>
+                  <th style="padding: 10px; text-align: center;">Efetiv.</th>
+                  <th style="padding: 10px; text-align: right;">Desconto</th>
+                </tr>
+              </thead>
+              <tbody>${linhasTabela}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      container.querySelectorAll('tr[data-rede]').forEach(tr => {
+        tr.addEventListener('click', () => abrirDrillRede(tr.dataset.rede));
+      });
+
+      document.getElementById('btn-exportar-csv').addEventListener('click', () => {
+        let csv = "Rede;Declaradas;Comprovadas;Gap;Efetividade;Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
+        redesArray.forEach(r => {
+          const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
+          const n = v => Number(v).toFixed(2).replace('.', ',');
+          csv += `${csvCampo(r.rede)};${r.declaradas};${r.comprovadas};${r.gap};${efet.toFixed(1).replace('.', ',')}%;${n(r.custoVisita)};${n(r.valorCobrado)};${n(r.desconto)};${n(r.valorAuditado)}\n`;
+        });
+        baixarCSV(`auditoria_redes_${Estado.config.mesAtivo}.csv`, csv);
+      });
+
+      document.getElementById('btn-exportar-csv-visitas').addEventListener('click', () => {
+        let csv = "Rede;Loja;Data;Promotor;Status;Fotos\n";
+        visitasAgrupadas.slice().sort((a, b) => (a.rede + a.loja + a.data).localeCompare(b.rede + b.loja + b.data)).forEach(v => {
+          const nomeRede = porRede[v.rede] ? porRede[v.rede].rede : v.rede;
+          csv += `${csvCampo(nomeRede)};${csvCampo(v.loja)};${formatarDataBR(v.data)};${csvCampo(v.promotor)};${ROTULO_STATUS[v.statusFinal] || v.statusFinal};${v.qtdFotos || 0}\n`;
+        });
+        baixarCSV(`auditoria_visitas_${Estado.config.mesAtivo}.csv`, csv);
+      });
+      return;
+    }
+
+    const chaveRedeAtual = auditoriaDrillState.rede;
+    const dadosRede = porRede[chaveRedeAtual];
+
+    // MODO DRILL-DOWN: LOJAS DE UMA REDE
+    if (!auditoriaDrillState.loja) {
+      const porLoja = {};
+      visitasAgrupadas.forEach(v => {
+        if (v.rede !== chaveRedeAtual) return;
+        if (!porLoja[v.loja]) porLoja[v.loja] = { loja: v.loja, comprovadas: 0, pendentes: 0, semFoto: 0 };
+        if (v.statusFinal === 'comprovada') porLoja[v.loja].comprovadas++;
+        else if (v.statusFinal === 'suspeita' || v.statusFinal === 'revisao') porLoja[v.loja].pendentes++;
+        else porLoja[v.loja].semFoto++;
+      });
+
+      const lojasArray = Object.values(porLoja).sort((a, b) => (b.semFoto - a.semFoto) || (a.comprovadas - b.comprovadas));
+
+      let linhas = '';
+      if (lojasArray.length === 0) {
+        linhas = '<tr><td colspan="4" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita registrada para esta rede.</td></tr>';
+      } else {
+        lojasArray.forEach(l => {
+          linhas += `
+            <tr data-loja="${esc(l.loja)}" style="border-bottom: 1px solid #EEE; cursor: pointer;">
+              <td style="padding: 10px; font-size: 12px;">${esc(l.loja)} <span style="color: #AAA;">›</span></td>
+              <td style="padding: 10px; text-align: center; color: #27AE60; font-weight: bold;">${l.comprovadas}</td>
+              <td style="padding: 10px; text-align: center; color: #F39C12; font-weight: bold;">${l.pendentes}</td>
+              <td style="padding: 10px; text-align: center; color: #E74C3C; font-weight: bold;">${l.semFoto}</td>
+            </tr>
+          `;
+        });
+      }
 
       container.innerHTML = `
         <div class="card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2>Auditoria por Rede</h2>
-            <button id="btn-exportar-csv" style="padding: 8px 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">📥 CSV</button>
-          </div>
-          <p style="font-size: 11px; color: var(--cor-texto-secundario); margin-bottom: 10px;">Clique em uma rede para ver o detalhamento.</p>
+          <button id="btn-voltar-redes" style="padding: 8px 12px; background: transparent; border: 1px solid var(--cor-primaria); color: var(--cor-primaria); border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 15px;">‹ Voltar</button>
+          <h2>Rede: ${esc(dadosRede.rede)}</h2>
+          <p style="font-size: 12px; margin-bottom: 5px;">${dadosRede.comprovadas} comprovadas de ${dadosRede.declaradas} declaradas (Gap: ${dadosRede.gap}).</p>
+          <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);">"Sem foto" = visita do Relatório de Tempo, dentro do período dos PDFs importados, sem nenhuma foto cruzada.</p>
           <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap;">
-              <thead><tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);"><th style="padding: 10px; text-align: left;">Rede</th><th style="padding: 10px; text-align: center;">Declar.</th><th style="padding: 10px; text-align: center;">Comprov.</th><th style="padding: 10px; text-align: center;">Gap</th><th style="padding: 10px; text-align: center;">Efetiv.</th><th style="padding: 10px; text-align: right;">Desconto</th></tr></thead>
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+              <thead>
+                <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
+                  <th style="padding: 10px; text-align: left;">Loja</th>
+                  <th style="padding: 10px; text-align: center;">Comprov.</th>
+                  <th style="padding: 10px; text-align: center;">Pendentes</th>
+                  <th style="padding: 10px; text-align: center;">Sem foto</th>
+                </tr>
+              </thead>
               <tbody>${linhas}</tbody>
             </table>
           </div>
         </div>
       `;
-
-      document.getElementById('btn-exportar-csv').addEventListener('click', () => {
-        let csv = "Rede;Declaradas;Comprovadas;Gap;Efetividade;Desconto;Valor Auditado\n";
-        redesArray.forEach(r => {
-          const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
-          csv += `${r.rede};${r.declaradas};${r.comprovadas};${r.gap};${efet.toFixed(1).replace('.', ',')}%;${r.desconto.toFixed(2).replace('.', ',')};${r.valorAuditado.toFixed(2).replace('.', ',')}\n`;
-        });
-        const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `auditoria_${Estado.config.mesAtivo}.csv`; link.click();
+      document.getElementById('btn-voltar-redes').addEventListener('click', () => { auditoriaDrillState = { rede: null, loja: null }; renderizarAuditoria(); });
+      container.querySelectorAll('tr[data-loja]').forEach(tr => {
+        tr.addEventListener('click', () => abrirDrillLoja(tr.dataset.loja));
       });
       return;
     }
 
-    if (auditoriaDrillState.rede && !auditoriaDrillState.loja) {
-      const rede = auditoriaDrillState.rede;
-      const dadosRede = porRede[rede];
-      const porLoja = {};
-      visitasAgrupadas.forEach(v => {
-        if (v.rede !== rede) return;
-        if (!porLoja[v.loja]) porLoja[v.loja] = { loja: v.loja, comprovadas: 0, suspeitas: 0, revisao: 0, total: 0 };
-        porLoja[v.loja].total++;
-        if (v.statusFinal === 'comprovada') porLoja[v.loja].comprovadas++;
-        else if (v.statusFinal === 'suspeita') porLoja[v.loja].suspeitas++;
-        else if (v.statusFinal === 'revisao') porLoja[v.loja].revisao++;
-      });
-      const lojasArray = Object.values(porLoja).sort((a, b) => a.comprovadas - b.comprovadas);
-
-      let linhas = lojasArray.map(l => `<tr style="border-bottom: 1px solid #EEE; cursor: pointer;" onclick="abrirDrillLoja('${l.loja.replace(/'/g, "\\'")}')"><td style="padding: 10px; font-size: 12px;">${l.loja} <span style="color: #AAA;">›</span></td><td style="padding: 10px; text-align: center; color: #27AE60; font-weight: bold;">${l.comprovadas}</td><td style="padding: 10px; text-align: center; color: #F39C12; font-weight: bold;">${l.suspeitas + l.revisao}</td></tr>`).join('');
-
-      container.innerHTML = `
-        <div class="card">
-          <button onclick="auditoriaDrillState.rede=null; renderizarAuditoria();" style="padding: 8px 12px; background: transparent; border: 1px solid var(--cor-primaria); color: var(--cor-primaria); border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 15px;">‹ Voltar</button>
-          <h2>Rede: ${dadosRede.rede}</h2>
-          <p style="font-size: 12px; margin-bottom: 15px;">${dadosRede.comprovadas} comprovadas de ${dadosRede.declaradas} declaradas (Gap: ${dadosRede.gap}).</p>
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-              <thead><tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);"><th style="padding: 10px; text-align: left;">Loja</th><th style="padding: 10px; text-align: center;">Comprov.</th><th style="padding: 10px; text-align: center;">Pendentes</th></tr></thead>
-              <tbody>${linhas || '<tr><td colspan="3" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita registrada.</td></tr>'}</tbody>
-            </table>
-          </div>
-        </div>
+    // MODO DRILL-DOWN: VISITAS DE UMA LOJA
+    const visitas = visitasAgrupadas
+      .filter(v => v.rede === chaveRedeAtual && v.loja === auditoriaDrillState.loja)
+      .sort((a, b) => a.data.localeCompare(b.data));
+    let linhas = '';
+    visitas.forEach(v => {
+      const cor = COR_STATUS[v.statusFinal] || '#E74C3C';
+      linhas += `
+        <tr style="border-bottom: 1px solid #EEE;">
+          <td style="padding: 10px; font-size: 12px;">${formatarDataBR(v.data)}</td>
+          <td style="padding: 10px; font-size: 12px;">${esc(v.promotor)}</td>
+          <td style="padding: 10px; text-align: center; font-size: 11px; color: ${cor}; font-weight: bold; text-transform: uppercase;">${ROTULO_STATUS[v.statusFinal] || esc(v.statusFinal)}</td>
+          <td style="padding: 10px; text-align: center; font-size: 12px;">${v.qtdFotos || 0}</td>
+        </tr>
       `;
-      return;
-    }
+    });
 
-    if (auditoriaDrillState.rede && auditoriaDrillState.loja) {
-      const visitas = visitasAgrupadas.filter(v => v.rede === auditoriaDrillState.rede && v.loja === auditoriaDrillState.loja);
-      let linhas = visitas.map(v => {
-        const cor = v.statusFinal === 'comprovada' ? '#27AE60' : v.statusFinal === 'suspeita' ? '#F39C12' : v.statusFinal === 'revisao' ? '#3498DB' : '#E74C3C';
-        return `<tr style="border-bottom: 1px solid #EEE;"><td style="padding: 10px; font-size: 12px;">${v.data}</td><td style="padding: 10px; font-size: 12px;">${v.promotor}</td><td style="padding: 10px; text-align: center; font-size: 11px; color: ${cor}; font-weight: bold; text-transform: uppercase;">${v.statusFinal.replace('_',' ')}</td></tr>`;
-      }).join('');
-
-      container.innerHTML = `
-        <div class="card">
-          <button onclick="auditoriaDrillState.loja=null; renderizarAuditoria();" style="padding: 8px 12px; background: transparent; border: 1px solid var(--cor-primaria); color: var(--cor-primaria); border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 15px;">‹ Voltar para lojas</button>
-          <h2>Loja: ${auditoriaDrillState.loja}</h2>
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-              <thead><tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);"><th style="padding: 10px; text-align: left;">Data</th><th style="padding: 10px; text-align: left;">Promotor</th><th style="padding: 10px; text-align: center;">Status</th></tr></thead>
-              <tbody>${linhas || '<tr><td colspan="3" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita.</td></tr>'}</tbody>
-            </table>
-          </div>
+    container.innerHTML = `
+      <div class="card">
+        <button id="btn-voltar-lojas" style="padding: 8px 12px; background: transparent; border: 1px solid var(--cor-primaria); color: var(--cor-primaria); border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 15px;">‹ Voltar para lojas</button>
+        <h2>Loja: ${esc(auditoriaDrillState.loja)}</h2>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+              <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
+                <th style="padding: 10px; text-align: left;">Data</th>
+                <th style="padding: 10px; text-align: left;">Promotor</th>
+                <th style="padding: 10px; text-align: center;">Status</th>
+                <th style="padding: 10px; text-align: center;">Fotos</th>
+              </tr>
+            </thead>
+            <tbody>${linhas || '<tr><td colspan="4" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita.</td></tr>'}</tbody>
+          </table>
         </div>
-      `;
-    }
+      </div>
+    `;
+    document.getElementById('btn-voltar-lojas').addEventListener('click', () => { auditoriaDrillState.loja = null; renderizarAuditoria(); });
   }
 
-  function abrirDrillRede(rede) { auditoriaDrillState = { rede: rede, loja: null }; renderizarAuditoria(); }
+  function abrirDrillRede(chave) { auditoriaDrillState = { rede: chave, loja: null }; renderizarAuditoria(); }
   function abrirDrillLoja(loja) { auditoriaDrillState.loja = loja; renderizarAuditoria(); }
 
+  // ── TELA DE REVISÃO ──
+  // O selo da foto vem com letras espaçadas ("M O G I M I R I M"); junta para ficar legível.
+  function limparSelo(t) {
+    if (!t) return '';
+    const partes = String(t).trim().split(/\s+/);
+    return partes.every(p => p.length <= 1) ? partes.join('') : partes.join(' ');
+  }
+
+  function renderizarRevisao() {
+    const container = document.getElementById('tela-revisao');
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+
+    if (!mesDados || !mesDados.fotos || mesDados.fotos.length === 0) {
+      container.innerHTML = `<div class="card"><h2>Revisão</h2><p>Nenhuma foto importada.</p></div>`;
+      return;
+    }
+    if (!mesDados.auditoria) {
+      container.innerHTML = `<div class="card"><h2>Revisão</h2><p>Processe a auditoria (aba Admin) para gerar a fila de revisão.</p></div>`;
+      return;
+    }
+
+    const fotosRevisao = mesDados.fotos.filter(f => f.status === 'revisao' || f.status === 'suspeita');
+
+    if (fotosRevisao.length === 0) {
+      container.innerHTML = `
+        <div class="card" style="border-left-color: #27AE60;">
+          <h2>Revisão</h2>
+          <p style="color: #27AE60; font-weight: bold;">✅ Nenhuma foto pendente de revisão no momento!</p>
+        </div>
+      `;
+      return;
+    }
+
+    const LIMITE = 30;
+    const visiveis = fotosRevisao.slice(0, LIMITE);
+    let html = `
+      <div class="card" style="border-left-color: #F39C12;">
+        <h2>Fila de Revisão (${fotosRevisao.length})</h2>
+        <p style="font-size: 13px; margin-bottom: 5px;">Avalie cada foto e decida. Ao decidir, a auditoria é recalculada automaticamente.</p>
+        ${fotosRevisao.length > LIMITE ? `<p style="font-size: 12px; color: var(--cor-texto-secundario);">Mostrando as ${LIMITE} primeiras.</p>` : ''}
+      </div>
+    `;
+
+    visiveis.forEach(foto => {
+      let dataStr = "Data não encontrada";
+      if (foto.dataHora) dataStr = new Date(foto.dataHora).toLocaleString('pt-BR');
+      const tagCor = foto.status === 'suspeita' ? '#E74C3C' : '#3498DB';
+      const tagTexto = foto.status === 'suspeita' ? 'SUSPEITA' : 'REVISÃO';
+
+      let blocoLoja = '';
+      if (foto.lojaAuditada) {
+        blocoLoja = `<p style="font-size: 12px; margin-bottom: 10px;">Loja atribuída: <strong>${esc(foto.lojaAuditada)}</strong></p>`;
+      } else if (foto.candidatas && foto.candidatas.length) {
+        blocoLoja = `
+          <label style="font-size: 12px; font-weight: bold;">Em qual loja foi tirada?</label>
+          <select id="sel-${foto.id}" style="width: 100%; padding: 8px; margin: 5px 0 10px 0; border: 1px solid #CCC; border-radius: 4px; font-size: 14px;">
+            <option value="-1">Selecione a loja...</option>
+            ${foto.candidatas.map((c, i) => `<option value="${i}">${esc(c.redeOriginal || c.rede)} - ${esc(c.loja)}</option>`).join('')}
+          </select>`;
+      }
+
+      html += `
+        <div class="card" style="padding: 15px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <div>
+              <p style="font-weight: bold; font-size: 14px; color: var(--cor-primaria);">${esc(foto.promotor || 'Promotor Desconhecido')}</p>
+              <p style="font-size: 12px; color: var(--cor-texto-secundario);">${esc(dataStr)} | Pág. ${foto.pagina}</p>
+            </div>
+            <span style="font-size: 10px; background: ${tagCor}; color: white; padding: 3px 6px; border-radius: 4px; height: fit-content;">${tagTexto}</span>
+          </div>
+
+          <p style="font-size: 12px; color: var(--cor-perigo); margin-bottom: 10px;"><strong>Motivo:</strong> ${esc(foto.motivoGap || 'Múltiplas lojas no dia')}</p>
+
+          <div style="width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; display: flex; justify-content: center; align-items: center;">
+            <img id="img-${foto.id}" alt="Carregando imagem..." style="max-width: 100%; max-height: 100%; object-fit: contain; color: #999; font-size: 12px;">
+          </div>
+
+          <p style="font-size: 12px; margin-bottom: 10px;">Selo na foto: <em>${esc(limparSelo(foto.redeTexto) || '?')} / ${esc(limparSelo(foto.lojaTexto) || 'não extraído')}</em></p>
+          ${blocoLoja}
+          <div style="display: flex; gap: 10px;">
+            <button onclick="decidirRevisao('${foto.id}', 'comprovada')" style="flex: 1; padding: 10px; background: #27AE60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">✅ Válida</button>
+            <button onclick="decidirRevisao('${foto.id}', 'sem_par')" style="flex: 1; padding: 10px; background: var(--cor-perigo); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">❌ Inválida</button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+
+    // As imagens ficam no IndexedDB: carrega depois de desenhar a tela
+    visiveis.forEach(foto => {
+      BancoImagens.ler(foto.id).then(src => {
+        const el = document.getElementById('img-' + foto.id);
+        if (!el) return;
+        if (src) el.src = src; else el.alt = 'Imagem indisponível';
+      });
+    });
+  }
+
+  function decidirRevisao(fotoId, novoStatus) {
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+    const foto = mesDados.fotos.find(f => f.id === fotoId);
+    if (!foto) return;
+
+    if (novoStatus === 'comprovada') {
+      if (!foto.lojaAuditada) {
+        // Foto de promotor com várias lojas no dia: quem decide a loja é o revisor (não o "primeiro da lista")
+        const sel = document.getElementById('sel-' + fotoId);
+        const i = sel ? parseInt(sel.value, 10) : -1;
+        const escolhida = (foto.candidatas || [])[i];
+        if (!escolhida) { alert('Selecione a loja antes de marcar como válida.'); return; }
+        foto.lojaAuditada = escolhida.loja;
+        foto.redeAuditada = escolhida.rede;
+        foto.promotorNome = escolhida.promotor;
+      }
+      foto.status = 'comprovada';
+      foto.motivoGap = 'Aprovado manualmente';
+    } else {
+      foto.status = 'sem_par';
+      foto.motivoGap = 'Reprovado manualmente';
+      foto.lojaAuditada = null;
+      foto.redeAuditada = null;
+    }
+    foto.revisaoManual = true; // a decisão é preservada quando a auditoria é recalculada
+
+    salvarEstado();
+    executarAuditoriaSilencioso();
+    renderizarRevisao();
+  }
+
+  // ── TELA DE RELATÓRIO ──
   function renderizarRelatorio() {
     const container = document.getElementById('tela-relatorio');
     const mesDados = Estado.meses[Estado.config.mesAtivo];
+
     if (!mesDados || !mesDados.auditoria || !mesDados.auditoria.total) {
       container.innerHTML = `<div class="card"><h2>Relatório</h2><p>Nenhuma auditoria processada.</p></div>`;
       return;
     }
+
     const total = mesDados.auditoria.total;
+    const fotos = mesDados.fotos || [];
+    const totalSuspeitas = fotos.filter(f => f.status === 'suspeita').length;
+    const totalRevisao = fotos.filter(f => f.status === 'revisao').length;
+    const totalDuplicatas = fotos.filter(f => f.status === 'duplicata').length;
+    const totalSemPar = fotos.filter(f => f.status === 'sem_par').length;
+    const totalFotosComprovadas = fotos.filter(f => f.status === 'comprovada').length;
     const efetividade = total.totalDeclaradas > 0 ? (total.comprovadas / total.totalDeclaradas) * 100 : 0;
 
     container.innerHTML = `
-      <div class="card"><h2>Relatório Consolidado - ${Estado.config.mesAtivo}</h2><p style="font-size: 12px; color: var(--cor-texto-secundario);">Gerado em ${new Date().toLocaleString('pt-BR')}</p></div>
+      <div class="card">
+        <h2>Relatório Consolidado - ${Estado.config.mesAtivo}</h2>
+        <p style="font-size: 12px; color: var(--cor-texto-secundario);">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+      </div>
+
+      ${htmlAvisoCobertura(mesDados.auditoria)}
+
       <div class="card">
         <h2>Funil de Visitas</h2>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;"><span style="font-weight: bold;">Programadas (Contrato)</span><span>${total.totalProgramadas || 0}</span></div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;"><span style="font-weight: bold;">Declaradas (Pacto)</span><span>${total.totalDeclaradas || 0}</span></div>
-        <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); font-weight: bold; margin-bottom: 10px;"><span>Comprovadas (Fotos)</span><span>${total.comprovadas}</span></div>
-        <div style="display: flex; justify-content: space-between; color: var(--cor-perigo); font-weight: bold;"><span>Gap (Não comprovadas)</span><span>${total.gap}</span></div>
-        <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 10px; border-top: 1px solid #CCC; font-weight: bold;"><span>Efetividade Geral</span><span>${formatarPorcentagem(efetividade)}</span></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;">
+          <span style="font-weight: bold;">Programadas (Contrato)</span><span>${total.totalProgramadas || 0}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;">
+          <span style="font-weight: bold;">Declaradas (Pacto)</span><span>${total.totalDeclaradas || 0}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); font-weight: bold; margin-bottom: 10px;">
+          <span>Comprovadas (Fotos)</span><span>${total.comprovadas}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; color: var(--cor-perigo); font-weight: bold;">
+          <span>Gap (Não comprovadas)</span><span>${total.gap}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 10px; border-top: 1px solid #CCC; font-weight: bold;">
+          <span>Efetividade Geral</span><span>${formatarPorcentagem(efetividade)}</span>
+        </div>
       </div>
+
       <div class="card">
         <h2>Resumo Financeiro</h2>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span style="font-size: 13px;">Valor Cobrado (Declarado)</span><span style="font-size: 16px; font-weight: bold;">${formatarMoeda(total.valorCobrado)}</span></div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--cor-perigo);"><span style="font-size: 13px;">Desconto Justificado (Gap)</span><span style="font-size: 16px; font-weight: bold;">- ${formatarMoeda(total.desconto)}</span></div>
-        <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); border-top: 2px solid var(--cor-primaria); padding-top: 10px; margin-top: 10px;"><span style="font-size: 14px; font-weight: bold;">Valor Auditado</span><span style="font-size: 20px; font-weight: 900;">${formatarMoeda(total.valorAuditado)}</span></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <span style="font-size: 13px;">Valor Cobrado (Declarado)</span>
+          <span style="font-size: 16px; font-weight: bold;">${formatarMoeda(total.valorCobrado)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--cor-perigo);">
+          <span style="font-size: 13px;">Desconto Justificado (Gap)</span>
+          <span style="font-size: 16px; font-weight: bold;">- ${formatarMoeda(total.desconto)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); border-top: 2px solid var(--cor-primaria); padding-top: 10px; margin-top: 10px;">
+          <span style="font-size: 14px; font-weight: bold;">Valor Auditado</span>
+          <span style="font-size: 20px; font-weight: 900;">${formatarMoeda(total.valorAuditado)}</span>
+        </div>
       </div>
+
+      <div class="card">
+        <h2>Auditoria de Fotos</h2>
+        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px;"><span>✅ Fotos Comprovadas:</span> <strong>${totalFotosComprovadas}</strong></p>
+        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #E74C3C;"><span>⚠️ Suspeitas:</span> <strong>${totalSuspeitas}</strong></p>
+        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #3498DB;"><span>🔍 Em Revisão:</span> <strong>${totalRevisao}</strong></p>
+        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--cor-perigo);"><span>🔁 Duplicatas:</span> <strong>${totalDuplicatas}</strong></p>
+        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--cor-texto-secundario);"><span>❓ Sem Par:</span> <strong>${totalSemPar}</strong></p>
+      </div>
+
       <div class="card">
         <h2>Glossário</h2>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Programadas:</strong> O que foi contratado no plano.</p>
@@ -914,13 +1807,14 @@
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Comprovadas:</strong> Visitas com foto válida (Promotor + Dia + Loja).</p>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Gap:</strong> Declaradas - Comprovadas.</p>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Desconto Justificado:</strong> Gap × Custo da Visita.</p>
-        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Valor Auditado:</strong> O valor real a ser pago.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Valor Auditado:</strong> Comprovadas × Custo da Visita.</p>
       </div>
+
       <button onclick="window.print()" style="width: 100%; padding: 15px; background: var(--cor-primaria); color: var(--cor-destaque); border: 2px solid var(--cor-destaque); border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-bottom: 30px;">🖨️ Imprimir / Salvar PDF</button>
     `;
   }
 
-  // ═══ INICIALIZAÇÃO ═══
+  // ── INICIALIZAÇÃO GERAL ──
   document.addEventListener('DOMContentLoaded', () => {
     carregarEstado();
     garantirMes(Estado.config.mesAtivo);
@@ -928,11 +1822,13 @@
     document.querySelectorAll('nav button').forEach(botao => {
       botao.addEventListener('click', () => {
         const nomeTela = botao.dataset.tela;
+        
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('ativo'));
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
         
         botao.classList.add('ativo');
-        document.getElementById(`tela-${nomeTela}`).classList.add('ativa');
+        const telaAlvo = document.getElementById(`tela-${nomeTela}`);
+        if (telaAlvo) telaAlvo.classList.add('ativa');
 
         if (nomeTela === 'config') renderizarConfig();
         if (nomeTela === 'admin') renderizarAdmin();
@@ -943,11 +1839,12 @@
       });
     });
 
-    // Renderiza a tela inicial
+    // Renderiza a tela ativa inicial
     renderizarDashboard();
     renderizarConfig();
     renderizarAdmin();
   });
 </script>
+<!-- ═══ FIM SUBBLOCO 08 ═══ -->
 </body>
 </html>
