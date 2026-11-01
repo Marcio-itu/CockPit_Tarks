@@ -115,7 +115,8 @@
   function formatarPorcentagem(v) { return Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'; }
 </script>
 <script>
-  // ═══ SUBBLOCO 03 e 04 — CONFIG E ADMIN (UPLOADS) ═══
+<script>
+  // ═══ SUBBLOCO 03 e 04 — CONFIG E ADMIN (UPLOADS MÚLTIPLOS) ═══
   
   // ── RENDERIZAR CONFIG ──
   function renderizarConfig() {
@@ -343,11 +344,38 @@
     let resumoFotos = temFotos ? `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;"><p style="font-size: 13px;"><strong>${mesDados.fotos.length} fotos</strong> extraídas.</p></div>` : '';
 
     container.innerHTML = `
-      <div class="card"><h2>1. Importar Fechamento</h2><input type="file" id="input-excel" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;"><div id="msg-excel" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoFechamento}</div>
-      <div class="card"><h2>2. Importar Plano de Visitas</h2><input type="file" id="input-plano" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;"><div id="msg-plano" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoLojas}</div>
-      <div class="card"><h2>3. Importar Relatório de Tempo</h2><input type="file" id="input-tempo" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;"><div id="msg-tempo" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoTempo}</div>
-      <div class="card"><h2>4. Importar PDFs (Fotos)</h2><input type="file" id="input-pdf" accept=".pdf" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;"><div id="progresso-pdf" style="display: none; margin-top: 15px;"><div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px; overflow: hidden;"><div id="barra-pdf" style="width: 0%; height: 100%; background: var(--cor-destaque); transition: width 0.3s ease;"></div></div><p id="texto-pdf" style="font-size: 11px; text-align: center; margin-top: 5px; color: var(--cor-texto-secundario);"></p></div><div id="msg-pdf" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoFotos}</div>
-      <div class="card" style="border-left-color: ${podeAuditar ? 'var(--cor-destaque)' : '#CCC'}; background: ${podeAuditar ? '#FFFDF5' : 'white'};"><h2>5. Processar Auditoria</h2>${!podeAuditar ? '<p style="font-size: 12px; color: var(--cor-perigo); font-weight: bold;">⚠️ Importe os 4 conjuntos de dados.</p>' : ''}${temAuditoria ? '<p style="font-size: 12px; color: #27AE60; font-weight: bold;">✅ Auditoria processada.</p>' : ''}<button id="btn-auditar" ${!podeAuditar ? 'disabled' : ''} style="width: 100%; padding: 15px; background: ${podeAuditar ? 'var(--cor-primaria)' : '#CCC'}; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: ${podeAuditar ? 'pointer' : 'not-allowed'}; margin-top: 10px;">⚙️ ${temAuditoria ? 'Recalcular' : 'Processar'} Auditoria</button></div>
+      <div class="card">
+        <h2>1. Importar Fechamento</h2>
+        <input type="file" id="input-excel" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
+        <div id="msg-excel" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoFechamento}
+      </div>
+      <div class="card">
+        <h2>2. Importar Plano de Visitas (Pode selecionar vários)</h2>
+        <input type="file" id="input-plano" accept=".xlsx, .xls" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
+        <div id="msg-plano" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoLojas}
+      </div>
+      <div class="card">
+        <h2>3. Importar Relatório de Tempo</h2>
+        <input type="file" id="input-tempo" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
+        <div id="msg-tempo" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoTempo}
+      </div>
+      <div class="card">
+        <h2>4. Importar PDFs (Fotos)</h2>
+        <input type="file" id="input-pdf" accept=".pdf" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
+        <div id="progresso-pdf" style="display: none; margin-top: 15px;">
+          <div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px; overflow: hidden;">
+            <div id="barra-pdf" style="width: 0%; height: 100%; background: var(--cor-destaque); transition: width 0.3s ease;"></div>
+          </div>
+          <p id="texto-pdf" style="font-size: 11px; text-align: center; margin-top: 5px; color: var(--cor-texto-secundario);"></p>
+        </div>
+        <div id="msg-pdf" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoFotos}
+      </div>
+      <div class="card" style="border-left-color: ${podeAuditar ? 'var(--cor-destaque)' : '#CCC'}; background: ${podeAuditar ? '#FFFDF5' : 'white'};">
+        <h2>5. Processar Auditoria</h2>
+        ${!podeAuditar ? '<p style="font-size: 12px; color: var(--cor-perigo); font-weight: bold;">⚠️ Importe os 4 conjuntos de dados.</p>' : ''}
+        ${temAuditoria ? '<p style="font-size: 12px; color: #27AE60; font-weight: bold;">✅ Auditoria processada.</p>' : ''}
+        <button id="btn-auditar" ${!podeAuditar ? 'disabled' : ''} style="width: 100%; padding: 15px; background: ${podeAuditar ? 'var(--cor-primaria)' : '#CCC'}; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: ${podeAuditar ? 'pointer' : 'not-allowed'}; margin-top: 10px;">⚙️ ${temAuditoria ? 'Recalcular' : 'Processar'} Auditoria</button>
+      </div>
     `;
 
     const bindUpload = (idInput, idMsg, parser, campo, extra) => {
@@ -371,14 +399,59 @@
     };
 
     bindUpload('input-excel', 'msg-excel', processarFechamento, 'fechamento', d => `${d.length} redes importadas.`);
-    bindUpload('input-plano', 'msg-plano', processarPlano, 'lojas', d => `${d.length} lojas importadas.`);
+
+    // UPLOAD MÚLTIPLO DO PLANO
+    const inputPlano = document.getElementById('input-plano');
+    if (inputPlano) {
+      inputPlano.addEventListener('change', async (e) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        
+        const msg = document.getElementById('msg-plano');
+        msg.innerHTML = '<span style="color: #E67E22;">Processando Plano(s)...</span>';
+        
+        let lojasAcumuladas = [];
+        const mesDadosAtual = garantirMes(Estado.config.mesAtivo);
+        mesDadosAtual.lojas = []; // Limpa as antigas para não duplicar
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          try {
+            const dados = await new Promise((resolve, reject) => {
+              const leitor = new FileReader();
+              leitor.onload = (ev) => resolve(new Uint8Array(ev.target.result));
+              leitor.onerror = reject;
+              leitor.readAsArrayBuffer(file);
+            });
+            
+            const wb = XLSX.read(dados, { type: 'array' });
+            const lojasDoArquivo = processarPlano(wb);
+            lojasAcumuladas = lojasAcumuladas.concat(lojasDoArquivo);
+            msg.innerHTML = `<span style="color: #E67E22;">Lendo ${i + 1} de ${files.length}: ${file.name}...</span>`;
+          } catch (erro) {
+            msg.innerHTML += `<br><span style="color: #E74C3C;">❌ Erro em ${file.name}: ${erro.message}</span>`;
+          }
+        }
+
+        if (lojasAcumuladas.length > 0) {
+          mesDadosAtual.lojas = lojasAcumuladas;
+          mesDadosAtual.auditoria = null;
+          salvarEstado();
+          const redesUnicas = [...new Set(lojasAcumuladas.map(l => l.rede))];
+          msg.innerHTML = `<span style="color: #27AE60;">✅ Plano(s) importado(s): ${lojasAcumuladas.length} lojas em ${redesUnicas.length} redes.</span>`;
+        } else {
+          msg.innerHTML = `<span style="color: #E74C3C;">❌ Nenhuma loja válida encontrada nos arquivos.</span>`;
+        }
+        renderizarAdmin();
+      });
+    }
+
     bindUpload('input-tempo', 'msg-tempo', processarRelatorioTempo, 'relatorioTempo', d => `${d.length} visitas importadas.`);
 
     configurarUploadPDF();
     if (podeAuditar) document.getElementById('btn-auditar').addEventListener('click', executarAuditoria);
   }
 </script>
-<script>
   // ═══ SUBBLOCO 05 — PARSER DE PDFs (FOTOS) ═══
   async function gerarHash(base64) {
     const msgBuffer = new TextEncoder().encode(base64);
