@@ -1,4 +1,3 @@
-/* ═══ SUBBLOCO 01 — ESTRUTURA + CSS + HEADER/NAV ═══ */
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -10,53 +9,37 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --cor-fundo: #E4E8EE;
-    --cor-fundo-card: #FFFFFF;
-    --cor-primaria: #0A3D2E;
-    --cor-destaque: #D4AF37;
-    --cor-perigo: #E74C3C;
-    --cor-texto: #1A252F;
-    --cor-texto-secundario: #7F8C8D;
-    --fonte-titulo: 'Orbitron', sans-serif;
-    --fonte-dados: 'Rajdhani', sans-serif;
+    --cor-fundo: #E4E8EE; --cor-fundo-card: #FFFFFF; --cor-primaria: #0A3D2E;
+    --cor-destaque: #D4AF37; --cor-perigo: #E74C3C; --cor-texto: #1A252F;
+    --cor-texto-secundario: #7F8C8D; --fonte-titulo: 'Orbitron', sans-serif; --fonte-dados: 'Rajdhani', sans-serif;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: var(--fonte-dados); background-color: var(--cor-fundo); color: var(--cor-texto); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-  
   header { background-color: var(--cor-primaria); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--cor-destaque); box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-shrink: 0; z-index: 10; }
   .logo-container { display: flex; align-items: center; gap: 12px; }
   .logo-placeholder { width: 40px; height: 40px; background-color: var(--cor-destaque); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--fonte-titulo); font-weight: 900; color: var(--cor-primaria); font-size: 20px; box-shadow: 0 0 15px rgba(212,175,55,0.4); border: 2px solid #FFF; }
   .titulo-header h1 { font-family: var(--fonte-titulo); font-size: 18px; font-weight: 900; color: var(--cor-destaque); text-transform: uppercase; letter-spacing: 2px; line-height: 1.1; }
   .titulo-header span { font-family: var(--fonte-dados); font-size: 9px; color: #A0A0A0; text-transform: uppercase; letter-spacing: 2px; }
-
   nav { background-color: #F8F9FA; display: flex; overflow-x: auto; border-bottom: 1px solid #CCC; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); -webkit-overflow-scrolling: touch; }
   nav::-webkit-scrollbar { display: none; }
   nav button { background: transparent; border: none; color: var(--cor-texto-secundario); font-family: var(--fonte-titulo); font-size: 11px; font-weight: 700; padding: 14px 16px; cursor: pointer; white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; border-bottom: 3px solid transparent; transition: all 0.2s ease; }
   nav button.ativo { color: var(--cor-primaria); border-bottom: 3px solid var(--cor-destaque); background-color: rgba(10,61,46,0.05); }
-
   main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
   .tela { display: none; }
   .tela.ativa { display: block; animation: fadeIn 0.3s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
   .card { background-color: var(--cor-fundo-card); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid var(--cor-primaria); position: relative; }
   .card h2 { font-family: var(--fonte-titulo); font-size: 14px; font-weight: 700; color: var(--cor-primaria); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
   .card p { font-family: var(--fonte-dados); font-size: 15px; color: var(--cor-texto-secundario); line-height: 1.5; font-weight: 500; }
-
   footer { background-color: var(--cor-primaria); padding: 10px; text-align: center; font-family: var(--fonte-titulo); font-size: 9px; color: var(--cor-destaque); border-top: 2px solid var(--cor-destaque); flex-shrink: 0; letter-spacing: 1px; position: fixed; bottom: 0; width: 100%; z-index: 10; }
-
   @media (min-width: 768px) {
-    nav { justify-content: center; }
-    nav button { font-size: 13px; padding: 16px 24px; }
-    .titulo-header h1 { font-size: 24px; }
-    .titulo-header span { font-size: 11px; }
-    main { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; }
-    .card { padding: 25px; }
+    nav { justify-content: center; } nav button { font-size: 13px; padding: 16px 24px; }
+    .titulo-header h1 { font-size: 24px; } .titulo-header span { font-size: 11px; }
+    main { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; } .card { padding: 25px; }
   }
 </style>
 </head>
 <body>
-
 <header>
   <div class="logo-container">
     <div class="logo-placeholder">T</div>
@@ -66,7 +49,6 @@
     </div>
   </div>
 </header>
-
 <nav>
   <button class="ativo" data-tela="dashboard">Dashboard</button>
   <button data-tela="admin">Admin</button>
@@ -75,48 +57,34 @@
   <button data-tela="relatorio">Relatório</button>
   <button data-tela="config">Config</button>
 </nav>
-
 <main>
-  <div id="tela-dashboard" class="tela ativa"><div class="card"><h2>Dashboard</h2><p>Visão geral da auditoria. (Em construção)</p></div></div>
-  <div id="tela-admin" class="tela"><div class="card"><h2>Admin</h2><p>Importação de arquivos e processamento. (Em construção)</p></div></div>
-  <div id="tela-auditoria" class="tela"><div class="card"><h2>Auditoria</h2><p>Drill-down por rede, loja e visita. (Em construção)</p></div></div>
-  <div id="tela-revisao" class="tela"><div class="card"><h2>Revisão</h2><p>Fila de fotos com suspeita para revisão manual. (Em construção)</p></div></div>
-  <div id="tela-relatorio" class="tela"><div class="card"><h2>Relatório</h2><p>Visão consolidada, impressão e exportação. (Em construção)</p></div></div>
+  <div id="tela-dashboard" class="tela ativa"></div>
+  <div id="tela-admin" class="tela"></div>
+  <div id="tela-auditoria" class="tela"></div>
+  <div id="tela-revisao" class="tela"></div>
+  <div id="tela-relatorio" class="tela"></div>
   <div id="tela-config" class="tela"></div>
 </main>
-
 <footer>CockPit Tarks &copy; 2026 | Grupo Tarks | Auditoria de Trade Marketing</footer>
 
-<!-- DEPENDÊNCIAS EXTERNAS -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <script>
-  // Configura o worker do PDF.js
+  // ═══ SUBBLOCO 01 e 02 — CONFIGURAÇÕES E ESTADO ═══
   if (typeof pdfjsLib !== 'undefined') {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
   }
-</script>
-/* ═══ FIM SUBBLOCO 01 ═══ */
-  /* ═══ SUBBLOCO 02 — ESTADO + PERSISTÊNCIA + CONFIG ═══ */
-<script>
+
   const Estado = {
-    config: {
-      janelaSuspeitaMin: 30,
-      limiteFotosLojaDia: 6,
-      mesAtivo: new Date().toISOString().slice(0, 7) // Formato AAAA-MM
-    },
+    config: { janelaSuspeitaMin: 30, limiteFotosLojaDia: 6, mesAtivo: new Date().toISOString().slice(0, 7) },
     meses: {}
   };
 
   function salvarEstado() {
-    try {
-      localStorage.setItem('cockpit_estado', JSON.stringify(Estado));
-    } catch (e) {
-      console.error("Erro ao salvar estado:", e);
-      alert("⚠️ Erro ao salvar dados. O armazenamento do navegador pode estar cheio. Exporte um backup e limpe os dados antigos.");
-    }
+    try { localStorage.setItem('cockpit_estado', JSON.stringify(Estado)); }
+    catch (e) { alert("⚠️ Erro ao salvar. Armazenamento cheio."); }
   }
 
   function carregarEstado() {
@@ -126,26 +94,30 @@
         const dados = JSON.parse(salvo);
         if (dados.config) Estado.config = { ...Estado.config, ...dados.config };
         if (dados.meses) Estado.meses = dados.meses;
-      } catch (e) { 
-        console.error("Erro ao carregar estado:", e); 
-      }
+      } catch (e) { console.error("Erro ao carregar:", e); }
     }
   }
 
   function garantirMes(mes) {
     if (!Estado.meses[mes]) {
-      Estado.meses[mes] = {
-        fechamento: [], 
-        lojas: [], 
-        relatorioTempo: [], 
-        fotos: [],
-        auditoria: null // Inicia como nulo até ser processada
-      };
+      Estado.meses[mes] = { fechamento: [], lojas: [], relatorioTempo: [], fotos: [], auditoria: null };
       salvarEstado();
     }
     return Estado.meses[mes];
   }
 
+  function normalizarTexto(texto) {
+    if (!texto) return '';
+    return String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+  }
+
+  function formatarMoeda(v) { return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+  function formatarPorcentagem(v) { return Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'; }
+</script>
+<script>
+  // ═══ SUBBLOCO 03 e 04 — CONFIG E ADMIN (UPLOADS) ═══
+  
+  // ── RENDERIZAR CONFIG ──
   function renderizarConfig() {
     const container = document.getElementById('tela-config');
     const meses = Object.keys(Estado.meses).sort().reverse();
@@ -156,8 +128,7 @@
       optionsMes = `<option value="${mesAtual}">${mesAtual} (novo)</option>`;
     } else {
       meses.forEach(m => {
-        const selecionado = m === mesAtual ? 'selected' : '';
-        optionsMes += `<option value="${m}" ${selecionado}>${m}</option>`;
+        optionsMes += `<option value="${m}" ${m === mesAtual ? 'selected' : ''}>${m}</option>`;
       });
       if (!meses.includes(mesAtual)) {
         optionsMes += `<option value="${mesAtual}" selected>${mesAtual} (novo)</option>`;
@@ -175,16 +146,15 @@
       </div>
       <div class="card">
         <h2>Regras de Auditoria</h2>
-        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Janela de Suspeita (minutos):</label>
+        <label style="font-size: 12px; font-weight: bold;">Janela de Suspeita (minutos):</label>
         <input type="number" id="config-suspeita" value="${Estado.config.janelaSuspeitaMin}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
-        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Limite de Fotos por Loja/Dia:</label>
+        <label style="font-size: 12px; font-weight: bold;">Limite de Fotos por Loja/Dia:</label>
         <input type="number" id="config-limite" value="${Estado.config.limiteFotosLojaDia}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
         <button id="btn-salvar-config" style="width: 100%; padding: 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Salvar Regras</button>
         <div id="msg-config" style="margin-top: 10px; text-align: center; font-weight: bold; color: var(--cor-primaria);"></div>
       </div>
       <div class="card">
         <h2>Backup de Dados</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Exporte ou importe o estado completo do sistema (incluindo imagens).</p>
         <div style="display: flex; gap: 10px;">
           <button id="btn-exportar" style="flex: 1; padding: 12px; background: var(--cor-destaque); color: var(--cor-primaria); border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">📥 Exportar</button>
           <button id="btn-importar" style="flex: 1; padding: 12px; background: transparent; color: var(--cor-primaria); border: 1px solid var(--cor-primaria); border-radius: 8px; font-weight: bold; cursor: pointer;">📤 Importar</button>
@@ -200,20 +170,15 @@
     document.getElementById('select-mes').addEventListener('change', (e) => {
       Estado.config.mesAtivo = e.target.value;
       garantirMes(Estado.config.mesAtivo);
-      salvarEstado();
-      renderizarConfig();
+      salvarEstado(); renderizarConfig();
     });
 
     document.getElementById('btn-add-mes').addEventListener('click', () => {
       const novoMes = prompt("Digite o novo mês (formato AAAA-MM):", new Date().toISOString().slice(0, 7));
       if (novoMes && /^\d{4}-\d{2}$/.test(novoMes)) {
-        Estado.config.mesAtivo = novoMes;
-        garantirMes(novoMes);
-        salvarEstado();
-        renderizarConfig();
-      } else if (novoMes) {
-        alert("Formato inválido. Use AAAA-MM (ex: 2026-11).");
-      }
+        Estado.config.mesAtivo = novoMes; garantirMes(novoMes);
+        salvarEstado(); renderizarConfig();
+      } else if (novoMes) alert("Formato inválido. Use AAAA-MM.");
     });
 
     document.getElementById('btn-salvar-config').addEventListener('click', () => {
@@ -226,140 +191,142 @@
 
     document.getElementById('btn-exportar').addEventListener('click', () => {
       const blob = new Blob([JSON.stringify(Estado, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `cockpit_backup_${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `cockpit_backup_${new Date().toISOString().slice(0, 10)}.json`; a.click();
       URL.revokeObjectURL(a.href);
     });
 
-    document.getElementById('btn-importar').addEventListener('click', () => {
-      document.getElementById('input-backup').click();
-    });
-
+    document.getElementById('btn-importar').addEventListener('click', () => document.getElementById('input-backup').click());
     document.getElementById('input-backup').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+      const file = e.target.files[0]; if (!file) return;
       const leitor = new FileReader();
       leitor.onload = (event) => {
         try {
           const dados = JSON.parse(event.target.result);
           if (dados.config && dados.meses) {
-            Estado.config = dados.config;
-            Estado.meses = dados.meses;
-            salvarEstado();
-            alert('✅ Backup importado com sucesso!');
-            renderizarConfig();
-          } else {
-            alert('❌ Arquivo de backup inválido.');
-          }
-        } catch (err) { alert('❌ Erro ao ler o arquivo: ' + err.message); }
+            Estado.config = dados.config; Estado.meses = dados.meses;
+            salvarEstado(); alert('✅ Backup importado!'); renderizarConfig();
+          } else alert('❌ Arquivo inválido.');
+        } catch (err) { alert('❌ Erro ao ler: ' + err.message); }
       };
       leitor.readAsText(file);
     });
 
     document.getElementById('btn-limpar').addEventListener('click', () => {
-      if (confirm('⚠️ ATENÇÃO: Isso apagará TODOS os dados salvos neste navegador. Tem certeza?')) {
-        localStorage.removeItem('cockpit_estado');
-        window.location.reload();
+      if (confirm('⚠️ ATENÇÃO: Isso apagará TODOS os dados salvos. Tem certeza?')) {
+        localStorage.removeItem('cockpit_estado'); window.location.reload();
       }
     });
   }
-</script>
-/* ═══ FIM SUBBLOCO 02 ═══ */
-  /* ═══ SUBBLOCO 03 — PARSER FECHAMENTO + TELA ADMIN ═══ */
-<script>
-  // ── FUNÇÕES AUXILIARES ──
-  function normalizarTexto(texto) {
-    if (!texto) return '';
-    return String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
-  }
 
-  // ── PARSER DO FECHAMENTO ──
+  // ── PARSERS DE ARQUIVOS (FECHAMENTO, PLANO E TEMPO) ──
   function processarFechamento(workbook) {
-    if (!workbook.SheetNames.includes('sistematica')) {
-      throw new Error("Aba 'sistematica' não encontrada. Verifique se é o arquivo de Fechamento correto.");
-    }
-
+    if (!workbook.SheetNames.includes('sistematica')) throw new Error("Aba 'sistematica' não encontrada.");
     const aba = workbook.Sheets['sistematica'];
     const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
     const fechamentoExtraido = [];
 
-    // Os dados começam na linha 3 (índice 2), pois as duas primeiras são cabeçalhos
     for (let i = 2; i < linhas.length; i++) {
-      const linha = linhas[i];
-      if (!linha) continue;
-
-      const rede = String(linha[2] || '').trim(); // Coluna C
+      const linha = linhas[i]; if (!linha) continue;
+      const rede = String(linha[2] || '').trim();
       if (!rede || normalizarTexto(rede) === 'TOTAL' || normalizarTexto(rede) === 'REDE') continue;
 
-      const custoVisita = parseFloat(String(linha[3]).replace(',', '.')) || 0; // Coluna D
-      const qtdLojas = parseInt(linha[4]) || 0; // Coluna E
-      const visitasSemana = parseInt(linha[5]) || 0; // Coluna F
-      const programadasMes = parseInt(linha[6]) || 0; // Coluna G
-      const declaradasMes = parseInt(linha[7]) || 0; // Coluna H
+      const custoVisita = parseFloat(String(linha[3]).replace(',', '.')) || 0;
+      const qtdLojas = parseInt(linha[4]) || 0;
+      const visitasSemana = parseInt(linha[5]) || 0;
+      const programadasMes = parseInt(linha[6]) || 0;
+      const declaradasMes = parseInt(linha[7]) || 0;
 
-      // Só adiciona se tiver algum dado válido
       if (custoVisita > 0 || declaradasMes > 0) {
-        fechamentoExtraido.push({
-          rede: normalizarTexto(rede),
-          redeOriginal: rede,
-          custoVisita,
-          qtdLojas,
-          visitasSemana,
-          programadasMes,
-          declaradasMes
-        });
+        fechamentoExtraido.push({ rede: normalizarTexto(rede), redeOriginal: rede, custoVisita, qtdLojas, visitasSemana, programadasMes, declaradasMes });
       }
     }
-
-    if (fechamentoExtraido.length === 0) {
-      throw new Error("Nenhum dado de rede válido encontrado na aba 'sistematica'.");
-    }
-
+    if (fechamentoExtraido.length === 0) throw new Error("Nenhum dado válido na aba 'sistematica'.");
     return fechamentoExtraido;
   }
 
-  // ── UPLOAD DO EXCEL ──
-  function configurarUploadExcel() {
-    const input = document.getElementById('input-excel');
-    if (!input) return;
+  function processarPlano(workbook) {
+    const lojasExtraidas = [];
+    const abasIgnorar = ['sistematica'];
 
-    input.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    workbook.SheetNames.forEach(nomeAba => {
+      if (abasIgnorar.includes(nomeAba)) return;
+      const aba = workbook.Sheets[nomeAba]; if (!aba) return;
+      const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
+      if (linhas.length < 3) return;
 
-      const msg = document.getElementById('msg-excel');
-      msg.innerHTML = '<span style="color: #E67E22;">Processando arquivo...</span>';
-
-      const leitor = new FileReader();
-      leitor.onload = (evento) => {
-        try {
-          const dados = new Uint8Array(evento.target.result);
-          const workbook = XLSX.read(dados, { type: 'array' });
-
-          // Processa o fechamento
-          const fechamento = processarFechamento(workbook);
-          
-          // Salva no mês ativo
-          const mesDados = garantirMes(Estado.config.mesAtivo);
-          mesDados.fechamento = fechamento;
-          // Invalida auditoria anterior, pois os dados base mudaram
-          mesDados.auditoria = null;
-          salvarEstado();
-
-          msg.innerHTML = `<span style="color: #27AE60;">✅ Fechamento importado: ${fechamento.length} redes encontradas.</span>`;
-          renderizarAdmin(); // Atualiza a tela
-        } catch (erro) {
-          msg.innerHTML = `<span style="color: #E74C3C;">❌ ${erro.message}</span>`;
+      let idxNomeLoja = -1, idxPromotor = -1, idxDia = -1, linhaCabecalho = -1;
+      for (let i = 0; i < Math.min(15, linhas.length); i++) {
+        const linha = linhas[i] || [];
+        let aNome = -1, aProm = -1, aDia = -1;
+        for (let c = 0; c < linha.length; c++) {
+          const cel = normalizarTexto(linha[c]);
+          if (aNome === -1 && cel === 'NOME DA LOJA') aNome = c;
+          if (aProm === -1 && (cel === 'PROMOTOR (A)' || cel === 'PROMOTOR' || cel === 'PROMOTOR(A)')) aProm = c;
+          if (aDia === -1 && (cel === 'DIA DE VISITA' || cel === 'DIA DE VISITAS')) aDia = c;
         }
-      };
-      leitor.onerror = () => { msg.innerHTML = '<span style="color: #E74C3C;">❌ Falha ao ler o arquivo.</span>'; };
-      leitor.readAsArrayBuffer(file);
+        if (aNome !== -1) { idxNomeLoja = aNome; idxPromotor = aProm; idxDia = aDia; linhaCabecalho = i; break; }
+      }
+      if (idxNomeLoja === -1) return;
+      if (idxPromotor === -1) idxPromotor = idxNomeLoja + 1;
+      if (idxDia === -1) idxDia = idxPromotor + 1;
+
+      for (let i = linhaCabecalho + 1; i < linhas.length; i++) {
+        const linha = linhas[i] || [];
+        const nomeLoja = String(linha[idxNomeLoja] || '').trim();
+        if (!nomeLoja || nomeLoja.length < 2) continue;
+        const nomeNorm = normalizarTexto(nomeLoja);
+        if (nomeNorm === 'NOME DA LOJA' || nomeNorm === 'TOTAL' || nomeNorm === 'TOTAL GERAL' || nomeNorm.startsWith('TOTAL ')) continue;
+        if (/^\d+$/.test(nomeLoja)) continue;
+
+        lojasExtraidas.push({ rede: normalizarTexto(nomeAba), nomeLoja: nomeLoja, promotor: String(linha[idxPromotor] || '').trim(), diaVisita: String(linha[idxDia] || '').trim() });
+      }
     });
+    if (lojasExtraidas.length === 0) throw new Error("Nenhuma loja encontrada (verifique se há coluna 'Nome da Loja').");
+    return lojasExtraidas;
   }
 
-  // ── RENDERIZAR TELA ADMIN ──
+  function processarRelatorioTempo(workbook) {
+    let abaEncontrada = null;
+    for (const nome of workbook.SheetNames) {
+      const aba = workbook.Sheets[nome]; if (!aba) continue;
+      const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
+      if (linhas.length < 2) continue;
+      for (let i = 0; i < Math.min(3, linhas.length); i++) {
+        const linha = (linhas[i] || []).map(c => normalizarTexto(c));
+        if (linha.some(c=>c==='REDE') && linha.some(c=>c==='LOJA') && linha.some(c=>c==='PROMOTOR') && linha.some(c=>c==='DIA')) {
+          const prox = linhas[i + 1] || [];
+          if (prox.length >= 4 && String(prox[0]).trim() && String(prox[1]).trim()) {
+            abaEncontrada = { linhas, linhaCabecalho: i }; break;
+          }
+        }
+      }
+      if (abaEncontrada) break;
+    }
+    if (!abaEncontrada) throw new Error("Aba de 'Relatório de tempo' não encontrada (Rede | Loja | Promotor | Dia).");
+
+    const { linhas, linhaCabecalho } = abaEncontrada;
+    const visitas = [];
+    for (let i = linhaCabecalho + 1; i < linhas.length; i++) {
+      const linha = linhas[i] || [];
+      const rede = String(linha[0] || '').trim(), loja = String(linha[1] || '').trim(), promotor = String(linha[2] || '').trim(), dia = String(linha[3] || '').trim();
+      if (!rede || !loja || !promotor || !dia) continue;
+      if (normalizarTexto(rede) === 'TOTAL' || normalizarTexto(loja) === 'TOTAL') continue;
+
+      let dataF = dia;
+      if (!isNaN(dia) && Number(dia) > 40000) {
+        try { const d = XLSX.SSF.parse_date_code(Number(dia)); dataF = `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`; } catch(e) {}
+      }
+      if (dataF.includes(' ')) dataF = dataF.split(' ')[0];
+      const mBR = dataF.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (mBR) dataF = `${mBR[3]}-${mBR[2]}-${mBR[1]}`;
+      visitas.push({ rede: normalizarTexto(rede), loja, promotor, data: dataF });
+    }
+    if (visitas.length === 0) throw new Error("Nenhuma visita válida.");
+    return visitas;
+  }
+
+  // ── RENDERIZAR ADMIN ──
   function renderizarAdmin() {
     const container = document.getElementById('tela-admin');
     const mesDados = Estado.meses[Estado.config.mesAtivo] || {};
@@ -367,371 +334,106 @@
     const temLojas = mesDados.lojas && mesDados.lojas.length > 0;
     const temTempo = mesDados.relatorioTempo && mesDados.relatorioTempo.length > 0;
     const temFotos = mesDados.fotos && mesDados.fotos.length > 0;
-
-    // Função auxiliar para renderizar o status de cada etapa
-    const renderStatus = (concluido, textoConcluido, textoPendente, corPendente = '#A0A0A0') => {
-      if (concluido) {
-        return `<p style="font-size: 12px; color: #27AE60; font-weight: bold; margin-top: 8px;">✅ ${textoConcluido}</p>`;
-      }
-      return `<p style="font-size: 12px; color: ${corPendente}; margin-top: 8px;">${textoPendente}</p>`;
-    };
-
-    // Resumo do Fechamento
-    let resumoFechamento = '';
-    if (temFechamento) {
-      const totalDeclaradas = mesDados.fechamento.reduce((acc, r) => acc + r.declaradasMes, 0);
-      resumoFechamento = `
-        <div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;">
-          <p style="font-size: 13px; color: #1A252F;"><strong>${mesDados.fechamento.length} redes</strong> | <strong>${totalDeclaradas} visitas declaradas</strong> no total.</p>
-        </div>
-      `;
-    }
-
-    // Botão de processar auditoria (só habilita se os 4 pilares estiverem prontos)
+    const temAuditoria = mesDados.auditoria !== null && mesDados.auditoria !== undefined;
     const podeAuditar = temFechamento && temLojas && temTempo && temFotos;
 
+    let resumoFechamento = temFechamento ? `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;"><p style="font-size: 13px;"><strong>${mesDados.fechamento.length} redes</strong> | <strong>${mesDados.fechamento.reduce((acc, r) => acc + r.declaradasMes, 0)} visitas declaradas</strong>.</p></div>` : '';
+    let resumoLojas = temLojas ? `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;"><p style="font-size: 13px;"><strong>${mesDados.lojas.length} lojas</strong> em <strong>${[...new Set(mesDados.lojas.map(l => l.rede))].length} redes</strong>.</p></div>` : '';
+    let resumoTempo = temTempo ? `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;"><p style="font-size: 13px;"><strong>${mesDados.relatorioTempo.length} visitas</strong> registradas.</p></div>` : '';
+    let resumoFotos = temFotos ? `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;"><p style="font-size: 13px;"><strong>${mesDados.fotos.length} fotos</strong> extraídas.</p></div>` : '';
+
     container.innerHTML = `
-      <div class="card">
-        <h2>1. Importar Fechamento (Excel)</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Selecione a planilha de Fechamento PACTO. O sistema buscará a aba <em>sistematica</em>.</p>
-        <input type="file" id="input-excel" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
-        <div id="msg-excel" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
-        ${resumoFechamento}
-        ${renderStatus(temFechamento, 'Fechamento carregado.', 'Nenhum fechamento importado.', '#F39C12')}
-      </div>
-      
-      <div class="card">
-        <h2>2. Importar Plano e Relatório (Excel)</h2>
-        <p style="font-size: 13px; color: #A0A0A0;">Disponível no Subbloco 04.</p>
-      </div>
-
-      <div class="card">
-        <h2>3. Importar PDFs (Fotos)</h2>
-        <p style="font-size: 13px; color: #A0A0A0;">Disponível no Subbloco 05.</p>
-      </div>
-
-      <div class="card" style="border-left-color: ${podeAuditar ? 'var(--cor-destaque)' : '#CCC'};">
-        <h2>4. Processar Auditoria</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Cruza todos os dados e calcula os resultados financeiros.</p>
-        ${!podeAuditar ? '<p style="font-size: 12px; color: var(--cor-perigo); font-weight: bold;">⚠️ Importe os 4 conjuntos de dados para habilitar.</p>' : ''}
-        <button id="btn-auditar" ${!podeAuditar ? 'disabled' : ''} style="width: 100%; padding: 15px; background: ${podeAuditar ? 'var(--cor-primaria)' : '#CCC'}; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: ${podeAuditar ? 'pointer' : 'not-allowed'}; margin-top: 10px;">⚙️ Processar Auditoria</button>
-      </div>
+      <div class="card"><h2>1. Importar Fechamento</h2><input type="file" id="input-excel" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;"><div id="msg-excel" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoFechamento}</div>
+      <div class="card"><h2>2. Importar Plano de Visitas</h2><input type="file" id="input-plano" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;"><div id="msg-plano" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoLojas}</div>
+      <div class="card"><h2>3. Importar Relatório de Tempo</h2><input type="file" id="input-tempo" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;"><div id="msg-tempo" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoTempo}</div>
+      <div class="card"><h2>4. Importar PDFs (Fotos)</h2><input type="file" id="input-pdf" accept=".pdf" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;"><div id="progresso-pdf" style="display: none; margin-top: 15px;"><div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px; overflow: hidden;"><div id="barra-pdf" style="width: 0%; height: 100%; background: var(--cor-destaque); transition: width 0.3s ease;"></div></div><p id="texto-pdf" style="font-size: 11px; text-align: center; margin-top: 5px; color: var(--cor-texto-secundario);"></p></div><div id="msg-pdf" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>${resumoFotos}</div>
+      <div class="card" style="border-left-color: ${podeAuditar ? 'var(--cor-destaque)' : '#CCC'}; background: ${podeAuditar ? '#FFFDF5' : 'white'};"><h2>5. Processar Auditoria</h2>${!podeAuditar ? '<p style="font-size: 12px; color: var(--cor-perigo); font-weight: bold;">⚠️ Importe os 4 conjuntos de dados.</p>' : ''}${temAuditoria ? '<p style="font-size: 12px; color: #27AE60; font-weight: bold;">✅ Auditoria processada.</p>' : ''}<button id="btn-auditar" ${!podeAuditar ? 'disabled' : ''} style="width: 100%; padding: 15px; background: ${podeAuditar ? 'var(--cor-primaria)' : '#CCC'}; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: ${podeAuditar ? 'pointer' : 'not-allowed'}; margin-top: 10px;">⚙️ ${temAuditoria ? 'Recalcular' : 'Processar'} Auditoria</button></div>
     `;
 
-    // Re-configura o evento do input
-    configurarUploadExcel();
+    const bindUpload = (idInput, idMsg, parser, campo, extra) => {
+      const input = document.getElementById(idInput); if (!input) return;
+      input.addEventListener('change', (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        const msg = document.getElementById(idMsg); msg.innerHTML = '<span style="color: #E67E22;">Processando...</span>';
+        const leitor = new FileReader();
+        leitor.onload = (ev) => {
+          try {
+            const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+            const dados = parser(wb);
+            const mes = garantirMes(Estado.config.mesAtivo);
+            mes[campo] = dados; mes.auditoria = null; salvarEstado();
+            msg.innerHTML = `<span style="color: #27AE60;">✅ ${extra(dados)}</span>`;
+            renderizarAdmin();
+          } catch (err) { msg.innerHTML = `<span style="color: #E74C3C;">❌ ${err.message}</span>`; }
+        };
+        leitor.readAsArrayBuffer(file);
+      });
+    };
 
-    // Configura o botão de auditar
-    if (podeAuditar) {
-      document.getElementById('btn-auditar').addEventListener('click', executarAuditoria);
-    }
+    bindUpload('input-excel', 'msg-excel', processarFechamento, 'fechamento', d => `${d.length} redes importadas.`);
+    bindUpload('input-plano', 'msg-plano', processarPlano, 'lojas', d => `${d.length} lojas importadas.`);
+    bindUpload('input-tempo', 'msg-tempo', processarRelatorioTempo, 'relatorioTempo', d => `${d.length} visitas importadas.`);
+
+    configurarUploadPDF();
+    if (podeAuditar) document.getElementById('btn-auditar').addEventListener('click', executarAuditoria);
   }
 </script>
-/* ═══ FIM SUBBLOCO 03 ═══ */
-  /* ═══ SUBBLOCO 04 — PARSER PLANO E RELATÓRIO DE TEMPO (V2 ROBUSTO) ═══ */
 <script>
-  // ── PARSER DO PLANO DE VISITAS (INTELIGENTE) ──
-  // Não assume posição fixa. Encontra o cabeçalho e mapeia as colunas.
-  function processarPlano(workbook) {
-    const lojasExtraidas = [];
-    const abasIgnorar = ['sistematica'];
-
-    workbook.SheetNames.forEach(nomeAba => {
-      if (abasIgnorar.includes(nomeAba)) return;
-
-      const aba = workbook.Sheets[nomeAba];
-      const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
-      if (linhas.length < 3) return;
-
-      // 1. Encontrar a linha do cabeçalho e mapear as colunas
-      let indices = { nomeLoja: -1, promotor: -1, diaVisita: -1 };
-      let linhaInicioDados = -1;
-
-      for (let i = 0; i < Math.min(10, linhas.length); i++) {
-        const linha = linhas[i] || [];
-        // Procura as palavras-chave em qualquer coluna
-        for (let c = 0; c < linha.length; c++) {
-          const celula = normalizarTexto(linha[c]);
-          if (celula === 'NOME DA LOJA' && indices.nomeLoja === -1) indices.nomeLoja = c;
-          if (celula === 'PROMOTOR (A)' || celula === 'PROMOTOR (A)' || celula === 'PROMOTOR' || celula === 'PROMOTOR(A)') {
-            if (indices.promotor === -1) indices.promotor = c;
-          }
-          if (celula === 'DIA DE VISITA' || celula === 'DIA DE VISITA') {
-            if (indices.diaVisita === -1) indices.diaVisita = c;
-          }
-        }
-        // Se encontrou pelo menos "Nome da Loja", a próxima linha pode ser a de dados
-        if (indices.nomeLoja !== -1) {
-          linhaInicioDados = i + 1;
-          break;
-        }
-      }
-
-      // Se não encontrou "Nome da Loja", pula a aba
-      if (indices.nomeLoja === -1) {
-        console.warn(`Aba ${nomeAba}: coluna "Nome da Loja" não encontrada. Pulando.`);
-        return;
-      }
-
-      // Se não encontrou promotor ou dia, atribui vazio
-      if (indices.promotor === -1) indices.promotor = indices.nomeLoja + 1;
-      if (indices.diaVisita === -1) indices.diaVisita = indices.nomeLoja + 2;
-
-      // 2. Iterar pelas linhas de dados a partir da linha identificada
-      for (let i = linhaInicioDados; i < linhas.length; i++) {
-        const linha = linhas[i] || [];
-        const nomeLoja = String(linha[indices.nomeLoja] || '').trim();
-        
-        if (!nomeLoja || nomeLoja.length < 2) continue;
-        if (normalizarTexto(nomeLoja).includes('TOTAL') || normalizarTexto(nomeLoja).includes('NOME DA LOJA')) continue;
-
-        lojasExtraidas.push({
-          rede: normalizarTexto(nomeAba),
-          nomeLoja: nomeLoja,
-          promotor: String(linha[indices.promotor] || '').trim(),
-          diaVisita: String(linha[indices.diaVisita] || '').trim()
-        });
-      }
-    });
-
-    if (lojasExtraidas.length === 0) {
-      throw new Error("Nenhuma loja encontrada. As abas do Plano de Visitas devem conter a coluna 'Nome da Loja'.");
-    }
-
-    return lojasExtraidas;
-  }
-
-  // ── PARSER DO RELATÓRIO DE TEMPO (FLEXÍVEL) ──
-  // Encontra a aba pelo nome parcial em vez de exigir o nome exato.
-  function processarRelatorioTempo(workbook) {
-    const nomeAbaEncontrada = workbook.SheetNames.find(nome => 
-      normalizarTexto(nome).includes('RELATORIO DE TEMPO') || 
-      normalizarTexto(nome) === 'EXPORT - RELATORIO DE TEMPO POR'
-    );
-
-    if (!nomeAbaEncontrada) {
-      throw new Error("Aba de 'Relatório de tempo' não encontrada. Verifique se é o arquivo correto.");
-    }
-
-    const aba = workbook.Sheets[nomeAbaEncontrada];
-    const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
-    const visitas = [];
-
-    // Encontra a linha do cabeçalho
-    let linhaCabecalho = -1;
-    for (let i = 0; i < Math.min(5, linhas.length); i++) {
-      const linha = linhas[i] || [];
-      const textoLinha = linha.map(c => normalizarTexto(c)).join('|');
-      if (textoLinha.includes('REDE') && textoLinha.includes('LOJA') && textoLinha.includes('PROMOTOR') && textoLinha.includes('DIA')) {
-        linhaCabecalho = i;
-        break;
-      }
-    }
-
-    if (linhaCabecalho === -1) {
-      throw new Error("Cabeçalho não encontrado na aba de Relatório de Tempo.");
-    }
-
-    // Pula a linha do cabeçalho e lê os dados (Rede | Loja | Promotor | Dia)
-    for (let i = linhaCabecalho + 1; i < linhas.length; i++) {
-      const linha = linhas[i] || [];
-      const rede = String(linha[0] || '').trim();
-      const loja = String(linha[1] || '').trim();
-      const promotor = String(linha[2] || '').trim();
-      const dia = String(linha[3] || '').trim();
-
-      if (rede && loja && promotor && dia) {
-        // Normaliza a data para AAAA-MM-DD
-        let dataFormatada = dia;
-        // Se vier como data Excel (ex: 45532), converte
-        if (!isNaN(dia) && Number(dia) > 40000) {
-          const dataExcel = XLSX.SSF.parse_date_code(Number(dia));
-          dataFormatada = `${dataExcel.y}-${String(dataExcel.m).padStart(2, '0')}-${String(dataExcel.d).padStart(2, '0')}`;
-        }
-        // Se vier como "2026-10-29 00:00:00", corta
-        if (dataFormatada.includes(' ')) dataFormatada = dataFormatada.split(' ')[0];
-
-        visitas.push({
-          rede: normalizarTexto(rede),
-          loja: loja,
-          promotor: promotor,
-          data: dataFormatada
-        });
-      }
-    }
-
-    if (visitas.length === 0) {
-      throw new Error("Nenhuma visita encontrada no Relatório de Tempo.");
-    }
-
-    return visitas;
-  }
-
-  // ── UPLOAD DO PLANO DE VISITAS ──
-  function configurarUploadPlano() {
-    const input = document.getElementById('input-plano');
-    if (!input) return;
-
-    input.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const msg = document.getElementById('msg-plano');
-      msg.innerHTML = '<span style="color: #E67E22;">Processando Plano...</span>';
-
-      const leitor = new FileReader();
-      leitor.onload = (evento) => {
-        try {
-          const dados = new Uint8Array(evento.target.result);
-          const workbook = XLSX.read(dados, { type: 'array' });
-          const lojas = processarPlano(workbook);
-          
-          const mesDados = garantirMes(Estado.config.mesAtivo);
-          mesDados.lojas = lojas; 
-          mesDados.auditoria = null;
-          salvarEstado();
-
-          // Conta redes únicas
-          const redesUnicas = [...new Set(lojas.map(l => l.rede))];
-          msg.innerHTML = `<span style="color: #27AE60;">✅ Plano importado: ${lojas.length} lojas em ${redesUnicas.length} redes.</span>`;
-          renderizarAdmin();
-        } catch (erro) {
-          msg.innerHTML = `<span style="color: #E74C3C;">❌ ${erro.message}</span>`;
-        }
-      };
-      leitor.readAsArrayBuffer(file);
-    });
-  }
-
-  // ── UPLOAD DO RELATÓRIO DE TEMPO ──
-  function configurarUploadTempo() {
-    const input = document.getElementById('input-tempo');
-    if (!input) return;
-
-    input.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const msg = document.getElementById('msg-tempo');
-      msg.innerHTML = '<span style="color: #E67E22;">Processando Relatório...</span>';
-
-      const leitor = new FileReader();
-      leitor.onload = (evento) => {
-        try {
-          const dados = new Uint8Array(evento.target.result);
-          const workbook = XLSX.read(dados, { type: 'array' });
-          const visitas = processarRelatorioTempo(workbook);
-          
-          const mesDados = garantirMes(Estado.config.mesAtivo);
-          mesDados.relatorioTempo = visitas;
-          mesDados.auditoria = null;
-          salvarEstado();
-
-          const diasUnicos = [...new Set(visitas.map(v => v.data))].sort();
-          const primeiroDia = diasUnicos[0] || '?';
-          const ultimoDia = diasUnicos[diasUnicos.length - 1] || '?';
-          msg.innerHTML = `<span style="color: #27AE60;">✅ Tempo importado: ${visitas.length} visitas (${primeiroDia} a ${ultimoDia}).</span>`;
-          renderizarAdmin();
-        } catch (erro) {
-          msg.innerHTML = `<span style="color: #E74C3C;">❌ ${erro.message}</span>`;
-        }
-      };
-      leitor.readAsArrayBuffer(file);
-    });
-  }
-</script>
-/* ═══ FIM SUBBLOCO 04 ═══ */
-  /* ═══ SUBBLOCO 05 — PARSER DE PDFs (FOTOS + HASH) ═══ */
-<script>
-  // ── FUNÇÕES AUXILIARES DE IMAGEM E TEXTO ──
-  
+  // ═══ SUBBLOCO 05 — PARSER DE PDFs (FOTOS) ═══
   async function gerarHash(base64) {
     const msgBuffer = new TextEncoder().encode(base64);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   function converterParaBase64(img) {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
+      canvas.width = img.width; canvas.height = img.height;
       const ctx = canvas.getContext('2d');
-      
       const imageData = ctx.createImageData(img.width, img.height);
       
       if (img.data.length === img.width * img.height * 4) {
         imageData.data.set(img.data);
       } else if (img.data.length === img.width * img.height * 3) {
         for (let i = 0, j = 0; i < img.data.length; i += 3, j += 4) {
-          imageData.data[j] = img.data[i];
-          imageData.data[j + 1] = img.data[i + 1];
-          imageData.data[j + 2] = img.data[i + 2];
-          imageData.data[j + 3] = 255;
-        }
-      } else if (img.data.length === img.width * img.height) {
-        for (let i = 0, j = 0; i < img.data.length; i++, j += 4) {
-          imageData.data[j] = img.data[i];
-          imageData.data[j + 1] = img.data[i];
-          imageData.data[j + 2] = img.data[i];
-          imageData.data[j + 3] = 255;
+          imageData.data[j] = img.data[i]; imageData.data[j+1] = img.data[i+1]; imageData.data[j+2] = img.data[i+2]; imageData.data[j+3] = 255;
         }
       } else {
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0, j = 0; i < img.data.length; i++, j += 4) {
+          imageData.data[j] = img.data[i]; imageData.data[j+1] = img.data[i]; imageData.data[j+2] = img.data[i]; imageData.data[j+3] = 255;
+        }
       }
-
       ctx.putImageData(imageData, 0, 0);
-      // Qualidade 0.7 para não estourar o localStorage
       resolve(canvas.toDataURL('image/jpeg', 0.7)); 
     });
   }
 
   function extrairMetadadosTexto(textoBruto) {
-    let dataHora = null;
-    let promotor = null;
-    let lojaTexto = null;
-
-    // Regex para Data e Hora (ex: 19/10/2026 - 10:21)
+    let dataHora = null, promotor = null, lojaTexto = null;
     const matchData = textoBruto.match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
     if (matchData) {
       const [dia, mes, ano] = matchData[1].split('/');
       dataHora = `${ano}-${mes}-${dia}T${matchData[2]}`;
     }
-
-    // Regex para Promotor (pega o texto após "Promotor:" até quebra de linha ou "Produto:")
     const matchPromotor = textoBruto.match(/Promotor:\s*([A-Za-zÀ-ÿ\s\.]+?)(?=\s*(?:Produto|$|\n))/i);
-    if (matchPromotor) {
-      promotor = matchPromotor[1].trim().replace(/\s+/g, ' ');
-    }
-
-    // Tenta extrair a loja do rodapé da imagem (texto "Foto: antes/depois da reposição ...")
+    if (matchPromotor) promotor = matchPromotor[1].trim().replace(/\s+/g, ' ');
+    
     const matchLojaRodape = textoBruto.match(/Foto:\s*(?:antes|depois)\s*da\s*reposição\s*\n?([A-Z0-9À-ÿ\s\/\.\-]+?)(?=\n|$)/i);
-    if (matchLojaRodape) {
-      lojaTexto = matchLojaRodape[1].trim().replace(/\n/g, ' ');
-    }
-
+    if (matchLojaRodape) lojaTexto = matchLojaRodape[1].trim().replace(/\n/g, ' ');
     return { dataHora, promotor, lojaTexto };
   }
 
-  // ── PROCESSADOR PRINCIPAL DO PDF ──
   async function processarPDF(arquivo, callbackProgresso) {
     const arrayBuffer = await arquivo.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const totalPaginas = pdf.numPages;
     const fotosExtraidas = [];
 
-    for (let i = 1; i <= totalPaginas; i++) {
-      if (callbackProgresso) callbackProgresso(i, totalPaginas);
-
+    for (let i = 1; i <= pdf.numPages; i++) {
+      if (callbackProgresso) callbackProgresso(i, pdf.numPages);
       const pagina = await pdf.getPage(i);
-      
-      // 1. Extrai texto
       const textoConteudo = await pagina.getTextContent();
       const textoBruto = textoConteudo.items.map(item => item.str).join(' \n ');
-      
-      // 2. Extrai imagem
       const operacoes = await pagina.getOperatorList();
       let imagemBase64 = null;
 
@@ -740,536 +442,231 @@
           try {
             const img = await pagina.objs.get(operacoes.argsArray[j][0]);
             if (img && img.width > 150 && img.height > 150) {
-              imagemBase64 = await converterParaBase64(img);
-              break;
+              imagemBase64 = await converterParaBase64(img); break;
             }
-          } catch (e) {
-            // Ignora erros de imagem específicos
-          }
+          } catch (e) {}
         }
       }
 
-      // 3. Se achou imagem, extrai metadados e hash
       if (imagemBase64) {
-        const metadados = extrairMetadadosTexto(textoBruto);
+        const meta = extrairMetadadosTexto(textoBruto);
         const hash = await gerarHash(imagemBase64);
-
         fotosExtraidas.push({
           id: Date.now() + '-' + i + '-' + Math.random().toString(36).substr(2, 5),
-          pagina: i,
-          arquivoOrigem: arquivo.name,
-          dataHora: metadados.dataHora,
-          promotor: metadados.promotor,
-          lojaTexto: metadados.lojaTexto,
-          imagemBase64: imagemBase64,
-          hash: hash,
-          status: 'pendente',
-          motivoGap: null,
-          revisaoManual: false
+          pagina: i, arquivoOrigem: arquivo.name, dataHora: meta.dataHora, promotor: meta.promotor, lojaTexto: meta.lojaTexto,
+          imagemBase64, hash, status: 'pendente', motivoGap: null, revisaoManual: false
         });
       }
     }
-
     return fotosExtraidas;
   }
 
-  // ── UPLOAD DOS PDFs (MÚLTIPLOS) ──
   function configurarUploadPDF() {
-    const input = document.getElementById('input-pdf');
-    if (!input) return;
-
+    const input = document.getElementById('input-pdf'); if (!input) return;
     input.addEventListener('change', async (e) => {
-      const files = e.target.files;
-      if (!files || files.length === 0) return;
-
-      const msg = document.getElementById('msg-pdf');
-      const prog = document.getElementById('progresso-pdf');
-      const barra = document.getElementById('barra-pdf');
-      const txt = document.getElementById('texto-pdf');
-      
-      prog.style.display = 'block';
-      msg.innerHTML = 'Iniciando processamento...';
-
+      const files = e.target.files; if (!files || files.length === 0) return;
+      const msg = document.getElementById('msg-pdf'), prog = document.getElementById('progresso-pdf'), barra = document.getElementById('barra-pdf'), txt = document.getElementById('texto-pdf');
+      prog.style.display = 'block'; msg.innerHTML = 'Iniciando...';
       let fotosAcumuladas = Estado.meses[Estado.config.mesAtivo].fotos || [];
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        txt.textContent = `Arquivo ${i + 1} de ${files.length}: Lendo ${file.name}...`;
-
         try {
           const fotosDoPDF = await processarPDF(file, (atual, total) => {
             const pct = Math.floor((atual / total) * 100);
-            barra.style.width = pct + '%';
-            txt.textContent = `Arquivo ${i + 1}/${files.length} - Página ${atual} de ${total} (${pct}%)`;
+            barra.style.width = pct + '%'; txt.textContent = `Arquivo ${i+1}/${files.length} - Pág ${atual}/${total}`;
           });
-
           fotosAcumuladas = fotosAcumuladas.concat(fotosDoPDF);
-          
-          // Salva incrementalmente
           Estado.meses[Estado.config.mesAtivo].fotos = fotosAcumuladas;
-          Estado.meses[Estado.config.mesAtivo].auditoria = null;
-          salvarEstado();
-          
-        } catch (erro) {
-          msg.innerHTML += `<br><span style="color: #E74C3C;">❌ Erro em ${file.name}: ${erro.message}</span>`;
-        }
+          Estado.meses[Estado.config.mesAtivo].auditoria = null; salvarEstado();
+        } catch (erro) { msg.innerHTML += `<br><span style="color: #E74C3C;">❌ Erro em ${file.name}: ${erro.message}</span>`; }
       }
-
-      prog.style.display = 'none';
-      msg.innerHTML = `<span style="color: #27AE60;">✅ Concluído! Total de ${fotosAcumuladas.length} fotos no sistema.</span>`;
+      prog.style.display = 'none'; msg.innerHTML = `<span style="color: #27AE60;">✅ Total: ${fotosAcumuladas.length} fotos.</span>`;
       renderizarAdmin();
     });
   }
-</script>
-/* ═══ FIM SUBBLOCO 05 ═══ */
-  /* ═══ SUBBLOCO 06 — MOTOR DE AUDITORIA (V2) ═══ */
-<script>
-  function executarAuditoria() {
+
+  // ═══ SUBBLOCO 06 — MOTOR DE AUDITORIA ═══
+  function executarAuditoria(opcoes) {
+    const silencioso = (opcoes && opcoes.silencioso) || window._silencioso === true;
     const mesDados = Estado.meses[Estado.config.mesAtivo];
-    if (!mesDados || !mesDados.fotos || mesDados.fotos.length === 0) {
-      alert("Não há fotos importadas para este mês.");
-      return;
-    }
-    if (!mesDados.relatorioTempo || mesDados.relatorioTempo.length === 0) {
-      alert("Importe o Relatório de Tempo primeiro.");
-      return;
-    }
-    if (!mesDados.fechamento || mesDados.fechamento.length === 0) {
-      alert("Importe o Fechamento primeiro.");
-      return;
-    }
+    if (!mesDados || !mesDados.fotos || !mesDados.relatorioTempo || !mesDados.fechamento) return false;
 
     const janelaMinutos = Estado.config.janelaSuspeitaMin || 30;
-    const fotos = mesDados.fotos;
-    const relatorio = mesDados.relatorioTempo;
+    const fotos = mesDados.fotos, relatorio = mesDados.relatorioTempo;
 
-    // ── PASSO 1: Resetar status de todas as fotos ──
-    fotos.forEach(f => {
-      f.status = 'pendente';
-      f.motivoGap = null;
-      f.lojaAuditada = null;
-      f.redeAuditada = null;
-    });
+    fotos.forEach(f => { if (!f.revisaoManual) { f.status = 'pendente'; f.motivoGap = null; f.lojaAuditada = null; f.redeAuditada = null; } });
 
-    // ── PASSO 2: Detectar Duplicatas (por Hash) ──
     const hashesVistos = new Set();
     fotos.forEach(foto => {
-      if (!foto.hash) return;
-      if (hashesVistos.has(foto.hash)) {
-        foto.status = 'duplicata';
-        foto.motivoGap = 'Imagem idêntica a outra já processada.';
-      } else {
-        hashesVistos.add(foto.hash);
-      }
+      if (foto.revisaoManual || !foto.hash) return;
+      if (hashesVistos.has(foto.hash)) { foto.status = 'duplicata'; foto.motivoGap = 'Duplicata.'; }
+      else hashesVistos.add(foto.hash);
     });
 
-    // ── PASSO 3: Cruzamento com Relatório de Tempo ──
     fotos.forEach(foto => {
-      if (foto.status === 'duplicata') return;
+      if (foto.revisaoManual || foto.status === 'duplicata') return;
+      if (!foto.dataHora || !foto.promotor) { foto.status = 'sem_par'; foto.motivoGap = 'Sem metadados.'; return; }
+      
+      const dataFoto = foto.dataHora.split('T')[0], promBusca = normalizarTexto(foto.promotor);
+      const visitas = relatorio.filter(v => normalizarTexto(v.promotor) === promBusca && v.data === dataFoto);
 
-      if (!foto.dataHora || !foto.promotor) {
-        foto.status = 'sem_par';
-        foto.motivoGap = 'Metadados (Data/Promotor) não encontrados no PDF.';
-        return;
+      if (visitas.length === 0) { foto.status = 'sem_par'; foto.motivoGap = 'Sem visita no relatório.'; return; }
+      if (visitas.length === 1) { foto.status = 'comprovada'; foto.lojaAuditada = visitas[0].loja; foto.redeAuditada = visitas[0].rede; return; }
+      
+      if (foto.lojaTexto) {
+        const txtNorm = normalizarTexto(foto.lojaTexto);
+        const match = visitas.find(v => txtNorm.includes(normalizarTexto(v.loja)) || normalizarTexto(v.loja).includes(txtNorm));
+        if (match) { foto.status = 'comprovada'; foto.lojaAuditada = match.loja; foto.redeAuditada = match.rede; return; }
       }
-
-      const dataFotoStr = foto.dataHora.split('T')[0];
-      const promotorBusca = normalizarTexto(foto.promotor);
-
-      // Filtra visitas do mesmo promotor no mesmo dia
-      const visitasDoDia = relatorio.filter(v => 
-        normalizarTexto(v.promotor) === promotorBusca && v.data === dataFotoStr
-      );
-
-      if (visitasDoDia.length === 0) {
-        foto.status = 'sem_par';
-        foto.motivoGap = 'Nenhuma visita deste promotor neste dia no Relatório de Tempo.';
-        return;
-      }
-
-      // Se houver apenas 1 loja, é match direto
-      if (visitasDoDia.length === 1) {
-        foto.status = 'comprovada';
-        foto.lojaAuditada = visitasDoDia[0].loja;
-        foto.redeAuditada = visitasDoDia[0].rede;
-        return;
-      }
-
-      // Se houver múltiplas lojas, tenta refinar pelo texto da imagem (lojaTexto)
-      if (visitasDoDia.length > 1) {
-        // Tenta casar o texto da imagem com o nome da loja do relatório
-        if (foto.lojaTexto) {
-          const textoNorm = normalizarTexto(foto.lojaTexto);
-          const match = visitasDoDia.find(v => {
-            const lojaNorm = normalizarTexto(v.loja);
-            return textoNorm.includes(lojaNorm) || lojaNorm.includes(textoNorm);
-          });
-          if (match) {
-            foto.status = 'comprovada';
-            foto.lojaAuditada = match.loja;
-            foto.redeAuditada = match.rede;
-            return;
-          }
-        }
-        // Não conseguiu refinar → vai para revisão
-        foto.status = 'revisao';
-        foto.motivoGap = `Promotor visitou ${visitasDoDia.length} lojas neste dia. Necessário revisão.`;
-      }
+      foto.status = 'revisao'; foto.motivoGap = `${visitas.length} lojas no dia.`;
     });
 
-    // ── PASSO 4: Detecção de Suspeita (mesmo promotor, 2 lojas, < janela) ──
-    // Esta lógica roda DEPOIS do cruzamento mas ANTES do agrupamento final,
-    // considerando TODAS as fotos que têm dataHora e promotor (mesmo as em revisão).
-    const gruposPorPromotorDia = {};
+    const grupos = {};
     fotos.forEach(f => {
-      if (!f.dataHora || !f.promotor) return;
-      if (f.status === 'duplicata' || f.status === 'sem_par') return;
-      
+      if (f.revisaoManual || !f.dataHora || !f.promotor || f.status === 'duplicata' || f.status === 'sem_par') return;
       const chave = normalizarTexto(f.promotor) + '_' + f.dataHora.split('T')[0];
-      if (!gruposPorPromotorDia[chave]) gruposPorPromotorDia[chave] = [];
-      gruposPorPromotorDia[chave].push(f);
+      (grupos[chave] = grupos[chave] || []).push(f);
     });
 
-    Object.values(gruposPorPromotorDia).forEach(grupo => {
+    Object.values(grupos).forEach(grupo => {
       if (grupo.length < 2) return;
-      
-      // Ordena por horário
       grupo.sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
-
-      // Compara fotos consecutivas
       for (let i = 0; i < grupo.length - 1; i++) {
-        const atual = grupo[i];
-        const proxima = grupo[i + 1];
-        const diffMinutos = (new Date(proxima.dataHora) - new Date(atual.dataHora)) / 60000;
-
-        // Se for a mesma loja auditada, não é suspeita
-        if (atual.lojaAuditada && proxima.lojaAuditada && atual.lojaAuditada === proxima.lojaAuditada) continue;
-
-        // Se ainda não tem loja definida (ambas em revisão), também não compara
-        if (!atual.lojaAuditada || !proxima.lojaAuditada) continue;
-
-        if (diffMinutos < janelaMinutos && diffMinutos >= 0) {
-          atual.status = 'suspeita';
-          atual.motivoGap = `Tempo curto (${Math.round(diffMinutos)}min) para trocar de loja.`;
-          proxima.status = 'suspeita';
-          proxima.motivoGap = `Tempo curto (${Math.round(diffMinutos)}min) para trocar de loja.`;
+        const a = grupo[i], b = grupo[i+1], diff = (new Date(b.dataHora) - new Date(a.dataHora)) / 60000;
+        if (a.lojaAuditada && b.lojaAuditada && a.lojaAuditada === b.lojaAuditada) continue;
+        if (!a.lojaAuditada || !b.lojaAuditada) continue;
+        if (diff >= 0 && diff < janelaMinutos) {
+          a.status = 'suspeita'; a.motivoGap = `Troca de loja em ${Math.round(diff)}min.`;
+          b.status = 'suspeita'; b.motivoGap = `Troca de loja em ${Math.round(diff)}min.`;
         }
       }
     });
 
-    // ── PASSO 5: Agrupamento Final (Promotor, Dia, Loja) ──
     const visitasAgrupadas = {};
-
     fotos.forEach(foto => {
-      if (!foto.lojaAuditada) return; // Ignora fotos sem loja definida
-
+      if (!foto.lojaAuditada) return;
       const chave = normalizarTexto(foto.promotor) + '_' + foto.dataHora.split('T')[0] + '_' + normalizarTexto(foto.lojaAuditada);
-      
-      if (!visitasAgrupadas[chave]) {
-        visitasAgrupadas[chave] = {
-          promotor: foto.promotor,
-          data: foto.dataHora.split('T')[0],
-          loja: foto.lojaAuditada,
-          rede: foto.redeAuditada || 'DESCONHECIDA',
-          fotos: [],
-          statusFinal: 'pendente'
-        };
-      }
+      if (!visitasAgrupadas[chave]) visitasAgrupadas[chave] = { promotor: foto.promotor, data: foto.dataHora.split('T')[0], loja: foto.lojaAuditada, rede: foto.redeAuditada || 'DESCONHECIDA', fotos: [], statusFinal: 'pendente' };
       visitasAgrupadas[chave].fotos.push(foto);
     });
 
-    // Define status final de cada visita agrupada
-    Object.values(visitasAgrupadas).forEach(visita => {
-      const temComprovada = visita.fotos.some(f => f.status === 'comprovada');
-      const temSuspeita = visita.fotos.some(f => f.status === 'suspeita');
-      const temRevisao = visita.fotos.some(f => f.status === 'revisao');
-      
-      if (temSuspeita) {
-        visita.statusFinal = 'suspeita';
-      } else if (temRevisao) {
-        visita.statusFinal = 'revisao';
-      } else if (temComprovada) {
-        visita.statusFinal = 'comprovada';
-      } else {
-        visita.statusFinal = 'nao_comprovada';
-      }
+    Object.values(visitasAgrupadas).forEach(v => {
+      if (v.fotos.some(f => f.status === 'suspeita')) v.statusFinal = 'suspeita';
+      else if (v.fotos.some(f => f.status === 'revisao')) v.statusFinal = 'revisao';
+      else if (v.fotos.some(f => f.status === 'comprovada')) v.statusFinal = 'comprovada';
+      else v.statusFinal = 'nao_comprovada';
     });
 
-    // ── PASSO 6: Cálculo Financeiro por Rede ──
     const porRede = {};
     mesDados.fechamento.forEach(f => {
-      porRede[f.rede] = {
-        rede: f.redeOriginal,
-        custoVisita: f.custoVisita,
-        declaradas: f.declaradasMes,
-        programadas: f.programadasMes,
-        comprovadas: 0,
-        gap: 0,
-        valorCobrado: f.declaradasMes * f.custoVisita,
-        desconto: 0,
-        valorAuditado: 0
-      };
+      porRede[f.rede] = { rede: f.redeOriginal, custoVisita: f.custoVisita, declaradas: f.declaradasMes, programadas: f.programadasMes, comprovadas: 0, gap: 0, valorCobrado: f.declaradasMes * f.custoVisita, desconto: 0, valorAuditado: 0 };
     });
 
-    // Conta visitas COMPROVADAS por rede
-    Object.values(visitasAgrupadas).forEach(v => {
-      if (v.statusFinal === 'comprovada' && porRede[v.rede]) {
-        porRede[v.rede].comprovadas++;
-      }
-    });
+    Object.values(visitasAgrupadas).forEach(v => { if (v.statusFinal === 'comprovada' && porRede[v.rede]) porRede[v.rede].comprovadas++; });
+    Object.values(porRede).forEach(r => { r.gap = r.declaradas - r.comprovadas; r.desconto = r.gap * r.custoVisita; r.valorAuditado = r.comprovadas * r.custoVisita; });
 
-    // Calcula gap e valores
-    Object.values(porRede).forEach(r => {
-      r.gap = r.declaradas - r.comprovadas;
-      r.desconto = r.gap * r.custoVisita;
-      r.valorAuditado = r.comprovadas * r.custoVisita;
-    });
-
-    // ── PASSO 7: Salva no Estado ──
     mesDados.auditoria = {
-      porRede: porRede,
-      visitasAgrupadas: Object.values(visitasAgrupadas),
+      porRede: porRede, visitasAgrupadas: Object.values(visitasAgrupadas),
       total: {
-        comprovadas: Object.values(porRede).reduce((acc, r) => acc + r.comprovadas, 0),
-        gap: Object.values(porRede).reduce((acc, r) => acc + r.gap, 0),
-        desconto: Object.values(porRede).reduce((acc, r) => acc + r.desconto, 0),
-        valorAuditado: Object.values(porRede).reduce((acc, r) => acc + r.valorAuditado, 0),
-        valorCobrado: Object.values(porRede).reduce((acc, r) => acc + r.valorCobrado, 0),
-        totalDeclaradas: Object.values(porRede).reduce((acc, r) => acc + r.declaradas, 0),
-        totalProgramadas: Object.values(porRede).reduce((acc, r) => acc + (r.programadas || 0), 0)
+        comprovadas: Object.values(porRede).reduce((a, r) => a + r.comprovadas, 0), gap: Object.values(porRede).reduce((a, r) => a + r.gap, 0),
+        desconto: Object.values(porRede).reduce((a, r) => a + r.desconto, 0), valorAuditado: Object.values(porRede).reduce((a, r) => a + r.valorAuditado, 0),
+        valorCobrado: Object.values(porRede).reduce((a, r) => a + r.valorCobrado, 0), totalDeclaradas: Object.values(porRede).reduce((a, r) => a + r.declaradas, 0),
+        totalProgramadas: Object.values(porRede).reduce((a, r) => a + (r.programadas || 0), 0)
       },
       dataProcessamento: new Date().toISOString()
     };
 
     salvarEstado();
-    alert("✅ Auditoria concluída! Os dados foram calculados com sucesso.");
-    
-    // Navega para dashboard
-    document.querySelector('nav button[data-tela="dashboard"]').click();
-  }
-</script>
-/* ═══ FIM SUBBLOCO 06 ═══ */
-  /* ═══ SUBBLOCO 07 — ADMIN COMPLETO + DASHBOARD ═══ */
-<script>
-  // ── FUNÇÕES AUXILIARES ──
-  function formatarMoeda(valor) {
-    return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    if (!silencioso) { alert("✅ Auditoria concluída!"); document.querySelector('nav button[data-tela="dashboard"]').click(); }
+    return true;
   }
 
-  function formatarPorcentagem(valor) {
-    return Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
-  }
-
-  // ── RENDERIZAR TELA ADMIN (V2 COMPLETA) ──
-  function renderizarAdmin() {
-    const container = document.getElementById('tela-admin');
-    const mesDados = Estado.meses[Estado.config.mesAtivo] || {};
-    
-    const temFechamento = mesDados.fechamento && mesDados.fechamento.length > 0;
-    const temLojas = mesDados.lojas && mesDados.lojas.length > 0;
-    const temTempo = mesDados.relatorioTempo && mesDados.relatorioTempo.length > 0;
-    const temFotos = mesDados.fotos && mesDados.fotos.length > 0;
-    const temAuditoria = mesDados.auditoria !== null && mesDados.auditoria !== undefined;
-
-    const podeAuditar = temFechamento && temLojas && temTempo && temFotos;
-
-    // Resumos
-    let resumoFechamento = '';
-    if (temFechamento) {
-      const totalDeclaradas = mesDados.fechamento.reduce((acc, r) => acc + r.declaradasMes, 0);
-      resumoFechamento = `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;">
-        <p style="font-size: 13px;"><strong>${mesDados.fechamento.length} redes</strong> | <strong>${totalDeclaradas} visitas declaradas</strong>.</p>
-      </div>`;
-    }
-
-    let resumoLojas = '';
-    if (temLojas) {
-      const redesUnicas = [...new Set(mesDados.lojas.map(l => l.rede))].length;
-      resumoLojas = `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;">
-        <p style="font-size: 13px;"><strong>${mesDados.lojas.length} lojas</strong> em <strong>${redesUnicas} redes</strong>.</p>
-      </div>`;
-    }
-
-    let resumoTempo = '';
-    if (temTempo) {
-      const diasUnicos = [...new Set(mesDados.relatorioTempo.map(v => v.data))].sort();
-      resumoTempo = `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;">
-        <p style="font-size: 13px;"><strong>${mesDados.relatorioTempo.length} visitas</strong> registradas (${diasUnicos[0] || '?'} a ${diasUnicos[diasUnicos.length - 1] || '?'}).</p>
-      </div>`;
-    }
-
-    let resumoFotos = '';
-    if (temFotos) {
-      resumoFotos = `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;">
-        <p style="font-size: 13px;"><strong>${mesDados.fotos.length} fotos</strong> extraídas dos PDFs.</p>
-      </div>`;
-    }
-
-    container.innerHTML = `
-      <div class="card">
-        <h2>1. Importar Fechamento (Excel)</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Planilha de Fechamento PACTO (aba <em>sistematica</em>).</p>
-        <input type="file" id="input-excel" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
-        <div id="msg-excel" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
-        ${resumoFechamento}
-      </div>
-      
-      <div class="card">
-        <h2>2. Importar Plano de Visitas (Excel)</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Planilha com as abas de cada rede (ATACADÃO, CARREFOUR, NAGUMO, etc).</p>
-        <input type="file" id="input-plano" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
-        <div id="msg-plano" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
-        ${resumoLojas}
-      </div>
-
-      <div class="card">
-        <h2>3. Importar Relatório de Tempo (Excel)</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Arquivo "Visitas - Outubro...".</p>
-        <input type="file" id="input-tempo" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
-        <div id="msg-tempo" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
-        ${resumoTempo}
-      </div>
-
-      <div class="card">
-        <h2>4. Importar PDFs (Fotos)</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Books de prestação de contas. Pode selecionar múltiplos.</p>
-        <input type="file" id="input-pdf" accept=".pdf" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
-        <div id="progresso-pdf" style="display: none; margin-top: 15px;">
-          <div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px; overflow: hidden;">
-            <div id="barra-pdf" style="width: 0%; height: 100%; background: var(--cor-destaque); transition: width 0.3s ease;"></div>
-          </div>
-          <p id="texto-pdf" style="font-size: 11px; text-align: center; margin-top: 5px; color: var(--cor-texto-secundario);"></p>
-        </div>
-        <div id="msg-pdf" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
-        ${resumoFotos}
-      </div>
-
-      <div class="card" style="border-left-color: ${podeAuditar ? 'var(--cor-destaque)' : '#CCC'}; background: ${podeAuditar ? '#FFFDF5' : 'white'};">
-        <h2>5. Processar Auditoria</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Cruza todos os dados e calcula os resultados financeiros.</p>
-        ${!podeAuditar ? '<p style="font-size: 12px; color: var(--cor-perigo); font-weight: bold;">⚠️ Importe os 4 conjuntos de dados para habilitar.</p>' : ''}
-        ${temAuditoria ? '<p style="font-size: 12px; color: #27AE60; font-weight: bold;">✅ Auditoria já processada. Clique para recalcular.</p>' : ''}
-        <button id="btn-auditar" ${!podeAuditar ? 'disabled' : ''} style="width: 100%; padding: 15px; background: ${podeAuditar ? 'var(--cor-primaria)' : '#CCC'}; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: ${podeAuditar ? 'pointer' : 'not-allowed'}; margin-top: 10px;">⚙️ ${temAuditoria ? 'Recalcular' : 'Processar'} Auditoria</button>
-      </div>
-    `;
-
-    configurarUploadExcel();
-    configurarUploadPlano();
-    configurarUploadTempo();
-    configurarUploadPDF();
-
-    if (podeAuditar) {
-      document.getElementById('btn-auditar').addEventListener('click', executarAuditoria);
-    }
-  }
-
-  // ── RENDERIZAR DASHBOARD ──
+  // ═══ SUBBLOCO 07 — DASHBOARD E REVISÃO ═══
   function renderizarDashboard() {
     const container = document.getElementById('tela-dashboard');
     const mesDados = Estado.meses[Estado.config.mesAtivo];
-
     if (!mesDados || !mesDados.auditoria || !mesDados.auditoria.porRede) {
-      container.innerHTML = `
-        <div class="card">
-          <h2>Dashboard</h2>
-          <p>Nenhuma auditoria processada ainda.</p>
-          <p style="margin-top: 15px; font-size: 13px;">Vá em <strong>Admin</strong>, importe os arquivos e clique em <strong>Processar Auditoria</strong>.</p>
-        </div>
-      `;
+      container.innerHTML = `<div class="card"><h2>Dashboard</h2><p>Nenhuma auditoria processada.</p><p style="margin-top: 15px; font-size: 13px;">Vá em <strong>Admin</strong> e clique em <strong>Processar Auditoria</strong>.</p></div>`;
       return;
     }
-
-    const porRede = mesDados.auditoria.porRede;
-    const total = mesDados.auditoria.total;
+    const total = mesDados.auditoria.total, porRede = mesDados.auditoria.porRede;
     const efetividade = total.totalDeclaradas > 0 ? (total.comprovadas / total.totalDeclaradas) * 100 : 0;
-
-    // Ranking ordenado por efetividade (pior para o melhor)
-    const ranking = Object.values(porRede).map(r => {
-      const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
-      return { ...r, efetividade: efet };
-    }).sort((a, b) => a.efetividade - b.efetividade);
-
-    let htmlRanking = '';
-    ranking.forEach((r, index) => {
-      const corBarra = r.efetividade > 80 ? '#27AE60' : r.efetividade > 50 ? '#F39C12' : '#E74C3C';
-      htmlRanking += `
-        <div style="margin-bottom: 15px;">
-          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 5px;">
-            <span>${index + 1}. ${r.rede}</span>
-            <span style="color: ${corBarra};">${formatarPorcentagem(r.efetividade)}</span>
-          </div>
-          <div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px;">
-            <div style="width: ${r.efetividade}%; height: 100%; background: ${corBarra}; border-radius: 4px;"></div>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--cor-texto-secundario); margin-top: 3px;">
-            <span>Declaradas: ${r.declaradas}</span>
-            <span>Comprovadas: ${r.comprovadas}</span>
-            <span>Desconto: ${formatarMoeda(r.desconto)}</span>
-          </div>
-        </div>
-      `;
-    });
+    const ranking = Object.values(porRede).map(r => ({ ...r, efetividade: r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0 })).sort((a, b) => a.efetividade - b.efetividade);
+    
+    let htmlRanking = ranking.map((r, i) => {
+      const cor = r.efetividade > 80 ? '#27AE60' : r.efetividade > 50 ? '#F39C12' : '#E74C3C';
+      return `<div style="margin-bottom: 15px;"><div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 5px;"><span>${i+1}. ${r.rede}</span><span style="color: ${cor};">${formatarPorcentagem(r.efetividade)}</span></div><div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px;"><div style="width: ${r.efetividade}%; height: 100%; background: ${cor}; border-radius: 4px;"></div></div><div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--cor-texto-secundario); margin-top: 3px;"><span>Declaradas: ${r.declaradas}</span><span>Comprovadas: ${r.comprovadas}</span><span>Desconto: ${formatarMoeda(r.desconto)}</span></div></div>`;
+    }).join('');
 
     container.innerHTML = `
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-        <div class="card" style="margin: 0; border-left-color: var(--cor-texto-secundario); padding: 15px;">
-          <h2 style="font-size: 10px;">Programadas</h2>
-          <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-texto); margin: 5px 0;">${total.totalProgramadas || 0}</p>
-          <p style="font-size: 10px;">Contratado</p>
-        </div>
-        <div class="card" style="margin: 0; border-left-color: var(--cor-destaque); padding: 15px;">
-          <h2 style="font-size: 10px;">Declaradas</h2>
-          <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-texto); margin: 5px 0;">${total.totalDeclaradas || 0}</p>
-          <p style="font-size: 10px;">Pacto</p>
-        </div>
-        <div class="card" style="margin: 0; border-left-color: var(--cor-primaria); padding: 15px;">
-          <h2 style="font-size: 10px;">Comprovadas</h2>
-          <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-primaria); margin: 5px 0;">${total.comprovadas || 0}</p>
-          <p style="font-size: 10px;">Com Fotos</p>
-        </div>
-        <div class="card" style="margin: 0; border-left-color: var(--cor-perigo); padding: 15px;">
-          <h2 style="font-size: 10px;">Efetividade</h2>
-          <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-perigo); margin: 5px 0;">${formatarPorcentagem(efetividade)}</p>
-          <p style="font-size: 10px;">Comprovadas / Declaradas</p>
-        </div>
+        <div class="card" style="margin: 0; border-left-color: #7F8C8D; padding: 15px;"><h2 style="font-size: 10px;">Programadas</h2><p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; margin: 5px 0;">${total.totalProgramadas || 0}</p></div>
+        <div class="card" style="margin: 0; border-left-color: var(--cor-destaque); padding: 15px;"><h2 style="font-size: 10px;">Declaradas</h2><p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; margin: 5px 0;">${total.totalDeclaradas || 0}</p></div>
+        <div class="card" style="margin: 0; border-left-color: var(--cor-primaria); padding: 15px;"><h2 style="font-size: 10px;">Comprovadas</h2><p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-primaria); margin: 5px 0;">${total.comprovadas || 0}</p></div>
+        <div class="card" style="margin: 0; border-left-color: var(--cor-perigo); padding: 15px;"><h2 style="font-size: 10px;">Efetividade</h2><p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-perigo); margin: 5px 0;">${formatarPorcentagem(efetividade)}</p></div>
       </div>
-
       <div class="card" style="border-left-color: var(--cor-perigo);">
         <h2>Resumo Financeiro</h2>
-        <div style="display: flex; justify-content: space-between; margin-top: 15px;">
-          <div>
-            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Valor Cobrado</p>
-            <p style="font-size: 18px; font-weight: bold; color: var(--cor-texto);">${formatarMoeda(total.valorCobrado)}</p>
-          </div>
-          <div style="text-align: right;">
-            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Desconto Justificado</p>
-            <p style="font-size: 18px; font-weight: bold; color: var(--cor-perigo);">- ${formatarMoeda(total.desconto)}</p>
-          </div>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #CCC;">
-          <div>
-            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Valor Auditado</p>
-            <p style="font-size: 22px; font-weight: bold; color: var(--cor-primaria);">${formatarMoeda(total.valorAuditado)}</p>
-          </div>
-          <div style="text-align: right;">
-            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Gap (Visitas)</p>
-            <p style="font-size: 22px; font-weight: bold; color: var(--cor-perigo);">${total.gap}</p>
-          </div>
-        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 15px;"><div><p style="font-size: 12px;">Valor Cobrado</p><p style="font-size: 18px; font-weight: bold;">${formatarMoeda(total.valorCobrado)}</p></div><div style="text-align: right;"><p style="font-size: 12px;">Desconto Justificado</p><p style="font-size: 18px; font-weight: bold; color: var(--cor-perigo);">- ${formatarMoeda(total.desconto)}</p></div></div>
+        <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #CCC;"><div><p style="font-size: 12px;">Valor Auditado</p><p style="font-size: 22px; font-weight: bold; color: var(--cor-primaria);">${formatarMoeda(total.valorAuditado)}</p></div><div style="text-align: right;"><p style="font-size: 12px;">Gap (Visitas)</p><p style="font-size: 22px; font-weight: bold; color: var(--cor-perigo);">${total.gap}</p></div></div>
       </div>
-
-      <div class="card">
-        <h2>Ranking de Redes (Efetividade)</h2>
-        <p style="font-size: 12px; margin-bottom: 15px; color: var(--cor-texto-secundario);">Da pior para a melhor performance.</p>
-        ${htmlRanking || '<p style="font-size: 13px;">Nenhuma rede processada.</p>'}
-      </div>
+      <div class="card"><h2>Ranking de Redes (Efetividade)</h2><p style="font-size: 12px; margin-bottom: 15px;">Da pior para a melhor performance.</p>${htmlRanking || '<p>Nenhuma rede.</p>'}</div>
     `;
   }
+
+  function renderizarRevisao() {
+    const container = document.getElementById('tela-revisao');
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+    if (!mesDados || !mesDados.fotos) return container.innerHTML = `<div class="card"><h2>Revisão</h2><p>Nenhuma foto importada.</p></div>`;
+    const fotosRevisao = mesDados.fotos.filter(f => f.status === 'revisao' || f.status === 'suspeita');
+    if (fotosRevisao.length === 0) return container.innerHTML = `<div class="card" style="border-left-color: #27AE60;"><h2>Revisão</h2><p style="color: #27AE60; font-weight: bold;">✅ Nenhuma foto pendente de revisão!</p></div>`;
+
+    let html = `<div class="card" style="border-left-color: #F39C12;"><h2>Fila de Revisão (${fotosRevisao.length})</h2><p style="font-size: 13px; margin-bottom: 15px;">Avalie e decida. A auditoria será recalculada automaticamente.</p></div>`;
+    fotosRevisao.forEach(foto => {
+      const dataStr = foto.dataHora ? new Date(foto.dataHora).toLocaleString('pt-BR') : "Data não encontrada";
+      const tagCor = foto.status === 'suspeita' ? '#E74C3C' : '#3498DB';
+      const tagTexto = foto.status === 'suspeita' ? 'SUSPEITA' : 'REVISÃO';
+      html += `
+        <div class="card" style="padding: 15px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><div><p style="font-weight: bold; font-size: 14px; color: var(--cor-primaria);">${foto.promotor || 'Desconhecido'}</p><p style="font-size: 12px; color: var(--cor-texto-secundario);">${dataStr} | Pág. ${foto.pagina}</p></div><span style="font-size: 10px; background: ${tagCor}; color: white; padding: 3px 6px; border-radius: 4px; height: fit-content;">${tagTexto}</span></div>
+          <p style="font-size: 12px; color: var(--cor-perigo); margin-bottom: 10px;"><strong>Motivo:</strong> ${foto.motivoGap || 'Múltiplas lojas'}</p>
+          <div style="width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; display: flex; justify-content: center; align-items: center;"><img src="${foto.imagemBase64}" style="max-width: 100%; max-height: 100%; object-fit: contain;"></div>
+          <p style="font-size: 12px; margin-bottom: 10px;">Texto na imagem: <em>${foto.lojaTexto || 'Não extraído'}</em></p>
+          <div style="display: flex; gap: 10px;"><button onclick="decidirRevisao('${foto.id}', 'comprovada')" style="flex: 1; padding: 10px; background: #27AE60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">✅ Válida</button><button onclick="decidirRevisao('${foto.id}', 'sem_par')" style="flex: 1; padding: 10px; background: var(--cor-perigo); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">❌ Inválida</button></div>
+        </div>`;
+    });
+    container.innerHTML = html;
+  }
+
+  function decidirRevisao(fotoId, novoStatus) {
+    const mesDados = Estado.meses[Estado.config.mesAtivo];
+    const foto = mesDados.fotos.find(f => f.id === fotoId); if (!foto) return;
+
+    if (novoStatus === 'comprovada') {
+      if (!foto.lojaAuditada && foto.dataHora && foto.promotor) {
+        const dataStr = foto.dataHora.split('T')[0], promBusca = normalizarTexto(foto.promotor);
+        const visitas = mesDados.relatorioTempo.filter(v => normalizarTexto(v.promotor) === promBusca && v.data === dataStr);
+        if (visitas.length > 0) { foto.lojaAuditada = visitas[0].loja; foto.redeAuditada = visitas[0].rede; }
+      }
+      foto.status = 'comprovada'; foto.motivoGap = 'Aprovado manualmente';
+    } else {
+      foto.status = 'sem_par'; foto.motivoGap = 'Reprovado manualmente'; foto.lojaAuditada = null; foto.redeAuditada = null;
+    }
+    foto.revisaoManual = true; salvarEstado();
+    
+    // Atualiza a auditoria de forma silenciosa
+    window._silencioso = true;
+    executarAuditoria();
+    window._silencioso = false;
+    
+    alert(`Foto marcada como ${novoStatus === 'comprovada' ? 'Válida' : 'Inválida'}.`);
+    renderizarRevisao();
+  }
 </script>
-/* ═══ FIM SUBBLOCO 07 ═══ */
-  /* ═══ SUBBLOCO 08 — TELAS AUDITORIA, REVISÃO, RELATÓRIO + INIT ═══ */
 <script>
-  // ── TELA DE AUDITORIA COM DRILL-DOWN ──
+  // ═══ SUBBLOCO 08 — AUDITORIA, RELATÓRIO E INICIALIZAÇÃO ═══
+  
   let auditoriaDrillState = { rede: null, loja: null };
 
   function renderizarAuditoria() {
@@ -1277,36 +674,20 @@
     const mesDados = Estado.meses[Estado.config.mesAtivo];
 
     if (!mesDados || !mesDados.auditoria || !mesDados.auditoria.porRede) {
-      container.innerHTML = `
-        <div class="card">
-          <h2>Auditoria</h2>
-          <p>Nenhuma auditoria processada ainda. Vá em <strong>Admin</strong> e clique em "Processar Auditoria".</p>
-        </div>
-      `;
+      container.innerHTML = `<div class="card"><h2>Auditoria</h2><p>Nenhuma auditoria processada ainda. Vá em <strong>Admin</strong> e clique em "Processar Auditoria".</p></div>`;
       return;
     }
 
     const porRede = mesDados.auditoria.porRede;
     const visitasAgrupadas = mesDados.auditoria.visitasAgrupadas || [];
 
-    // MODO VISÃO GERAL (por rede)
     if (!auditoriaDrillState.rede) {
       const redesArray = Object.values(porRede).sort((a, b) => b.desconto - a.desconto);
-      let linhasTabela = '';
-      redesArray.forEach(r => {
+      let linhas = redesArray.map(r => {
         const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
-        const corEfet = efet > 80 ? '#27AE60' : efet > 50 ? '#F39C12' : '#E74C3C';
-        linhasTabela += `
-          <tr style="border-bottom: 1px solid #EEE; cursor: pointer;" onclick="abrirDrillRede('${r.rede}')">
-            <td style="padding: 10px; font-weight: bold; font-size: 13px;">${r.rede} <span style="color: #AAA;">›</span></td>
-            <td style="padding: 10px; text-align: center;">${r.declaradas}</td>
-            <td style="padding: 10px; text-align: center;">${r.comprovadas}</td>
-            <td style="padding: 10px; text-align: center; color: var(--cor-perigo); font-weight: bold;">${r.gap}</td>
-            <td style="padding: 10px; text-align: center; color: ${corEfet}; font-weight: bold;">${formatarPorcentagem(efet)}</td>
-            <td style="padding: 10px; text-align: right; color: var(--cor-perigo);">${formatarMoeda(r.desconto)}</td>
-          </tr>
-        `;
-      });
+        const cor = efet > 80 ? '#27AE60' : efet > 50 ? '#F39C12' : '#E74C3C';
+        return `<tr style="border-bottom: 1px solid #EEE; cursor: pointer;" onclick="abrirDrillRede('${r.rede}')"><td style="padding: 10px; font-weight: bold; font-size: 13px;">${r.rede} <span style="color: #AAA;">›</span></td><td style="padding: 10px; text-align: center;">${r.declaradas}</td><td style="padding: 10px; text-align: center;">${r.comprovadas}</td><td style="padding: 10px; text-align: center; color: var(--cor-perigo); font-weight: bold;">${r.gap}</td><td style="padding: 10px; text-align: center; color: ${cor}; font-weight: bold;">${formatarPorcentagem(efet)}</td><td style="padding: 10px; text-align: right; color: var(--cor-perigo);">${formatarMoeda(r.desconto)}</td></tr>`;
+      }).join('');
 
       container.innerHTML = `
         <div class="card">
@@ -1314,47 +695,31 @@
             <h2>Auditoria por Rede</h2>
             <button id="btn-exportar-csv" style="padding: 8px 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">📥 CSV</button>
           </div>
-          <p style="font-size: 11px; color: var(--cor-texto-secundario); margin-bottom: 10px;">Clique em uma rede para ver o detalhamento por loja.</p>
+          <p style="font-size: 11px; color: var(--cor-texto-secundario); margin-bottom: 10px;">Clique em uma rede para ver o detalhamento.</p>
           <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap;">
-              <thead>
-                <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
-                  <th style="padding: 10px; text-align: left;">Rede</th>
-                  <th style="padding: 10px; text-align: center;">Declar.</th>
-                  <th style="padding: 10px; text-align: center;">Comprov.</th>
-                  <th style="padding: 10px; text-align: center;">Gap</th>
-                  <th style="padding: 10px; text-align: center;">Efetiv.</th>
-                  <th style="padding: 10px; text-align: right;">Desconto</th>
-                </tr>
-              </thead>
-              <tbody>${linhasTabela}</tbody>
+              <thead><tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);"><th style="padding: 10px; text-align: left;">Rede</th><th style="padding: 10px; text-align: center;">Declar.</th><th style="padding: 10px; text-align: center;">Comprov.</th><th style="padding: 10px; text-align: center;">Gap</th><th style="padding: 10px; text-align: center;">Efetiv.</th><th style="padding: 10px; text-align: right;">Desconto</th></tr></thead>
+              <tbody>${linhas}</tbody>
             </table>
           </div>
         </div>
       `;
 
       document.getElementById('btn-exportar-csv').addEventListener('click', () => {
-        let csvContent = "Rede;Declaradas;Comprovadas;Gap;Efetividade;Desconto;Valor Auditado\n";
+        let csv = "Rede;Declaradas;Comprovadas;Gap;Efetividade;Desconto;Valor Auditado\n";
         redesArray.forEach(r => {
           const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
-          csvContent += `${r.rede};${r.declaradas};${r.comprovadas};${r.gap};${efet.toFixed(1).replace('.', ',')}%;${r.desconto.toFixed(2).replace('.', ',')};${r.valorAuditado.toFixed(2).replace('.', ',')}\n`;
+          csv += `${r.rede};${r.declaradas};${r.comprovadas};${r.gap};${efet.toFixed(1).replace('.', ',')}%;${r.desconto.toFixed(2).replace('.', ',')};${r.valorAuditado.toFixed(2).replace('.', ',')}\n`;
         });
-        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `auditoria_${Estado.config.mesAtivo}.csv`;
-        link.click();
-        URL.revokeObjectURL(link.href);
+        const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `auditoria_${Estado.config.mesAtivo}.csv`; link.click();
       });
       return;
     }
 
-    // MODO DRILL-DOWN: LOJAS DE UMA REDE
     if (auditoriaDrillState.rede && !auditoriaDrillState.loja) {
       const rede = auditoriaDrillState.rede;
       const dadosRede = porRede[rede];
-      
-      // Agrupa visitas desta rede por loja
       const porLoja = {};
       visitasAgrupadas.forEach(v => {
         if (v.rede !== rede) return;
@@ -1364,23 +729,9 @@
         else if (v.statusFinal === 'suspeita') porLoja[v.loja].suspeitas++;
         else if (v.statusFinal === 'revisao') porLoja[v.loja].revisao++;
       });
-
       const lojasArray = Object.values(porLoja).sort((a, b) => a.comprovadas - b.comprovadas);
 
-      let linhas = '';
-      if (lojasArray.length === 0) {
-        linhas = '<tr><td colspan="3" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita registrada para esta rede.</td></tr>';
-      } else {
-        lojasArray.forEach(l => {
-          linhas += `
-            <tr style="border-bottom: 1px solid #EEE; cursor: pointer;" onclick="abrirDrillLoja('${l.loja.replace(/'/g, "\\'")}')">
-              <td style="padding: 10px; font-size: 12px;">${l.loja} <span style="color: #AAA;">›</span></td>
-              <td style="padding: 10px; text-align: center; color: #27AE60; font-weight: bold;">${l.comprovadas}</td>
-              <td style="padding: 10px; text-align: center; color: #F39C12; font-weight: bold;">${l.suspeitas + l.revisao}</td>
-            </tr>
-          `;
-        });
-      }
+      let linhas = lojasArray.map(l => `<tr style="border-bottom: 1px solid #EEE; cursor: pointer;" onclick="abrirDrillLoja('${l.loja.replace(/'/g, "\\'")}')"><td style="padding: 10px; font-size: 12px;">${l.loja} <span style="color: #AAA;">›</span></td><td style="padding: 10px; text-align: center; color: #27AE60; font-weight: bold;">${l.comprovadas}</td><td style="padding: 10px; text-align: center; color: #F39C12; font-weight: bold;">${l.suspeitas + l.revisao}</td></tr>`).join('');
 
       container.innerHTML = `
         <div class="card">
@@ -1389,14 +740,8 @@
           <p style="font-size: 12px; margin-bottom: 15px;">${dadosRede.comprovadas} comprovadas de ${dadosRede.declaradas} declaradas (Gap: ${dadosRede.gap}).</p>
           <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-              <thead>
-                <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
-                  <th style="padding: 10px; text-align: left;">Loja</th>
-                  <th style="padding: 10px; text-align: center;">Comprov.</th>
-                  <th style="padding: 10px; text-align: center;">Pendentes</th>
-                </tr>
-              </thead>
-              <tbody>${linhas}</tbody>
+              <thead><tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);"><th style="padding: 10px; text-align: left;">Loja</th><th style="padding: 10px; text-align: center;">Comprov.</th><th style="padding: 10px; text-align: center;">Pendentes</th></tr></thead>
+              <tbody>${linhas || '<tr><td colspan="3" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita registrada.</td></tr>'}</tbody>
             </table>
           </div>
         </div>
@@ -1404,20 +749,12 @@
       return;
     }
 
-    // MODO DRILL-DOWN: VISITAS DE UMA LOJA
     if (auditoriaDrillState.rede && auditoriaDrillState.loja) {
       const visitas = visitasAgrupadas.filter(v => v.rede === auditoriaDrillState.rede && v.loja === auditoriaDrillState.loja);
-      let linhas = '';
-      visitas.forEach(v => {
-        const corStatus = v.statusFinal === 'comprovada' ? '#27AE60' : v.statusFinal === 'suspeita' ? '#F39C12' : v.statusFinal === 'revisao' ? '#3498DB' : '#E74C3C';
-        linhas += `
-          <tr style="border-bottom: 1px solid #EEE;">
-            <td style="padding: 10px; font-size: 12px;">${v.data}</td>
-            <td style="padding: 10px; font-size: 12px;">${v.promotor}</td>
-            <td style="padding: 10px; text-align: center; font-size: 11px; color: ${corStatus}; font-weight: bold; text-transform: uppercase;">${v.statusFinal.replace('_',' ')}</td>
-          </tr>
-        `;
-      });
+      let linhas = visitas.map(v => {
+        const cor = v.statusFinal === 'comprovada' ? '#27AE60' : v.statusFinal === 'suspeita' ? '#F39C12' : v.statusFinal === 'revisao' ? '#3498DB' : '#E74C3C';
+        return `<tr style="border-bottom: 1px solid #EEE;"><td style="padding: 10px; font-size: 12px;">${v.data}</td><td style="padding: 10px; font-size: 12px;">${v.promotor}</td><td style="padding: 10px; text-align: center; font-size: 11px; color: ${cor}; font-weight: bold; text-transform: uppercase;">${v.statusFinal.replace('_',' ')}</td></tr>`;
+      }).join('');
 
       container.innerHTML = `
         <div class="card">
@@ -1425,209 +762,44 @@
           <h2>Loja: ${auditoriaDrillState.loja}</h2>
           <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-              <thead>
-                <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
-                  <th style="padding: 10px; text-align: left;">Data</th>
-                  <th style="padding: 10px; text-align: left;">Promotor</th>
-                  <th style="padding: 10px; text-align: center;">Status</th>
-                </tr>
-              </thead>
+              <thead><tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);"><th style="padding: 10px; text-align: left;">Data</th><th style="padding: 10px; text-align: left;">Promotor</th><th style="padding: 10px; text-align: center;">Status</th></tr></thead>
               <tbody>${linhas || '<tr><td colspan="3" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita.</td></tr>'}</tbody>
             </table>
           </div>
         </div>
       `;
-      return;
     }
   }
 
   function abrirDrillRede(rede) { auditoriaDrillState = { rede: rede, loja: null }; renderizarAuditoria(); }
   function abrirDrillLoja(loja) { auditoriaDrillState.loja = loja; renderizarAuditoria(); }
 
-  // ── TELA DE REVISÃO ──
-  function renderizarRevisao() {
-    const container = document.getElementById('tela-revisao');
-    const mesDados = Estado.meses[Estado.config.mesAtivo];
-
-    if (!mesDados || !mesDados.fotos) {
-      container.innerHTML = `<div class="card"><h2>Revisão</h2><p>Nenhuma foto importada.</p></div>`;
-      return;
-    }
-
-    const fotosRevisao = mesDados.fotos.filter(f => f.status === 'revisao' || f.status === 'suspeita');
-
-    if (fotosRevisao.length === 0) {
-      container.innerHTML = `
-        <div class="card" style="border-left-color: #27AE60;">
-          <h2>Revisão</h2>
-          <p style="color: #27AE60; font-weight: bold;">✅ Nenhuma foto pendente de revisão no momento!</p>
-        </div>
-      `;
-      return;
-    }
-
-    let html = `
-      <div class="card" style="border-left-color: #F39C12;">
-        <h2>Fila de Revisão (${fotosRevisao.length})</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Avalie cada foto e decida. Ao decidir, a auditoria é recalculada automaticamente.</p>
-      </div>
-    `;
-
-    fotosRevisao.forEach(foto => {
-      let dataStr = "Data não encontrada";
-      if (foto.dataHora) {
-        const d = new Date(foto.dataHora);
-        dataStr = d.toLocaleString('pt-BR');
-      }
-      const tagCor = foto.status === 'suspeita' ? '#E74C3C' : '#3498DB';
-      const tagTexto = foto.status === 'suspeita' ? 'SUSPEITA' : 'REVISÃO';
-
-      html += `
-        <div class="card" style="padding: 15px;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <div>
-              <p style="font-weight: bold; font-size: 14px; color: var(--cor-primaria);">${foto.promotor || 'Promotor Desconhecido'}</p>
-              <p style="font-size: 12px; color: var(--cor-texto-secundario);">${dataStr} | Pág. ${foto.pagina}</p>
-            </div>
-            <span style="font-size: 10px; background: ${tagCor}; color: white; padding: 3px 6px; border-radius: 4px; height: fit-content;">${tagTexto}</span>
-          </div>
-          
-          <p style="font-size: 12px; color: var(--cor-perigo); margin-bottom: 10px;"><strong>Motivo:</strong> ${foto.motivoGap || 'Múltiplas lojas no dia'}</p>
-          
-          <div style="width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; display: flex; justify-content: center; align-items: center;">
-            <img src="${foto.imagemBase64}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-          </div>
-          
-          <p style="font-size: 12px; margin-bottom: 10px;">Texto na imagem: <em>${foto.lojaTexto || 'Não extraído'}</em></p>
-          
-          <div style="display: flex; gap: 10px;">
-            <button onclick="decidirRevisao('${foto.id}', 'comprovada')" style="flex: 1; padding: 10px; background: #27AE60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">✅ Válida</button>
-            <button onclick="decidirRevisao('${foto.id}', 'sem_par')" style="flex: 1; padding: 10px; background: var(--cor-perigo); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">❌ Inválida</button>
-          </div>
-        </div>
-      `;
-    });
-
-    container.innerHTML = html;
-  }
-
-  function decidirRevisao(fotoId, novoStatus) {
-    const mesDados = Estado.meses[Estado.config.mesAtivo];
-    const foto = mesDados.fotos.find(f => f.id === fotoId);
-    if (!foto) return;
-
-    if (novoStatus === 'comprovada') {
-      // Tenta associar uma loja se ainda não tiver
-      if (!foto.lojaAuditada && foto.dataHora && foto.promotor) {
-        const dataStr = foto.dataHora.split('T')[0];
-        const promotorBusca = normalizarTexto(foto.promotor);
-        const visitas = mesDados.relatorioTempo.filter(v => normalizarTexto(v.promotor) === promotorBusca && v.data === dataStr);
-        if (visitas.length > 0) {
-          foto.lojaAuditada = visitas[0].loja;
-          foto.redeAuditada = visitas[0].rede;
-        }
-      }
-      foto.status = 'comprovada';
-      foto.motivoGap = 'Aprovado manualmente';
-    } else {
-      foto.status = 'sem_par';
-      foto.motivoGap = 'Reprovado manualmente';
-      foto.lojaAuditada = null;
-      foto.redeAuditada = null;
-    }
-    foto.revisaoManual = true;
-
-    salvarEstado();
-    // Recalcula toda a auditoria para refletir a mudança
-    executarAuditoriaSilencioso();
-    alert(`Foto marcada como ${novoStatus === 'comprovada' ? 'Válida' : 'Inválida'}.`);
-    renderizarRevisao();
-  }
-
-  // Versão silenciosa da auditoria (não navega ao terminar)
-  function executarAuditoriaSilencioso() {
-    const original = document.querySelector('nav button[data-tela="auditoria"]');
-    // Roda a mesma lógica sem alterar a tela
-    try {
-      const mesDados = Estado.meses[Estado.config.mesAtivo];
-      if (!mesDados || !mesDados.fotos || mesDados.fotos.length === 0) return;
-      // Simula o clique em Auditar sem navegar
-      const backupNavegar = document.querySelector('nav button[data-tela="dashboard"]');
-      // Chama executarAuditoria mas intercepta o alert e o redirect via flag
-      window._silencioso = true;
-      executarAuditoria();
-      window._silencioso = false;
-    } catch(e) { console.error(e); }
-  }
-
-  // ── TELA DE RELATÓRIO ──
   function renderizarRelatorio() {
     const container = document.getElementById('tela-relatorio');
     const mesDados = Estado.meses[Estado.config.mesAtivo];
-
     if (!mesDados || !mesDados.auditoria || !mesDados.auditoria.total) {
       container.innerHTML = `<div class="card"><h2>Relatório</h2><p>Nenhuma auditoria processada.</p></div>`;
       return;
     }
-
     const total = mesDados.auditoria.total;
-    const fotos = mesDados.fotos || [];
-    const totalSuspeitas = fotos.filter(f => f.status === 'suspeita').length;
-    const totalRevisao = fotos.filter(f => f.status === 'revisao').length;
-    const totalDuplicatas = fotos.filter(f => f.status === 'duplicata').length;
-    const totalSemPar = fotos.filter(f => f.status === 'sem_par').length;
     const efetividade = total.totalDeclaradas > 0 ? (total.comprovadas / total.totalDeclaradas) * 100 : 0;
 
     container.innerHTML = `
-      <div class="card">
-        <h2>Relatório Consolidado - ${Estado.config.mesAtivo}</h2>
-        <p style="font-size: 12px; color: var(--cor-texto-secundario);">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
-      </div>
-
+      <div class="card"><h2>Relatório Consolidado - ${Estado.config.mesAtivo}</h2><p style="font-size: 12px; color: var(--cor-texto-secundario);">Gerado em ${new Date().toLocaleString('pt-BR')}</p></div>
       <div class="card">
         <h2>Funil de Visitas</h2>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;">
-          <span style="font-weight: bold;">Programadas (Contrato)</span><span>${total.totalProgramadas || 0}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;">
-          <span style="font-weight: bold;">Declaradas (Pacto)</span><span>${total.totalDeclaradas || 0}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); font-weight: bold; margin-bottom: 10px;">
-          <span>Comprovadas (Fotos)</span><span>${total.comprovadas}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; color: var(--cor-perigo); font-weight: bold;">
-          <span>Gap (Não comprovadas)</span><span>${total.gap}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 10px; border-top: 1px solid #CCC; font-weight: bold;">
-          <span>Efetividade Geral</span><span>${formatarPorcentagem(efetividade)}</span>
-        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;"><span style="font-weight: bold;">Programadas (Contrato)</span><span>${total.totalProgramadas || 0}</span></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;"><span style="font-weight: bold;">Declaradas (Pacto)</span><span>${total.totalDeclaradas || 0}</span></div>
+        <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); font-weight: bold; margin-bottom: 10px;"><span>Comprovadas (Fotos)</span><span>${total.comprovadas}</span></div>
+        <div style="display: flex; justify-content: space-between; color: var(--cor-perigo); font-weight: bold;"><span>Gap (Não comprovadas)</span><span>${total.gap}</span></div>
+        <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 10px; border-top: 1px solid #CCC; font-weight: bold;"><span>Efetividade Geral</span><span>${formatarPorcentagem(efetividade)}</span></div>
       </div>
-
       <div class="card">
         <h2>Resumo Financeiro</h2>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-          <span style="font-size: 13px;">Valor Cobrado (Declarado)</span>
-          <span style="font-size: 16px; font-weight: bold;">${formatarMoeda(total.valorCobrado)}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--cor-perigo);">
-          <span style="font-size: 13px;">Desconto Justificado (Gap)</span>
-          <span style="font-size: 16px; font-weight: bold;">- ${formatarMoeda(total.desconto)}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); border-top: 2px solid var(--cor-primaria); padding-top: 10px; margin-top: 10px;">
-          <span style="font-size: 14px; font-weight: bold;">Valor Auditado</span>
-          <span style="font-size: 20px; font-weight: 900;">${formatarMoeda(total.valorAuditado)}</span>
-        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span style="font-size: 13px;">Valor Cobrado (Declarado)</span><span style="font-size: 16px; font-weight: bold;">${formatarMoeda(total.valorCobrado)}</span></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--cor-perigo);"><span style="font-size: 13px;">Desconto Justificado (Gap)</span><span style="font-size: 16px; font-weight: bold;">- ${formatarMoeda(total.desconto)}</span></div>
+        <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); border-top: 2px solid var(--cor-primaria); padding-top: 10px; margin-top: 10px;"><span style="font-size: 14px; font-weight: bold;">Valor Auditado</span><span style="font-size: 20px; font-weight: 900;">${formatarMoeda(total.valorAuditado)}</span></div>
       </div>
-
-      <div class="card">
-        <h2>Auditoria de Fotos</h2>
-        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px;"><span>✅ Fotos Comprovadas:</span> <strong>${total.comprovadas}</strong></p>
-        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #E74C3C;"><span>⚠️ Suspeitas:</span> <strong>${totalSuspeitas}</strong></p>
-        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #3498DB;"><span>🔍 Em Revisão:</span> <strong>${totalRevisao}</strong></p>
-        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--cor-perigo);"><span>🔁 Duplicatas:</span> <strong>${totalDuplicatas}</strong></p>
-        <p style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--cor-texto-secundario);"><span>❓ Sem Par:</span> <strong>${totalSemPar}</strong></p>
-      </div>
-
       <div class="card">
         <h2>Glossário</h2>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Programadas:</strong> O que foi contratado no plano.</p>
@@ -1637,12 +809,11 @@
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Desconto Justificado:</strong> Gap × Custo da Visita.</p>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Valor Auditado:</strong> O valor real a ser pago.</p>
       </div>
-
       <button onclick="window.print()" style="width: 100%; padding: 15px; background: var(--cor-primaria); color: var(--cor-destaque); border: 2px solid var(--cor-destaque); border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-bottom: 30px;">🖨️ Imprimir / Salvar PDF</button>
     `;
   }
 
-  // ── INICIALIZAÇÃO GERAL ──
+  // ═══ INICIALIZAÇÃO ═══
   document.addEventListener('DOMContentLoaded', () => {
     carregarEstado();
     garantirMes(Estado.config.mesAtivo);
@@ -1650,13 +821,11 @@
     document.querySelectorAll('nav button').forEach(botao => {
       botao.addEventListener('click', () => {
         const nomeTela = botao.dataset.tela;
-        
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('ativo'));
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
         
         botao.classList.add('ativo');
-        const telaAlvo = document.getElementById(`tela-${nomeTela}`);
-        if (telaAlvo) telaAlvo.classList.add('ativa');
+        document.getElementById(`tela-${nomeTela}`).classList.add('ativa');
 
         if (nomeTela === 'config') renderizarConfig();
         if (nomeTela === 'admin') renderizarAdmin();
@@ -1667,12 +836,11 @@
       });
     });
 
-    // Renderiza a tela ativa inicial
+    // Renderiza a tela inicial
     renderizarDashboard();
     renderizarConfig();
     renderizarAdmin();
   });
 </script>
-/* ═══ FIM SUBBLOCO 08 ═══ */
 </body>
 </html>
