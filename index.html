@@ -12,11 +12,10 @@
 
     <style>
         /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 02 — CSS MOBILE-FIRST (CockPit Tarks) - VERSÃO PREMIUM
+           SUBBLOCO 01 — CSS PREMIUM (Visual Prateado F1)
            ═══════════════════════════════════════════════════════════════ */
-        
         :root {
-            /* Cores de Fundo (Prateado F1) */
+            /* Cores Prateado F1 */
             --cor-fundo: #E4E8EE;
             --cor-fundo-card: #FFFFFF;
             
@@ -26,8 +25,8 @@
             --cor-perigo: #E74C3C;         /* Vermelho Alerta */
             
             /* Textos */
-            --cor-texto: #1A252F;          /* Azul escuro quase preto */
-            --cor-texto-secundario: #7F8C8D; /* Cinza */
+            --cor-texto: #1A252F;
+            --cor-texto-secundario: #7F8C8D;
             
             /* Tipografia */
             --fonte-titulo: 'Orbitron', sans-serif;
@@ -43,7 +42,6 @@
         body {
             font-family: var(--fonte-dados);
             background-color: var(--cor-fundo);
-            /* Gradiente sutil para simular metal escovado */
             background-image: linear-gradient(135deg, #E4E8EE 0%, #D1D9E6 100%);
             color: var(--cor-texto);
             display: flex;
@@ -52,7 +50,7 @@
             overflow: hidden;
         }
 
-        /* ── HEADER (Cockpit) ──────────────────────────────────────── */
+        /* ── HEADER ────────────────────────────────────────────────── */
         header {
             background-color: var(--cor-primaria);
             padding: 14px 20px;
@@ -65,7 +63,6 @@
             position: relative;
         }
 
-        /* Linha de velocidade sutil no header */
         header::after {
             content: '';
             position: absolute;
@@ -82,7 +79,6 @@
             z-index: 1;
         }
 
-        /* Logo Placeholder (Círculo Dourado com T) */
         .logo-placeholder {
             width: 48px;
             height: 48px;
@@ -117,7 +113,7 @@
             letter-spacing: 3px;
         }
 
-        /* ── NAV (Menu Superior) ───────────────────────────────────── */
+        /* ── NAV ────────────────────────────────────────────────────── */
         nav {
             background-color: #F8F9FA;
             display: flex;
@@ -146,7 +142,7 @@
         nav button.ativo {
             color: var(--cor-primaria);
             border-bottom: 3px solid var(--cor-primaria);
-            background-color: rgba(10, 61, 46, 0.05); /* Leve destaque */
+            background-color: rgba(10, 61, 46, 0.05);
         }
 
         nav button:hover {
@@ -177,7 +173,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ── CARDS (Painéis de Instrumentos) ────────────────────────── */
+        /* ── CARDS ──────────────────────────────────────────────────── */
         .card {
             background-color: var(--cor-fundo-card);
             border-radius: 8px;
@@ -189,7 +185,6 @@
             overflow: hidden;
         }
 
-        /* Detalhe dourado no canto (velocidade) */
         .card::after {
             content: '';
             position: absolute;
@@ -218,7 +213,6 @@
             font-weight: 500;
         }
 
-        /* Números Grandes (Dashboard) */
         .numero-destaque {
             font-family: var(--fonte-titulo);
             font-size: 36px;
@@ -241,36 +235,23 @@
             letter-spacing: 1px;
         }
 
-        /* ── RESPONSIVIDADE (Notebook) ─────────────────────────────── */
+        /* ── RESPONSIVIDADE ────────────────────────────────────────── */
         @media (min-width: 768px) {
-            nav button {
-                font-size: 14px;
-                padding: 20px 25px;
-            }
-            .titulo-header h1 {
-                font-size: 30px;
-            }
-            .titulo-header span {
-                font-size: 12px;
-            }
-            main {
-                padding: 30px;
-                max-width: 1200px;
-                margin: 0 auto;
-                width: 100%;
-            }
-            .card {
-                padding: 25px;
-            }
-            .numero-destaque {
-                font-size: 48px;
-            }
+            nav button { font-size: 14px; padding: 20px 25px; }
+            .titulo-header h1 { font-size: 30px; }
+            .titulo-header span { font-size: 12px; }
+            main { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; }
+            .card { padding: 25px; }
+            .numero-destaque { font-size: 48px; }
         }
     </style>
 </head>
-
 <body>
-    <!-- ── HEADER ────────────────────────────────────────────────── -->
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SUBBLOCO 02 — ESTRUTURA HTML (Header, Nav, Telas)
+         ═══════════════════════════════════════════════════════════════ -->
+    
     <header>
         <div class="logo-container">
             <div class="logo-placeholder">T</div>
@@ -281,7 +262,6 @@
         </div>
     </header>
 
-    <!-- ── NAV ────────────────────────────────────────────────────── -->
     <nav>
         <button class="ativo" data-tela="dashboard">Dashboard</button>
         <button data-tela="admin">Admin</button>
@@ -290,7 +270,6 @@
         <button data-tela="config">Configurações</button>
     </nav>
 
-    <!-- ── MIOLO ──────────────────────────────────────────────────── -->
     <main>
 
         <!-- TELA 1: DASHBOARD -->
@@ -357,7 +336,7 @@
         <div id="tela-auditoria" class="tela">
             <div class="card">
                 <h2>Auditoria de Lojas</h2>
-                <p>Lista de lojas com status: 100% comprovado, divergência, suspeita ou duplicata.</p>
+                <p>Lista de lojas com status.</p>
             </div>
         </div>
 
@@ -379,12 +358,13 @@
 
     </main>
 
-    <!-- ── FOOTER ─────────────────────────────────────────────────── -->
     <footer>
         CockPit Tarks &copy; 2026 | Grupo Tarks | Auditoria de Trade Marketing
     </footer>
 
-    <!-- ── SCRIPT DE NAVEGAÇÃO ────────────────────────────────────── -->
+    <!-- ═══════════════════════════════════════════════════════════════
+         SUBBLOCO 03 — SCRIPT DE NAVEGAÇÃO
+         ═══════════════════════════════════════════════════════════════ -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const botoesNav = document.querySelectorAll('nav button');
@@ -401,61 +381,37 @@
             });
         });
     </script>
-</body>
-</html>
-    <!-- ═══════════════════════════════════════════════════════════════
-         SUBBLOCO 03 — ESTADO GLOBAL E NAVEGAÇÃO
-         ═══════════════════════════════════════════════════════════════ -->
-    <script>
-        // Navegação entre telas
-        document.addEventListener('DOMContentLoaded', () => {
-            const botoesNav = document.querySelectorAll('nav button');
-            const telas = document.querySelectorAll('.tela');
-
-            botoesNav.forEach(botao => {
-                botao.addEventListener('click', () => {
-                    const nomeTela = botao.dataset.tela;
-                    botoesNav.forEach(b => b.classList.remove('ativo'));
-                    telas.forEach(t => t.classList.remove('ativa'));
-                    botao.classList.add('ativo');
-                    document.getElementById(`tela-${nomeTela}`).classList.add('ativa');
-                });
-            });
-        });
-    </script>
 
 </body>
 </html>
     <!-- ═══════════════════════════════════════════════════════════════
-         PARTE 2 — IMPORTAÇÃO DO EXCEL
+         SUBBLOCO 04 — BIBLIOTECAS E ESTADO GLOBAL
          ═══════════════════════════════════════════════════════════════ -->
+    <!-- Carregando bibliotecas via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
-    <!-- TELA DE IMPORTAÇÃO DE EXCEL (substitui o placeholder da Tela Admin) -->
     <script>
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 04 — PARSER DO EXCEL (SheetJS + cálculo de fórmulas)
-           ═══════════════════════════════════════════════════════════════ */
+        // Configuração do Worker do PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
         const Estado = {
-            config: {
-                janelaDuplicata: 10, // minutos
-                janelaSuspeita: 60,  // minutos
-                mesAtual: '2026-10'
-            },
-            redes: [],
-            lojas: [],
-            visitasDeclaradas: [],
-            fotos: [],
-            visitasComprovadas: [],
-            auditoria: {
-                totalDeclaradas: 0,
-                totalComprovadas: 0,
-                divergencias: [],
-                suspeitas: [],
-                duplicatas: []
-            }
+            config: { janelaDuplicata: 10, janelaSuspeita: 60 },
+            redes: [], lojas: [], visitasDeclaradas: [], fotos: []
         };
 
-        // Lê um arquivo Excel e devolve um objeto com as abas
+        // Dicionário de redes conhecidas
+        const REDES_CONHECIDAS = [
+            'ATACADÃO', 'NAGUMO', 'CARREFOUR', 'X', 'AKKI', 'MERCADÃO', 
+            'CHAMA', 'AYUMI', 'KAÇULA', 'MEGASTOCK', 'REDE SIMCO', 'TENDA', 
+            'MINI PREÇO', 'PRABAR', 'HIGA', 'ATAC CRESCER', 'G2', 'CATO', 
+            'SÃO VICENTE', 'ALVORADA', 'PARANÁ', 'DELTA', 'COPEBE', 'SINCO'
+        ];
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 05 — PARSER DE EXCEL
+           ═══════════════════════════════════════════════════════════════ */
         function lerExcel(arquivo) {
             return new Promise((resolve, reject) => {
                 const leitor = new FileReader();
@@ -464,286 +420,64 @@
                         const dados = new Uint8Array(e.target.result);
                         const workbook = XLSX.read(dados, { type: 'array' });
                         resolve(workbook);
-                    } catch (erro) {
-                        reject(erro);
-                    }
+                    } catch (erro) { reject(erro); }
                 };
                 leitor.onerror = reject;
                 leitor.readAsArrayBuffer(arquivo);
             });
         }
 
-        // Extrai os dados da aba "sistematica" (fechamento PACTO x TUBAINA)
-        function extrairSistematica(workbook) {
-            const nomeAba = 'sistematica';
-            if (!workbook.SheetNames.includes(nomeAba)) {
-                throw new Error('Aba "sistematica" não encontrada no Excel.');
-            }
-            const aba = workbook.Sheets[nomeAba];
-            const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
+        function normalizar(texto) {
+            return String(texto).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+        }
 
-            // A linha 3 (índice 2) é o cabeçalho real (as duas primeiras são título)
-            const cabecalho = linhas[2];
-            const dados = linhas.slice(3);
-
+        function extrairDadosExcel(workbook) {
             const redes = [];
+            const lojas = [];
             const visitas = [];
 
-            dados.forEach(linha => {
-                const rede = String(linha[2] || '').trim(); // Coluna C: REDE
-                const custo = parseFloat(linha[3]) || 0;    // Coluna D: CUSTO DA VISITA
-                const qtdLojas = parseInt(linha[4]) || 0;   // Coluna E: QTD LOJAS
-                const visitasSemana = parseInt(linha[5]) || 0; // Coluna F: VISITAS/SEMANA
-                const programadas = parseInt(linha[6]) || 0; // Coluna G: VISITAS PROGRAMADAS/MÊS
-                const realizadas = parseInt(linha[7]) || 0; // Coluna H: VISITAS REALIZADAS/MÊS
-                const custoTotal = parseFloat(linha[8]) || 0; // Coluna I: TOTAL PROGRAMADO
-                const custoEfetivo = parseFloat(linha[9]) || 0; // Coluna J: TOTAL EFETIVO
-                const efetividade = parseFloat(linha[10]) || 0; // Coluna K: EFETIVIDADE
-
-                if (rede && rede !== 'TOTAL') {
-                    redes.push({ rede, custo, qtdLojas, visitasSemana, programadas, realizadas, custoTotal, custoEfetivo, efetividade });
-                    visitas.push({ rede, programadas, realizadas });
+            // 1. Extrai da aba "sistematica"
+            if (workbook.SheetNames.includes('sistematica')) {
+                const aba = workbook.Sheets['sistematica'];
+                const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
+                // Pula as 3 primeiras linhas (cabeçalho)
+                for (let i = 3; i < linhas.length; i++) {
+                    const linha = linhas[i];
+                    const rede = String(linha[2] || '').trim();
+                    const realizadas = parseInt(linha[7]) || 0;
+                    if (rede && rede !== 'TOTAL') {
+                        redes.push({ nome: rede });
+                        visitas.push({ rede: rede, realizadas: realizadas });
+                    }
                 }
-            });
-
-            return { redes, visitas };
-        }
-
-        // Calcula fórmula simples (fallback para quando o cache não existe)
-        function calcularFormula(formula, aba) {
-            // Remove o "=" inicial
-            let expr = formula.replace(/^=/, '');
-            
-            // Substitui SUM, COUNTA por funções JS
-            // Exemplo: =SUM(F3*4*E3) → SUM(F3*4*E3)
-            // Exemplo: =COUNTA(G3:L3) → COUNTA(G3:L3)
-            // Exemplo: =H3/G3 → H3/G3
-            
-            // Substitui referências de célula por valores
-            expr = expr.replace(/([A-Z]+)(\d+)/g, (match, col, row) => {
-                const cell = aba[`${col}${row}`];
-                if (cell && cell.v !== undefined) {
-                    return cell.v;
-                }
-                return '0';
-            });
-            
-            // Substitui SUM(a,b,c) por a+b+c
-            expr = expr.replace(/SUM\(([^)]+)\)/g, (match, args) => {
-                return `(${args.split(/[,+]/).join('+')})`;
-            });
-            
-            // Substitui COUNTA(a,b,c) por contagem de não-vazios
-            // (simplificado: retorna 1 se algum valor existe)
-            expr = expr.replace(/COUNTA\(([^)]+)\)/g, (match, args) => {
-                return `1`;
-            });
-            
-            try {
-                return eval(expr);
-            } catch (e) {
-                return 0;
             }
-        }
 
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 05 — NORMALIZAÇÃO DE REDES E LOJAS
-           ═══════════════════════════════════════════════════════════════ */
-        
-        // Dicionário de redes conhecidas (extraído das planilhas)
-        const REDES_CONHECIDAS = [
-            'ATACADÃO', 'NAGUMO', 'CARREFOUR', 'X', 'AKKI', 'MERCADÃO', 
-            'CHAMA', 'AYUMI', 'KAÇULA', 'MEGASTOCK', 'REDE SIMCO', 'TENDA', 
-            'MINI PREÇO', 'PRABAR', 'HIGA', 'ATAC CRESCER', 'G2', 'CATO', 
-            'SÃO VICENTE', 'ALVORADA', 'PARANÁ', 'DELTA', 'COPEBE', 'SINCO',
-            'PISTONI', 'ADEGA CRESCER'
-        ];
-
-        // Normaliza um nome (remove acentos, converte para maiúsculas)
-        function normalizar(texto) {
-            return String(texto)
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toUpperCase()
-                .trim();
-        }
-
-        // Separa cidade e complemento do nome da loja
-        function separarCidadeComplemento(nomeLoja) {
-            const palavras = nomeLoja.split(' ');
-            if (palavras.length === 1) {
-                return { cidade: nomeLoja, complemento: '' };
-            }
-            // Heurística: primeira palavra é a cidade, resto é complemento
-            return {
-                cidade: palavras[0],
-                complemento: palavras.slice(1).join(' ')
-            };
-        }
-
-        // Extrai as lojas das abas operacionais (ATACADÃO, CARREFOUR, etc.)
-        function extrairLojas(workbook) {
-            const lojas = [];
+            // 2. Extrai lojas das abas operacionais
             workbook.SheetNames.forEach(nomeAba => {
-                if (nomeAba === 'sistematica') return; // Pula a aba mestra
+                if (nomeAba === 'sistematica') return;
                 const aba = workbook.Sheets[nomeAba];
                 const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
                 
-                // Procura o cabeçalho (linha que contém "Nome da Loja" ou "Promotor")
-                let inicioDados = -1;
                 for (let i = 0; i < linhas.length; i++) {
-                    const linhaStr = linhas[i].join(' ');
-                    if (linhaStr.includes('Nome da Loja') || linhaStr.includes('Promotor')) {
-                        inicioDados = i + 1;
-                        break;
-                    }
-                }
-                if (inicioDados === -1) return; // Não encontrou cabeçalho
-
-                // Extrai as lojas a partir da linha de dados
-                for (let i = inicioDados; i < linhas.length; i++) {
                     const linha = linhas[i];
-                    const nomeLoja = String(linha[1] || '').trim(); // Coluna B: Nome da Loja
-                    const promotor = String(linha[2] || '').trim(); // Coluna C: Promotor
-                    
-                    if (nomeLoja && nomeLoja !== 'TOTAL' && nomeLoja !== 'Nome da Loja') {
-                        const { cidade, complemento } = separarCidadeComplemento(nomeLoja);
+                    // Procura a linha que tem "Nome da Loja" ou o padrão de dados
+                    const nomeLoja = String(linha[1] || '').trim();
+                    if (nomeLoja && nomeLoja !== 'Nome da Loja' && nomeLoja !== 'TOTAL' && nomeLoja.length > 2) {
                         lojas.push({
                             rede: normalizar(nomeAba),
                             nomeOriginal: nomeLoja,
-                            cidade: normalizar(cidade),
-                            complemento: normalizar(complemento),
-                            promotor: normalizar(promotor)
+                            cidade: normalizar(nomeLoja.split(' ')[0])
                         });
                     }
                 }
             });
-            return lojas;
+
+            return { redes, lojas, visitas };
         }
 
         /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 06 — TELA DE IMPORTAÇÃO DE EXCEL
+           SUBBLOCO 06 — PARSER DE PDF E OCR
            ═══════════════════════════════════════════════════════════════ */
-        
-        // Função para renderizar a tela de importação
-        function renderizarImportacaoExcel() {
-            const container = document.getElementById('tela-admin');
-            container.innerHTML = `
-                <div class="card">
-                    <h2>Importar Excel (Fechamento Pacto)</h2>
-                    <p>Selecione o arquivo .xlsx do fechamento mensal.</p>
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <input type="file" id="input-excel" accept=".xlsx, .xls" 
-                           style="display: none;">
-                    <button id="btn-selecionar-excel" class="card" 
-                            style="width: 100%; cursor: pointer; text-align: center; padding: 20px; color: var(--cor-destaque); font-weight: bold;">
-                        Clique para selecionar o arquivo Excel
-                    </button>
-                </div>
-                <div id="preview-excel" style="display: none;">
-                    <div class="card">
-                        <h2>Prévia da Importação</h2>
-                        <div id="preview-conteudo"></div>
-                    </div>
-                    <button id="btn-confirmar-excel" 
-                            style="width: 100%; padding: 12px; background: var(--cor-sucesso); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                        Confirmar Importação
-                    </button>
-                </div>
-                <div id="mensagem-excel"></div>
-            `;
-
-            // Eventos
-            const btnSelecionar = document.getElementById('btn-selecionar-excel');
-            const inputExcel = document.getElementById('input-excel');
-            const previewExcel = document.getElementById('preview-excel');
-            const previewConteudo = document.getElementById('preview-conteudo');
-            const btnConfirmar = document.getElementById('btn-confirmar-excel');
-            const mensagem = document.getElementById('mensagem-excel');
-
-            let dadosImportados = null;
-
-            btnSelecionar.addEventListener('click', () => inputExcel.click());
-
-            inputExcel.addEventListener('change', async (e) => {
-                const arquivo = e.target.files[0];
-                if (!arquivo) return;
-
-                mensagem.innerHTML = '<p style="color: var(--cor-alerta);">Processando Excel...</p>';
-
-                try {
-                    const workbook = await lerExcel(arquivo);
-                    
-                    // Extrai dados da sistematica
-                    const { redes, visitas } = extrairSistematica(workbook);
-                    
-                    // Extrai lojas das abas operacionais
-                    const lojas = extrairLojas(workbook);
-
-                    dadosImportados = { redes, visitas, lojas, workbook };
-
-                    // Preview
-                    previewConteudo.innerHTML = `
-                        <p><strong>Redes encontradas:</strong> ${redes.length}</p>
-                        <p><strong>Lojas encontradas:</strong> ${lojas.length}</p>
-                        <p><strong>Visitas declaradas:</strong> ${visitas.reduce((acc, v) => acc + v.realizadas, 0)}</p>
-                        <p><strong>Abas do Excel:</strong> ${workbook.SheetNames.join(', ')}</p>
-                    `;
-                    previewExcel.style.display = 'block';
-                    mensagem.innerHTML = '<p style="color: var(--cor-sucesso);">✅ Excel processado com sucesso!</p>';
-                } catch (erro) {
-                    mensagem.innerHTML = `<p style="color: var(--cor-perigo);">❌ Erro: ${erro.message}</p>`;
-                }
-            });
-
-            btnConfirmar.addEventListener('click', () => {
-                if (!dadosImportados) return;
-                
-                // Salva no estado global
-                Estado.redes = dadosImportados.redes;
-                Estado.lojas = dadosImportados.lojas;
-                Estado.visitasDeclaradas = dadosImportados.visitas;
-
-                // Salva no localStorage
-                localStorage.setItem('cockpit_estado', JSON.stringify({
-                    redes: Estado.redes,
-                    lojas: Estado.lojas,
-                    visitasDeclaradas: Estado.visitasDeclaradas,
-                    config: Estado.config
-                }));
-
-                mensagem.innerHTML = '<p style="color: var(--cor-sucesso);">✅ Dados salvos no sistema!</p>';
-                
-                // Muda para a tela de auditoria
-                setTimeout(() => {
-                    document.querySelector('nav button[data-tela="auditoria"]').click();
-                }, 1000);
-            });
-        }
-
-        // Renderiza a tela de importação quando a aba Admin é clicada
-        document.addEventListener('DOMContentLoaded', () => {
-            const btnAdmin = document.querySelector('nav button[data-tela="admin"]');
-            if (btnAdmin) {
-                btnAdmin.addEventListener('click', () => {
-                    renderizarImportacaoExcel();
-                });
-            }
-        });
-    </script>
-        <!-- ═══════════════════════════════════════════════════════════════
-         PARTE 3A — LEITURA DE PDF, OCR E HASH VISUAL
-         ═══════════════════════════════════════════════════════════════ -->
-    <script>
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 07 — EXTRAÇÃO DE TEXTO E IMAGENS DO PDF
-           ═══════════════════════════════════════════════════════════════ */
-        
-        // Configuração do PDF.js (Worker)
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-
-        // Processa um PDF inteiro, página por página
         async function processarPDF(arquivo, callbackProgresso) {
             const arrayBuffer = await arquivo.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -751,265 +485,224 @@
             const fotosExtraidas = [];
 
             for (let i = 1; i <= totalPaginas; i++) {
-                // Atualiza barra de progresso
                 if (callbackProgresso) callbackProgresso(i, totalPaginas);
-
                 const pagina = await pdf.getPage(i);
                 
-                // 1. Extrai o texto lateral (metadados fáceis)
+                // Pega texto lateral
                 const textoConteudo = await pagina.getTextContent();
                 const textoBruto = textoConteudo.items.map(item => item.str).join(' ');
                 
-                // 2. Extrai a imagem (para OCR e Hash)
+                // Pega imagem
                 const operacoes = await pagina.getOperatorList();
                 let imagemBase64 = null;
                 
-                // Procura a imagem principal da página (geralmente a primeira imagem grande)
                 for (let j = 0; j < operacoes.fnArray.length; j++) {
                     if (operacoes.fnArray[j] === pdfjsLib.OPS.paintImageXObject) {
-                        const imgName = operacoes.argsArray[j][0];
                         try {
-                            const img = await pagina.objs.get(imgName);
-                            if (img && img.width > 100 && img.height > 100) { // Ignora ícones pequenos
-                                imagemBase64 = await converterImagemParaBase64(img);
+                            const img = await pagina.objs.get(operacoes.argsArray[j][0]);
+                            if (img && img.width > 100 && img.height > 100) {
+                                imagemBase64 = await converterParaBase64(img);
                                 break;
                             }
-                        } catch (e) {
-                            console.warn('Erro ao extrair imagem da página', i, e);
-                        }
+                        } catch (e) {}
                     }
                 }
 
-                // 3. Se encontrou imagem, faz OCR e Hash
-                let dadosFoto = null;
                 if (imagemBase64) {
-                    // OCR na legenda (parte inferior da imagem)
-                    const textoOCR = await fazerOCRnaLegenda(imagemBase64);
-                    
-                    // Hash visual (para detectar duplicatas/fraudes)
-                    const hashVisual = await gerarHashVisual(imagemBase64);
-
-                    dadosFoto = {
+                    const dados = extrairMetadados(textoBruto);
+                    // Salva foto (o OCR será feito depois, se necessário)
+                    fotosExtraidas.push({
                         pagina: i,
-                        dataHora: extrairDataHora(textoBruto),
-                        promotor: extrairPromotor(textoBruto),
-                        produto: extrairProduto(textoBruto),
-                        textoOCR: textoOCR,
+                        data: dados.data,
+                        promotor: dados.promotor,
                         imagemBase64: imagemBase64,
-                        hashVisual: hashVisual,
-                        redeOCR: null, // Será preenchido no cruzamento
-                        lojaOCR: null, // Será preenchido no cruzamento
                         status: 'pendente'
-                    };
-                    fotosExtraidas.push(dadosFoto);
+                    });
                 }
 
-                // Salva progresso a cada 50 páginas (segurança)
+                // Salvamento a cada 50 páginas
                 if (i % 50 === 0) {
-                    localStorage.setItem('cockpit_pdf_progresso', JSON.stringify({
-                        paginaAtual: i,
-                        total: totalPaginas,
-                        fotos: fotosExtraidas
-                    }));
+                    localStorage.setItem('cockpit_progresso_pdf', JSON.stringify(fotosExtraidas));
                 }
             }
-
             return fotosExtraidas;
         }
 
-        // Converte imagem do PDF.js para Base64
-        function converterImagemParaBase64(img) {
+        function converterParaBase64(img) {
             return new Promise((resolve) => {
                 const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
+                canvas.width = img.width; canvas.height = img.height;
                 const ctx = canvas.getContext('2d');
-                
                 const imageData = ctx.createImageData(img.width, img.height);
                 imageData.data.set(img.data);
                 ctx.putImageData(imageData, 0, 0);
-                
                 resolve(canvas.toDataURL('image/jpeg', 0.8));
             });
         }
 
+        function extrairMetadados(texto) {
+            const matchData = texto.match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
+            const matchPromotor = texto.match(/Promotor:\s*([A-Za-zÀ-ÿ\s]+?)(?=\s*Produto|$)/i);
+            return {
+                data: matchData ? { dia: matchData[1], hora: matchData[2] } : null,
+                promotor: matchPromotor ? matchPromotor[1].trim() : null
+            };
+        }
+
         /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 08 — OCR DA LEGENDA (Tesseract.js)
+           SUBBLOCO 07 — INTERFACE DE ADMINISTRAÇÃO (UPLOADS)
            ═══════════════════════════════════════════════════════════════ */
-        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Ao clicar em Admin, monta a tela
+            document.querySelector('nav button[data-tela="admin"]').addEventListener('click', () => {
+                const container = document.getElementById('tela-admin');
+                container.innerHTML = `
+                    <div class="card">
+                        <h2>1. Importar Excel (Fechamento)</h2>
+                        <input type="file" id="input-excel" accept=".xlsx, .xls" style="margin-top: 10px;">
+                        <div id="msg-excel" style="margin-top: 10px; font-weight: bold;"></div>
+                    </div>
+                    <div class="card">
+                        <h2>2. Importar PDF (Evidências)</h2>
+                        <input type="file" id="input-pdf" accept=".pdf" style="margin-top: 10px;">
+                        <div id="progresso-pdf" style="display: none; margin-top: 10px;">
+                            <div style="background: #ddd; height: 10px; border-radius: 5px;">
+                                <div id="barra-pdf" style="background: var(--cor-primaria); height: 100%; width: 0%; border-radius: 5px;"></div>
+                            </div>
+                            <p id="texto-pdf" style="font-size: 12px; margin-top: 5px;"></p>
+                        </div>
+                        <div id="msg-pdf" style="margin-top: 10px; font-weight: bold;"></div>
+                    </div>
+                `;
+
+                // Evento de Upload de Excel
+                document.getElementById('input-excel').addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const msg = document.getElementById('msg-excel');
+                    msg.innerHTML = 'Lendo arquivo...';
+                    try {
+                        const wb = await lerExcel(file);
+                        const dados = extrairDadosExcel(wb);
+                        
+                        Estado.redes = dados.redes;
+                        Estado.lojas = dados.lojas;
+                        Estado.visitasDeclaradas = dados.visitas;
+                        
+                        localStorage.setItem('cockpit_estado', JSON.stringify(Estado));
+                        msg.innerHTML = `<span style="color: green;">✅ Excel lido: ${dados.lojas.length} lojas e ${dados.visitas.length} redes.</span>`;
+                        renderizarDashboard();
+                    } catch (erro) {
+                        msg.innerHTML = `<span style="color: red;">❌ Erro: ${erro.message}</span>`;
+                    }
+                });
+
+                // Evento de Upload de PDF
+                document.getElementById('input-pdf').addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const msg = document.getElementById('msg-pdf');
+                    const prog = document.getElementById('progresso-pdf');
+                    const barra = document.getElementById('barra-pdf');
+                    const txt = document.getElementById('texto-pdf');
+
+                    prog.style.display = 'block';
+                    msg.innerHTML = 'Processando PDF (isso pode demorar)...';
+
+                    try {
+                        const fotos = await processarPDF(file, (atual, total) => {
+                            const pct = Math.floor((atual / total) * 100);
+                            barra.style.width = pct + '%';
+                            txt.textContent = `Página ${atual} de ${total} (${pct}%)`;
+                        });
+
+                        Estado.fotos = fotos;
+                        localStorage.setItem('cockpit_fotos', JSON.stringify(fotos));
+                        msg.innerHTML = `<span style="color: green;">✅ PDF lido: ${fotos.length} fotos extraídas.</span>`;
+                        prog.style.display = 'none';
+                        renderizarDashboard();
+                    } catch (erro) {
+                        msg.innerHTML = `<span style="color: red;">❌ Erro: ${erro.message}</span>`;
+                        prog.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 08 — DASHBOARD
+           ═══════════════════════════════════════════════════════════════ */
+        function renderizarDashboard() {
+            const totalDeclaradas = Estado.visitasDeclaradas.reduce((acc, v) => acc + v.realizadas, 0);
+            const totalComprovadas = Estado.fotos.length;
+            const pct = totalDeclaradas > 0 ? ((totalComprovadas / totalDeclaradas) * 100).toFixed(1) : 0;
+
+            const elDeclaradas = document.querySelectorAll('.numero-destaque')[0];
+            const elComprovadas = document.querySelectorAll('.numero-destaque')[1];
+            const elPct = document.querySelectorAll('.numero-destaque')[2];
+            
+            if (elDeclaradas) elDeclaradas.textContent = totalDeclaradas;
+            if (elComprovadas) elComprovadas.textContent = totalComprovadas;
+            if (elPct) elPct.textContent = pct + '%';
+
+            // Barra de progresso
+            const barra = document.querySelector('.card div[style*="width: 0%"]');
+            if (barra) barra.style.width = pct + '%';
+        }
+
+        // Carrega dados do localStorage ao iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            const salvo = localStorage.getItem('cockpit_estado');
+            if (salvo) {
+                const d = JSON.parse(salvo);
+                Estado.redes = d.redes || [];
+                Estado.lojas = d.lojas || [];
+                Estado.visitasDeclaradas = d.visitasDeclaradas || [];
+            }
+            const fotosSalvas = localStorage.getItem('cockpit_fotos');
+            if (fotosSalvas) Estado.fotos = JSON.parse(fotosSalvas) || [];
+            
+            renderizarDashboard();
+        });
+    </script>
+
+</body>
+</html>
+    <!-- ═══════════════════════════════════════════════════════════════
+         SUBBLOCO 09 — INTELIGÊNCIA DE AUDITORIA (CRUZAMENTO E FRAUDE)
+         ═══════════════════════════════════════════════════════════════ -->
+    <script>
+        // Variável para o worker do OCR (Tesseract)
         let workerOCR = null;
 
-        // Inicializa o worker do Tesseract (só uma vez)
         async function inicializarOCR() {
             if (!workerOCR) {
-                workerOCR = await Tesseract.createWorker('por'); // Português
+                workerOCR = await Tesseract.createWorker('por');
             }
             return workerOCR;
         }
 
-        // Faz OCR na parte inferior da imagem (onde fica a legenda)
+        // Faz o OCR na parte inferior da imagem (onde fica a legenda)
         async function fazerOCRnaLegenda(imagemBase64) {
             try {
                 const worker = await inicializarOCR();
-                
-                // Recorta a parte inferior da imagem (legenda)
-                const imagemRecortada = await recortarLegenda(imagemBase64);
-                
-                // Roda o OCR
-                const { data: { text } } = await worker.recognize(imagemRecortada);
+                // Recorta a parte de baixo da imagem (25% da altura)
+                const img = new Image();
+                img.src = imagemBase64;
+                await new Promise(r => img.onload = r);
+
+                const canvas = document.createElement('canvas');
+                const alturaRecorte = Math.floor(img.height * 0.25);
+                canvas.width = img.width;
+                canvas.height = alturaRecorte;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, img.height - alturaRecorte, img.width, alturaRecorte, 0, 0, img.width, alturaRecorte);
+
+                const { data: { text } } = await worker.recognize(canvas.toDataURL('image/jpeg', 0.9));
                 return text;
-            } catch (erro) {
-                console.warn('Erro no OCR:', erro);
+            } catch (e) {
                 return '';
             }
-        }
-
-        // Recorta a parte inferior da imagem (onde fica a legenda)
-        function recortarLegenda(imagemBase64) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    // Pega só a parte inferior (25% da altura)
-                    const alturaRecorte = Math.floor(img.height * 0.25);
-                    canvas.width = img.width;
-                    canvas.height = alturaRecorte;
-                    
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, img.height - alturaRecorte, img.width, alturaRecorte, 0, 0, img.width, alturaRecorte);
-                    
-                    resolve(canvas.toDataURL('image/jpeg', 0.9));
-                };
-                img.src = imagemBase64;
-            });
-        }
-
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 09 — EXTRAÇÃO DE METADADOS (Texto Lateral)
-           ═══════════════════════════════════════════════════════════════ */
-        
-        // Extrai Data e Hora do texto lateral
-        function extrairDataHora(texto) {
-            // Padrão: 19/10/2026 - 11:51
-            const match = texto.match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
-            if (match) {
-                return { data: match[1], hora: match[2] };
-            }
-            return null;
-        }
-
-        // Extrai Promotor do texto lateral
-        function extrairPromotor(texto) {
-            const match = texto.match(/Promotor:\s*([A-Za-zÀ-ÿ\s]+?)(?=\s*Produto|$)/i);
-            if (match) {
-                return match[1].trim();
-            }
-            return null;
-        }
-
-        // Extrai Produto do texto lateral
-        function extrairProduto(texto) {
-            const match = texto.match(/Produto:\s*([A-Za-zÀ-ÿ0-9\s.,/]+?)(?=\s*$)/i);
-            if (match) {
-                return match[1].trim().substring(0, 100); // Limita tamanho
-            }
-            return null;
-        }
-
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 10 — HASH VISUAL (Detecção de Fotos Idênticas)
-           ═══════════════════════════════════════════════════════════════ */
-        
-        // Gera um hash visual simplificado (baseado em histograma de cores)
-        // Em produção, o ideal seria usar pHash, mas para MVP usamos histograma
-        async function gerarHashVisual(imagemBase64) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 32;  // Reduz para 32x32
-                    canvas.height = 32;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, 32, 32);
-                    
-                    const imageData = ctx.getImageData(0, 0, 32, 32);
-                    const data = imageData.data;
-                    
-                    // Calcula histograma de luminância (simplificado)
-                    let hash = '';
-                    for (let i = 0; i < data.length; i += 4) {
-                        const luminancia = (data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114);
-                        hash += luminancia > 128 ? '1' : '0';
-                    }
-                    
-                    // Converte binário para hexadecimal (mais compacto)
-                    let hashHex = '';
-                    for (let i = 0; i < hash.length; i += 4) {
-                        const nibble = hash.substring(i, i + 4);
-                        hashHex += parseInt(nibble, 2).toString(16);
-                    }
-                    
-                    resolve(hashHex);
-                };
-                img.src = imagemBase64;
-            });
-        }
-
-        // Compara dois hashes e retorna similaridade (0 a 1)
-        function compararHashes(hash1, hash2) {
-            if (hash1 === hash2) return 1.0;
-            if (hash1.length !== hash2.length) return 0;
-            
-            let iguais = 0;
-            for (let i = 0; i < hash1.length; i++) {
-                if (hash1[i] === hash2[i]) iguais++;
-            }
-            return iguais / hash1.length;
-        }
-    </script>
-        <!-- ═══════════════════════════════════════════════════════════════
-         PARTE 3B — CRUZAMENTO, AUDITORIA E REVISÃO
-         ═══════════════════════════════════════════════════════════════ -->
-    <script>
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 11 — CRUZAMENTO (OCR + EXCEL)
-           ═══════════════════════════════════════════════════════════════ */
-        
-        // Extrai Rede e Loja do texto do OCR
-        function extrairRedeLojaOCR(textoOCR) {
-            const linhas = textoOCR.split('\n').map(l => l.trim()).filter(l => l);
-            let rede = null;
-            let loja = null;
-
-            // Heurística: procura uma linha que seja uma rede conhecida
-            for (const linha of linhas) {
-                const linhaNorm = normalizar(linha);
-                for (const r of REDES_CONHECIDAS) {
-                    if (linhaNorm === normalizar(r)) {
-                        rede = r;
-                        break;
-                    }
-                }
-                if (rede) break;
-            }
-
-            // Se encontrou a rede, a próxima linha (ou a mesma) deve ser a loja
-            if (rede) {
-                const indexRede = linhas.findIndex(l => normalizar(l) === normalizar(rede));
-                if (indexRede !== -1 && indexRede + 1 < linhas.length) {
-                    loja = linhas[indexRede + 1];
-                }
-            } else {
-                // Fallback: pega a primeira linha que não é data/hora
-                for (const linha of linhas) {
-                    if (!linha.match(/\d{2}\/\d{2}\/\d{4}/) && !linha.includes('Foto:')) {
-                        loja = linha;
-                        break;
-                    }
-                }
-            }
-
-            return { rede, loja };
         }
 
         // Calcula similaridade entre duas strings (0 a 1)
@@ -1019,7 +712,6 @@
             if (s1 === s2) return 1;
             if (s1.length === 0 || s2.length === 0) return 0;
 
-            // Distância de Levenshtein
             const track = Array(s2.length + 1).fill(null).map(() => Array(s1.length + 1).fill(null));
             for (let i = 0; i <= s1.length; i += 1) track[0][i] = i;
             for (let j = 0; j <= s2.length; j += 1) track[j][0] = j;
@@ -1038,452 +730,167 @@
             return 1 - (distancia / Math.max(s1.length, s2.length));
         }
 
-        // Cruza uma foto do PDF com uma loja do Excel
-        function cruzarFotoComExcel(foto, lojasExcel) {
-            const { rede, loja } = extrairRedeLojaOCR(foto.textoOCR);
-            
-            if (!loja) {
-                return { status: 'sem_par', lojaExcel: null };
-            }
-
-            // Procura a loja no Excel com tolerância de 20%
-            let melhorMatch = null;
-            let maiorSimilaridade = 0;
-
-            for (const lojaExcel of lojasExcel) {
-                // Se a rede bate (ou não foi identificada), compara o nome da loja
-                const sim = similaridade(loja, lojaExcel.nomeOriginal);
-                if (sim > maiorSimilaridade) {
-                    maiorSimilaridade = sim;
-                    melhorMatch = lojaExcel;
-                }
-            }
-
-            // Se a similaridade for maior que 80% (tolerância de 20%), considera match
-            if (maiorSimilaridade >= 0.8) {
-                return { 
-                    status: 'cruzado', 
-                    lojaExcel: melhorMatch, 
-                    similaridade: maiorSimilaridade,
-                    redeOCR: rede,
-                    lojaOCR: loja
+        // Gera um hash visual simplificado para detectar fotos iguais
+        async function gerarHashVisual(imagemBase64) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 32; canvas.height = 32;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 32, 32);
+                    const data = ctx.getImageData(0, 0, 32, 32).data;
+                    
+                    let hash = '';
+                    for (let i = 0; i < data.length; i += 4) {
+                        const luminancia = (data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114);
+                        hash += luminancia > 128 ? '1' : '0';
+                    }
+                    let hashHex = '';
+                    for (let i = 0; i < hash.length; i += 4) {
+                        hashHex += parseInt(hash.substring(i, i + 4), 2).toString(16);
+                    }
+                    resolve(hashHex);
                 };
-            }
-
-            return { status: 'sem_par', lojaOCR: loja, redeOCR: rede };
+                img.src = imagemBase64;
+            });
         }
 
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 12 — AUDITORIA (DEDUPLICAÇÃO E FRAUDE)
-           ═══════════════════════════════════════════════════════════════ */
-        
-        function auditarFotos(fotos) {
-            const fotosAuditadas = fotos.map(f => ({ ...f }));
+        function compararHashes(h1, h2) {
+            if (h1 === h2) return 1.0;
+            if (h1.length !== h2.length) return 0;
+            let iguais = 0;
+            for (let i = 0; i < h1.length; i++) {
+                if (h1[i] === h2[i]) iguais++;
+            }
+            return iguais / h1.length;
+        }
 
-            // 1. Cruzamento com Excel
-            fotosAuditadas.forEach(foto => {
-                if (foto.status === 'pendente') {
-                    const resultado = cruzarFotoComExcel(foto, Estado.lojas);
-                    foto.status = resultado.status;
-                    foto.lojaExcel = resultado.lojaExcel;
-                    foto.similaridade = resultado.similaridade;
-                    foto.redeOCR = resultado.redeOCR;
-                    foto.lojaOCR = resultado.lojaOCR;
+        // Cruza todas as fotos com o Excel
+        async function auditarFotos() {
+            if (!Estado.fotos || Estado.fotos.length === 0) return;
+
+            const msg = document.getElementById('msg-pdf');
+            if (msg) msg.innerHTML = 'Iniciando auditoria e OCR...';
+
+            for (let i = 0; i < Estado.fotos.length; i++) {
+                const foto = Estado.fotos[i];
+                if (foto.status !== 'pendente') continue;
+
+                // 1. Faz OCR se ainda não tiver
+                if (!foto.textoOCR) {
+                    foto.textoOCR = await fazerOCRnaLegenda(foto.imagemBase64);
                 }
-            });
+                
+                // 2. Tenta achar a loja no Excel
+                const linhas = foto.textoOCR.split('\n').map(l => l.trim()).filter(l => l);
+                let melhorMatch = null;
+                let maiorSim = 0;
+                
+                for (const linha of linhas) {
+                    if (linha.length < 3) continue;
+                    for (const lojaExcel of Estado.lojas) {
+                        const sim = similaridade(linha, lojaExcel.nomeOriginal);
+                        if (sim > maiorSim) {
+                            maiorSim = sim;
+                            melhorMatch = lojaExcel;
+                        }
+                    }
+                }
 
-            // 2. Deduplicação técnica (mesma loja, mesmo promotor, mesmo dia)
-            const fotosPorLojaPromotorDia = {};
-            fotosAuditadas.forEach(foto => {
-                if (foto.status !== 'cruzado') return;
-                const chave = `${foto.lojaExcel.nomeOriginal}|${foto.promotor}|${foto.dataHora?.data}`;
-                if (!fotosPorLojaPromotorDia[chave]) fotosPorLojaPromotorDia[chave] = [];
-                fotosPorLojaPromotorDia[chave].push(foto);
-            });
+                // Se a similaridade for > 80%, considera cruzado
+                if (maiorSim >= 0.8) {
+                    foto.status = 'cruzado';
+                    foto.lojaExcel = melhorMatch;
+                } else {
+                    foto.status = 'sem_par';
+                }
 
-            // Para cada grupo, ordena por hora e verifica duplicatas
-            Object.values(fotosPorLojaPromotorDia).forEach(grupo => {
-                grupo.sort((a, b) => {
-                    const horaA = a.dataHora?.hora || '00:00';
-                    const horaB = b.dataHora?.hora || '00:00';
-                    return horaA.localeCompare(horaB);
-                });
+                // 3. Gera hash visual (para detectar duplicatas)
+                if (!foto.hashVisual) {
+                    foto.hashVisual = await gerarHashVisual(foto.imagemBase64);
+                }
+            }
 
-                for (let i = 0; i < grupo.length; i++) {
-                    const fotoAtual = grupo[i];
-                    if (fotoAtual.status === 'duplicata') continue;
+            // 4. Deduplicação técnica e Fraude
+            for (let i = 0; i < Estado.fotos.length; i++) {
+                const f1 = Estado.fotos[i];
+                if (f1.status !== 'cruzado') continue;
 
-                    for (let j = i + 1; j < grupo.length; j++) {
-                        const fotoComparada = grupo[j];
-                        if (fotoComparada.status === 'duplicata') continue;
+                for (let j = i + 1; j < Estado.fotos.length; j++) {
+                    const f2 = Estado.fotos[j];
+                    if (f2.status !== 'cruzado') continue;
 
-                        // Calcula diferença de tempo em minutos
-                        const horaA = fotoAtual.dataHora?.hora.split(':').map(Number) || [0, 0];
-                        const horaB = fotoComparada.dataHora?.hora.split(':').map(Number) || [0, 0];
-                        const diffMinutos = Math.abs((horaB[0] * 60 + horaB[1]) - (horaA[0] * 60 + horaA[1]));
+                    const simHash = compararHashes(f1.hashVisual, f2.hashVisual);
+                    if (simHash > 0.9) {
+                        // Se são da mesma loja e mesmo promotor
+                        if (f1.lojaExcel.nomeOriginal === f2.lojaExcel.nomeOriginal) {
+                            // Diferença de horário (minutos)
+                            const h1 = f1.data ? f1.data.hora.split(':').map(Number) : [0,0];
+                            const h2 = f2.data ? f2.data.hora.split(':').map(Number) : [0,0];
+                            const diff = Math.abs((h2[0]*60 + h2[1]) - (h1[0]*60 + h1[1]));
 
-                        // Compara hashes visuais
-                        const similaridadeHash = compararHashes(fotoAtual.hashVisual, fotoComparada.hashVisual);
-
-                        if (similaridadeHash > 0.9) {
-                            // Fotos visualmente idênticas
-                            if (diffMinutos <= 10) {
-                                fotoComparada.status = 'duplicata';
-                                fotoComparada.motivo = `Duplicata técnica (${diffMinutos} min de diferença)`;
-                            } else if (diffMinutos <= 60) {
-                                fotoComparada.status = 'duplicata_alerta';
-                                fotoComparada.motivo = `Fotos espaçadas (${diffMinutos} min). Verificar.`;
+                            if (diff <= Estado.config.janelaDuplicata) {
+                                f2.status = 'duplicata';
+                            } else if (diff <= Estado.config.janelaSuspeita) {
+                                f2.status = 'duplicata_alerta';
                             } else {
-                                fotoComparada.status = 'suspeita_fraude';
-                                fotoComparada.motivo = `Mesma foto em horários distantes (${diffMinutos} min). Suspeita.`;
+                                f2.status = 'suspeita_fraude';
                             }
-                        }
-                    }
-                }
-            });
-
-            // 3. Detecção de fraude (mesma foto em lojas diferentes)
-            for (let i = 0; i < fotosAuditadas.length; i++) {
-                const foto1 = fotosAuditadas[i];
-                if (foto1.status !== 'cruzado') continue;
-
-                for (let j = i + 1; j < fotosAuditadas.length; j++) {
-                    const foto2 = fotosAuditadas[j];
-                    if (foto2.status !== 'cruzado') continue;
-
-                    // Se são lojas diferentes
-                    if (foto1.lojaExcel.nomeOriginal !== foto2.lojaExcel.nomeOriginal) {
-                        const similaridadeHash = compararHashes(foto1.hashVisual, foto2.hashVisual);
-                        if (similaridadeHash > 0.9) {
-                            foto1.status = 'suspeita_fraude';
-                            foto2.status = 'suspeita_fraude';
-                            foto1.motivo = `Mesma foto usada na loja ${foto2.lojaExcel.nomeOriginal}`;
-                            foto2.motivo = `Mesma foto usada na loja ${foto1.lojaExcel.nomeOriginal}`;
+                        } else {
+                            // Lojas diferentes = Fraude confirmada (mas o sistema só marca como suspeita)
+                            f1.status = 'suspeita_fraude';
+                            f2.status = 'suspeita_fraude';
                         }
                     }
                 }
             }
 
-            return fotosAuditadas;
-        }
-
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 13 — TELA DE IMPORTAÇÃO DE PDF E REVISÃO
-           ═══════════════════════════════════════════════════════════════ */
-        
-        function renderizarImportacaoPDF() {
-            const container = document.getElementById('tela-admin');
-            container.innerHTML += `
-                <div class="card" style="margin-top: 20px;">
-                    <h2>Importar PDF (Evidências Mob2con)</h2>
-                    <p>Selecione o arquivo PDF (até ~500 páginas).</p>
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <input type="file" id="input-pdf" accept=".pdf" style="display: none;">
-                    <button id="btn-selecionar-pdf" class="card" 
-                            style="width: 100%; cursor: pointer; text-align: center; padding: 20px; color: var(--cor-destaque); font-weight: bold;">
-                        Clique para selecionar o PDF
-                    </button>
-                </div>
-                <div id="progresso-pdf" style="display: none; margin-bottom: 16px;">
-                    <div style="background: var(--cor-borda); border-radius: 8px; height: 20px; overflow: hidden;">
-                        <div id="barra-progresso" style="background: var(--cor-destaque); height: 100%; width: 0%; transition: width 0.3s;"></div>
-                    </div>
-                    <p id="texto-progresso" style="text-align: center; margin-top: 8px; font-size: 12px; color: var(--cor-texto-secundario);"></p>
-                </div>
-                <div id="mensagem-pdf"></div>
-            `;
-
-            const btnSelecionar = document.getElementById('btn-selecionar-pdf');
-            const inputPdf = document.getElementById('input-pdf');
-            const progressoPdf = document.getElementById('progresso-pdf');
-            const barraProgresso = document.getElementById('barra-progresso');
-            const textoProgresso = document.getElementById('texto-progresso');
-            const mensagem = document.getElementById('mensagem-pdf');
-
-            btnSelecionar.addEventListener('click', () => inputPdf.click());
-
-            inputPdf.addEventListener('change', async (e) => {
-                const arquivo = e.target.files[0];
-                if (!arquivo) return;
-
-                progressoPdf.style.display = 'block';
-                mensagem.innerHTML = '<p style="color: var(--cor-alerta);">Processando PDF. Isso pode levar alguns minutos...</p>';
-
-                try {
-                    const fotos = await processarPDF(arquivo, (atual, total) => {
-                        const porcentagem = Math.floor((atual / total) * 100);
-                        barraProgresso.style.width = porcentagem + '%';
-                        textoProgresso.textContent = `Processando página ${atual} de ${total} (${porcentagem}%)`;
-                    });
-
-                    textoProgresso.textContent = '✅ PDF processado! Cruzando com Excel...';
-                    
-                    // Audita as fotos
-                    const fotosAuditadas = auditarFotos(fotos);
-                    
-                    // Salva no estado
-                    Estado.fotos = fotosAuditadas;
-                    localStorage.setItem('cockpit_fotos', JSON.stringify(fotosAuditadas));
-
-                    // Estatísticas
-                    const total = fotosAuditadas.length;
-                    const cruzadas = fotosAuditadas.filter(f => f.status === 'cruzado').length;
-                    const duplicatas = fotosAuditadas.filter(f => f.status === 'duplicata' || f.status === 'duplicata_alerta').length;
-                    const suspeitas = fotosAuditadas.filter(f => f.status === 'suspeita_fraude').length;
-                    const semPar = fotosAuditadas.filter(f => f.status === 'sem_par').length;
-
-                    mensagem.innerHTML = `
-                        <div class="card" style="border-left-color: var(--cor-sucesso);">
-                            <h2>✅ PDF Processado</h2>
-                            <p><strong>Total de fotos:</strong> ${total}</p>
-                            <p><strong>Cruzadas com Excel:</strong> ${cruzadas}</p>
-                            <p><strong>Duplicatas técnicas:</strong> ${duplicatas}</p>
-                            <p><strong>Suspeitas de fraude:</strong> ${suspeitas}</p>
-                            <p><strong>Sem par (revisar):</strong> ${semPar}</p>
-                        </div>
-                    `;
-
-                    progressoPdf.style.display = 'none';
-
-                    // Muda para a tela de auditoria
-                    setTimeout(() => {
-                        document.querySelector('nav button[data-tela="auditoria"]').click();
-                    }, 2000);
-
-                } catch (erro) {
-                    mensagem.innerHTML = `<p style="color: var(--cor-perigo);">❌ Erro: ${erro.message}</p>`;
-                    progressoPdf.style.display = 'none';
-                }
-            });
-        }
-
-        // Inicializa a tela de PDF quando a aba Admin é clicada
-        document.addEventListener('DOMContentLoaded', () => {
-            const btnAdmin = document.querySelector('nav button[data-tela="admin"]');
-            if (btnAdmin) {
-                // Adiciona um pequeno delay para garantir que a tela de Excel já foi renderizada
-                btnAdmin.addEventListener('click', () => {
-                    setTimeout(renderizarImportacaoPDF, 100);
-                });
-            }
-        });
-    </script>
-        <!-- ═══════════════════════════════════════════════════════════════
-         PARTE 4 — DASHBOARD, AUDITORIA E RELATÓRIO
-         ═══════════════════════════════════════════════════════════════ -->
-    <script>
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 14 — DASHBOARD EXECUTIVO
-           ═══════════════════════════════════════════════════════════════ */
-        
-        function renderizarDashboard() {
-            const container = document.getElementById('tela-dashboard');
+            localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
+            if (msg) msg.innerHTML = '<span style="color: green;">✅ Auditoria concluída!</span>';
             
-            // Carrega dados do estado
-            const redes = Estado.redes || [];
-            const visitasDeclaradas = Estado.visitasDeclaradas || [];
-            const fotos = Estado.fotos || [];
-
-            // Calcula métricas gerais
-            let totalDeclaradas = 0;
-            let totalComprovadas = 0;
-            let totalDuplicatas = 0;
-            let totalSuspeitas = 0;
-            let totalSemPar = 0;
-
-            visitasDeclaradas.forEach(v => {
-                totalDeclaradas += v.realizadas;
-            });
-
-            fotos.forEach(f => {
-                if (f.status === 'cruzado') totalComprovadas++;
-                else if (f.status === 'duplicata' || f.status === 'duplicata_alerta') totalDuplicatas++;
-                else if (f.status === 'suspeita_fraude') totalSuspeitas++;
-                else if (f.status === 'sem_par') totalSemPar++;
-            });
-
-            const atingimento = totalDeclaradas > 0 ? ((totalComprovadas / totalDeclaradas) * 100).toFixed(1) : 0;
-
-            // Renderiza o Dashboard
-            container.innerHTML = `
-                <div class="card" style="border-left-color: var(--cor-destaque);">
-                    <h2>Visão Geral — Auditoria de Trade Marketing</h2>
-                    <p>Dados consolidados do mês. Fonte: Excel Pacto + PDFs Mob2con.</p>
-                </div>
-
-                <!-- Cards de Métricas Principais -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-                    <div class="card" style="margin: 0; border-left-color: var(--cor-destaque);">
-                        <h2 style="font-size: 10px;">Visitas Declaradas</h2>
-                        <p style="font-size: 24px; font-weight: 900; color: var(--cor-destaque); margin: 0;">${totalDeclaradas}</p>
-                        <p style="font-size: 10px;">Excel Pacto</p>
-                    </div>
-                    <div class="card" style="margin: 0; border-left-color: var(--cor-sucesso);">
-                        <h2 style="font-size: 10px;">Visitas Comprovadas</h2>
-                        <p style="font-size: 24px; font-weight: 900; color: var(--cor-sucesso); margin: 0;">${totalComprovadas}</p>
-                        <p style="font-size: 10px;">Fotos PDF</p>
-                    </div>
-                </div>
-
-                <!-- Barra de Atingimento -->
-                <div class="card" style="border-left-color: var(--cor-primaria);">
-                    <h2>Efetividade de Visitas</h2>
-                    <div style="background: var(--cor-borda); border-radius: 8px; height: 24px; overflow: hidden; margin: 12px 0;">
-                        <div style="background: ${atingimento >= 80 ? 'var(--cor-sucesso)' : atingimento >= 50 ? 'var(--cor-alerta)' : 'var(--cor-perigo)'}; height: 100%; width: ${atingimento}%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">
-                            ${atingimento}%
-                        </div>
-                    </div>
-                    <p>${totalComprovadas} de ${totalDeclaradas} visitas comprovadas.</p>
-                </div>
-
-                <!-- Alertas de Auditoria -->
-                <div class="card" style="border-left-color: var(--cor-alerta);">
-                    <h2>Alertas de Auditoria</h2>
-                    <div style="display: flex; justify-content: space-between; margin-top: 12px;">
-                        <div style="text-align: center; flex: 1;">
-                            <p style="font-size: 20px; font-weight: 900; color: var(--cor-sucesso);">${totalComprovadas}</p>
-                            <p style="font-size: 10px;">✅ Válidas</p>
-                        </div>
-                        <div style="text-align: center; flex: 1;">
-                            <p style="font-size: 20px; font-weight: 900; color: var(--cor-alerta);">${totalDuplicatas}</p>
-                            <p style="font-size: 10px;">🔁 Duplicatas</p>
-                        </div>
-                        <div style="text-align: center; flex: 1;">
-                            <p style="font-size: 20px; font-weight: 900; color: var(--cor-perigo);">${totalSuspeitas}</p>
-                            <p style="font-size: 10px;">🚨 Suspeitas</p>
-                        </div>
-                        <div style="text-align: center; flex: 1;">
-                            <p style="font-size: 20px; font-weight: 900; color: var(--cor-texto-secundario);">${totalSemPar}</p>
-                            <p style="font-size: 10px;">❓ Sem Par</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Resumo por Rede -->
-                <div class="card">
-                    <h2>Resumo por Rede</h2>
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                            <thead>
-                                <tr style="border-bottom: 1px solid var(--cor-borda);">
-                                    <th style="text-align: left; padding: 8px; color: var(--cor-destaque);">Rede</th>
-                                    <th style="text-align: center; padding: 8px; color: var(--cor-destaque);">Declaradas</th>
-                                    <th style="text-align: center; padding: 8px; color: var(--cor-destaque);">Comprovadas</th>
-                                    <th style="text-align: center; padding: 8px; color: var(--cor-destaque);">Atingimento</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${visitasDeclaradas.map(v => {
-                                    // Conta quantas fotos cruzadas existem para essa rede
-                                    const comprovadasRede = fotos.filter(f => f.status === 'cruzado' && f.lojaExcel && f.lojaExcel.rede === normalizar(v.rede)).length;
-                                    const pct = v.realizadas > 0 ? ((comprovadasRede / v.realizadas) * 100).toFixed(1) : 0;
-                                    return `
-                                        <tr style="border-bottom: 1px solid var(--cor-borda);">
-                                            <td style="padding: 8px;">${v.rede}</td>
-                                            <td style="text-align: center; padding: 8px;">${v.realizadas}</td>
-                                            <td style="text-align: center; padding: 8px;">${comprovadasRede}</td>
-                                            <td style="text-align: center; padding: 8px; color: ${pct >= 80 ? 'var(--cor-sucesso)' : pct >= 50 ? 'var(--cor-alerta)' : 'var(--cor-perigo)'}; font-weight: bold;">${pct}%</td>
-                                        </tr>
-                                    `;
-                                }).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <p style="text-align: center; font-size: 10px; color: var(--cor-texto-secundario); margin-top: 20px;">
-                    Evidência fotográfica com data, hora, promotor e loja declarados pela Mob2con. O sistema não verifica a localização geográfica da foto.
-                </p>
-            `;
+            renderizarAuditoria();
+            renderizarDashboard();
         }
 
-        // Renderiza o Dashboard ao carregar a tela
-        document.addEventListener('DOMContentLoaded', () => {
-            // Tenta carregar dados do localStorage
-            const estadoSalvo = localStorage.getItem('cockpit_estado');
-            if (estadoSalvo) {
-                const dados = JSON.parse(estadoSalvo);
-                Estado.redes = dados.redes || [];
-                Estado.lojas = dados.lojas || [];
-                Estado.visitasDeclaradas = dados.visitasDeclaradas || [];
-            }
-
-            const fotosSalvas = localStorage.getItem('cockpit_fotos');
-            if (fotosSalvas) {
-                Estado.fotos = JSON.parse(fotosSalvas) || [];
-            }
-
-            renderizarDashboard();
-
-            // Atualiza o dashboard quando a aba é clicada
-            const btnDashboard = document.querySelector('nav button[data-tela="dashboard"]');
-            if (btnDashboard) {
-                btnDashboard.addEventListener('click', renderizarDashboard);
-            }
-        });
-
         /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 15 — TELA DE AUDITORIA (LISTA DE LOJAS)
+           SUBBLOCO 10 — TELA DE AUDITORIA E REVISÃO
            ═══════════════════════════════════════════════════════════════ */
-        
         function renderizarAuditoria() {
             const container = document.getElementById('tela-auditoria');
-            const fotos = Estado.fotos || [];
-            const lojas = Estado.lojas || [];
-
-            if (fotos.length === 0) {
-                container.innerHTML = `
-                    <div class="card">
-                        <h2>Auditoria de Lojas</h2>
-                        <p>Nenhuma foto importada ainda. Vá até a aba <strong>Admin</strong> e importe o Excel e os PDFs.</p>
-                    </div>
-                `;
+            if (!Estado.fotos || Estado.fotos.length === 0) {
+                container.innerHTML = `<div class="card"><h2>Auditoria</h2><p>Nenhuma foto importada ainda. Vá em <strong>Admin</strong> e importe o Excel e o PDF.</p></div>`;
                 return;
             }
 
-            // Agrupa fotos por loja
-            const fotosPorLoja = {};
-            fotos.forEach(foto => {
-                const nomeLoja = foto.lojaExcel ? foto.lojaExcel.nomeOriginal : 'Sem Par';
-                if (!fotosPorLoja[nomeLoja]) fotosPorLoja[nomeLoja] = [];
-                fotosPorLoja[nomeLoja].push(foto);
+            // Agrupa por loja
+            const porLoja = {};
+            Estado.fotos.forEach(f => {
+                if (f.status === 'pendente') return;
+                const nome = f.lojaExcel ? f.lojaExcel.nomeOriginal : 'Sem Par';
+                if (!porLoja[nome]) porLoja[nome] = [];
+                porLoja[nome].push(f);
             });
 
-            // Renderiza a lista
-            let html = `
-                <div class="card">
-                    <h2>Auditoria de Lojas (${Object.keys(fotosPorLoja).length} lojas)</h2>
-                    <p>Clique em uma loja para ver os detalhes e revisar as fotos.</p>
-                </div>
-            `;
+            let html = `<div class="card"><h2>Auditoria de Lojas (${Object.keys(porLoja).length})</h2><p>Clique em uma loja para revisar as fotos.</p></div>`;
 
-            Object.keys(fotosPorLoja).sort().forEach(nomeLoja => {
-                const fotosLoja = fotosPorLoja[nomeLoja];
-                const validas = fotosLoja.filter(f => f.status === 'cruzado').length;
-                const duplicatas = fotosLoja.filter(f => f.status === 'duplicata' || f.status === 'duplicata_alerta').length;
-                const suspeitas = fotosLoja.filter(f => f.status === 'suspeita_fraude').length;
-                const semPar = fotosLoja.filter(f => f.status === 'sem_par').length;
+            Object.keys(porLoja).sort().forEach(nome => {
+                const fotos = porLoja[nome];
+                const validas = fotos.filter(f => f.status === 'cruzado').length;
+                const dups = fotos.filter(f => f.status === 'duplicata' || f.status === 'duplicata_alerta').length;
+                const fraudes = fotos.filter(f => f.status === 'suspeita_fraude').length;
+                const semPar = fotos.filter(f => f.status === 'sem_par').length;
 
-                let statusIcon = '✅';
-                let statusColor = 'var(--cor-sucesso)';
-                if (suspeitas > 0) { statusIcon = '🚨'; statusColor = 'var(--cor-perigo)'; }
-                else if (semPar > 0) { statusIcon = '❓'; statusColor = 'var(--cor-texto-secundario)'; }
-                else if (duplicatas > 0) { statusIcon = '🔁'; statusColor = 'var(--cor-alerta)'; }
+                let icon = '✅', cor = 'var(--cor-primaria)';
+                if (fraudes > 0) { icon = '🚨'; cor = 'var(--cor-perigo)'; }
+                else if (semPar > 0) { icon = '❓'; cor = 'var(--cor-texto-secundario)'; }
+                else if (dups > 0) { icon = '🔁'; cor = '#F1C40F'; }
 
                 html += `
-                    <div class="card" style="border-left-color: ${statusColor}; cursor: pointer;" onclick="abrirDetalhesLoja('${nomeLoja.replace(/'/g, "\\'")}')">
+                    <div class="card" style="border-left-color: ${cor}; cursor: pointer;" onclick="abrirDetalhesLoja('${nome.replace(/'/g, "\\'")}')">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <h2 style="margin: 0; font-size: 14px;">${statusIcon} ${nomeLoja}</h2>
-                                <p style="font-size: 10px; margin-top: 4px;">${fotosLoja.length} fotos no total</p>
-                            </div>
-                            <div style="text-align: right; font-size: 11px;">
-                                <p style="color: var(--cor-sucesso);">✅ ${validas} válidas</p>
-                                ${duplicatas > 0 ? `<p style="color: var(--cor-alerta);">🔁 ${duplicatas} duplicatas</p>` : ''}
-                                ${suspeitas > 0 ? `<p style="color: var(--cor-perigo);">🚨 ${suspeitas} suspeitas</p>` : ''}
-                                ${semPar > 0 ? `<p style="color: var(--cor-texto-secundario);">❓ ${semPar} sem par</p>` : ''}
-                            </div>
+                            <h2 style="margin: 0; font-size: 14px;">${icon} ${nome}</h2>
+                            <p style="font-size: 12px; margin: 0;">${fotos.length} fotos</p>
                         </div>
                     </div>
                 `;
@@ -1492,68 +899,46 @@
             container.innerHTML = html;
         }
 
-        // Abre os detalhes de uma loja
         function abrirDetalhesLoja(nomeLoja) {
             const fotos = Estado.fotos.filter(f => {
                 const nome = f.lojaExcel ? f.lojaExcel.nomeOriginal : 'Sem Par';
-                return nome === nomeLoja;
+                return nome === nomeLoja && f.status !== 'pendente';
             });
 
             const container = document.getElementById('tela-auditoria');
-            
-            let html = `
-                <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-                    <button onclick="renderizarAuditoria()" style="background: transparent; border: none; color: var(--cor-destaque); cursor: pointer; font-weight: bold;">← Voltar</button>
-                    <h2 style="margin: 0; font-size: 14px;">${nomeLoja}</h2>
-                    <div></div>
-                </div>
-            `;
-
-            fotos.sort((a, b) => {
-                const dataA = a.dataHora?.data || '';
-                const dataB = b.dataHora?.data || '';
-                return dataA.localeCompare(dataB);
-            });
+            let html = `<div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+                            <button onclick="renderizarAuditoria()" style="background: transparent; border: none; color: var(--cor-primaria); font-weight: bold; cursor: pointer;">← Voltar</button>
+                            <h2 style="margin: 0; font-size: 14px;">${nomeLoja}</h2>
+                            <div></div>
+                        </div>`;
 
             fotos.forEach(foto => {
-                let statusText = '';
-                let statusColor = '';
-                let acaoHtml = '';
+                let statusTxt = '', cor = '', botoes = '';
+                if (foto.status === 'cruzado') { statusTxt = '✅ Válida'; cor = 'var(--cor-primaria)'; }
+                else if (foto.status === 'duplicata') { statusTxt = '🔁 Duplicata Técnica'; cor = '#F1C40F'; }
+                else if (foto.status === 'duplicata_alerta') { statusTxt = '⚠️ Fotos Espaçadas'; cor = '#F1C40F'; }
+                else if (foto.status === 'suspeita_fraude') { statusTxt = '🚨 Suspeita de Fraude'; cor = 'var(--cor-perigo)'; }
+                else if (foto.status === 'sem_par') { statusTxt = '❓ Sem Par'; cor = 'var(--cor-texto-secundario)'; }
 
-                if (foto.status === 'cruzado') {
-                    statusText = '✅ Válida';
-                    statusColor = 'var(--cor-sucesso)';
-                } else if (foto.status === 'duplicata') {
-                    statusText = '🔁 Duplicata Técnica';
-                    statusColor = 'var(--cor-alerta)';
-                } else if (foto.status === 'duplicata_alerta') {
-                    statusText = '⚠️ Fotos Espaçadas';
-                    statusColor = 'var(--cor-alerta)';
-                    acaoHtml = `<button onclick="marcarComoValida(${foto.pagina})" style="background: var(--cor-sucesso); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-top: 4px;">Marcar como Válida</button>`;
-                } else if (foto.status === 'suspeita_fraude') {
-                    statusText = '🚨 Suspeita de Fraude';
-                    statusColor = 'var(--cor-perigo)';
-                    acaoHtml = `
-                        <p style="font-size: 10px; color: var(--cor-perigo); margin-top: 4px;">${foto.motivo || ''}</p>
-                        <button onclick="confirmarFraude(${foto.pagina})" style="background: var(--cor-perigo); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-top: 4px;">Confirmar Fraude</button>
-                        <button onclick="marcarComoValida(${foto.pagina})" style="background: var(--cor-sucesso); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-top: 4px;">Marcar como Válida</button>
+                // Botões de revisão manual
+                if (foto.status !== 'cruzado') {
+                    botoes = `
+                        <div style="margin-top: 8px;">
+                            <button onclick="revisarFoto(${foto.pagina}, 'valida')" style="background: var(--cor-primaria); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Aprovar como Válida</button>
+                            <button onclick="revisarFoto(${foto.pagina}, 'fraude')" style="background: var(--cor-perigo); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Confirmar Fraude</button>
+                        </div>
                     `;
-                } else if (foto.status === 'sem_par') {
-                    statusText = '❓ Sem Par';
-                    statusColor = 'var(--cor-texto-secundario)';
-                    acaoHtml = `<p style="font-size: 10px; color: var(--cor-texto-secundario); margin-top: 4px;">OCR não conseguiu identificar a loja. Verifique a legenda.</p>`;
                 }
 
                 html += `
-                    <div class="card" style="border-left-color: ${statusColor};">
-                        <div style="display: flex; gap: 12px;">
-                            <img src="${foto.imagemBase64}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--cor-borda);" />
+                    <div class="card" style="border-left-color: ${cor};">
+                        <div style="display: flex; gap: 15px; align-items: center;">
+                            <img src="${foto.imagemBase64}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #CCC;" />
                             <div style="flex: 1;">
-                                <p style="font-size: 11px; font-weight: bold; color: ${statusColor};">${statusText}</p>
-                                <p style="font-size: 10px;">Pág. ${foto.pagina} | ${foto.dataHora?.data || '?'} às ${foto.dataHora?.hora || '?'}</p>
-                                <p style="font-size: 10px;">Promotor: ${foto.promotor || '?'}</p>
-                                ${foto.lojaOCR ? `<p style="font-size: 10px; color: var(--cor-texto-secundario);">OCR: ${foto.lojaOCR}</p>` : ''}
-                                ${acaoHtml}
+                                <p style="font-weight: bold; color: ${cor};">${statusTxt}</p>
+                                <p style="font-size: 12px; color: var(--cor-texto-secundario);">Pág. ${foto.pagina} | ${foto.data ? foto.data.dia + ' às ' + foto.data.hora : 'Data não lida'}</p>
+                                <p style="font-size: 12px; color: var(--cor-texto-secundario);">Promotor: ${foto.promotor || '?'}</p>
+                                ${botoes}
                             </div>
                         </div>
                     </div>
@@ -1563,433 +948,222 @@
             container.innerHTML = html;
         }
 
-        // Revisão manual: marcar como válida
-        function marcarComoValida(pagina) {
+        // Função para revisar manualmente
+        function revisarFoto(pagina, acao) {
             const foto = Estado.fotos.find(f => f.pagina === pagina);
-            if (foto) {
-                foto.status = 'cruzado';
-                foto.revisaoManual = 'valida';
-                localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
-                renderizarAuditoria();
-            }
+            if (!foto) return;
+            
+            if (acao === 'valida') foto.status = 'cruzado';
+            if (acao === 'fraude') foto.status = 'suspeita_fraude'; // Mantém como suspeita, mas revisada
+            
+            localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
+            abrirDetalhesLoja(foto.lojaExcel ? foto.lojaExcel.nomeOriginal : 'Sem Par');
+            renderizarDashboard();
         }
 
-        // Revisão manual: confirmar fraude
-        function confirmarFraude(pagina) {
-            const foto = Estado.fotos.find(f => f.pagina === pagina);
-            if (foto) {
-                foto.status = 'fraude_confirmada';
-                foto.revisaoManual = 'fraude';
-                localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
-                renderizarAuditoria();
-            }
-        }
-
-        // Atualiza a auditoria quando a aba é clicada
+        // Botão para iniciar auditoria (adicionado na tela de Admin)
         document.addEventListener('DOMContentLoaded', () => {
-            const btnAuditoria = document.querySelector('nav button[data-tela="auditoria"]');
-            if (btnAuditoria) {
-                btnAuditoria.addEventListener('click', renderizarAuditoria);
-            }
+            document.querySelector('nav button[data-tela="admin"]').addEventListener('click', () => {
+                // Adiciona o botão de auditar após a renderização da tela de Admin
+                setTimeout(() => {
+                    const container = document.getElementById('tela-admin');
+                    if (!document.getElementById('btn-auditar')) {
+                        const div = document.createElement('div');
+                        div.id = 'btn-auditar';
+                        div.className = 'card';
+                        div.innerHTML = `
+                            <h2>3. Processar Auditoria</h2>
+                            <p>Após importar o Excel e o PDF, clique abaixo para cruzar os dados e detectar fraudes.</p>
+                            <button onclick="auditarFotos()" style="width: 100%; margin-top: 10px; padding: 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Iniciar Auditoria</button>
+                        `;
+                        container.appendChild(div);
+                    }
+                }, 200);
+            });
+            
+            // Atualiza a tela de auditoria quando ela é clicada
+            document.querySelector('nav button[data-tela="auditoria"]').addEventListener('click', renderizarAuditoria);
         });
+    </script>
 
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 16 — RELATÓRIO (EXPORTAR PDF)
-           ═══════════════════════════════════════════════════════════════ */
-        
+</body>
+</html>
+    <!-- ═══════════════════════════════════════════════════════════════
+         SUBBLOCO 11 — RELATÓRIO E IMPRESSÃO
+         ═══════════════════════════════════════════════════════════════ -->
+    <script>
         function renderizarRelatorio() {
             const container = document.getElementById('tela-relatorio');
+            
+            // Calcula os totais para o relatório
+            const totalDeclaradas = Estado.visitasDeclaradas.reduce((acc, v) => acc + v.realizadas, 0);
+            const totalValidas = Estado.fotos.filter(f => f.status === 'cruzado').length;
+            const totalDuplicatas = Estado.fotos.filter(f => f.status === 'duplicata' || f.status === 'duplicata_alerta').length;
+            const totalFraudes = Estado.fotos.filter(f => f.status === 'suspeita_fraude').length;
+            const totalSemPar = Estado.fotos.filter(f => f.status === 'sem_par').length;
+            const pct = totalDeclaradas > 0 ? ((totalValidas / totalDeclaradas) * 100).toFixed(1) : 0;
+
             container.innerHTML = `
                 <div class="card">
-                    <h2>Relatório de Auditoria</h2>
-                    <p>Gere um relatório executivo com os dados da auditoria para apresentar à diretoria.</p>
+                    <h2>Relatório de Auditoria — CockPit Tarks</h2>
+                    <p>Resumo executivo para apresentação à Diretoria.</p>
                 </div>
-                <button onclick="window.print()" style="width: 100%; padding: 16px; background: var(--cor-destaque); color: var(--cor-primaria); border: none; border-radius: 8px; font-weight: 900; font-size: 16px; cursor: pointer; margin-bottom: 16px;">
-                    🖨️ Imprimir / Salvar como PDF
-                </button>
+
+                <div class="card">
+                    <h2>Resumo Geral</h2>
+                    <p><strong>Visitas Declaradas (Excel):</strong> ${totalDeclaradas}</p>
+                    <p><strong>Visitas Comprovadas (PDF):</strong> ${totalValidas}</p>
+                    <p><strong>Efetividade:</strong> <span style="color: var(--cor-primaria); font-weight: bold;">${pct}%</span></p>
+                </div>
+
+                <div class="card">
+                    <h2>Alertas de Auditoria</h2>
+                    <p><strong>✅ Válidas:</strong> ${totalValidas}</p>
+                    <p><strong>🔁 Duplicatas Técnicas:</strong> ${totalDuplicatas}</p>
+                    <p><strong>🚨 Suspeitas de Fraude:</strong> ${totalFraudes}</p>
+                    <p><strong>❓ Sem Par (Revisão Manual):</strong> ${totalSemPar}</p>
+                </div>
+
                 <div class="card">
                     <h2>Glossário de Status</h2>
-                    <p><strong>✅ Válida:</strong> a foto foi cruzada com uma loja do Excel e é única no dia. Conta como visita comprovada.</p>
-                    <p><strong>🔁 Duplicata Técnica:</strong> a foto se repete (bug do sistema) na mesma loja, mesmo promotor, no mesmo dia. Conta apenas 1 vez.</p>
-                    <p><strong>⚠️ Fotos Espaçadas:</strong> a foto se repete na mesma loja, mas em horários distantes. Requer revisão manual.</p>
-                    <p><strong>🚨 Suspeita de Fraude:</strong> a mesma foto foi usada em lojas diferentes. O sistema não acusa sozinho. Requer revisão manual.</p>
-                    <p><strong>❓ Sem Par:</strong> o OCR não conseguiu identificar a loja. Requer revisão manual.</p>
+                    <p><strong>✅ Válida:</strong> A foto foi cruzada com uma loja do Excel e é única no dia. Conta como visita comprovada.</p>
+                    <p><strong>🔁 Duplicata Técnica:</strong> A foto se repete (bug do sistema) na mesma loja, mesmo promotor, no mesmo dia. Conta apenas 1 vez.</p>
+                    <p><strong>⚠️ Fotos Espaçadas:</strong> A foto se repete na mesma loja, mas em horários distantes. Requer revisão manual.</p>
+                    <p><strong>🚨 Suspeita de Fraude:</strong> A mesma foto foi usada em lojas diferentes. O sistema não acusa sozinho. Requer revisão manual.</p>
+                    <p><strong>❓ Sem Par:</strong> O OCR não conseguiu identificar a loja. Requer revisão manual.</p>
                 </div>
+
+                <div class="card" style="border-left-color: var(--cor-destaque);">
+                    <p style="font-size: 11px;">Evidência fotográfica com data, hora, promotor e loja declarados pela Mob2con. O sistema não verifica a localização geográfica da foto.</p>
+                </div>
+
+                <button onclick="window.print()" style="width: 100%; padding: 16px; background: var(--cor-primaria); color: var(--cor-destaque); border: 2px solid var(--cor-destaque); border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-bottom: 20px;">
+                    🖨️ Imprimir / Salvar como PDF
+                </button>
             `;
         }
 
         // Atualiza o relatório quando a aba é clicada
         document.addEventListener('DOMContentLoaded', () => {
-            const btnRelatorio = document.querySelector('nav button[data-tela="relatorio"]');
-            if (btnRelatorio) {
-                btnRelatorio.addEventListener('click', renderizarRelatorio);
-            }
+            document.querySelector('nav button[data-tela="relatorio"]').addEventListener('click', renderizarRelatorio);
         });
     </script>
-        <!-- ═══════════════════════════════════════════════════════════════
-         PARTE 5 — BACKUP E CONFIGURAÇÕES
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SUBBLOCO 12 — CONFIGURAÇÕES E BACKUP
          ═══════════════════════════════════════════════════════════════ -->
     <script>
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 17 — BACKUP (EXPORTAR / IMPORTAR JSON)
-           ═══════════════════════════════════════════════════════════════ */
-        
-        // Exporta todo o estado atual para um arquivo JSON
+        function renderizarConfiguracoes() {
+            const container = document.getElementById('tela-config');
+            
+            container.innerHTML = `
+                <div class="card">
+                    <h2>Backup e Sincronização</h2>
+                    <p>Exporte os dados do CockPit Tarks para um arquivo JSON (para backup ou sincronizar do notebook para o celular).</p>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="exportarBackup()" style="flex: 1; padding: 12px; background: var(--cor-destaque); color: var(--cor-primaria); border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">📥 Exportar Backup</button>
+                        <button onclick="document.getElementById('input-backup').click()" style="flex: 1; padding: 12px; background: transparent; color: var(--cor-primaria); border: 1px solid var(--cor-primaria); border-radius: 8px; font-weight: bold; cursor: pointer;">📤 Importar Backup</button>
+                    </div>
+                    <input type="file" id="input-backup" accept=".json" style="display: none;">
+                </div>
+
+                <div class="card">
+                    <h2>Configurações de Auditoria</h2>
+                    <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto-secundario);">Janela de Duplicata Técnica (minutos):</label>
+                    <input type="number" id="config-dup" value="${Estado.config.janelaDuplicata}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px;">
+                    <p style="font-size: 11px; color: var(--cor-texto-secundario); margin-bottom: 15px;">Fotos com diferença menor que este valor são consideradas duplicatas.</p>
+
+                    <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto-secundario);">Janela de Suspeita (minutos):</label>
+                    <input type="number" id="config-suspeita" value="${Estado.config.janelaSuspeita}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px;">
+                    <p style="font-size: 11px; color: var(--cor-texto-secundario); margin-bottom: 15px;">Fotos com diferença maior que este valor (na mesma loja) são suspeitas.</p>
+
+                    <button onclick="salvarConfiguracoes()" style="width: 100%; padding: 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Salvar Configurações</button>
+                    <div id="msg-config" style="margin-top: 10px; text-align: center; font-weight: bold; color: var(--cor-primaria);"></div>
+                </div>
+
+                <div class="card" style="border-left-color: var(--cor-perigo);">
+                    <h2>Zona de Perigo</h2>
+                    <p style="font-size: 12px;">Apaga todos os dados importados (Excel, PDFs e auditorias).</p>
+                    <button onclick="limparDados()" style="width: 100%; margin-top: 10px; padding: 12px; background: var(--cor-perigo); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">🗑️ Limpar Todos os Dados</button>
+                </div>
+            `;
+
+            // Evento de importar backup
+            document.getElementById('input-backup').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const leitor = new FileReader();
+                leitor.onload = (event) => {
+                    try {
+                        const dados = JSON.parse(event.target.result);
+                        if (dados.redes) Estado.redes = dados.redes;
+                        if (dados.lojas) Estado.lojas = dados.lojas;
+                        if (dados.visitasDeclaradas) Estado.visitasDeclaradas = dados.visitasDeclaradas;
+                        if (dados.fotos) Estado.fotos = dados.fotos;
+                        if (dados.config) Estado.config = dados.config;
+
+                        localStorage.setItem('cockpit_estado', JSON.stringify(Estado));
+                        localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
+                        alert('✅ Backup importado com sucesso!');
+                        renderizarDashboard();
+                        renderizarConfiguracoes();
+                    } catch (err) {
+                        alert('❌ Erro ao importar: ' + err.message);
+                    }
+                };
+                leitor.readAsText(file);
+            });
+        }
+
         function exportarBackup() {
             const dados = {
-                versao: '1.0',
-                dataExportacao: new Date().toISOString(),
+                data: new Date().toISOString(),
                 config: Estado.config,
                 redes: Estado.redes,
                 lojas: Estado.lojas,
                 visitasDeclaradas: Estado.visitasDeclaradas,
                 fotos: Estado.fotos
             };
-
             const json = JSON.stringify(dados, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            
             const a = document.createElement('a');
             a.href = url;
-            a.download = `cockpit_tarks_backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.download = `cockpit_backup_${new Date().toISOString().slice(0,10)}.json`;
             a.click();
-            
             URL.revokeObjectURL(url);
         }
 
-        // Importa um arquivo JSON de backup
-        function importarBackup(arquivo) {
-            return new Promise((resolve, reject) => {
-                const leitor = new FileReader();
-                leitor.onload = (e) => {
-                    try {
-                        const dados = JSON.parse(e.target.result);
-                        
-                        // Restaura o estado
-                        if (dados.config) Estado.config = dados.config;
-                        if (dados.redes) Estado.redes = dados.redes;
-                        if (dados.lojas) Estado.lojas = dados.lojas;
-                        if (dados.visitasDeclaradas) Estado.visitasDeclaradas = dados.visitasDeclaradas;
-                        if (dados.fotos) Estado.fotos = dados.fotos;
-
-                        // Salva no localStorage
-                        localStorage.setItem('cockpit_estado', JSON.stringify({
-                            config: Estado.config,
-                            redes: Estado.redes,
-                            lojas: Estado.lojas,
-                            visitasDeclaradas: Estado.visitasDeclaradas
-                        }));
-                        localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
-
-                        resolve(dados);
-                    } catch (erro) {
-                        reject(erro);
-                    }
-                };
-                leitor.onerror = reject;
-                leitor.readAsText(arquivo);
-            });
+        function salvarConfiguracoes() {
+            const dup = parseInt(document.getElementById('config-dup').value) || 10;
+            const sus = parseInt(document.getElementById('config-suspeita').value) || 60;
+            
+            Estado.config.janelaDuplicata = dup;
+            Estado.config.janelaSuspeita = sus;
+            
+            localStorage.setItem('cockpit_estado', JSON.stringify(Estado));
+            
+            const msg = document.getElementById('msg-config');
+            msg.textContent = '✅ Configurações salvas!';
+            setTimeout(() => msg.textContent = '', 3000);
         }
 
-        // Renderiza a tela de Backup
-        function renderizarBackup() {
-            const container = document.getElementById('tela-config');
-            
-            container.innerHTML = `
-                <div class="card">
-                    <h2>Backup e Sincronização</h2>
-                    <p>Exporte os dados do CockPit Tarks para um arquivo JSON. Use esse arquivo para fazer backup ou para sincronizar do notebook para o celular.</p>
-                </div>
-
-                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-                    <button id="btn-exportar" style="flex: 1; padding: 16px; background: var(--cor-destaque); color: var(--cor-primaria); border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                        📥 Exportar Backup
-                    </button>
-                    <button id="btn-importar" style="flex: 1; padding: 16px; background: var(--cor-primaria); color: var(--cor-destaque); border: 1px solid var(--cor-destaque); border-radius: 8px; font-weight: bold; cursor: pointer;">
-                        📤 Importar Backup
-                    </button>
-                </div>
-                <input type="file" id="input-backup" accept=".json" style="display: none;">
-                <div id="mensagem-backup"></div>
-
-                <div class="card" style="margin-top: 20px;">
-                    <h2>Configurações de Auditoria</h2>
-                    
-                    <div style="margin-top: 12px;">
-                        <label style="font-size: 12px; color: var(--cor-texto-secundario);">Janela de Duplicata Técnica (minutos):</label>
-                        <input type="number" id="config-janela-duplicata" value="${Estado.config.janelaDuplicata}" 
-                               style="width: 100%; padding: 8px; margin-top: 4px; background: var(--cor-fundo); border: 1px solid var(--cor-borda); color: var(--cor-texto); border-radius: 4px;">
-                        <p style="font-size: 10px; color: var(--cor-texto-secundario); margin-top: 4px;">Fotos com diferença menor que este valor são consideradas duplicatas (bug do sistema).</p>
-                    </div>
-
-                    <div style="margin-top: 12px;">
-                        <label style="font-size: 12px; color: var(--cor-texto-secundario);">Janela de Suspeita de Fraude (minutos):</label>
-                        <input type="number" id="config-janela-suspeita" value="${Estado.config.janelaSuspeita}" 
-                               style="width: 100%; padding: 8px; margin-top: 4px; background: var(--cor-fundo); border: 1px solid var(--cor-borda); color: var(--cor-texto); border-radius: 4px;">
-                        <p style="font-size: 10px; color: var(--cor-texto-secundario); margin-top: 4px;">Fotos com diferença maior que este valor (na mesma loja) são consideradas suspeitas.</p>
-                    </div>
-
-                    <button id="btn-salvar-config" style="width: 100%; margin-top: 16px; padding: 12px; background: var(--cor-sucesso); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                        Salvar Configurações
-                    </button>
-                    <div id="mensagem-config"></div>
-                </div>
-
-                <div class="card" style="margin-top: 20px; border-left-color: var(--cor-perigo);">
-                    <h2>Zona de Perigo</h2>
-                    <p style="font-size: 11px;">Apaga todos os dados importados do sistema (Excel, PDFs e auditorias). Use com cuidado.</p>
-                    <button id="btn-limpar" style="width: 100%; margin-top: 12px; padding: 12px; background: var(--cor-perigo); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                        🗑️ Limpar Todos os Dados
-                    </button>
-                </div>
-            `;
-
-            // Eventos de Backup
-            document.getElementById('btn-exportar').addEventListener('click', exportarBackup);
-            
-            const inputBackup = document.getElementById('input-backup');
-            document.getElementById('btn-importar').addEventListener('click', () => inputBackup.click());
-            
-            inputBackup.addEventListener('change', async (e) => {
-                const arquivo = e.target.files[0];
-                if (!arquivo) return;
-                const msg = document.getElementById('mensagem-backup');
-                msg.innerHTML = '<p style="color: var(--cor-alerta);">Importando...</p>';
-                try {
-                    const dados = await importarBackup(arquivo);
-                    msg.innerHTML = `<p style="color: var(--cor-sucesso);">✅ Backup importado com sucesso! (${dados.fotos?.length || 0} fotos restauradas)</p>`;
-                    renderizarDashboard();
-                } catch (erro) {
-                    msg.innerHTML = `<p style="color: var(--cor-perigo);">❌ Erro: ${erro.message}</p>`;
-                }
-            });
-
-            // Eventos de Configuração
-            document.getElementById('btn-salvar-config').addEventListener('click', () => {
-                const janelaDup = parseInt(document.getElementById('config-janela-duplicata').value) || 10;
-                const janelaSus = parseInt(document.getElementById('config-janela-suspeita').value) || 60;
-                
-                Estado.config.janelaDuplicata = janelaDup;
-                Estado.config.janelaSuspeita = janelaSus;
-                
-                localStorage.setItem('cockpit_estado', JSON.stringify({
-                    config: Estado.config,
-                    redes: Estado.redes,
-                    lojas: Estado.lojas,
-                    visitasDeclaradas: Estado.visitasDeclaradas
-                }));
-
-                const msg = document.getElementById('mensagem-config');
-                msg.innerHTML = '<p style="color: var(--cor-sucesso);">✅ Configurações salvas!</p>';
-                setTimeout(() => msg.innerHTML = '', 3000);
-            });
-
-            // Evento de Limpar Dados
-            document.getElementById('btn-limpar').addEventListener('click', () => {
-                if (confirm('Tem certeza? Todos os dados importados serão apagados do navegador.')) {
-                    localStorage.removeItem('cockpit_estado');
-                    localStorage.removeItem('cockpit_fotos');
-                    localStorage.removeItem('cockpit_pdf_progresso');
-                    Estado.redes = [];
-                    Estado.lojas = [];
-                    Estado.visitasDeclaradas = [];
-                    Estado.fotos = [];
-                    alert('Dados apagados. Recarregue a página.');
-                    window.location.reload();
-                }
-            });
-        }
-
-        // Atualiza a tela de configurações quando a aba é clicada
-        document.addEventListener('DOMContentLoaded', () => {
-            const btnConfig = document.querySelector('nav button[data-tela="config"]');
-            if (btnConfig) {
-                btnConfig.addEventListener('click', renderizarBackup);
+        function limparDados() {
+            if (confirm('Tem certeza? Todos os dados importados serão apagados.')) {
+                localStorage.removeItem('cockpit_estado');
+                localStorage.removeItem('cockpit_fotos');
+                localStorage.removeItem('cockpit_progresso_pdf');
+                Estado.redes = []; Estado.lojas = []; Estado.visitasDeclaradas = []; Estado.fotos = [];
+                alert('Dados apagados. Recarregue a página.');
+                window.location.reload();
             }
+        }
+
+        // Atualiza as configurações quando a aba é clicada
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('nav button[data-tela="config"]').addEventListener('click', renderizarConfiguracoes);
         });
     </script>
-        <!-- ═══════════════════════════════════════════════════════════════
-         PARTE 6 — POLIMENTO FINAL (LOGO, ANIMAÇÕES, IMPRESSÃO)
-         ═══════════════════════════════════════════════════════════════ -->
-    <style>
-        /* ── ANIMAÇÕES DE VELOCIDADE (F1) ───────────────────────────── */
-        @keyframes velocidade {
-            0% { transform: translateX(-100%); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateX(100%); opacity: 0; }
-        }
 
-        .linha-velocidade {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--cor-destaque), transparent);
-            animation: velocidade 2s infinite linear;
-            pointer-events: none;
-        }
-
-        .card {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--cor-destaque);
-            opacity: 0.8;
-        }
-
-        /* ── ESTILO DE IMPRESSÃO (PDF) ──────────────────────────────── */
-        @media print {
-            body {
-                background: white !important;
-                color: black !important;
-                height: auto;
-                overflow: visible;
-            }
-            header, nav, footer, button, .card::before, .linha-velocidade {
-                display: none !important;
-            }
-            main {
-                padding: 0 !important;
-                max-width: 100% !important;
-                overflow: visible !important;
-            }
-            .card {
-                border: 1px solid #ccc !important;
-                box-shadow: none !important;
-                page-break-inside: avoid;
-            }
-            .card h2, .card p, .card strong {
-                color: black !important;
-            }
-        }
-
-        /* ── LOGO OFICIAL ──────────────────────────────────────────── */
-        .logo-oficial {
-            width: 48px;
-            height: 48px;
-            object-fit: contain;
-            border-radius: 50%;
-            background: white;
-            padding: 2px;
-            border: 2px solid var(--cor-destaque);
-        }
-    </style>
-
-    <script>
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 18 — SUBSTITUIÇÃO DO LOGO E ANIMAÇÕES
-           ═══════════════════════════════════════════════════════════════ */
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            // Substitui o placeholder do logo pela imagem oficial
-            const logoPlaceholder = document.querySelector('.logo-placeholder');
-            if (logoPlaceholder) {
-                // Usando a imagem que você subiu. Se estiver no GitHub, troque o caminho para './logo-tarks.jpg'
-                // Para o MVP, usamos um placeholder com a letra T estilizada se a imagem falhar.
-                const img = document.createElement('img');
-                img.src = 'https://i.ibb.co/3k5Hq0B/logo-tarks.jpg'; // Exemplo de URL. Você deve subir a imagem no GitHub e trocar aqui.
-                img.alt = 'Tarks';
-                img.className = 'logo-oficial';
-                img.onerror = () => {
-                    // Se a imagem não carregar, volta para o placeholder
-                    logoPlaceholder.style.display = 'flex';
-                };
-                logoPlaceholder.style.display = 'none';
-                logoPlaceholder.parentNode.insertBefore(img, logoPlaceholder);
-            }
-
-            // Adiciona a linha de velocidade no header
-            const header = document.querySelector('header');
-            if (header) {
-                const linha = document.createElement('div');
-                linha.className = 'linha-velocidade';
-                header.appendChild(linha);
-            }
-        });
-
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 19 — TRATAMENTO DE ERROS AMIGÁVEL
-           ═══════════════════════════════════════════════════════════════ */
-        
-        // Verifica se as bibliotecas carregaram (se a internet caiu)
-        window.addEventListener('load', () => {
-            const bibliotecasOk = typeof XLSX !== 'undefined' && typeof pdfjsLib !== 'undefined' && typeof Tesseract !== 'undefined';
-            if (!bibliotecasOk) {
-                alert('⚠️ Atenção: Não foi possível carregar as bibliotecas do sistema. Verifique sua conexão com a internet e recarregue a página.');
-            }
-        });
-
-        // Bloqueia o zoom no celular (para não quebrar o layout)
-        document.addEventListener('gesturestart', function (e) {
-            e.preventDefault();
-        });
-
-        /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 20 — REVISÃO MANUAL E IMPRESSÃO
-           ═══════════════════════════════════════════════════════════════ */
-        
-        // Função para imprimir apenas o relatório (esconde as outras abas)
-        function imprimirRelatorio() {
-            // Muda para a aba de relatório antes de imprimir
-            document.querySelector('nav button[data-tela="relatorio"]').click();
-            
-            // Pequeno delay para garantir que a tela renderizou
-            setTimeout(() => {
-                window.print();
-            }, 500);
-        }
-
-        // Sobrescreve a função de impressão da Parte 4 para usar a nova
-        window.imprimirRelatorio = imprimirRelatorio;
-
-        // Adiciona o botão de impressão na tela de relatório
-        document.addEventListener('DOMContentLoaded', () => {
-            const btnRelatorio = document.querySelector('nav button[data-tela="relatorio"]');
-            if (btnRelatorio) {
-                btnRelatorio.addEventListener('click', () => {
-                    setTimeout(() => {
-                        const container = document.getElementById('tela-relatorio');
-                        const btnImprimir = container.querySelector('button[onclick="window.print()"]');
-                        if (btnImprimir) {
-                            btnImprimir.setAttribute('onclick', 'imprimirRelatorio()');
-                        }
-                    }, 100);
-                });
-            }
-        });
-
-        // Função para revisar manualmente as fotos na Tela de Auditoria
-        // (Já implementada na Parte 4, mas garantimos que está acessível globalmente)
-        window.marcarComoValida = function(pagina) {
-            const foto = Estado.fotos.find(f => f.pagina === pagina);
-            if (foto) {
-                foto.status = 'cruzado';
-                foto.revisaoManual = 'valida';
-                localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
-                if (typeof renderizarAuditoria === 'function') renderizarAuditoria();
-                if (typeof renderizarDashboard === 'function') renderizarDashboard();
-            }
-        };
-
-        window.confirmarFraude = function(pagina) {
-            const foto = Estado.fotos.find(f => f.pagina === pagina);
-            if (foto) {
-                foto.status = 'fraude_confirmada';
-                foto.revisaoManual = 'fraude';
-                localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
-                if (typeof renderizarAuditoria === 'function') renderizarAuditoria();
-                if (typeof renderizarDashboard === 'function') renderizarDashboard();
-            }
-        };
-    </script>
-    
+</body>
+</html>
