@@ -71,6 +71,7 @@
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
+</script>
 <script>
   // ═══ SUBBLOCO 01 e 02 — CONFIGURAÇÕES E ESTADO ═══
   if (typeof pdfjsLib !== 'undefined') {
@@ -83,8 +84,28 @@
   };
 
   function salvarEstado() {
-    try { localStorage.setItem('cockpit_estado', JSON.stringify(Estado)); }
-    catch (e) { alert("⚠️ Erro ao salvar. Armazenamento cheio."); }
+    try {
+      // Cria uma cópia do estado APENAS para salvar no disco
+      const estadoParaSalvar = JSON.parse(JSON.stringify(Estado));
+      
+      // Remove as imagens Base64 da cópia para não estourar a memória (5MB)
+      // Mantém apenas os metadados (promotor, data, status, etc)
+      if (estadoParaSalvar.meses) {
+        Object.keys(estadoParaSalvar.meses).forEach(mes => {
+          if (estadoParaSalvar.meses[mes].fotos) {
+            estadoParaSalvar.meses[mes].fotos = estadoParaSalvar.meses[mes].fotos.map(f => {
+              return { ...f, imagemBase64: null }; // Zera a imagem no backup
+            });
+          }
+        });
+      }
+      
+      localStorage.setItem('cockpit_estado', JSON.stringify(estadoParaSalvar)); 
+    }
+    catch (e) { 
+      console.error(e);
+      alert("⚠️ Erro ao salvar. O armazenamento do navegador está cheio."); 
+    }
   }
 
   function carregarEstado() {
