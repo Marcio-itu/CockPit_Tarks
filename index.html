@@ -31,6 +31,7 @@
 
   nav { background-color: #F8F9FA; display: flex; overflow-x: auto; border-bottom: 1px solid #CCC; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); -webkit-overflow-scrolling: touch; }
   nav::-webkit-scrollbar { display: none; }
+  input[type=file]:disabled{opacity:.45;cursor:not-allowed}
   nav button { background: transparent; border: none; color: var(--cor-texto-secundario); font-family: var(--fonte-titulo); font-size: 11px; font-weight: 700; padding: 14px 16px; cursor: pointer; white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; border-bottom: 3px solid transparent; transition: all 0.2s ease; }
   nav button.ativo { color: var(--cor-primaria); border-bottom: 3px solid var(--cor-destaque); background-color: rgba(10,61,46,0.05); }
 
@@ -340,7 +341,7 @@
       const novoMes = prompt("Digite o novo mês (formato AAAA-MM):", mesAtualLocal());
       if (novoMes && /^\d{4}-\d{2}$/.test(novoMes)) {
         Estado.config.mesAtivo = novoMes;
-        garantirMes(novoMes);
+        garantirMes(novoMes).mesConfirmado = true;
         salvarEstado();
         renderizarConfig();
       } else if (novoMes) {
@@ -540,6 +541,11 @@
           const workbook = XLSX.read(dados, { type: 'array' });
 
           // Processa o fechamento
+          if (!conferirMesDoArquivo('Fechamento', fileNomeSeguro('input-excel'), detectarMesFechamento(workbook), 'mês do título')) {
+            document.getElementById('input-excel').value = '';
+            msg.innerHTML = '<span style="color:#E67E22;">Importação cancelada (mês diferente).</span>';
+            return;
+          }
           const fechamento = processarFechamento(workbook);
           
           // Salva no mês ativo
@@ -669,6 +675,10 @@
       for (const file of files) {
         try {
           const workbook = await lerArquivoComoWorkbook(file);
+          if (!conferirMesDoArquivo('Plano de Visitas', file.name, detectarMesPlano(workbook), 'datas da planilha')) {
+            erros.push(`${esc(file.name)}: não importado (mês diferente)`);
+            continue;
+          }
           const novas = processarPlano(workbook, file.name);
           // Substitui só as redes que vieram neste arquivo; as demais ficam como estavam
           const redesNovas = new Set(novas.map(l => l.rede));
@@ -712,6 +722,11 @@
           const dados = new Uint8Array(evento.target.result);
           const workbook = XLSX.read(dados, { type: 'array' });
           const visitas = processarRelatorioTempo(workbook);
+          if (!conferirMesDoArquivo('Relatório de Tempo', fileNomeSeguro('input-tempo'), mesMajoritario(visitas.map(v => v.data)), 'datas das visitas')) {
+            document.getElementById('input-tempo').value = '';
+            msg.innerHTML = '<span style="color:#E67E22;">Importação cancelada (mês diferente).</span>';
+            return;
+          }
           
           const mesDados = garantirMes(Estado.config.mesAtivo);
           mesDados.relatorioTempo = visitas;
@@ -882,7 +897,7 @@
   }
 
   // ── PROCESSADOR PRINCIPAL DO PDF ──
-  async function processarPDF(arquivo, callbackProgresso) {
+  async function processarPDF(arquivo, callbackProgresso, aoDetectarPeriodo) {
     const arrayBuffer = await arquivo.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const totalPaginas = pdf.numPages;
@@ -894,7 +909,10 @@
 
       const pagina = await pdf.getPage(i);
       const texto = await pagina.getTextContent();
-      if (i === 1 && !periodo) periodo = extrairPeriodoCapa(texto.items); // capa: "Período: dd/mm/aaaa até dd/mm/aaaa"
+      if (i === 1 && !periodo) {
+        periodo = extrairPeriodoCapa(texto.items); // capa: "Período: dd/mm/aaaa até dd/mm/aaaa"
+        if (periodo && aoDetectarPeriodo && !aoDetectarPeriodo(periodo)) throw new Error('Importação cancelada (mês diferente)');
+      }
 
       const meta = extrairMetadadosPagina(texto.items);
       if (!meta.temRodape) { ignoradas++; pagina.cleanup(); continue; } // capa/páginas sem foto com selo
@@ -956,7 +974,18 @@
             const pct = Math.floor((atual / total) * 100);
             barra.style.width = pct + '%';
             txt.textContent = `Arquivo ${i + 1}/${files.length} - Página ${atual} de ${total} (${pct}%)`;
+          }, (per) => {
+            const ini = per.inicio.slice(0, 7), fim = per.fim.slice(0, 7), ativo = Estado.config.mesAtivo;
+            if (ini === ativo || fim === ativo) return true;
+            return conferirMesDoArquivo('Book PDF', file.name, ini, 'período da capa');
           });
+          if (!r.periodo) {
+            const md = mesMajoritario(r.fotos.map(f => (f.dataHora || '').slice(0, 10)));
+            if (!conferirMesDoArquivo('Book PDF', file.name, md, 'datas das fotos')) {
+              resumo.push(`<span style="color:#E67E22;">⏭️ ${esc(file.name.slice(0, 40))}: não importado (mês diferente)</span>`);
+              continue;
+            }
+          }
 
           // Reimportar o mesmo arquivo substitui as fotos dele (não duplica)
           const antigas = (mesDados.fotos || []).filter(f => f.arquivoOrigem === file.name);
@@ -1253,10 +1282,11 @@
     if (naoMap.length) {
       extra += `<p style="font-size: 12px; margin-top: 6px; color: #C0392B;">⚠️ Visitas comprovadas de rede(s) que não existem no Fechamento (ficaram fora dos totais): ${naoMap.map(([r, q]) => esc(r) + ' (' + q + ')').join(', ')}.</p>`;
     }
-    const texto = aud.periodoAuditado
+    const rotMes = `<strong>Mês ${esc(Estado.config.mesAtivo)}</strong> · `;
+    const texto = rotMes + (aud.periodoAuditado
       ? `<strong>Período auditado:</strong> ${esc(formatarDataBR(aud.periodoAuditado.inicio))} a ${esc(formatarDataBR(aud.periodoAuditado.fim))}. Neste mês a auditoria vale só para este período: "Declaradas" são as visitas do Relatório de Tempo nesses dias e as fotos de outros dias foram ignoradas (${aud.foraPeriodo || 0}). Cobrado, desconto e valor auditado referem-se apenas ao período.`
-      : `<strong>Cobertura das fotos:</strong> ${esc(per)}. O Fechamento é mensal: enquanto faltarem PDFs (ou partes do book) do mês, as comprovadas ficam abaixo do real e o gap/desconto ficam superestimados.`;
-    return `<div class="card" style="border-left-color: #F39C12; padding: 15px;">
+      : `<strong>Cobertura das fotos:</strong> ${esc(per)}. O Fechamento é mensal: enquanto faltarem PDFs (ou partes do book) do mês, as comprovadas ficam abaixo do real e o gap/desconto ficam superestimados.`);
+    return `${htmlAvisoMesDosDados()}<div class="card" style="border-left-color: #F39C12; padding: 15px;">
       <p style="font-size: 12px; line-height: 1.4;">${texto}</p>
       ${extra}
     </div>`;
@@ -1307,11 +1337,14 @@
       </div>`;
     }
 
+    const travar = mesLiberadoParaImportar(mesDados) ? '' : 'disabled';
     container.innerHTML = `
+      ${htmlAvisoMesDosDados()}
+      ${htmlCardMesAdmin()}
       <div class="card">
         <h2>1. Importar Fechamento (Excel)</h2>
         <p style="font-size: 13px; margin-bottom: 15px;">Planilha de Fechamento PACTO (aba <em>sistematica</em>).</p>
-        <input type="file" id="input-excel" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
+        <input type="file" id="input-excel" ${travar} accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
         <div id="msg-excel" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
         ${resumoFechamento}
       </div>
@@ -1319,7 +1352,7 @@
       <div class="card">
         <h2>2. Importar Plano de Visitas (Excel)</h2>
         <p style="font-size: 13px; margin-bottom: 15px;">Planilhas com as abas de cada rede. Pode selecionar vários arquivos de uma vez (TUBAÍNA, CARREFOUR, NAGUMO...).</p>
-        <input type="file" id="input-plano" accept=".xlsx, .xls" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
+        <input type="file" id="input-plano" ${travar} accept=".xlsx, .xls" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
         <div id="msg-plano" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
         ${resumoLojas}
       </div>
@@ -1327,7 +1360,7 @@
       <div class="card">
         <h2>3. Importar Relatório de Tempo (Excel)</h2>
         <p style="font-size: 13px; margin-bottom: 15px;">Arquivo "Visitas - Outubro...".</p>
-        <input type="file" id="input-tempo" accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
+        <input type="file" id="input-tempo" ${travar} accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
         <div id="msg-tempo" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
         ${resumoTempo}
       </div>
@@ -1335,7 +1368,7 @@
       <div class="card">
         <h2>4. Importar PDFs (Fotos)</h2>
         <p style="font-size: 13px; margin-bottom: 15px;">Books de prestação de contas. Pode selecionar múltiplos.</p>
-        <input type="file" id="input-pdf" accept=".pdf" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
+        <input type="file" id="input-pdf" ${travar} accept=".pdf" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
         <div id="progresso-pdf" style="display: none; margin-top: 15px;">
           <div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px; overflow: hidden;">
             <div id="barra-pdf" style="width: 0%; height: 100%; background: var(--cor-destaque); transition: width 0.3s ease;"></div>
@@ -1359,6 +1392,7 @@
     configurarUploadPlano();
     configurarUploadTempo();
     configurarUploadPDF();
+    configurarCardMesAdmin();
 
     if (podeAuditar) {
       document.getElementById('btn-auditar').addEventListener('click', executarAuditoria);
@@ -1901,7 +1935,9 @@
   // ── INICIALIZAÇÃO GERAL ──
   document.addEventListener('DOMContentLoaded', () => {
     carregarEstado();
+    escolherMesInicial();
     garantirMes(Estado.config.mesAtivo);
+    atualizarAuditoriaSeNecessario();
 
     document.querySelectorAll('nav button').forEach(botao => {
       botao.addEventListener('click', () => {
@@ -1914,6 +1950,7 @@
         const telaAlvo = document.getElementById(`tela-${nomeTela}`);
         if (telaAlvo) telaAlvo.classList.add('ativa');
 
+        if (nomeTela === 'dashboard' || nomeTela === 'auditoria' || nomeTela === 'relatorio') atualizarAuditoriaSeNecessario();
         if (nomeTela === 'config') renderizarConfig();
         if (nomeTela === 'admin') renderizarAdmin();
         if (nomeTela === 'dashboard') renderizarDashboard();
@@ -2174,6 +2211,157 @@
     } finally {
       btn.disabled = false;
     }
+  }
+
+  // ── MÊS ATIVO E COERÊNCIA DOS DADOS ──
+  function mesPredominanteDasFotos(m) {
+    const c = {};
+    (m.fotos || []).forEach(f => { if (f.dataHora) { const k = f.dataHora.slice(0, 7); c[k] = (c[k] || 0) + 1; } });
+    const e = Object.entries(c).sort((a, b) => b[1] - a[1]);
+    return e.length ? e[0][0] : null;
+  }
+
+  // Aviso quando os dados foram importados num mês diferente do mês das fotos (ex.: dados de outubro dentro de 2026-11).
+  // As regras por mês, como o período de 18 a 24/10, só valem no mês certo.
+  function htmlAvisoMesDosDados() {
+    if (Modo !== 'local') return '';
+    const mes = Estado.config.mesAtivo, m = Estado.meses[mes];
+    const real = m ? mesPredominanteDasFotos(m) : null;
+    if (!real || real === mes) return '';
+    return `<div class="card" style="border-left-color: #E74C3C; padding: 15px;">
+      <p style="font-size: 12px; line-height: 1.4; margin-bottom: 10px;">⚠️ <strong>O mês ativo é ${esc(mes)}, mas as fotos importadas são de ${esc(real)}.</strong> As regras por mês (como o período de 18 a 24/10 de outubro) só valem quando os dados estão no mês certo.</p>
+      <button onclick="moverDadosParaMes('${esc(real)}')" style="width: 100%; padding: 10px; background: var(--cor-perigo); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Mover estes dados para ${esc(real)}</button>
+    </div>`;
+  }
+
+  function moverDadosParaMes(destino) {
+    if (Modo !== 'local' || !/^\d{4}-\d{2}$/.test(destino)) return;
+    const origem = Estado.config.mesAtivo;
+    const m = Estado.meses[origem];
+    if (!m || origem === destino) return;
+    const ex = Estado.meses[destino];
+    const temDados = ex && ((ex.fotos || []).length || (ex.fechamento || []).length || (ex.relatorioTempo || []).length || (ex.lojas || []).length);
+    if (!confirm(`Mover todos os dados de ${origem} para ${destino}?` + (temDados ? `\n\n${destino} já tem dados importados, que serão SUBSTITUÍDOS.` : ''))) return;
+    Estado.meses[destino] = m;
+    delete Estado.meses[origem];
+    if (PERIODOS_PADRAO[destino] && !m.periodoAuditado) m.periodoAuditado = { ...PERIODOS_PADRAO[destino] };
+    Estado.config.mesAtivo = destino;
+    executarAuditoriaSilencioso();
+    salvarEstado();
+    document.querySelector('nav button[data-tela="dashboard"]').click();
+  }
+
+  // A auditoria guardada pode ser anterior ao período configurado (ex.: arquivo novo aberto sobre dados antigos).
+  // Quando o período não bate, recalcula sozinha.
+  function atualizarAuditoriaSeNecessario() {
+    if (Modo !== 'local') return;
+    const m = Estado.meses[Estado.config.mesAtivo];
+    if (!m || !m.auditoria) return;
+    if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
+    const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado)) executarAuditoriaSilencioso();
+  }
+
+
+  // ── MÊS E ANO DA AUDITORIA: escolha obrigatória + conferência por arquivo ──
+  const NOMES_MES = ['janeiro','fevereiro','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const ROTULO_MES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  function rotuloMes(am) {
+    const m = /^(\d{4})-(\d{2})$/.exec(am || '');
+    return m ? ROTULO_MES[+m[2] - 1] + '/' + m[1] : (am || '?');
+  }
+  function fileNomeSeguro(idInput) {
+    const el = document.getElementById(idInput);
+    return (el && el.files && el.files[0] && el.files[0].name) || 'arquivo';
+  }
+  function mesMajoritario(datas) {
+    const c = {};
+    (datas || []).forEach(d => { const m = /^(\d{4}-\d{2})/.exec(d || ''); if (m) c[m[1]] = (c[m[1]] || 0) + 1; });
+    const k = Object.keys(c).sort((a, b) => c[b] - c[a]);
+    return k[0] || null;
+  }
+  function detectarMesFechamento(wb) {
+    try {
+      for (const nome of wb.SheetNames) {
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[nome], { header: 1, defval: '' }).slice(0, 8);
+        for (const r of rows) for (const c of r) {
+          if (typeof c !== 'string') continue;
+          const t = normalizarTexto(c).toLowerCase();
+          if (t.indexOf('fechamento') < 0) continue;
+          const seguinte = t.slice(t.indexOf('fechamento'));
+          for (let i = 0; i < 12; i++) if (seguinte.indexOf(NOMES_MES[i]) >= 0) {
+            return Estado.config.mesAtivo.slice(0, 4) + '-' + String(i + 1).padStart(2, '0');
+          }
+        }
+      }
+    } catch (e) {}
+    return null;
+  }
+  function detectarMesPlano(wb) {
+    const datas = [];
+    try {
+      for (const nome of wb.SheetNames) {
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[nome], { header: 1, defval: '', raw: true }).slice(0, 3);
+        for (const r of rows) for (const c of r) {
+          let d = null;
+          if (c instanceof Date && !isNaN(c)) d = c;
+          else if (typeof c === 'number' && c > 40000 && c < 60000) d = new Date(Math.round((c - 25569) * 86400000));
+          else if (typeof c === 'string') {
+            const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(c.trim());
+            if (m) d = new Date(Date.UTC(+m[3], +m[2] - 1, +m[1]));
+          }
+          if (d) datas.push(d.toISOString().slice(0, 10));
+        }
+      }
+    } catch (e) {}
+    return mesMajoritario(datas);
+  }
+  function conferirMesDoArquivo(rotulo, nomeArquivo, detectado, origem) {
+    if (!detectado) return true;
+    const ativo = Estado.config.mesAtivo;
+    if (detectado === ativo) return true;
+    return confirm(`⚠️ ATENÇÃO — ${rotulo}\n\nO arquivo "${nomeArquivo}" parece ser de ${rotuloMes(detectado)} (${origem}),\nmas você escolheu ${rotuloMes(ativo)}.\n\nOK = importar mesmo assim em ${rotuloMes(ativo)}\nCancelar = NÃO importar este arquivo`);
+  }
+  function temDadosNoMes(m) {
+    return !!m && ((m.fechamento || []).length || (m.lojas || []).length || (m.relatorioTempo || []).length || (m.fotos || []).length);
+  }
+  function mesLiberadoParaImportar(m) { return !!m && (temDadosNoMes(m) || m.mesConfirmado === true); }
+  function escolherMesInicial() {
+    const ativo = Estado.config.mesAtivo, ms = Estado.meses || {};
+    if (!(ativo in ms) || (!temDadosNoMes(ms[ativo]) && !ms[ativo].mesConfirmado)) {
+      const comDados = Object.keys(ms).filter(k => temDadosNoMes(ms[k])).sort();
+      if (comDados.length) Estado.config.mesAtivo = comDados[comDados.length - 1];
+    }
+    Object.keys(ms).forEach(k => { if (k !== Estado.config.mesAtivo && !temDadosNoMes(ms[k]) && !ms[k].mesConfirmado) delete ms[k]; });
+    salvarEstado();
+  }
+  function htmlCardMesAdmin() {
+    const ativo = Estado.config.mesAtivo, m = Estado.meses[ativo];
+    const lib = mesLiberadoParaImportar(m);
+    const lista = Object.keys(Estado.meses).filter(k => temDadosNoMes(Estado.meses[k])).sort().reverse()
+      .map(k => `<button type="button" class="btn-mes-hist" data-mes="${esc(k)}" style="margin:3px 4px 0 0;padding:6px 10px;border-radius:14px;border:1px solid #CCC;background:${k === ativo ? 'var(--cor-destaque)' : '#FFF'};cursor:pointer;font-size:12px;">${esc(rotuloMes(k))}</button>`).join('');
+    const per = m && m.periodoAuditado ? ' · período auditado: ' + esc(formatarDataBR(m.periodoAuditado.inicio)) + ' a ' + esc(formatarDataBR(m.periodoAuditado.fim)) : ' · mês inteiro';
+    return `<div class="card" style="border-left:4px solid ${lib ? '#27AE60' : '#E67E22'};">
+      <h2>📅 Mês e ano desta auditoria</h2>
+      <p style="font-size:13px;margin-bottom:10px;">${lib ? `Importando para <strong>${esc(rotuloMes(ativo))}</strong>${per}.` : '<strong>Escolha o mês e o ano antes de importar.</strong> Os botões de importação ficam travados até você confirmar.'}</p>
+      <input type="month" id="admin-mes" value="${esc(ativo)}" style="padding:10px;border:1px solid #CCC;border-radius:6px;font-size:15px;">
+      <button type="button" id="btn-confirmar-mes" style="margin-left:6px;padding:10px 14px;border-radius:6px;border:none;background:var(--cor-primaria);color:var(--cor-destaque);font-weight:bold;cursor:pointer;">${lib ? 'Trocar de mês' : 'Confirmar mês'}</button>
+      ${lista ? `<div style="margin-top:10px;font-size:12px;">Histórico: ${lista}</div>` : ''}
+    </div>`;
+  }
+  function configurarCardMesAdmin() {
+    const btn = document.getElementById('btn-confirmar-mes');
+    if (btn) btn.addEventListener('click', () => {
+      const v = (document.getElementById('admin-mes') || {}).value;
+      if (!/^\d{4}-\d{2}$/.test(v || '')) { alert('Escolha um mês e ano válidos.'); return; }
+      Estado.config.mesAtivo = v;
+      garantirMes(v).mesConfirmado = true;
+      salvarEstado();
+      renderizarAdmin();
+    });
+    document.querySelectorAll('.btn-mes-hist').forEach(b => b.addEventListener('click', () => {
+      Estado.config.mesAtivo = b.dataset.mes; salvarEstado(); renderizarAdmin();
+    }));
   }
 
   function configurarPublicacao() {
