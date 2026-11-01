@@ -12,24 +12,36 @@
 
     <style>
      <style>
+      <style>
         /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 02 — CSS MOBILE-FIRST (CockPit Tarks) - VERSÃO CLARA
+           SUBBLOCO 02 — CSS MOBILE-FIRST (CockPit Tarks) - F1 EDITION
            ═══════════════════════════════════════════════════════════════ */
+        
+        /* Importando fontes do Google Fonts para dar o ar de velocidade */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Rajdhani:wght@500;700&display=swap');
+
         :root {
-            /* Cores Tarks (F1) - Fundo Claro */
-            --cor-primaria: #0A3D2E;      /* Verde escuro (header) */
-            --cor-destaque: #D4AF37;       /* Dourado (logo) */
-            --cor-fundo: #F4F6F8;          /* Cinza bem claro (fundo do miolo) */
-            --cor-fundo-card: #FFFFFF;     /* Branco (cards) */
-            --cor-texto: #212529;          /* Quase preto (texto) */
-            --cor-texto-secundario: #6C757D; /* Cinza médio (texto secundário) */
-            --cor-sucesso: #28A745;        /* Verde sucesso */
-            --cor-alerta: #FFC107;         /* Amarelo alerta */
-            --cor-perigo: #DC3545;         /* Vermelho perigo */
-            --cor-borda: #DEE2E6;          /* Borda cinza clara */
+            /* Cores Tarks (F1) - Cockpit */
+            --cor-primaria: #0A3D2E;      /* Verde escuro (Tarks) */
+            --cor-destaque: #D4AF37;       /* Dourado (Logo) */
+            
+            /* Fundo e Cards */
+            --cor-fundo: #0B0F19;          /* Preto/Azul profundo (F1) */
+            --cor-fundo-card: #151B26;     /* Grafite escuro (Cards) */
+            --cor-borda: #2A3441;          /* Borda sutil */
+            
+            /* Textos */
+            --cor-texto: #F8F9FA;          /* Branco off */
+            --cor-texto-secundario: #8B949E; /* Cinza claro */
+            
+            /* Status (Velocidade) */
+            --cor-sucesso: #00E676;        /* Verde neon */
+            --cor-alerta: #FFEA00;         /* Amarelo vibrante */
+            --cor-perigo: #FF3D00;         /* Vermelho/laranja de alerta */
             
             /* Tipografia */
-            --fonte-principal: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --fonte-titulo: 'Rajdhani', sans-serif;
+            --fonte-texto: 'Inter', sans-serif;
         }
 
         * {
@@ -39,7 +51,7 @@
         }
 
         body {
-            font-family: var(--fonte-principal);
+            font-family: var(--fonte-texto);
             background-color: var(--cor-fundo);
             color: var(--cor-texto);
             display: flex;
@@ -48,9 +60,9 @@
             overflow: hidden;
         }
 
-        /* ── HEADER (Mantém o verde escuro para contraste) ────────── */
+        /* ── HEADER (Visual F1) ────────────────────────────────────── */
         header {
-            background-color: var(--cor-primaria);
+            background: linear-gradient(90deg, #051C14 0%, var(--cor-primaria) 100%);
             padding: 12px 16px;
             display: flex;
             align-items: center;
@@ -61,12 +73,13 @@
             overflow: hidden;
         }
 
+        /* Linha de velocidade no header */
         header::after {
             content: '';
             position: absolute;
             top: 0; right: 0;
-            width: 120px; height: 100%;
-            background: linear-gradient(135deg, transparent 0%, rgba(212, 175, 55, 0.15) 50%, transparent 100%);
+            width: 150px; height: 100%;
+            background: linear-gradient(135deg, transparent 0%, rgba(212, 175, 55, 0.2) 50%, transparent 100%);
             pointer-events: none;
         }
 
@@ -77,6 +90,7 @@
             z-index: 1;
         }
 
+        /* Mantendo o placeholder "T" bonito até vc subir o logo */
         .logo-placeholder {
             width: 44px; height: 44px;
             background-color: var(--cor-destaque);
@@ -84,34 +98,38 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 900;
+            font-family: var(--fonte-titulo);
+            font-weight: 700;
             color: var(--cor-primaria);
-            font-size: 20px;
-            border: 2px solid var(--cor-fundo-card);
+            font-size: 24px;
+            border: 2px solid #FFF;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
         }
 
         .titulo-header h1 {
-            font-size: 18px;
-            font-weight: 900;
-            letter-spacing: 1.5px;
+            font-family: var(--fonte-titulo);
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 2px;
             color: var(--cor-destaque);
             text-transform: uppercase;
-            line-height: 1.2;
+            line-height: 1;
         }
 
         .titulo-header span {
+            font-family: var(--fonte-texto);
             font-size: 9px;
             color: var(--cor-texto-secundario);
             text-transform: uppercase;
             letter-spacing: 2px;
         }
 
-        /* ── NAV ────────────────────────────────────────────────────── */
+        /* ── NAV (Menu de Abas) ─────────────────────────────────────── */
         nav {
             background-color: var(--cor-fundo-card);
             display: flex;
             justify-content: space-around;
-            padding: 6px 4px;
+            padding: 8px 4px;
             border-bottom: 1px solid var(--cor-borda);
             flex-shrink: 0;
             overflow-x: auto;
@@ -122,20 +140,22 @@
             background: transparent;
             border: none;
             color: var(--cor-texto-secundario);
-            font-size: 11px;
-            padding: 8px 10px;
+            font-family: var(--fonte-titulo);
+            font-size: 14px;
+            font-weight: 700;
+            padding: 8px 12px;
             border-radius: 4px;
             cursor: pointer;
             white-space: nowrap;
             transition: all 0.2s ease;
-            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
         }
 
         nav button.ativo {
-            background-color: var(--cor-primaria);
+            background-color: rgba(212, 175, 55, 0.1);
             color: var(--cor-destaque);
+            border-bottom: 3px solid var(--cor-destaque);
         }
 
         nav button:hover { color: var(--cor-texto); }
@@ -149,28 +169,37 @@
             scrollbar-color: var(--cor-borda) var(--cor-fundo);
         }
 
-        /* ── TELAS ──────────────────────────────────────────────────── */
-        .tela { display: none; animation: fadeIn 0.3s ease; }
+        /* ── TELAS (Animações) ──────────────────────────────────────── */
+        .tela { display: none; animation: subirTela 0.4s ease-out; }
         .tela.ativa { display: block; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
+        @keyframes subirTela {
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ── CARDS ──────────────────────────────────────────────────── */
+        /* ── CARDS (Visual Cockpit) ─────────────────────────────────── */
         .card {
             background-color: var(--cor-fundo-card);
             border-radius: 8px;
             padding: 16px;
             margin-bottom: 16px;
+            border: 1px solid var(--cor-borda);
             border-left: 4px solid var(--cor-destaque);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05); /* Sombra mais suave */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--cor-destaque);
         }
 
         .card h2 {
-            font-size: 14px;
-            color: var(--cor-primaria); /* Título do card no verde escuro */
+            font-family: var(--fonte-titulo);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--cor-destaque);
             margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -179,9 +208,10 @@
         .card p {
             font-size: 13px;
             color: var(--cor-texto-secundario);
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
+        /* ── PLACEHOLDER DE TELAS VAZIAS ────────────────────────────── */
         .placeholder-tela {
             text-align: center;
             padding: 40px 20px;
@@ -193,23 +223,27 @@
         }
 
         .placeholder-tela h3 {
-            font-size: 16px;
-            margin-bottom: 8px;
+            font-family: var(--fonte-titulo);
+            font-size: 20px;
             color: var(--cor-texto);
+            margin-bottom: 8px;
         }
 
-        /* ── FOOTER ─────────────────────────────────────────────────── */
+        /* ── FOOTER (F1) ────────────────────────────────────────────── */
         footer {
             background-color: var(--cor-primaria);
             padding: 8px;
             text-align: center;
-            font-size: 10px;
-            color: var(--cor-texto-secundario);
+            font-family: var(--fonte-titulo);
+            font-weight: 500;
+            font-size: 11px;
+            color: var(--cor-destaque);
             border-top: 1px solid var(--cor-borda);
             flex-shrink: 0;
+            letter-spacing: 1px;
         }
 
-        /* ── ANIMAÇÕES DE VELOCIDADE (F1) ───────────────────────────── */
+        /* ── ELEMENTOS DE VELOCIDADE ────────────────────────────────── */
         @keyframes velocidade {
             0% { transform: translateX(-100%); opacity: 0; }
             50% { opacity: 1; }
@@ -227,7 +261,7 @@
             pointer-events: none;
         }
 
-        /* ── ESTILO DE IMPRESSÃO (PDF) ──────────────────────────────── */
+        /* ── ESTILO DE IMPRESSÃO (PDF do Relatório) ─────────────────── */
         @media print {
             body {
                 background: white !important;
@@ -247,33 +281,22 @@
                 border: 1px solid #ccc !important;
                 box-shadow: none !important;
                 page-break-inside: avoid;
+                background: white !important;
             }
             .card h2, .card p, .card strong {
                 color: black !important;
             }
         }
 
-        /* ── LOGO OFICIAL ──────────────────────────────────────────── */
-        .logo-oficial {
-            width: 48px;
-            height: 48px;
-            object-fit: contain;
-            border-radius: 50%;
-            background: white;
-            padding: 2px;
-            border: 2px solid var(--cor-destaque);
-        }
-
-        /* ── RESPONSIVIDADE ────────────────────────────────────────── */
+        /* ── RESPONSIVIDADE (Notebook) ─────────────────────────────── */
         @media (min-width: 768px) {
-            nav button { font-size: 13px; padding: 10px 18px; }
-            .titulo-header h1 { font-size: 22px; }
+            nav button { font-size: 15px; padding: 10px 20px; }
+            .titulo-header h1 { font-size: 26px; }
             .titulo-header span { font-size: 10px; }
             main { padding: 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
+            .card { padding: 24px; }
         }
     </style>
-</head>
-<body>
 
     <!-- ── HEADER ────────────────────────────────────────────────── -->
     <header>
