@@ -130,8 +130,11 @@
 
   const Estado = {
     config: {
-      janelaSuspeitaMin: 30,
+      janelaSuspeitaMin: 15,
       limiteFotosLojaDia: 6,
+      maxVisitasDia: 7,
+      intervaloAntesDepoisMin: 5,
+      exigirAntesDepois: true,
       mesAtivo: mesAtualLocal() // Formato AAAA-MM
     },
     meses: {}
@@ -304,8 +307,13 @@
       </div>
       <div class="card">
         <h2>Regras de Auditoria</h2>
-        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Janela de Suspeita (minutos):</label>
+        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Mesmo horário em lojas diferentes (minutos):</label>
         <input type="number" id="config-suspeita" value="${Estado.config.janelaSuspeitaMin}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
+        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Intervalo mínimo entre foto ANTES e DEPOIS (minutos):</label>
+        <input type="number" id="config-intervalo-ad" value="${Estado.config.intervaloAntesDepoisMin != null ? Estado.config.intervaloAntesDepoisMin : 5}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
+        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto); display:block; margin-bottom:15px;"><input type="checkbox" id="config-exigir-ad" ${Estado.config.exigirAntesDepois !== false ? 'checked' : ''}> Exigir foto ANTES e DEPOIS na mesma visita<br><span style="font-weight:normal;color:var(--cor-texto-secundario);">Desmarque se o Book ainda estiver incompleto (a outra foto pode estar numa parte do PDF não importada).</span></label>
+        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Máximo de visitas por promotor no mesmo dia (acima disso, alerta):</label>
+        <input type="number" id="config-max-dia" value="${Estado.config.maxVisitasDia || 7}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
         <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Limite de Fotos por Loja/Dia:</label>
         <input type="number" id="config-limite" value="${Estado.config.limiteFotosLojaDia}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
         <button id="btn-salvar-config" style="width: 100%; padding: 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Salvar Regras</button>
@@ -357,10 +365,14 @@
     });
 
     document.getElementById('btn-salvar-config').addEventListener('click', () => {
-      Estado.config.janelaSuspeitaMin = parseInt(document.getElementById('config-suspeita').value) || 30;
+      Estado.config.janelaSuspeitaMin = parseInt(document.getElementById('config-suspeita').value) || 15;
+      const ad = parseInt(document.getElementById('config-intervalo-ad').value); Estado.config.intervaloAntesDepoisMin = isNaN(ad) ? 5 : ad;
+      Estado.config.maxVisitasDia = parseInt(document.getElementById('config-max-dia').value) || 7;
+      Estado.config.exigirAntesDepois = document.getElementById('config-exigir-ad').checked;
       Estado.config.limiteFotosLojaDia = parseInt(document.getElementById('config-limite').value) || 6;
       salvarEstado();
-      document.getElementById('msg-config').textContent = '✅ Regras salvas!';
+      executarAuditoriaSilencioso(); // aplica as regras novas ao mês ativo
+      document.getElementById('msg-config').textContent = '✅ Regras salvas e auditoria recalculada!';
       setTimeout(() => document.getElementById('msg-config').textContent = '', 3000);
     });
 
@@ -1047,7 +1059,11 @@
   }
   
   function calcularAuditoria(mesDados, config) {
-    const janela = (config && config.janelaSuspeitaMin) || 30;
+    const janela = (config && config.janelaSuspeitaMin) || 15;
+    const intervaloAD = (config && config.intervaloAntesDepoisMin != null) ? config.intervaloAntesDepoisMin : 5;
+    const maxVisitasDia = (config && config.maxVisitasDia) || 7;
+    const exigirAD = !config || config.exigirAntesDepois !== false;
+    const decisoesVisita = mesDados.decisoesVisita || {};
     // Período auditado do mês (opcional). Ex.: outubro/2026 só vale de 18 a 24/10, porque o sistema começou a ser usado no meio do mês.
     const periodo = mesDados.periodoAuditado && mesDados.periodoAuditado.inicio && mesDados.periodoAuditado.fim ? mesDados.periodoAuditado : null;
     const noPeriodo = d => !periodo || (d >= periodo.inicio && d <= periodo.fim);
@@ -1081,7 +1097,7 @@
     // 1. Reset (preserva decisões manuais da tela de Revisão)
     fotos.forEach(f => {
       if (f.revisaoManual) return;
-      f.status = 'pendente'; f.motivoGap = null; f.lojaAuditada = null; f.redeAuditada = null; f.candidatas = null;
+      f.status = 'pendente'; f.motivoGap = null; f.lojaAuditada = null; f.redeAuditada = null; f.candidatas = null; f.conflitos = null;
     });
   
     // 2. Duplicatas por hash
@@ -1145,8 +1161,11 @@
         if (a.lojaAuditada === b.lojaAuditada && a.redeAuditada === b.redeAuditada) continue;
         const dif = (new Date(b.dataHora) - new Date(a.dataHora)) / 60000;
         if (dif >= 0 && dif < janela) {
-          const msg = `Tempo curto (${Math.round(dif)} min) para trocar de loja.`;
+          const msg = `Promotor em lojas diferentes no mesmo horário (${Math.round(dif)} min de diferença; limite ${janela} min).`;
           a.status = 'suspeita'; a.motivoGap = msg; b.status = 'suspeita'; b.motivoGap = msg;
+          const ref = (o, antes) => ({ id: o.id, pagina: o.pagina, arquivo: o.arquivoOrigem, dataHora: o.dataHora, rede: o.redeAuditada, loja: o.lojaAuditada, min: Math.round(dif), antes });
+          (a.conflitos = a.conflitos || []).push(ref(b, false)); // b veio depois de a
+          (b.conflitos = b.conflitos || []).push(ref(a, true));  // a veio antes de b
         }
       }
     });
@@ -1158,8 +1177,9 @@
       const k = pk(f) + '_' + diaDe(f) + '_' + f.redeAuditada + '_' + chaveCompacta(f.lojaAuditada);
       if (!visitas[k]) {
         visitas[k] = { promotor: f.promotorNome || f.promotor, data: diaDe(f), loja: f.lojaAuditada,
-                       rede: f.redeAuditada || 'DESCONHECIDA', fotos: [], qtdFotos: 0, statusFinal: 'pendente' };
+                       rede: f.redeAuditada || 'DESCONHECIDA', fotos: [], qtdFotos: 0, statusFinal: 'pendente', chave: k, _fo: [] };
       }
+      visitas[k]._fo.push(f);
       visitas[k].fotos.push(f.id);
       visitas[k].qtdFotos++;
       visitas[k]._st = (visitas[k]._st || []).concat(f.status);
@@ -1171,6 +1191,33 @@
       else if (v._st.includes('revisao')) v.statusFinal = 'revisao';
       else v.statusFinal = 'nao_comprovada';
       delete v._st;
+
+      // Regras de antes/depois (só vale com foto de tipo identificado no rodapé)
+      const hh = d => (d || '').split('T')[1] || '?';
+      const comTipo = v._fo.filter(f => f.tipoFoto && f.dataHora && f.status !== 'duplicata');
+      const antes = comTipo.filter(f => f.tipoFoto === 'antes').map(f => f.dataHora).sort();
+      const depois = comTipo.filter(f => f.tipoFoto === 'depois').map(f => f.dataHora).sort();
+      const alertas = [];
+      if (exigirAD && antes.length && !depois.length) alertas.push({ tipo: 'sem_depois', texto: `Só existe foto ANTES da reposição (${hh(antes[0])}). Falta a foto DEPOIS.` });
+      if (exigirAD && depois.length && !antes.length) alertas.push({ tipo: 'sem_antes', texto: `Só existe foto DEPOIS da reposição (${hh(depois[0])}). Não existe DEPOIS sem ANTES.` });
+      if (antes.length && depois.length) {
+        const gap = (new Date(depois[0]) - new Date(antes[0])) / 60000;
+        if (gap < 0) alertas.push({ tipo: 'ordem', texto: `A foto DEPOIS (${hh(depois[0])}) é anterior à foto ANTES (${hh(antes[0])}).` });
+        else if (gap < intervaloAD) alertas.push({ tipo: 'intervalo', texto: `Só ${Math.round(gap)} min entre a foto ANTES (${hh(antes[0])}) e a foto DEPOIS (${hh(depois[0])}); mínimo esperado: ${intervaloAD} min.` });
+      }
+      v.alertas = alertas;
+      v.alertasFoto = [];
+      v._fo.forEach(f => {
+        if (f.status === 'suspeita' && f.conflitos) f.conflitos.forEach(c => v.alertasFoto.push(
+          `${hh(f.dataHora)}: ${f.redeAuditada} › ${f.lojaAuditada} (pág. ${f.pagina}) e, ${c.min} min ${c.antes ? 'depois de' : 'antes de'} isso, ${hh(c.dataHora)}: ${c.rede} › ${c.loja} (pág. ${c.pagina}). Mesmo promotor, mesmo horário, lojas diferentes.`));
+      });
+      v.provas = v._fo.slice().sort((a, b) => (a.dataHora || '').localeCompare(b.dataHora || '')).map(f => ({
+        id: f.id, pagina: f.pagina, arquivo: f.arquivoOrigem, tipo: f.tipoFoto || null, dataHora: f.dataHora, status: f.status, temImagem: !!f.temImagem }));
+      if (alertas.length) {
+        if (decisoesVisita[v.chave] === 'aceita') v.aceita = true;
+        else if (v.statusFinal === 'comprovada') { v.statusFinal = 'suspeita'; v.motivoSuspeita = alertas.map(a => a.texto).join(' '); }
+      }
+      delete v._fo;
     });
   
     // 6. Visitas do Relatório de Tempo, dentro do período coberto pelos PDFs, que ficaram sem nenhuma foto
@@ -1187,6 +1234,23 @@
       semFoto[k] = { promotor: v.promotor, data: v.data, loja: v.loja, rede: v.rede, fotos: [], qtdFotos: 0, statusFinal: 'sem_foto' };
     });
   
+    // 6b. Volume por promotor/dia: visitas declaradas no Relatório de Tempo acima do limite
+    const porPD = {}, vistoV = new Set();
+    relatorio.forEach(v => {
+      const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja);
+      if (vistoV.has(k)) return; vistoV.add(k);
+      const pd = chaveCompacta(v.promotor) + '|' + v.data;
+      (porPD[pd] = porPD[pd] || { promotor: v.promotor, data: v.data, lojas: [] }).lojas.push({ k, rede: v.rede, loja: v.loja });
+    });
+    const volumeAlertas = Object.values(porPD).filter(x => x.lojas.length > maxVisitasDia).map(x => ({
+      promotor: x.promotor, data: x.data, n: x.lojas.length,
+      lojas: x.lojas.map(l => {
+        const vv = visitas[l.k] || semFoto[l.k];
+        const horas = vv && vv.provas ? vv.provas.map(pf => (pf.dataHora || '').split('T')[1]).filter(Boolean) : [];
+        return { rede: l.rede, loja: l.loja, status: vv ? vv.statusFinal : 'sem_foto', qtdFotos: vv ? (vv.qtdFotos || 0) : 0, primeiraHora: horas[0] || null };
+      })
+    })).sort((a, b) => b.n - a.n || a.data.localeCompare(b.data));
+
     // 7. Financeiro por rede (várias linhas do fechamento da mesma rede são somadas)
     const porRede = {};
     fechamento.forEach(f => {
@@ -1252,7 +1316,8 @@
         visitasPendentes: todas.filter(v => v.statusFinal === 'suspeita' || v.statusFinal === 'revisao').length,
         fotosPendentes: fotos.filter(f => f.status === 'suspeita' || f.status === 'revisao').length
       },
-      versaoCalculo: 2,
+      versaoCalculo: 3,
+      volumeAlertas, maxVisitasDia,
       dataProcessamento: new Date().toISOString()
     };
   }
@@ -1657,6 +1722,7 @@
         tr.addEventListener('click', () => abrirDrillRede(tr.dataset.rede));
       });
       montarListaNaoComprovadas(container, aud);
+      montarListaVolume(container, aud);
 
       document.getElementById('btn-exportar-csv').addEventListener('click', () => {
         let csv = "Rede;Planejadas;Declaradas;Comprovadas;Gap;Efetividade;Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
@@ -1782,7 +1848,50 @@
       if (prox && prox.classList.contains('evid')) { prox.remove(); return; }
       const v = visitas[+tr.dataset.vi];
       tr.insertAdjacentHTML('afterend', `<tr class="evid"><td colspan="4" style="padding:0;">${htmlEvidenciaVisita(v, aud, mesDados, visitas)}</td></tr>`);
+      ligarEvidencia(tr.nextElementSibling, v, aud, mesDados);
     }));
+  }
+
+  function ligarEvidencia(trEv, v, aud, mesDados) {
+    if (!trEv) return;
+    configurarBotoesOriginal(trEv);
+    (v.provas || []).forEach(async pf => {
+      const el = trEv.querySelector('#img-p-' + pf.id); if (!el) return;
+      const src = await BancoImagens.ler(pf.id); if (!src) { el.remove(); return; }
+      const fo = (mesDados.fotos || []).find(f => f.id === pf.id);
+      el.src = await girarDataURL(src, rotacaoDaFoto(fo));
+    });
+    const bc = trEv.querySelector('.btn-copiar-ev');
+    if (bc) bc.addEventListener('click', async () => {
+      const txt = trEv.querySelector('.ev-painel').innerText.replace(/\n{3,}/g, '\n\n') + '\n\n(Gerado pelo CockPit Tarks)';
+      try { await navigator.clipboard.writeText(txt); }
+      catch (e) { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e2) {} ta.remove(); }
+      bc.textContent = '✅ Copiado!'; setTimeout(() => { bc.textContent = '📋 Copiar resumo para a agência'; }, 2000);
+    });
+    const ba = trEv.querySelector('.btn-aceitar');
+    if (ba) ba.addEventListener('click', () => {
+      mesDados.decisoesVisita = mesDados.decisoesVisita || {};
+      if (ba.dataset.acao === 'aceitar') mesDados.decisoesVisita[v.chave] = 'aceita'; else delete mesDados.decisoesVisita[v.chave];
+      salvarEstado(); executarAuditoriaSilencioso(); renderizarAuditoria();
+    });
+  }
+
+  // Alertas de volume: promotor com mais visitas declaradas no dia do que o limite
+  function montarListaVolume(container, aud) {
+    const lista = aud.volumeAlertas || [];
+    if (!lista.length) return;
+    const nome = r => (aud.porRede[r] ? aud.porRede[r].rede : r);
+    const itens = lista.slice(0, 60).map(x => {
+      const comp = x.lojas.filter(l => l.status === 'comprovada').length;
+      return `<details style="border-bottom:1px solid #EEE;padding:8px 0;">
+        <summary style="cursor:pointer;font-size:12px;"><strong>${esc(x.promotor)}</strong> · ${esc(formatarDataBR(x.data))} · <strong>${x.n}</strong> visitas declaradas · ${comp} comprovada(s)</summary>
+        <ul style="padding-left:18px;margin:6px 0;font-size:12px;">${x.lojas.map(l => `<li>${esc(nome(l.rede))} › ${esc(l.loja)} — ${esc(ROTULO_STATUS[l.status] || l.status)}${l.primeiraHora ? ' · foto às ' + esc(l.primeiraHora) : ''}</li>`).join('')}</ul>
+      </details>`;
+    }).join('');
+    container.insertAdjacentHTML('beforeend', `<div class="card">
+      <h2>📈 Volume alto por promotor/dia (${lista.length})</h2>
+      <p style="font-size:12px;margin-bottom:10px;">Promotores com <strong>mais de ${aud.maxVisitasDia || 7}</strong> visitas declaradas no mesmo dia (limite ajustável na aba Config). É um alerta: confira se o deslocamento e o horário cabem.</p>
+      ${itens}${lista.length > 60 ? `<p style="font-size:11px;margin-top:8px;">Mostrando 60 de ${lista.length}.</p>` : ''}</div>`);
   }
 
   // Painel de evidência: o que o sistema procurou para esta visita (funciona também no modo leitura)
@@ -1807,8 +1916,8 @@
       mesmoDia = `No mesmo dia, ${esc(v.promotor)} tem ${outras.length} outra(s) visita(s) declarada(s): ` +
         outras.map(o => `${esc((aud.porRede[o.rede] ? aud.porRede[o.rede].rede : o.rede) + ' › ' + o.loja)} (${o.qtdFotos || 0} foto(s))`).join('; ') + '.';
     } else mesmoDia = `No mesmo dia, ${esc(v.promotor)} não tem outra visita declarada.`;
-    if (fotosDoDia.length) mesmoDia += ` O Book tem <strong>${fotosDoDia.length}</strong> foto(s) dele nesse dia.`;
-    else mesmoDia += ' O Book não tem nenhuma foto dele nesse dia.';
+    if (fotosDoDia.length) mesmoDia += ` O Book tem <strong>${fotosDoDia.length}</strong> foto(s) desse promotor nesse dia.`;
+    else mesmoDia += ' O Book não tem nenhuma foto desse promotor nesse dia.';
 
     // 3) fotos soltas que poderiam ser desta visita
     const poss = soltas.length
@@ -1825,14 +1934,38 @@
     const per = (aud.periodos || []).map(p => `${formatarDataBR(p.inicio)} a ${formatarDataBR(p.fim)}`).join(' | ') || 'não identificado';
     const cobertura = `Cobertura do Book importado: ${esc(per)}. Em ${esc(formatarDataBR(v.data))} o Book tem <strong>${doDia.length}</strong> foto(s) de <strong>${proms.size}</strong> promotor(es) no total.`;
 
-    const conclusao = (v.statusFinal === 'sem_foto' || v.statusFinal === 'nao_comprovada')
+    const conclusao = (v.statusFinal === 'suspeita' && (v.alertas || []).length)
+      ? 'Conclusão: há foto da visita, mas os motivos de suspeita acima exigem sua decisão. Se o Book foi importado só em parte, a foto que falta pode estar em outro PDF.'
+      : (v.statusFinal === 'sem_foto' || v.statusFinal === 'nao_comprovada')
       ? (soltas.length ? 'Conclusão: ainda há fotos soltas do promotor neste dia; revise antes de cobrar o desconto.'
         : (doDia.length ? 'Conclusão: o Book cobre este dia e não há foto desta visita.' : 'Atenção: o Book não tem nenhuma foto neste dia. Pode faltar parte do PDF; confirme antes de contestar.'))
       : 'Conclusão: esta visita tem foto vinculada.';
-    return `<div style="margin:6px 0 10px;padding:12px 14px;background:#F8F9FA;border-left:4px solid var(--cor-destaque);font-size:12px;line-height:1.5;">
-      <p style="font-weight:bold;margin-bottom:6px;">🧾 Evidência desta visita</p>
+    // Alertas desta visita (antes/depois e mesmo horário) + fotos com arquivo/página
+    const alertas = (v.alertas || []).map(a => li('⚠️ ' + esc(a.texto))).join('') + (v.alertasFoto || []).map(t => li('⚠️ ' + esc(t))).join('');
+    const hh = d => (d || '').split('T')[1] || '?';
+    const local = Modo === 'local';
+    const provas = (v.provas || []).map(pf => `<tr style="border-top:1px solid #E5E5E5;">
+        <td style="padding:6px;">${local && pf.temImagem ? `<img id="img-p-${pf.id}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:4px;background:#000;">` : ''}</td>
+        <td style="padding:6px;"><strong>${pf.tipo === 'antes' ? 'ANTES' : pf.tipo === 'depois' ? 'DEPOIS' : '?'}</strong><br>${esc(hh(pf.dataHora))}</td>
+        <td style="padding:6px;word-break:break-all;">📄 ${esc(pf.arquivo || '?')}<br>página <strong>${pf.pagina}</strong></td>
+        <td style="padding:6px;">${local ? `<button type="button" class="btn-original" data-foto="${pf.id}" style="padding:6px 8px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:11px;">🔍 Original</button>` : ''}</td></tr>`).join('');
+    const tabelaProvas = provas ? `<p style="font-weight:bold;margin:8px 0 4px;">Fotos desta visita no Book</p>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;">${provas}</table>` : '';
+    const temAlertaVisita = (v.alertas || []).length > 0;
+    const botoes = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      <button type="button" class="btn-copiar-ev" style="padding:8px 12px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:12px;">📋 Copiar resumo para a agência</button>
+      ${local && temAlertaVisita ? (v.aceita
+        ? `<button type="button" class="btn-aceitar" data-acao="desfazer" style="padding:8px 12px;border:1px solid #999;background:transparent;border-radius:4px;cursor:pointer;font-size:12px;">↩ Desfazer aceite</button>`
+        : `<button type="button" class="btn-aceitar" data-acao="aceitar" style="padding:8px 12px;border:none;background:#27AE60;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;">✅ Aceitar esta visita mesmo assim</button>`) : ''}</div>`;
+    const aviso = v.aceita ? '<p style="color:#27AE60;font-weight:bold;margin-bottom:6px;">✅ Visita aceita manualmente apesar dos alertas abaixo.</p>' : '';
+    return `<div class="ev-painel" style="margin:6px 0 10px;padding:12px 14px;background:#F8F9FA;border-left:4px solid var(--cor-destaque);font-size:12px;line-height:1.5;">
+      <p style="font-weight:bold;margin-bottom:6px;">🧾 Evidência — ${esc(nomeRede)} › ${esc(v.loja)} · ${esc(formatarDataBR(v.data))} · ${esc(v.promotor)}</p>
+      ${aviso}
+      ${alertas ? `<p style="font-weight:bold;margin-bottom:2px;">Motivos de suspeita</p><ul style="padding-left:18px;margin:0 0 8px;">${alertas}</ul>` : ''}
       <ul style="padding-left:18px;margin:0 0 8px;">${li(declarado)}${li(mesmoDia)}${li(poss)}${outrosDias ? li(outrosDias) : ''}${li(cobertura)}</ul>
-      <p style="font-weight:bold;">${esc(conclusao)}</p></div>`;
+      ${tabelaProvas}
+      <p style="font-weight:bold;margin-top:8px;">${esc(conclusao)}</p>
+      ${botoes}</div>`;
   }
 
   let filtroNaoComp = 'todas';
@@ -1922,7 +2055,7 @@
           <div style="width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; display: flex; justify-content: center; align-items: center;">
             <img id="img-${foto.id}" alt="Carregando imagem..." style="max-width: 100%; max-height: 100%; object-fit: contain; color: #999; font-size: 12px;">
           </div>
-          ${htmlBotoesFoto(foto.id)}
+          ${htmlBotoesFoto(foto)}
         </div>`;
       });
     }
@@ -1958,18 +2091,19 @@
           <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <div>
               <p style="font-weight: bold; font-size: 14px; color: var(--cor-primaria);">${esc(foto.promotor || 'Promotor Desconhecido')}</p>
-              <p style="font-size: 12px; color: var(--cor-texto-secundario);">${esc(dataStr)} | Pág. ${foto.pagina}</p>
+              <p style="font-size: 12px; color: var(--cor-texto-secundario);">${esc(dataStr)} | ${esc(foto.arquivoOrigem || '')} · pág. ${foto.pagina}</p>
             </div>
             <span style="font-size: 10px; background: ${tagCor}; color: white; padding: 3px 6px; border-radius: 4px; height: fit-content;">${tagTexto}</span>
           </div>
 
           <p style="font-size: 12px; color: var(--cor-perigo); margin-bottom: 10px;"><strong>Motivo:</strong> ${esc(foto.motivoGap || 'Múltiplas lojas no dia')}</p>
+          ${htmlConflitosFoto(foto, mesDados)}
 
           <div style="width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; display: flex; justify-content: center; align-items: center;">
             <img id="img-${foto.id}" alt="Carregando imagem..." style="max-width: 100%; max-height: 100%; object-fit: contain; color: #999; font-size: 12px;">
           </div>
 
-          ${htmlBotoesFoto(foto.id)}
+          ${htmlBotoesFoto(foto)}
           <p style="font-size: 12px; margin-bottom: 10px;">Selo na foto: <em>${esc(limparSelo(foto.redeTexto) || '?')} / ${esc(limparSelo(foto.lojaTexto) || 'não extraído')}</em></p>
           ${blocoLoja}
           <div style="display: flex; gap: 10px;">
@@ -1985,6 +2119,7 @@
     configurarControlesRotacao(container);
 
     // As imagens ficam no IndexedDB: carrega depois de desenhar a tela
+    carregarMiniaturasConflito(visiveis);
     visiveis.concat(visSL).forEach(foto => {
       carregarFotoOrientada(foto);
     });
@@ -2333,7 +2468,8 @@
       periodoAuditado: m.periodoAuditado || null,
       auditoria: Object.assign({}, a, {
         visitasAgrupadas: (a.visitasAgrupadas || []).map(v => ({
-          promotor: v.promotor, data: v.data, loja: v.loja, rede: v.rede, qtdFotos: v.qtdFotos || 0, statusFinal: v.statusFinal
+          promotor: v.promotor, data: v.data, loja: v.loja, rede: v.rede, qtdFotos: v.qtdFotos || 0, statusFinal: v.statusFinal,
+          chave: v.chave, alertas: v.alertas, alertasFoto: v.alertasFoto, provas: v.provas, aceita: v.aceita, motivoSuspeita: v.motivoSuspeita
         }))
       }),
       fotos: (m.fotos || []).map(f => ({ id: f.id, pagina: f.pagina, status: f.status })) // só o status: serve para as contagens do Relatório
@@ -2437,7 +2573,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 2) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 3) executarAuditoriaSilencioso();
   }
 
 
@@ -2505,6 +2641,10 @@
   }
   function mesLiberadoParaImportar(m) { return !!m && (temDadosNoMes(m) || m.mesConfirmado === true); }
   function escolherMesInicial() {
+    if (Estado.config.janelaSuspeitaMin === 30) Estado.config.janelaSuspeitaMin = 15; // antigo padrão de "tempo para trocar de loja"
+    if (!Estado.config.maxVisitasDia) Estado.config.maxVisitasDia = 7;
+    if (Estado.config.exigirAntesDepois == null) Estado.config.exigirAntesDepois = true;
+    if (Estado.config.intervaloAntesDepoisMin == null) Estado.config.intervaloAntesDepoisMin = 5;
     const ativo = Estado.config.mesAtivo, ms = Estado.meses || {};
     if (!(ativo in ms) || (!temDadosNoMes(ms[ativo]) && !ms[ativo].mesConfirmado)) {
       const comDados = Object.keys(ms).filter(k => temDadosNoMes(ms[k])).sort();
@@ -2572,7 +2712,7 @@
     const old = document.getElementById('modal-original'); if (old) old.remove();
     const d = document.createElement('div'); d.id = 'modal-original';
     d.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;flex-direction:column;';
-    d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:#fff;font-size:13px;"><span>Pág. ${foto.pagina} · ${r.w}×${r.h}px (toque na imagem para ampliar/reduzir)</span><button type="button" id="fechar-original" style="padding:8px 14px;border:none;border-radius:4px;font-weight:bold;cursor:pointer;">Fechar</button></div><div id="area-original" style="flex:1;overflow:auto;text-align:center;"><img src="${r.url}" id="img-original" style="max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in;"></div>`;
+    d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:#fff;font-size:13px;"><span>📄 ${esc(foto.arquivoOrigem || '?')} · página ${foto.pagina} · ${r.w}×${r.h}px (toque na imagem para ampliar/reduzir)</span><button type="button" id="fechar-original" style="padding:8px 14px;border:none;border-radius:4px;font-weight:bold;cursor:pointer;">Fechar</button></div><div id="area-original" style="flex:1;overflow:auto;text-align:center;"><img src="${r.url}" id="img-original" style="max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in;"></div>`;
     document.body.appendChild(d);
     d.querySelector('#fechar-original').onclick = () => d.remove();
     const im = d.querySelector('#img-original'); let zoom = false;
@@ -2628,13 +2768,15 @@
     if (!src) { el.alt = 'Imagem indisponível'; return; }
     el.src = await girarDataURL(src, rotacaoDaFoto(foto));
   }
-  function htmlBotoesFoto(id) {
+  function htmlBotoesFoto(foto) {
+    const id = foto.id;
     const b = 'padding:8px 12px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:14px;';
     return `<div style="display:flex;gap:6px;margin-bottom:10px;">
       <button type="button" class="btn-original" data-foto="${id}" style="${b}flex:1;">🔍 Ver original</button>
       <button type="button" class="btn-rot" data-foto="${id}" data-dir="-1" title="Girar para a esquerda" style="${b}">↺</button>
       <button type="button" class="btn-rot" data-foto="${id}" data-dir="1" title="Girar para a direita" style="${b}">↻</button>
-    </div>`;
+    </div>
+    <p style="font-size:11px;margin:-4px 0 10px;color:var(--cor-texto-secundario);">📄 Arquivo: <strong>${esc(foto.arquivoOrigem || '?')}</strong> · página <strong>${foto.pagina}</strong> (no leitor de PDF, vá para a página ${foto.pagina})</p>`;
   }
   function htmlSeletorRotacao() {
     const v = Estado.config.rotacaoPadrao != null ? Estado.config.rotacaoPadrao : 90;
@@ -2684,6 +2826,33 @@
       auditoriaDrillState = { rede: null, loja: null };
       const ativoBtn = document.querySelector('nav button.ativo') || document.querySelector('nav button[data-tela="dashboard"]');
       ativoBtn.click();
+    }));
+  }
+
+
+  // Suspeita de tempo curto: mostra ONDE o mesmo promotor estava antes/depois (rede, loja, hora, página, miniatura)
+  function htmlConflitosFoto(foto, mesDados) {
+    const lista = (foto.conflitos || []).slice().sort((a, b) => a.dataHora.localeCompare(b.dataHora));
+    if (!lista.length) return '';
+    const porRede = (mesDados.auditoria && mesDados.auditoria.porRede) || {};
+    const hora = d => (d || '').split('T')[1] || '?';
+    const itens = lista.slice(0, 4).map(c => {
+      const rede = porRede[c.rede] ? porRede[c.rede].rede : (c.rede || '?');
+      const tem = !!(mesDados.fotos || []).find(f => f.id === c.id && f.temImagem);
+      return `<div style="display:flex;gap:10px;align-items:center;margin-top:6px;">
+        ${tem ? `<img id="img-c-${c.id}-${foto.id}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:4px;background:#000;flex-shrink:0;">` : ''}
+        <span>${c.antes ? '⬅️ <strong>Antes</strong>' : '➡️ <strong>Depois</strong>'}: às <strong>${esc(hora(c.dataHora))}</strong> (${c.min} min ${c.antes ? 'antes' : 'depois'}) o mesmo promotor fotografou em <strong>${esc(rede)} › ${esc(c.loja || '?')}</strong> <span style="color:var(--cor-texto-secundario);">(${esc(c.arquivo || '')} · pág. ${c.pagina})</span></span>
+      </div>`;
+    }).join('');
+    return `<div style="font-size:12px;margin-bottom:10px;padding:10px;background:#FFF8E1;border-left:4px solid #F39C12;border-radius:4px;">
+      <strong>Por que é suspeita:</strong> esta foto é de <strong>${esc(porRede[foto.redeAuditada] ? porRede[foto.redeAuditada].rede : (foto.redeAuditada || '?'))} › ${esc(foto.lojaAuditada || '?')}</strong> às <strong>${esc(hora(foto.dataHora))}</strong>.${itens}</div>`;
+  }
+  function carregarMiniaturasConflito(fotos) {
+    fotos.forEach(foto => (foto.conflitos || []).slice(0, 4).forEach(async c => {
+      const el = document.getElementById(`img-c-${c.id}-${foto.id}`); if (!el) return;
+      const src = await BancoImagens.ler(c.id); if (!src) { el.remove(); return; }
+      const outra = ((Estado.meses[Estado.config.mesAtivo] || {}).fotos || []).find(f => f.id === c.id);
+      el.src = await girarDataURL(src, rotacaoDaFoto(outra));
     }));
   }
 
