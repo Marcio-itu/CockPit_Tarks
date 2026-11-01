@@ -32,6 +32,11 @@
   nav { background-color: #F8F9FA; display: flex; overflow-x: auto; border-bottom: 1px solid #CCC; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); -webkit-overflow-scrolling: touch; }
   nav::-webkit-scrollbar { display: none; }
   input[type=file]:disabled{opacity:.45;cursor:not-allowed}
+  #barra-mes{flex-shrink:0;align-items:baseline;justify-content:center;gap:18px;flex-wrap:wrap;padding:10px 16px;background:var(--cor-primaria);border-bottom:3px solid var(--cor-destaque);}
+  #barra-mes button{background:transparent;border:none;cursor:pointer;font-family:inherit;color:#B8C0CC;font-size:15px;padding:4px 2px;}
+  #barra-mes button:disabled{opacity:.35;cursor:not-allowed;text-decoration:line-through;}
+  #barra-mes button.mes-atual{color:var(--cor-destaque);font-size:26px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:default;}
+  #barra-mes .ano{font-size:12px;color:#B8C0CC;font-weight:normal;letter-spacing:0;margin-left:4px;}
   nav button { background: transparent; border: none; color: var(--cor-texto-secundario); font-family: var(--fonte-titulo); font-size: 11px; font-weight: 700; padding: 14px 16px; cursor: pointer; white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; border-bottom: 3px solid transparent; transition: all 0.2s ease; }
   nav button.ativo { color: var(--cor-primaria); border-bottom: 3px solid var(--cor-destaque); background-color: rgba(10,61,46,0.05); }
 
@@ -87,6 +92,7 @@
   <button data-tela="config">Config</button>
 </nav>
 
+<div id="barra-mes" style="display:none;"></div>
 <div id="barra-fonte" style="display: none; flex-shrink: 0; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 16px; background: #FFF8E1; border-bottom: 1px solid #F0D98C; font-family: var(--fonte-dados); font-size: 13px; color: var(--cor-texto);"></div>
 
 <main>
@@ -223,6 +229,7 @@
     if (Modo === 'publicado') return; // modo leitura nunca sobrescreve os dados locais
     try {
       localStorage.setItem('cockpit_estado', JSON.stringify(Estado));
+      if (typeof atualizarBarraMes === 'function') atualizarBarraMes();
     } catch (e) {
       console.error("Erro ao salvar estado:", e);
       alert("⚠️ Erro ao salvar dados. O armazenamento do navegador pode estar cheio. Exporte um backup e limpe os dados antigos.");
@@ -1699,10 +1706,10 @@
       .filter(v => v.rede === chaveRedeAtual && v.loja === auditoriaDrillState.loja)
       .sort((a, b) => a.data.localeCompare(b.data));
     let linhas = '';
-    visitas.forEach(v => {
+    visitas.forEach((v, vi) => {
       const cor = COR_STATUS[v.statusFinal] || '#E74C3C';
       linhas += `
-        <tr style="border-bottom: 1px solid #EEE;">
+        <tr data-vi="${vi}" style="border-bottom: 1px solid #EEE; cursor: pointer;">
           <td style="padding: 10px; font-size: 12px;">${formatarDataBR(v.data)}</td>
           <td style="padding: 10px; font-size: 12px;">${esc(v.promotor)}</td>
           <td style="padding: 10px; text-align: center; font-size: 11px; color: ${cor}; font-weight: bold; text-transform: uppercase;">${ROTULO_STATUS[v.statusFinal] || esc(v.statusFinal)}</td>
@@ -1715,6 +1722,7 @@
       <div class="card">
         <button id="btn-voltar-lojas" style="padding: 8px 12px; background: transparent; border: 1px solid var(--cor-primaria); color: var(--cor-primaria); border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 15px;">‹ Voltar para lojas</button>
         <h2>Loja: ${esc(auditoriaDrillState.loja)}</h2>
+        <p style="font-size:11px;margin-bottom:10px;color:var(--cor-texto-secundario);">Toque numa visita para ver a evidência.</p>
         <div style="overflow-x: auto;">
           <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
             <thead>
@@ -1731,6 +1739,62 @@
       </div>
     `;
     document.getElementById('btn-voltar-lojas').addEventListener('click', () => { auditoriaDrillState.loja = null; renderizarAuditoria(); });
+    container.querySelectorAll('tr[data-vi]').forEach(tr => tr.addEventListener('click', () => {
+      const prox = tr.nextElementSibling;
+      if (prox && prox.classList.contains('evid')) { prox.remove(); return; }
+      const v = visitas[+tr.dataset.vi];
+      tr.insertAdjacentHTML('afterend', `<tr class="evid"><td colspan="4" style="padding:0;">${htmlEvidenciaVisita(v, aud, mesDados, visitas)}</td></tr>`);
+    }));
+  }
+
+  // Painel de evidência: o que o sistema procurou para esta visita (funciona também no modo leitura)
+  function htmlEvidenciaVisita(v, aud, mesDados, visitasDaLoja) {
+    const nomeRede = aud.porRede[v.rede] ? aud.porRede[v.rede].rede : v.rede;
+    const kProm = chaveCompacta(v.promotor || '');
+    const mesmoProm = f => f.dataHora && (chaveCompacta(f.promotorNome || f.promotor || '') === kProm || f.promotorKey === kProm);
+    const diaDeF = f => (f.dataHora || '').split('T')[0];
+    const todasV = aud.visitasAgrupadas || [];
+    const fotos = (mesDados && mesDados.fotos) || [];
+    const li = t => `<li style="margin-bottom:4px;">${t}</li>`;
+
+    // 1) declarado
+    const declarado = `O Relatório de Tempo registra que <strong>${esc(v.promotor)}</strong> visitou <strong>${esc(nomeRede)} › ${esc(v.loja)}</strong> em <strong>${esc(formatarDataBR(v.data))}</strong>.`;
+
+    // 2) o que o promotor fez no mesmo dia
+    const outras = todasV.filter(o => o !== v && o.data === v.data && chaveCompacta(o.promotor || '') === kProm);
+    const fotosDoDia = fotos.filter(f => mesmoProm(f) && diaDeF(f) === v.data);
+    const soltas = fotosDoDia.filter(f => !f.lojaAuditada || f.status === 'revisao' || f.status === 'suspeita' || f.status === 'sem_par');
+    let mesmoDia;
+    if (outras.length) {
+      mesmoDia = `No mesmo dia, ${esc(v.promotor)} tem ${outras.length} outra(s) visita(s) declarada(s): ` +
+        outras.map(o => `${esc((aud.porRede[o.rede] ? aud.porRede[o.rede].rede : o.rede) + ' › ' + o.loja)} (${o.qtdFotos || 0} foto(s))`).join('; ') + '.';
+    } else mesmoDia = `No mesmo dia, ${esc(v.promotor)} não tem outra visita declarada.`;
+    if (fotosDoDia.length) mesmoDia += ` O Book tem <strong>${fotosDoDia.length}</strong> foto(s) dele nesse dia.`;
+    else mesmoDia += ' O Book não tem nenhuma foto dele nesse dia.';
+
+    // 3) fotos soltas que poderiam ser desta visita
+    const poss = soltas.length
+      ? `<span style="color:#E67E22;font-weight:bold;">Atenção:</span> há ${soltas.length} foto(s) deste promotor neste dia ainda sem loja definida (em revisão/suspeita/sem par). Resolva-as na aba Revisão antes de contestar.`
+      : 'Não há fotos deste promotor neste dia pendentes de revisão que pudessem pertencer a esta loja.';
+
+    // 4) mesma loja em outros dias
+    const dias = (visitasDaLoja || []).filter(o => o !== v).map(o => `${esc(formatarDataBR(o.data))}: ${o.qtdFotos || 0} foto(s)`);
+    const outrosDias = dias.length ? `Mesma loja nos outros dias: ${dias.join(' · ')}.` : '';
+
+    // 5) cobertura do Book no dia
+    const doDia = fotos.filter(f => diaDeF(f) === v.data);
+    const proms = new Set(doDia.map(f => f.promotorKey || chaveCompacta(f.promotor || '')));
+    const per = (aud.periodos || []).map(p => `${formatarDataBR(p.inicio)} a ${formatarDataBR(p.fim)}`).join(' | ') || 'não identificado';
+    const cobertura = `Cobertura do Book importado: ${esc(per)}. Em ${esc(formatarDataBR(v.data))} o Book tem <strong>${doDia.length}</strong> foto(s) de <strong>${proms.size}</strong> promotor(es) no total.`;
+
+    const conclusao = (v.statusFinal === 'sem_foto' || v.statusFinal === 'nao_comprovada')
+      ? (soltas.length ? 'Conclusão: ainda há fotos soltas do promotor neste dia; revise antes de cobrar o desconto.'
+        : (doDia.length ? 'Conclusão: o Book cobre este dia e não há foto desta visita.' : 'Atenção: o Book não tem nenhuma foto neste dia. Pode faltar parte do PDF; confirme antes de contestar.'))
+      : 'Conclusão: esta visita tem foto vinculada.';
+    return `<div style="margin:6px 0 10px;padding:12px 14px;background:#F8F9FA;border-left:4px solid var(--cor-destaque);font-size:12px;line-height:1.5;">
+      <p style="font-weight:bold;margin-bottom:6px;">🧾 Evidência desta visita</p>
+      <ul style="padding-left:18px;margin:0 0 8px;">${li(declarado)}${li(mesmoDia)}${li(poss)}${outrosDias ? li(outrosDias) : ''}${li(cobertura)}</ul>
+      <p style="font-weight:bold;">${esc(conclusao)}</p></div>`;
   }
 
   let filtroNaoComp = 'todas';
@@ -1811,6 +1875,7 @@
     if (fotosSemLegenda.length) {
       html += `<div class="card" style="border-left-color: #8E44AD;">
         <h2>🏷️ Fotos sem legenda (${fotosSemLegenda.length})</h2>
+        ${htmlSeletorRotacao()}
         <p style="font-size: 13px;">Páginas do book com foto, mas sem o rodapé de data/rede/loja/promotor. Não entram como comprovação. ${fotosSemLegenda.length > LIMITE ? `Mostrando as ${LIMITE} primeiras (a lista completa está no CSV de fotos sem legenda, na aba Auditoria).` : ''}</p>
       </div>`;
       visSL.forEach(foto => {
@@ -1819,7 +1884,7 @@
           <div style="width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; display: flex; justify-content: center; align-items: center;">
             <img id="img-${foto.id}" alt="Carregando imagem..." style="max-width: 100%; max-height: 100%; object-fit: contain; color: #999; font-size: 12px;">
           </div>
-          <button type="button" class="btn-original" data-foto="${foto.id}" style="width:100%;padding:8px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;">🔍 Ver original</button>
+          ${htmlBotoesFoto(foto.id)}
         </div>`;
       });
     }
@@ -1827,6 +1892,7 @@
       <div class="card" style="border-left-color: #F39C12;">
         <h2>Fila de Revisão (${fotosRevisao.length})</h2>
         <p style="font-size: 13px; margin-bottom: 5px;">Avalie cada foto e decida. Ao decidir, a auditoria é recalculada automaticamente.</p>
+        ${htmlSeletorRotacao()}
         ${fotosRevisao.length > LIMITE ? `<p style="font-size: 12px; color: var(--cor-texto-secundario);">Mostrando as ${LIMITE} primeiras.</p>` : ''}
       </div>
     `;
@@ -1865,7 +1931,7 @@
             <img id="img-${foto.id}" alt="Carregando imagem..." style="max-width: 100%; max-height: 100%; object-fit: contain; color: #999; font-size: 12px;">
           </div>
 
-          <button type="button" class="btn-original" data-foto="${foto.id}" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;">🔍 Ver original</button>
+          ${htmlBotoesFoto(foto.id)}
           <p style="font-size: 12px; margin-bottom: 10px;">Selo na foto: <em>${esc(limparSelo(foto.redeTexto) || '?')} / ${esc(limparSelo(foto.lojaTexto) || 'não extraído')}</em></p>
           ${blocoLoja}
           <div style="display: flex; gap: 10px;">
@@ -1878,14 +1944,11 @@
 
     container.innerHTML = html;
     configurarBotoesOriginal(container);
+    configurarControlesRotacao(container);
 
     // As imagens ficam no IndexedDB: carrega depois de desenhar a tela
     visiveis.concat(visSL).forEach(foto => {
-      BancoImagens.ler(foto.id).then(src => {
-        const el = document.getElementById('img-' + foto.id);
-        if (!el) return;
-        if (src) el.src = src; else el.alt = 'Imagem indisponível';
-      });
+      carregarFotoOrientada(foto);
     });
   }
 
@@ -2013,6 +2076,7 @@
     escolherMesInicial();
     garantirMes(Estado.config.mesAtivo);
     atualizarAuditoriaSeNecessario();
+    atualizarBarraMes();
 
     document.querySelectorAll('nav button').forEach(botao => {
       botao.addEventListener('click', () => {
@@ -2070,6 +2134,7 @@
       b.style.display = (Modo === 'publicado' && TELAS_DO_OPERADOR.includes(b.dataset.tela)) ? 'none' : '';
     });
     auditoriaDrillState = { rede: null, loja: null };
+    atualizarBarraMes();
     atualizarBarraFonte();
     document.querySelector('nav button[data-tela="dashboard"]').click();
   }
@@ -2482,7 +2547,7 @@
       if (!foto) return;
       const executar = async file => {
         const txt = btn.textContent; btn.disabled = true; btn.textContent = 'Abrindo original...';
-        try { mostrarOriginal(foto, await renderizarPaginaOriginal(file, foto.pagina)); }
+        try { const r = await renderizarPaginaOriginal(file, foto.pagina); const g = rotacaoDaFoto(foto); if (g) { r.url = await girarDataURL(r.url, g); if (g === 90 || g === 270) { const t = r.w; r.w = r.h; r.h = t; } } mostrarOriginal(foto, r); }
         catch (e) { alert('Não foi possível abrir o original: ' + e.message); }
         btn.disabled = false; btn.textContent = txt;
       };
@@ -2494,6 +2559,93 @@
         PDFsEmSessao[foto.arquivoOrigem] = f; executar(f);
       };
       inp.click();
+    }));
+  }
+
+
+  // ── ORIENTAÇÃO DAS FOTOS: o book guarda as fotos deitadas (giradas p/ a esquerda); por padrão giramos 90° p/ a direita ──
+  function rotacaoDaFoto(f) {
+    const v = (f && f.rot != null) ? f.rot : (Estado.config.rotacaoPadrao != null ? Estado.config.rotacaoPadrao : 90);
+    return ((Number(v) % 360) + 360) % 360;
+  }
+  function girarDataURL(src, graus) {
+    return new Promise((res) => {
+      if (!graus) return res(src);
+      const im = new Image();
+      im.onload = () => {
+        const w = im.width, h = im.height, troca = graus === 90 || graus === 270;
+        const cv = document.createElement('canvas'); cv.width = troca ? h : w; cv.height = troca ? w : h;
+        const c = cv.getContext('2d');
+        c.translate(cv.width / 2, cv.height / 2); c.rotate(graus * Math.PI / 180); c.drawImage(im, -w / 2, -h / 2);
+        const out = cv.toDataURL('image/jpeg', 0.92); cv.width = cv.height = 0; res(out);
+      };
+      im.onerror = () => res(src);
+      im.src = src;
+    });
+  }
+  async function carregarFotoOrientada(foto) {
+    const src = await BancoImagens.ler(foto.id);
+    const el = document.getElementById('img-' + foto.id);
+    if (!el) return;
+    if (!src) { el.alt = 'Imagem indisponível'; return; }
+    el.src = await girarDataURL(src, rotacaoDaFoto(foto));
+  }
+  function htmlBotoesFoto(id) {
+    const b = 'padding:8px 12px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:14px;';
+    return `<div style="display:flex;gap:6px;margin-bottom:10px;">
+      <button type="button" class="btn-original" data-foto="${id}" style="${b}flex:1;">🔍 Ver original</button>
+      <button type="button" class="btn-rot" data-foto="${id}" data-dir="-1" title="Girar para a esquerda" style="${b}">↺</button>
+      <button type="button" class="btn-rot" data-foto="${id}" data-dir="1" title="Girar para a direita" style="${b}">↻</button>
+    </div>`;
+  }
+  function htmlSeletorRotacao() {
+    const v = Estado.config.rotacaoPadrao != null ? Estado.config.rotacaoPadrao : 90;
+    const o = (g, t) => `<option value="${g}" ${v === g ? 'selected' : ''}>${t}</option>`;
+    return `<label style="font-size:12px;display:block;margin:6px 0 10px;">Orientação padrão das fotos:
+      <select class="sel-rot-padrao" style="padding:6px;border:1px solid #CCC;border-radius:4px;font-size:13px;">${o(90, 'girar 90° para a direita')}${o(0, 'sem girar')}${o(270, 'girar 90° para a esquerda')}${o(180, 'girar 180°')}</select>
+      <span style="color:var(--cor-texto-secundario);"> (↺ ↻ em cada foto ajustam só aquela)</span></label>`;
+  }
+  function configurarControlesRotacao(container) {
+    container.querySelectorAll('.sel-rot-padrao').forEach(sel => sel.addEventListener('change', () => {
+      Estado.config.rotacaoPadrao = parseInt(sel.value, 10); salvarEstado(); renderizarRevisao();
+    }));
+    container.querySelectorAll('.btn-rot').forEach(btn => btn.addEventListener('click', () => {
+      const m = Estado.meses[Estado.config.mesAtivo];
+      const foto = (m.fotos || []).find(f => f.id === btn.dataset.foto); if (!foto) return;
+      foto.rot = (rotacaoDaFoto(foto) + 90 * parseInt(btn.dataset.dir, 10) + 360) % 360;
+      salvarEstado(); carregarFotoOrientada(foto);
+    }));
+  }
+
+  // ── BARRA DO MÊS: mês analisado em destaque + 2 anteriores clicáveis ──
+  function atualizarBarraMes() {
+    const el = document.getElementById('barra-mes'); if (!el) return;
+    const disp = Modo === 'publicado'
+      ? ((Publicado.indice && Publicado.indice.meses) || []).map(m => m.mes)
+      : Object.keys(Estado.meses || {}).filter(k => temDadosNoMes(Estado.meses[k]));
+    const ativo = Estado.config.mesAtivo;
+    if (!/^\d{4}-\d{2}$/.test(ativo || '')) { el.style.display = 'none'; return; }
+    const ref = disp.concat(ativo).sort().pop(); // mês mais recente com dados (ou o ativo)
+    const sub = (am, n) => { let [a, m] = am.split('-').map(Number); m -= n; while (m < 1) { m += 12; a--; } return a + '-' + String(m).padStart(2, '0'); };
+    const lista = [sub(ref, 2), sub(ref, 1), ref];
+    if (!lista.includes(ativo)) lista.unshift(ativo);
+    lista.sort();
+    const anoRef = ref.slice(0, 4);
+    el.style.display = 'flex';
+    el.innerHTML = lista.map(am => {
+      const nome = rotuloMes(am).split('/')[0], ano = am.slice(0, 4);
+      const rot = nome.charAt(0).toUpperCase() + nome.slice(1);
+      const anoTxt = (am === ativo || ano !== anoRef) ? `<span class="ano">${ano}</span>` : '';
+      if (am === ativo) return `<button type="button" class="mes-atual" aria-current="true">${esc(rot)}${anoTxt}</button>`;
+      const ok = disp.includes(am);
+      return `<button type="button" data-mes="${am}" ${ok ? '' : 'disabled title="Sem dados neste mês"'}>${esc(rot)}${anoTxt}</button>`;
+    }).join('');
+    el.querySelectorAll('button[data-mes]').forEach(b => b.addEventListener('click', () => {
+      if (Modo === 'publicado') { entrarModoPublicado(b.dataset.mes); return; }
+      Estado.config.mesAtivo = b.dataset.mes; salvarEstado();
+      auditoriaDrillState = { rede: null, loja: null };
+      const ativoBtn = document.querySelector('nav button.ativo') || document.querySelector('nav button[data-tela="dashboard"]');
+      ativoBtn.click();
     }));
   }
 
