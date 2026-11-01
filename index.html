@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CockPit Tarks | Auditoria</title>
+    <title>CockPit Tarks | Auditoria de Trade Marketing</title>
     
     <!-- Fontes de Velocidade (F1) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,32 +12,39 @@
 
     <style>
         /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 02 — CSS F1 PRATEADO (CockPit Tarks)
+           SUBBLOCO 02 — CSS MOBILE-FIRST (CockPit Tarks) - VERSÃO PREMIUM
            ═══════════════════════════════════════════════════════════════ */
+        
         :root {
-            /* Fundo Prateado F1 */
-            --cor-fundo: #E0E5EC;
+            /* Cores de Fundo (Prateado F1) */
+            --cor-fundo: #E4E8EE;
             --cor-fundo-card: #FFFFFF;
             
             /* Cores Tarks */
             --cor-primaria: #0A3D2E;       /* Verde Escuro */
             --cor-destaque: #D4AF37;       /* Dourado */
-            --cor-perigo: #E74C3C;         /* Vermelho */
+            --cor-perigo: #E74C3C;         /* Vermelho Alerta */
             
             /* Textos */
-            --cor-texto: #2C3E50;          /* Azul Escuro (Quase Preto) */
+            --cor-texto: #1A252F;          /* Azul escuro quase preto */
             --cor-texto-secundario: #7F8C8D; /* Cinza */
             
+            /* Tipografia */
             --fonte-titulo: 'Orbitron', sans-serif;
             --fonte-dados: 'Rajdhani', sans-serif;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         body {
             font-family: var(--fonte-dados);
             background-color: var(--cor-fundo);
-            background-image: linear-gradient(135deg, #E0E5EC 0%, #D1D9E6 100%);
+            /* Gradiente sutil para simular metal escovado */
+            background-image: linear-gradient(135deg, #E4E8EE 0%, #D1D9E6 100%);
             color: var(--cor-texto);
             display: flex;
             flex-direction: column;
@@ -45,27 +52,40 @@
             overflow: hidden;
         }
 
-        /* ── HEADER (Visual Cockpit) ───────────────────────────────── */
+        /* ── HEADER (Cockpit) ──────────────────────────────────────── */
         header {
             background-color: var(--cor-primaria);
-            padding: 12px 20px;
+            padding: 14px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             border-bottom: 4px solid var(--cor-destaque);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             flex-shrink: 0;
+            position: relative;
+        }
+
+        /* Linha de velocidade sutil no header */
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 200px; height: 100%;
+            background: linear-gradient(135deg, transparent 50%, rgba(212, 175, 55, 0.1) 50%);
+            pointer-events: none;
         }
 
         .logo-container {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 16px;
+            z-index: 1;
         }
 
         /* Logo Placeholder (Círculo Dourado com T) */
         .logo-placeholder {
-            width: 44px; height: 44px;
+            width: 48px;
+            height: 48px;
             background-color: var(--cor-destaque);
             border-radius: 50%;
             display: flex;
@@ -74,8 +94,9 @@
             font-family: var(--fonte-titulo);
             font-weight: 900;
             color: var(--cor-primaria);
-            font-size: 22px;
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+            font-size: 24px;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+            border: 2px solid #FFF;
         }
 
         .titulo-header h1 {
@@ -85,7 +106,7 @@
             color: var(--cor-destaque);
             text-transform: uppercase;
             letter-spacing: 2px;
-            line-height: 1;
+            line-height: 1.1;
         }
 
         .titulo-header span {
@@ -113,18 +134,23 @@
             font-family: var(--fonte-titulo);
             font-size: 12px;
             font-weight: 700;
-            padding: 15px 12px;
+            padding: 16px 12px;
             cursor: pointer;
             white-space: nowrap;
             text-transform: uppercase;
             letter-spacing: 1px;
             border-bottom: 3px solid transparent;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
         }
 
         nav button.ativo {
             color: var(--cor-primaria);
             border-bottom: 3px solid var(--cor-primaria);
+            background-color: rgba(10, 61, 46, 0.05); /* Leve destaque */
+        }
+
+        nav button:hover {
+            color: var(--cor-texto);
         }
 
         /* ── MIOLO ──────────────────────────────────────────────────── */
@@ -132,11 +158,19 @@
             flex: 1;
             overflow-y: auto;
             padding: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: #B0BEC5 var(--cor-fundo);
         }
 
         /* ── TELAS ──────────────────────────────────────────────────── */
-        .tela { display: none; }
-        .tela.ativa { display: block; animation: fadeIn 0.4s ease; }
+        .tela {
+            display: none;
+        }
+
+        .tela.ativa {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -160,9 +194,9 @@
             content: '';
             position: absolute;
             top: 0; right: 0;
-            width: 60px; height: 60px;
-            background: linear-gradient(135deg, transparent 50%, rgba(212, 175, 55, 0.1) 50%);
-            border-radius: 0 0 0 60px;
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, transparent 50%, rgba(212, 175, 55, 0.08) 50%);
+            border-radius: 0 0 0 80px;
             pointer-events: none;
         }
 
@@ -171,7 +205,7 @@
             font-size: 14px;
             font-weight: 700;
             color: var(--cor-primaria);
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -180,7 +214,7 @@
             font-family: var(--fonte-dados);
             font-size: 15px;
             color: var(--cor-texto-secundario);
-            line-height: 1.5;
+            line-height: 1.6;
             font-weight: 500;
         }
 
@@ -197,7 +231,7 @@
         /* ── FOOTER ─────────────────────────────────────────────────── */
         footer {
             background-color: var(--cor-primaria);
-            padding: 10px;
+            padding: 12px;
             text-align: center;
             font-family: var(--fonte-titulo);
             font-size: 10px;
@@ -209,16 +243,33 @@
 
         /* ── RESPONSIVIDADE (Notebook) ─────────────────────────────── */
         @media (min-width: 768px) {
-            nav button { font-size: 14px; padding: 20px 25px; }
-            .titulo-header h1 { font-size: 30px; }
-            .titulo-header span { font-size: 12px; }
-            main { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; }
-            .card { padding: 25px; }
-            .numero-destaque { font-size: 48px; }
+            nav button {
+                font-size: 14px;
+                padding: 20px 25px;
+            }
+            .titulo-header h1 {
+                font-size: 30px;
+            }
+            .titulo-header span {
+                font-size: 12px;
+            }
+            main {
+                padding: 30px;
+                max-width: 1200px;
+                margin: 0 auto;
+                width: 100%;
+            }
+            .card {
+                padding: 25px;
+            }
+            .numero-destaque {
+                font-size: 48px;
+            }
         }
     </style>
 </head>
 
+<body>
     <!-- ── HEADER ────────────────────────────────────────────────── -->
     <header>
         <div class="logo-container">
@@ -245,12 +296,52 @@
         <!-- TELA 1: DASHBOARD -->
         <div id="tela-dashboard" class="tela ativa">
             <div class="card">
-                <h2>Visão Geral</h2>
-                <p>Resumo do mês: visitas declaradas, comprovadas e % de atingimento.</p>
+                <h2>Visão Geral — Auditoria de Trade Marketing</h2>
+                <p>Dados consolidados do mês. Fonte: Excel Pacto + PDFs Mob2con.</p>
             </div>
-            <div class="placeholder-tela">
-                <h3>Dashboard em construção</h3>
-                <p>Os cards de métricas, gráficos e alertas aparecerão aqui.</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div class="card" style="border-left-color: var(--cor-destaque); margin: 0;">
+                    <h2 style="font-size: 12px;">Visitas Declaradas</h2>
+                    <p class="numero-destaque">0</p>
+                    <p style="font-size: 12px;">Excel Pacto</p>
+                </div>
+                <div class="card" style="border-left-color: var(--cor-primaria); margin: 0;">
+                    <h2 style="font-size: 12px;">Visitas Comprovadas</h2>
+                    <p class="numero-destaque" style="color: var(--cor-primaria);">0</p>
+                    <p style="font-size: 12px;">Fotos PDF</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Efetividade de Visitas</h2>
+                <p class="numero-destaque">0%</p>
+                <p>0 de 0 visitas comprovadas.</p>
+                <div style="width: 100%; height: 10px; background: #EAEAEA; border-radius: 5px; margin-top: 10px;">
+                    <div style="width: 0%; height: 100%; background: var(--cor-primaria); border-radius: 5px;"></div>
+                </div>
+            </div>
+
+            <div class="card" style="border-left-color: var(--cor-perigo);">
+                <h2>Alertas de Auditoria</h2>
+                <div style="display: flex; justify-content: space-between; margin-top: 15px; text-align: center;">
+                    <div>
+                        <p class="numero-destaque" style="font-size: 24px; color: var(--cor-primaria);">0</p>
+                        <p style="font-size: 12px;">Válidas</p>
+                    </div>
+                    <div>
+                        <p class="numero-destaque" style="font-size: 24px; color: #F1C40F;">0</p>
+                        <p style="font-size: 12px;">Duplicatas</p>
+                    </div>
+                    <div>
+                        <p class="numero-destaque" style="font-size: 24px; color: var(--cor-perigo);">0</p>
+                        <p style="font-size: 12px;">Suspeitas</p>
+                    </div>
+                    <div>
+                        <p class="numero-destaque" style="font-size: 24px; color: var(--cor-texto-secundario);">0</p>
+                        <p style="font-size: 12px;">Sem Par</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -260,10 +351,6 @@
                 <h2>Administração</h2>
                 <p>Upload de planilhas (Excel e PDFs), revisão de fotos, backup e configurações.</p>
             </div>
-            <div class="placeholder-tela">
-                <h3>Área Administrativa em construção</h3>
-                <p>Aqui você poderá subir as planilhas de comprovação e gerenciar o sistema.</p>
-            </div>
         </div>
 
         <!-- TELA 3: AUDITORIA -->
@@ -271,10 +358,6 @@
             <div class="card">
                 <h2>Auditoria de Lojas</h2>
                 <p>Lista de lojas com status: 100% comprovado, divergência, suspeita ou duplicata.</p>
-            </div>
-            <div class="placeholder-tela">
-                <h3>Auditoria em construção</h3>
-                <p>Após importar os dados, a lista de lojas e os status aparecerão aqui.</p>
             </div>
         </div>
 
@@ -284,10 +367,6 @@
                 <h2>Relatório de Auditoria</h2>
                 <p>Relatório executivo com divergências, miniaturas das fotos e status.</p>
             </div>
-            <div class="placeholder-tela">
-                <h3>Relatório em construção</h3>
-                <p>Após a auditoria, você poderá exportar o relatório em PDF.</p>
-            </div>
         </div>
 
         <!-- TELA 5: CONFIGURAÇÕES -->
@@ -295,10 +374,6 @@
             <div class="card">
                 <h2>Configurações</h2>
                 <p>Janelas de tempo, redes conhecidas, e outras configurações do sistema.</p>
-            </div>
-            <div class="placeholder-tela">
-                <h3>Configurações em construção</h3>
-                <p>Aqui você poderá ajustar os parâmetros de auditoria.</p>
             </div>
         </div>
 
@@ -309,6 +384,25 @@
         CockPit Tarks &copy; 2026 | Grupo Tarks | Auditoria de Trade Marketing
     </footer>
 
+    <!-- ── SCRIPT DE NAVEGAÇÃO ────────────────────────────────────── -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const botoesNav = document.querySelectorAll('nav button');
+            const telas = document.querySelectorAll('.tela');
+            
+            botoesNav.forEach(botao => {
+                botao.addEventListener('click', () => {
+                    const nomeTela = botao.dataset.tela;
+                    botoesNav.forEach(b => b.classList.remove('ativo'));
+                    telas.forEach(t => t.classList.remove('ativa'));
+                    botao.classList.add('ativo');
+                    document.getElementById(`tela-${nomeTela}`).classList.add('ativa');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
     <!-- ═══════════════════════════════════════════════════════════════
          SUBBLOCO 03 — ESTADO GLOBAL E NAVEGAÇÃO
          ═══════════════════════════════════════════════════════════════ -->
