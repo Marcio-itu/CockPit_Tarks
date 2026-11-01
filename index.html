@@ -1354,6 +1354,16 @@
   <!-- ═══ SUBBLOCO 07 — ADMIN COMPLETO + DASHBOARD ═══ -->
 <script>
   // ── FUNÇÕES AUXILIARES ──
+  // Cadeia da auditoria: planejou X → declarou Y → comprovou Z
+  function pctCadeia(r) {
+    const pl = r.planejadas || 0, de = r.declaradas || 0, co = r.comprovadas || 0;
+    return {
+      declDoPlano: pl > 0 ? de / pl * 100 : null,      // quanto do plano a agência diz ter feito
+      compDaDecl: de > 0 ? co / de * 100 : 0,          // quanto do declarado temos prova (efetividade)
+      real: pl > 0 ? co / pl * 100 : null              // quanto do plano está comprovado de fato
+    };
+  }
+  function corPct(v) { return v == null ? '#999' : v > 80 ? '#27AE60' : v > 50 ? '#F39C12' : '#E74C3C'; }
   function formatarMoeda(valor) {
     return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
@@ -1516,30 +1526,38 @@
     const total = mesDados.auditoria.total;
     const efetividade = total.totalDeclaradas > 0 ? (total.comprovadas / total.totalDeclaradas) * 100 : 0;
     const corEfetGeral = efetividade >= 80 ? '#27AE60' : efetividade >= 50 ? '#F39C12' : '#E74C3C';
+    const pctGeral = pctCadeia({ planejadas: total.totalPlanejadas != null ? total.totalPlanejadas : total.totalProgramadas, declaradas: total.totalDeclaradas, comprovadas: total.comprovadas });
 
     // Ranking ordenado por efetividade (pior para o melhor)
     const todasRedes = Object.values(porRede).map(r => {
       const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
       return { ...r, efetividade: efet };
     }).sort((a, b) => a.efetividade - b.efetividade);
-    const ranking = todasRedes.filter(r => (r.planejadas || 0) > 0);
+    const ranking = todasRedes.filter(r => (r.planejadas || 0) > 0).sort((a, b) => pctCadeia(a).real - pctCadeia(b).real);
     const semPlano = todasRedes.filter(r => !(r.planejadas > 0));
 
     const linhaRede = (r, rotulo) => {
-      const corBarra = r.efetividade > 80 ? '#27AE60' : r.efetividade > 50 ? '#F39C12' : '#E74C3C';
+      const pl = r.planejadas || 0, de = r.declaradas || 0, co = r.comprovadas || 0;
+      const pc = pctCadeia(r);
+      const base = Math.max(pl, de, 1);
+      const w = n => Math.max(0, n) / base * 100;
+      const marcaPlano = (de > pl && pl > 0) ? `<div title="Fim do plano (${pl})" style="position:absolute;left:${w(pl)}%;top:-2px;bottom:-2px;width:2px;background:#333;"></div>` : '';
+      const cor = corPct(pc.real);
       return `
-        <div style="margin-bottom: 15px;">
-          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 5px;">
+        <div style="margin-bottom: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: bold; margin-bottom: 5px;">
             <span>${rotulo}${esc(r.rede)}</span>
-            <span style="color: ${corBarra};">${formatarPorcentagem(r.efetividade)}</span>
+            <span style="color: ${cor};">${pc.real == null ? 'sem plano' : formatarPorcentagem(pc.real) + ' do plano comprovado'}</span>
           </div>
-          <div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px;">
-            <div style="width: ${Math.min(100, r.efetividade)}%; height: 100%; background: ${corBarra}; border-radius: 4px;"></div>
+          <div style="position:relative;display:flex;width:100%;height:12px;background:#E3E6EA;border-radius:6px;overflow:visible;">
+            <div style="width:${w(co)}%;background:#27AE60;border-radius:6px 0 0 6px;"></div>
+            <div style="width:${w(de - co)}%;background:#E74C3C;"></div>
+            ${marcaPlano}
           </div>
-          <div style="display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; font-size: 11px; color: var(--cor-texto-secundario); margin-top: 3px;">
-            <span><strong>${r.planejadas || 0}</strong> planejadas</span>
-            <span><strong>${r.declaradas}</strong> declaradas</span>
-            <span><strong>${r.comprovadas}</strong> comprovadas</span>
+          <div style="display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--cor-texto-secundario);margin-top:4px;">
+            <span><strong>${pl}</strong> planejadas</span>
+            <span>➜ <strong>${de}</strong> declaradas${pc.declDoPlano == null ? '' : ' (' + formatarPorcentagem(pc.declDoPlano) + ' do plano)'}</span>
+            <span>➜ <strong>${co}</strong> comprovadas (${formatarPorcentagem(pc.compDaDecl)} das declaradas)</span>
             <span>Desconto: ${formatarMoeda(r.desconto)}</span>
           </div>
         </div>`;
@@ -1595,6 +1613,16 @@
           <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: ${corEfetGeral}; margin: 5px 0;">${formatarPorcentagem(efetividade)}</p>
           <p style="font-size: 10px;">Comprovadas / Declaradas</p>
         </div>
+        <div class="card" style="margin: 0; border-left-color: var(--cor-texto-secundario); padding: 15px;">
+          <h2 style="font-size: 10px;">Declarado do plano</h2>
+          <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-texto); margin: 5px 0;">${pctGeral.declDoPlano == null ? '—' : formatarPorcentagem(pctGeral.declDoPlano)}</p>
+          <p style="font-size: 10px;">Declaradas / Planejadas</p>
+        </div>
+        <div class="card" style="margin: 0; border-left-color: ${corPct(pctGeral.real)}; padding: 15px; grid-column: 1 / -1;">
+          <h2 style="font-size: 10px;">Plano comprovado (atingimento real)</h2>
+          <p style="font-family: var(--fonte-titulo); font-size: 26px; font-weight: 900; color: ${corPct(pctGeral.real)}; margin: 5px 0;">${pctGeral.real == null ? '—' : formatarPorcentagem(pctGeral.real)}</p>
+          <p style="font-size: 10px;">Comprovadas / Planejadas — das visitas que a agência prometeu, quantas temos prova</p>
+        </div>
       </div>
 
       <div class="card" style="border-left-color: var(--cor-perigo);">
@@ -1622,8 +1650,9 @@
       </div>
 
       <div class="card">
-        <h2>Ranking de Redes (Efetividade)</h2>
-        <p style="font-size: 12px; margin-bottom: 15px; color: var(--cor-texto-secundario);">Da pior para a melhor performance.</p>
+        <h2>Ranking de Redes (Plano comprovado)</h2>
+        <p style="font-size: 12px; margin-bottom: 8px; color: var(--cor-texto-secundario);">Planejou → declarou → comprovou. Da pior para a melhor, pela parcela do <strong>plano</strong> que está comprovada.</p>
+        <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);"><span style="color:#27AE60;">■</span> comprovadas &nbsp; <span style="color:#E74C3C;">■</span> declaradas sem prova &nbsp; <span style="color:#C5CBD3;">■</span> plano não declarado &nbsp; <span style="color:#333;">|</span> fim do plano (quando declarou mais que o plano)</p>
         ${htmlRanking || '<p style="font-size: 13px;">Nenhuma rede com visitas planejadas.</p>'}
       </div>
       ${htmlSemPlano}
@@ -1673,16 +1702,16 @@
       const redesArray = Object.values(porRede).sort((a, b) => b.desconto - a.desconto);
       let linhasTabela = '';
       redesArray.forEach(r => {
-        const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
-        const corEfet = efet > 80 ? '#27AE60' : efet > 50 ? '#F39C12' : '#E74C3C';
+        const pc = pctCadeia(r);
+        const sub = t => `<br><span style="font-size:10px;color:var(--cor-texto-secundario);">${t}</span>`;
         linhasTabela += `
           <tr data-rede="${esc(r.chave)}" style="border-bottom: 1px solid #EEE; cursor: pointer;">
             <td style="padding: 10px; font-weight: bold; font-size: 13px;">${esc(r.rede)} <span style="color: #AAA;">›</span></td>
             <td style="padding: 10px; text-align: center;">${r.planejadas || 0}</td>
-            <td style="padding: 10px; text-align: center;">${r.declaradas}</td>
-            <td style="padding: 10px; text-align: center;">${r.comprovadas}</td>
+            <td style="padding: 10px; text-align: center;">${r.declaradas}${pc.declDoPlano == null ? '' : sub(formatarPorcentagem(pc.declDoPlano) + ' do plano')}</td>
+            <td style="padding: 10px; text-align: center;">${r.comprovadas}${sub(formatarPorcentagem(pc.compDaDecl) + ' das decl.')}</td>
             <td style="padding: 10px; text-align: center; color: var(--cor-perigo); font-weight: bold;">${r.gap}</td>
-            <td style="padding: 10px; text-align: center; color: ${corEfet}; font-weight: bold;">${formatarPorcentagem(efet)}</td>
+            <td style="padding: 10px; text-align: center; color: ${corPct(pc.real)}; font-weight: bold;">${pc.real == null ? '—' : formatarPorcentagem(pc.real)}</td>
             <td style="padding: 10px; text-align: right; color: var(--cor-perigo);">${formatarMoeda(r.desconto)}</td>
           </tr>
         `;
@@ -1708,7 +1737,7 @@
                   <th style="padding: 10px; text-align: center;">Declar.</th>
                   <th style="padding: 10px; text-align: center;">Comprov.</th>
                   <th style="padding: 10px; text-align: center;">Gap</th>
-                  <th style="padding: 10px; text-align: center;">Efetiv.</th>
+                  <th style="padding: 10px; text-align: center;" title="Comprovadas / Planejadas">Plano comprov.</th>
                   <th style="padding: 10px; text-align: right;">Desconto</th>
                 </tr>
               </thead>
@@ -1725,11 +1754,12 @@
       montarListaVolume(container, aud);
 
       document.getElementById('btn-exportar-csv').addEventListener('click', () => {
-        let csv = "Rede;Planejadas;Declaradas;Comprovadas;Gap;Efetividade;Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
+        let csv = "Rede;Planejadas;Declaradas;Comprovadas;Gap;Declarado do plano;Efetividade (comp/decl);Plano comprovado (comp/plan);Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
         redesArray.forEach(r => {
-          const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
+          const pc = pctCadeia(r);
+          const pf = v => v == null ? '' : v.toFixed(1).replace('.', ',') + '%';
           const n = v => Number(v).toFixed(2).replace('.', ',');
-          csv += `${csvCampo(r.rede)};${r.planejadas || 0};${r.declaradas};${r.comprovadas};${r.gap};${efet.toFixed(1).replace('.', ',')}%;${n(r.custoVisita)};${n(r.valorCobrado)};${n(r.desconto)};${n(r.valorAuditado)}\n`;
+          csv += `${csvCampo(r.rede)};${r.planejadas || 0};${r.declaradas};${r.comprovadas};${r.gap};${pf(pc.declDoPlano)};${pf(pc.compDaDecl)};${pf(pc.real)};${n(r.custoVisita)};${n(r.valorCobrado)};${n(r.desconto)};${n(r.valorAuditado)}\n`;
         });
         baixarCSV(`auditoria_redes_${Estado.config.mesAtivo}.csv`, csv);
       });
