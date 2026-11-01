@@ -1191,17 +1191,23 @@
     const porRede = {};
     fechamento.forEach(f => {
       const r = porRede[f.rede] || (porRede[f.rede] = {
-        chave: f.rede, rede: String(f.redeOriginal).trim(), custoVisita: 0, declaradas: 0, declaradasMes: 0, programadas: 0,
+        chave: f.rede, rede: String(f.redeOriginal).trim(), custoVisita: 0, declaradas: 0, declaradasMes: 0, programadas: 0, semanal: 0, planejadas: 0,
         comprovadas: 0, gap: 0, valorCobrado: 0, desconto: 0, valorAuditado: 0, semFoto: 0
       });
       r.declaradas += f.declaradasMes;
       r.declaradasMes += f.declaradasMes;
       r.programadas += f.programadasMes || 0;
+      r.semanal += (f.qtdLojas || 0) * (f.visitasSemana || 0);
       r.valorCobrado += f.declaradasMes * f.custoVisita;
       if (!r.custoVisita) r.custoVisita = f.custoVisita;
     });
     Object.values(porRede).forEach(r => {
       if (r.declaradas > 0) r.custoVisita = r.valorCobrado / r.declaradas; // custo médio ponderado
+    });
+    // Planejadas: mês inteiro = programadas do Fechamento; com período auditado = lojas × visitas/semana × (dias do período / 7)
+    const diasPeriodo = periodo ? Math.max(1, Math.round((new Date(periodo.fim + 'T00:00:00Z') - new Date(periodo.inicio + 'T00:00:00Z')) / 86400000) + 1) : 0;
+    Object.values(porRede).forEach(r => {
+      r.planejadas = periodo ? Math.round(r.semanal * diasPeriodo / 7) : r.programadas;
     });
   
     // Com período auditado, "declaradas" = visitas únicas (promotor+dia+loja) do Relatório de Tempo dentro do período
@@ -1242,10 +1248,11 @@
       total: {
         comprovadas: soma('comprovadas'), gap: soma('gap'), desconto: soma('desconto'),
         valorAuditado: soma('valorAuditado'), valorCobrado: soma('valorCobrado'),
-        totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
+        totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
         visitasPendentes: todas.filter(v => v.statusFinal === 'suspeita' || v.statusFinal === 'revisao').length,
         fotosPendentes: fotos.filter(f => f.status === 'suspeita' || f.status === 'revisao').length
       },
+      versaoCalculo: 2,
       dataProcessamento: new Date().toISOString()
     };
   }
@@ -1446,13 +1453,41 @@
     const corEfetGeral = efetividade >= 80 ? '#27AE60' : efetividade >= 50 ? '#F39C12' : '#E74C3C';
 
     // Ranking ordenado por efetividade (pior para o melhor)
-    const ranking = Object.values(porRede).map(r => {
+    const todasRedes = Object.values(porRede).map(r => {
       const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
       return { ...r, efetividade: efet };
     }).sort((a, b) => a.efetividade - b.efetividade);
+    const ranking = todasRedes.filter(r => (r.planejadas || 0) > 0);
+    const semPlano = todasRedes.filter(r => !(r.planejadas > 0));
 
-    let htmlRanking = '';
+    const linhaRede = (r, rotulo) => {
+      const corBarra = r.efetividade > 80 ? '#27AE60' : r.efetividade > 50 ? '#F39C12' : '#E74C3C';
+      return `
+        <div style="margin-bottom: 15px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 5px;">
+            <span>${rotulo}${esc(r.rede)}</span>
+            <span style="color: ${corBarra};">${formatarPorcentagem(r.efetividade)}</span>
+          </div>
+          <div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px;">
+            <div style="width: ${Math.min(100, r.efetividade)}%; height: 100%; background: ${corBarra}; border-radius: 4px;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; font-size: 11px; color: var(--cor-texto-secundario); margin-top: 3px;">
+            <span><strong>${r.planejadas || 0}</strong> planejadas</span>
+            <span><strong>${r.declaradas}</strong> declaradas</span>
+            <span><strong>${r.comprovadas}</strong> comprovadas</span>
+            <span>Desconto: ${formatarMoeda(r.desconto)}</span>
+          </div>
+        </div>`;
+    };
+    let htmlRanking = ranking.map((r, i) => linhaRede(r, (i + 1) + '. ')).join('');
+    const htmlSemPlano = semPlano.length ? `
+      <div class="card" style="border-left-color: var(--cor-texto-secundario);">
+        <h2>Redes sem visitas planejadas (${semPlano.length})</h2>
+        <p style="font-size: 12px; margin-bottom: 15px; color: var(--cor-texto-secundario);">Planejadas = 0. Se houver visitas declaradas aqui, foram feitas fora do plano.</p>
+        ${semPlano.map(r => linhaRede(r, '')).join('')}
+      </div>` : '';
     ranking.forEach((r, index) => {
+      return; // (layout antigo, substituído por linhaRede)
       const corBarra = r.efetividade > 80 ? '#27AE60' : r.efetividade > 50 ? '#F39C12' : '#E74C3C';
       htmlRanking += `
         <div style="margin-bottom: 15px;">
@@ -1476,9 +1511,9 @@
       ${htmlAvisoCobertura(mesDados.auditoria)}
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
         <div class="card" style="margin: 0; border-left-color: var(--cor-texto-secundario); padding: 15px;">
-          <h2 style="font-size: 10px;">Programadas</h2>
-          <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-texto); margin: 5px 0;">${total.totalProgramadas || 0}</p>
-          <p style="font-size: 10px;">${mesDados.periodoAuditado ? 'Contrato do mês inteiro' : 'Contratado'}</p>
+          <h2 style="font-size: 10px;">Planejadas</h2>
+          <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-texto); margin: 5px 0;">${total.totalPlanejadas != null ? total.totalPlanejadas : (total.totalProgramadas || 0)}</p>
+          <p style="font-size: 10px;">${mesDados.periodoAuditado ? 'No período auditado' : 'Contratado no mês'}</p>
         </div>
         <div class="card" style="margin: 0; border-left-color: var(--cor-destaque); padding: 15px;">
           <h2 style="font-size: 10px;">Declaradas</h2>
@@ -1524,8 +1559,9 @@
       <div class="card">
         <h2>Ranking de Redes (Efetividade)</h2>
         <p style="font-size: 12px; margin-bottom: 15px; color: var(--cor-texto-secundario);">Da pior para a melhor performance.</p>
-        ${htmlRanking || '<p style="font-size: 13px;">Nenhuma rede processada.</p>'}
+        ${htmlRanking || '<p style="font-size: 13px;">Nenhuma rede com visitas planejadas.</p>'}
       </div>
+      ${htmlSemPlano}
     `;
   }
 </script>
@@ -1577,6 +1613,7 @@
         linhasTabela += `
           <tr data-rede="${esc(r.chave)}" style="border-bottom: 1px solid #EEE; cursor: pointer;">
             <td style="padding: 10px; font-weight: bold; font-size: 13px;">${esc(r.rede)} <span style="color: #AAA;">›</span></td>
+            <td style="padding: 10px; text-align: center;">${r.planejadas || 0}</td>
             <td style="padding: 10px; text-align: center;">${r.declaradas}</td>
             <td style="padding: 10px; text-align: center;">${r.comprovadas}</td>
             <td style="padding: 10px; text-align: center; color: var(--cor-perigo); font-weight: bold;">${r.gap}</td>
@@ -1602,6 +1639,7 @@
               <thead>
                 <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
                   <th style="padding: 10px; text-align: left;">Rede</th>
+                  <th style="padding: 10px; text-align: center;">Planej.</th>
                   <th style="padding: 10px; text-align: center;">Declar.</th>
                   <th style="padding: 10px; text-align: center;">Comprov.</th>
                   <th style="padding: 10px; text-align: center;">Gap</th>
@@ -1621,11 +1659,11 @@
       montarListaNaoComprovadas(container, aud);
 
       document.getElementById('btn-exportar-csv').addEventListener('click', () => {
-        let csv = "Rede;Declaradas;Comprovadas;Gap;Efetividade;Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
+        let csv = "Rede;Planejadas;Declaradas;Comprovadas;Gap;Efetividade;Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
         redesArray.forEach(r => {
           const efet = r.declaradas > 0 ? (r.comprovadas / r.declaradas) * 100 : 0;
           const n = v => Number(v).toFixed(2).replace('.', ',');
-          csv += `${csvCampo(r.rede)};${r.declaradas};${r.comprovadas};${r.gap};${efet.toFixed(1).replace('.', ',')}%;${n(r.custoVisita)};${n(r.valorCobrado)};${n(r.desconto)};${n(r.valorAuditado)}\n`;
+          csv += `${csvCampo(r.rede)};${r.planejadas || 0};${r.declaradas};${r.comprovadas};${r.gap};${efet.toFixed(1).replace('.', ',')}%;${n(r.custoVisita)};${n(r.valorCobrado)};${n(r.desconto)};${n(r.valorAuditado)}\n`;
         });
         baixarCSV(`auditoria_redes_${Estado.config.mesAtivo}.csv`, csv);
       });
@@ -2399,7 +2437,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado)) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 2) executarAuditoriaSilencioso();
   }
 
 
