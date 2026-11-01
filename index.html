@@ -57,7 +57,7 @@
   /* Impressão / Salvar PDF: libera a rolagem e esconde a navegação */
   @media print {
     body { display: block; height: auto; overflow: visible; background: #FFF; }
-    header, nav, footer, button, input, select { display: none !important; }
+    header, nav, footer, button, input, select, #barra-fonte { display: none !important; }
     main { overflow: visible; padding: 0; max-width: none; }
     .tela { display: none !important; }
     .tela.ativa { display: block !important; animation: none; }
@@ -85,6 +85,8 @@
   <button data-tela="relatorio">Relatório</button>
   <button data-tela="config">Config</button>
 </nav>
+
+<div id="barra-fonte" style="display: none; flex-shrink: 0; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 16px; background: #FFF8E1; border-bottom: 1px solid #F0D98C; font-family: var(--fonte-dados); font-size: 13px; color: var(--cor-texto);"></div>
 
 <main>
   <div id="tela-dashboard" class="tela ativa"><div class="card"><h2>Dashboard</h2><p>Visão geral da auditoria. (Em construção)</p></div></div>
@@ -115,6 +117,9 @@
     const d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
   }
+
+  // 'local' = dados deste navegador (operador) | 'publicado' = leitura dos resultados publicados no site (nada é gravado)
+  let Modo = 'local';
 
   const Estado = {
     config: {
@@ -214,6 +219,7 @@
   }
 
   function salvarEstado() {
+    if (Modo === 'publicado') return; // modo leitura nunca sobrescreve os dados locais
     try {
       localStorage.setItem('cockpit_estado', JSON.stringify(Estado));
     } catch (e) {
@@ -229,11 +235,20 @@
         const dados = JSON.parse(salvo);
         if (dados.config) Estado.config = { ...Estado.config, ...dados.config };
         if (dados.meses) Estado.meses = dados.meses;
+        aplicarPeriodosPadrao();
         migrarImagensLegadas(Estado.meses).then(mudou => { if (mudou) salvarEstado(); }).catch(() => {});
       } catch (e) { 
         console.error("Erro ao carregar estado:", e); 
       }
     }
+  }
+
+  // Outubro/2026 é atípico: o sistema começou a ser usado no meio do mês, então só vale 18 a 24/10.
+  const PERIODOS_PADRAO = { '2026-10': { inicio: '2026-10-18', fim: '2026-10-24' } };
+  function aplicarPeriodosPadrao() {
+    Object.keys(PERIODOS_PADRAO).forEach(m => {
+      if (Estado.meses[m] && !('periodoAuditado' in Estado.meses[m])) Estado.meses[m].periodoAuditado = { ...PERIODOS_PADRAO[m] };
+    });
   }
 
   function garantirMes(mes) {
@@ -244,6 +259,7 @@
         relatorioTempo: [], 
         fotos: [],
         periodosPDF: [],
+        periodoAuditado: PERIODOS_PADRAO[mes] ? { ...PERIODOS_PADRAO[mes] } : null, // null = mês inteiro
         auditoria: null // Inicia como nulo até ser processada
       };
       salvarEstado();
@@ -288,6 +304,17 @@
         <div id="msg-config" style="margin-top: 10px; text-align: center; font-weight: bold; color: var(--cor-primaria);"></div>
       </div>
       <div class="card">
+        <h2>Período Auditado do Mês</h2>
+        <p style="font-size: 13px; margin-bottom: 10px;">Para meses em que o sistema não cobriu o mês todo. Só vale para o mês ativo (<strong>${mesAtual}</strong>): "Declaradas" passam a ser as visitas do Relatório de Tempo no período e fotos de outros dias são ignoradas. Deixe em branco para auditar o mês inteiro.</p>
+        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">De:</label>
+        <input type="date" id="periodo-inicio" value="${((Estado.meses[mesAtual] || {}).periodoAuditado || {}).inicio || ''}" style="width: 100%; padding: 10px; margin: 5px 0 10px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
+        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Até:</label>
+        <input type="date" id="periodo-fim" value="${((Estado.meses[mesAtual] || {}).periodoAuditado || {}).fim || ''}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
+        <button id="btn-salvar-periodo" style="width: 100%; padding: 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Salvar Período</button>
+        <div id="msg-periodo" style="margin-top: 10px; text-align: center; font-weight: bold; color: var(--cor-primaria);"></div>
+      </div>
+      ${htmlCardPublicacao()}
+      <div class="card">
         <h2>Backup de Dados</h2>
         <p style="font-size: 13px; margin-bottom: 15px;">Exporte ou importe o estado completo do sistema (incluindo imagens).</p>
         <div style="display: flex; gap: 10px;">
@@ -329,6 +356,23 @@
       setTimeout(() => document.getElementById('msg-config').textContent = '', 3000);
     });
 
+    document.getElementById('btn-salvar-periodo').addEventListener('click', () => {
+      const ini = document.getElementById('periodo-inicio').value;
+      const fim = document.getElementById('periodo-fim').value;
+      const msg = document.getElementById('msg-periodo');
+      const mesDados = garantirMes(Estado.config.mesAtivo);
+      if ((ini && !fim) || (!ini && fim)) { msg.style.color = '#E74C3C'; msg.textContent = 'Preencha as duas datas, ou deixe as duas em branco.'; return; }
+      if (ini && fim && fim < ini) { msg.style.color = '#E74C3C'; msg.textContent = 'A data final é anterior à inicial.'; return; }
+      if (ini && (ini.slice(0, 7) !== Estado.config.mesAtivo || fim.slice(0, 7) !== Estado.config.mesAtivo)) {
+        if (!confirm('O período não está inteiro dentro do mês ' + Estado.config.mesAtivo + '. Salvar assim mesmo?')) return;
+      }
+      mesDados.periodoAuditado = ini ? { inicio: ini, fim: fim } : null;
+      salvarEstado();
+      if (mesDados.auditoria) executarAuditoriaSilencioso(); // recalcula com o novo período
+      msg.style.color = 'var(--cor-primaria)';
+      msg.textContent = ini ? '✅ Período salvo e auditoria recalculada.' : '✅ Auditando o mês inteiro.';
+    });
+
     document.getElementById('btn-exportar').addEventListener('click', async () => {
       const comImagens = confirm('Incluir as imagens das fotos no backup?\n\nOK = backup completo (arquivo grande)\nCancelar = só os dados, sem imagens');
       const pacote = { config: Estado.config, meses: Estado.meses, imagens: comImagens ? await BancoImagens.todas() : {} };
@@ -354,6 +398,7 @@
           if (dados.config && dados.meses) {
             Estado.config = { ...Estado.config, ...dados.config };
             Estado.meses = dados.meses;
+            aplicarPeriodosPadrao();
             if (dados.imagens) {
               for (const [id, url] of Object.entries(dados.imagens)) await BancoImagens.salvar(id, url);
             }
@@ -373,10 +418,13 @@
       if (confirm('⚠️ ATENÇÃO: Isso apagará TODOS os dados salvos neste navegador. Tem certeza?')) {
         BancoImagens.limpar().then(() => {
           localStorage.removeItem('cockpit_estado');
+          localStorage.removeItem('cockpit_gh'); // inclui o token de publicação
           window.location.reload();
         });
       }
     });
+
+    configurarPublicacao();
   }
 </script>
 <!-- ═══ FIM SUBBLOCO 02 ═══ -->
@@ -947,7 +995,24 @@
   
   function calcularAuditoria(mesDados, config) {
     const janela = (config && config.janelaSuspeitaMin) || 30;
-    const fotos = mesDados.fotos, relatorio = mesDados.relatorioTempo;
+    // Período auditado do mês (opcional). Ex.: outubro/2026 só vale de 18 a 24/10, porque o sistema começou a ser usado no meio do mês.
+    const periodo = mesDados.periodoAuditado && mesDados.periodoAuditado.inicio && mesDados.periodoAuditado.fim ? mesDados.periodoAuditado : null;
+    const noPeriodo = d => !periodo || (d >= periodo.inicio && d <= periodo.fim);
+    const diaFoto = f => (f.dataHora ? f.dataHora.split('T')[0] : null);
+    let foraPeriodo = 0;
+    mesDados.fotos.forEach(f => {
+      const d = diaFoto(f);
+      if (periodo && d && !noPeriodo(d)) {
+        f.status = 'fora_periodo'; f.motivoGap = 'Fora do período auditado.';
+        f.lojaAuditada = null; f.redeAuditada = null; f.candidatas = null; f.revisaoManual = false; foraPeriodo++;
+      } else if (f.status === 'fora_periodo') {
+        f.status = 'pendente'; f.motivoGap = null; // o período foi ampliado: a foto volta para a auditoria
+      }
+    });
+    const fotos = mesDados.fotos.filter(f => f.status !== 'fora_periodo');
+    // Normaliza o nome da rede também em dados importados por versões antigas (que guardavam o nome cru da planilha)
+    const relatorio = mesDados.relatorioTempo.map(v => ({ ...v, redeOriginal: v.redeOriginal || v.rede, rede: chaveRede(v.rede) })).filter(v => noPeriodo(v.data));
+    const fechamento = mesDados.fechamento.map(f => ({ ...f, redeOriginal: f.redeOriginal || f.rede, rede: chaveRede(f.rede) }));
     const pk = f => f.promotorKey || chaveCompacta(f.promotor);
     const diaDe = f => f.dataHora.split('T')[0];
   
@@ -1055,9 +1120,9 @@
     });
   
     // 6. Visitas do Relatório de Tempo, dentro do período coberto pelos PDFs, que ficaram sem nenhuma foto
-    let periodos = (mesDados.periodosPDF || []).filter(p => p && p.inicio && p.fim);
+    let periodos = periodo ? [{ inicio: periodo.inicio, fim: periodo.fim, auditado: true }] : (mesDados.periodosPDF || []).filter(p => p && p.inicio && p.fim);
     const datasFotos = fotos.filter(f => f.dataHora).map(diaDe).sort();
-    if (periodos.length === 0 && datasFotos.length) periodos = [{ inicio: datasFotos[0], fim: datasFotos[datasFotos.length - 1] }];
+    if (!periodo && periodos.length === 0 && datasFotos.length) periodos = [{ inicio: datasFotos[0], fim: datasFotos[datasFotos.length - 1] }];
     const coberto = d => periodos.some(p => d >= p.inicio && d <= p.fim);
     const jaTem = new Set(Object.keys(visitas));
     const semFoto = {};
@@ -1070,12 +1135,13 @@
   
     // 7. Financeiro por rede (várias linhas do fechamento da mesma rede são somadas)
     const porRede = {};
-    mesDados.fechamento.forEach(f => {
+    fechamento.forEach(f => {
       const r = porRede[f.rede] || (porRede[f.rede] = {
-        chave: f.rede, rede: String(f.redeOriginal).trim(), custoVisita: 0, declaradas: 0, programadas: 0,
+        chave: f.rede, rede: String(f.redeOriginal).trim(), custoVisita: 0, declaradas: 0, declaradasMes: 0, programadas: 0,
         comprovadas: 0, gap: 0, valorCobrado: 0, desconto: 0, valorAuditado: 0, semFoto: 0
       });
       r.declaradas += f.declaradasMes;
+      r.declaradasMes += f.declaradasMes;
       r.programadas += f.programadasMes || 0;
       r.valorCobrado += f.declaradasMes * f.custoVisita;
       if (!r.custoVisita) r.custoVisita = f.custoVisita;
@@ -1083,6 +1149,19 @@
     Object.values(porRede).forEach(r => {
       if (r.declaradas > 0) r.custoVisita = r.valorCobrado / r.declaradas; // custo médio ponderado
     });
+  
+    // Com período auditado, "declaradas" = visitas únicas (promotor+dia+loja) do Relatório de Tempo dentro do período
+    if (periodo) {
+      Object.values(porRede).forEach(r => { r.declaradas = 0; });
+      const vistos = new Set();
+      relatorio.forEach(v => {
+        const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja);
+        if (vistos.has(k)) return;
+        vistos.add(k);
+        if (porRede[v.rede]) porRede[v.rede].declaradas++;
+      });
+      Object.values(porRede).forEach(r => { r.valorCobrado = r.declaradas * r.custoVisita; });
+    }
   
     const redesNaoMapeadas = {};
     Object.values(visitas).forEach(v => {
@@ -1104,10 +1183,12 @@
       visitasAgrupadas: todas.concat(Object.values(semFoto)),
       redesNaoMapeadas,
       periodos,
+      periodoAuditado: periodo,
+      foraPeriodo,
       total: {
         comprovadas: soma('comprovadas'), gap: soma('gap'), desconto: soma('desconto'),
         valorAuditado: soma('valorAuditado'), valorCobrado: soma('valorCobrado'),
-        totalDeclaradas: soma('declaradas'), totalProgramadas: soma('programadas'),
+        totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
         visitasPendentes: todas.filter(v => v.statusFinal === 'suspeita' || v.statusFinal === 'revisao').length,
         fotosPendentes: fotos.filter(f => f.status === 'suspeita' || f.status === 'revisao').length
       },
@@ -1166,14 +1247,17 @@
     const per = (aud.periodos || []).map(p => `${formatarDataBR(p.inicio)} a ${formatarDataBR(p.fim)}`).join(' | ') || 'não identificado';
     let extra = '';
     if (aud.total && aud.total.fotosPendentes > 0) {
-      extra += `<p style="font-size: 12px; margin-top: 6px; color: #C0392B;">⚠️ ${aud.total.fotosPendentes} foto(s) aguardando revisão (aba Revisão). Ao decidir, as comprovadas podem subir.</p>`;
+      extra += `<p style="font-size: 12px; margin-top: 6px; color: #C0392B;">⚠️ ${aud.total.fotosPendentes} foto(s) aguardando revisão${Modo === 'publicado' ? ' manual: o resultado ainda pode mudar' : ' (aba Revisão). Ao decidir, as comprovadas podem subir'}.</p>`;
     }
     const naoMap = Object.entries(aud.redesNaoMapeadas || {});
     if (naoMap.length) {
       extra += `<p style="font-size: 12px; margin-top: 6px; color: #C0392B;">⚠️ Visitas comprovadas de rede(s) que não existem no Fechamento (ficaram fora dos totais): ${naoMap.map(([r, q]) => esc(r) + ' (' + q + ')').join(', ')}.</p>`;
     }
+    const texto = aud.periodoAuditado
+      ? `<strong>Período auditado:</strong> ${esc(formatarDataBR(aud.periodoAuditado.inicio))} a ${esc(formatarDataBR(aud.periodoAuditado.fim))}. Neste mês a auditoria vale só para este período: "Declaradas" são as visitas do Relatório de Tempo nesses dias e as fotos de outros dias foram ignoradas (${aud.foraPeriodo || 0}). Cobrado, desconto e valor auditado referem-se apenas ao período.`
+      : `<strong>Cobertura das fotos:</strong> ${esc(per)}. O Fechamento é mensal: enquanto faltarem PDFs (ou partes do book) do mês, as comprovadas ficam abaixo do real e o gap/desconto ficam superestimados.`;
     return `<div class="card" style="border-left-color: #F39C12; padding: 15px;">
-      <p style="font-size: 12px; line-height: 1.4;"><strong>Cobertura das fotos:</strong> ${esc(per)}. O Fechamento é mensal: enquanto faltarem PDFs (ou partes do book) do mês, as comprovadas ficam abaixo do real e o gap/desconto ficam superestimados.</p>
+      <p style="font-size: 12px; line-height: 1.4;">${texto}</p>
       ${extra}
     </div>`;
   }
@@ -1335,12 +1419,12 @@
         <div class="card" style="margin: 0; border-left-color: var(--cor-texto-secundario); padding: 15px;">
           <h2 style="font-size: 10px;">Programadas</h2>
           <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-texto); margin: 5px 0;">${total.totalProgramadas || 0}</p>
-          <p style="font-size: 10px;">Contratado</p>
+          <p style="font-size: 10px;">${mesDados.periodoAuditado ? 'Contrato do mês inteiro' : 'Contratado'}</p>
         </div>
         <div class="card" style="margin: 0; border-left-color: var(--cor-destaque); padding: 15px;">
           <h2 style="font-size: 10px;">Declaradas</h2>
           <p style="font-family: var(--fonte-titulo); font-size: 22px; font-weight: 900; color: var(--cor-texto); margin: 5px 0;">${total.totalDeclaradas || 0}</p>
-          <p style="font-size: 10px;">Pacto</p>
+          <p style="font-size: 10px;">${mesDados.periodoAuditado ? 'Rel. de Tempo, no período' : 'Pacto'}</p>
         </div>
         <div class="card" style="margin: 0; border-left-color: var(--cor-primaria); padding: 15px;">
           <h2 style="font-size: 10px;">Comprovadas</h2>
@@ -1762,7 +1846,7 @@
           <span style="font-weight: bold;">Programadas (Contrato)</span><span>${total.totalProgramadas || 0}</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;">
-          <span style="font-weight: bold;">Declaradas (Pacto)</span><span>${total.totalDeclaradas || 0}</span>
+          <span style="font-weight: bold;">${mesDados.periodoAuditado ? 'Declaradas (Rel. de Tempo, período)' : 'Declaradas (Pacto)'}</span><span>${total.totalDeclaradas || 0}</span>
         </div>
         <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); font-weight: bold; margin-bottom: 10px;">
           <span>Comprovadas (Fotos)</span><span>${total.comprovadas}</span>
@@ -1843,8 +1927,260 @@
     renderizarDashboard();
     renderizarConfig();
     renderizarAdmin();
+    iniciarPublicacao(); // decide entre dados locais (operador) e resultados publicados (visitante)
   });
 </script>
 <!-- ═══ FIM SUBBLOCO 08 ═══ -->
+<!-- ═══ SUBBLOCO 09 — PUBLICAÇÃO DOS RESULTADOS + MODO LEITURA ═══ -->
+<script>
+  // Os resultados publicados ficam em resultados/indice.json e resultados/AAAA-MM.json, na raiz do repositório
+  // (ao lado do index.html). Só os RESULTADOS vão para lá: nada de fotos, hashes ou planilhas originais.
+  const Publicado = { indice: null, guardaLocal: null };
+  const CAMINHO_PUBLICADO = 'resultados/';
+  const TELAS_DO_OPERADOR = ['admin', 'revisao', 'config'];
+
+  async function buscarJSONPublicado(caminho) {
+    try {
+      const r = await fetch(caminho + '?v=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch (e) { return null; }
+  }
+
+  function formatarDataHora(iso) {
+    const d = new Date(iso);
+    return isNaN(d) ? '?' : d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  }
+
+  // ── MODO LEITURA (quem abre o link só vê os resultados publicados) ──
+  function aplicarModoNaInterface() {
+    document.querySelectorAll('nav button').forEach(b => {
+      b.style.display = (Modo === 'publicado' && TELAS_DO_OPERADOR.includes(b.dataset.tela)) ? 'none' : '';
+    });
+    auditoriaDrillState = { rede: null, loja: null };
+    atualizarBarraFonte();
+    document.querySelector('nav button[data-tela="dashboard"]').click();
+  }
+
+  async function entrarModoPublicado(mes) {
+    const idx = Publicado.indice;
+    if (!idx || !idx.meses || idx.meses.length === 0) return false;
+    const alvo = mes || idx.meses[0].mes;
+    const dados = await buscarJSONPublicado(CAMINHO_PUBLICADO + alvo + '.json');
+    if (!dados || !dados.auditoria) { alert('Não foi possível carregar os resultados publicados de ' + alvo + '.'); return false; }
+    if (Modo === 'local') Publicado.guardaLocal = { config: Estado.config, meses: Estado.meses };
+    Modo = 'publicado'; // a partir daqui salvarEstado() não grava nada: os dados locais ficam intactos
+    Estado.config = { ...Publicado.guardaLocal.config, mesAtivo: alvo };
+    Estado.meses = { [alvo]: {
+      fechamento: [], lojas: [], relatorioTempo: [], periodosPDF: [],
+      fotos: dados.fotos || [], periodoAuditado: dados.periodoAuditado || null, auditoria: dados.auditoria
+    } };
+    aplicarModoNaInterface();
+    return true;
+  }
+
+  function sairModoPublicado() {
+    if (Modo !== 'publicado' || !Publicado.guardaLocal) return;
+    Estado.config = Publicado.guardaLocal.config;
+    Estado.meses = Publicado.guardaLocal.meses;
+    Modo = 'local';
+    aplicarModoNaInterface();
+  }
+
+  function atualizarBarraFonte() {
+    const el = document.getElementById('barra-fonte');
+    const idx = Publicado.indice;
+    if (!idx || !idx.meses || idx.meses.length === 0) { el.style.display = 'none'; return; }
+    el.style.display = 'flex';
+    const estiloBtn = 'padding: 5px 10px; background: transparent; color: var(--cor-primaria); border: 1px solid var(--cor-primaria); border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;';
+
+    if (Modo === 'publicado') {
+      const mes = Estado.config.mesAtivo;
+      const info = idx.meses.find(m => m.mes === mes) || {};
+      el.innerHTML = `
+        <span>📢 <strong>Resultados publicados</strong>${info.geradoEm ? ' · atualizados em ' + esc(formatarDataHora(info.geradoEm)) : ''}</span>
+        <span style="display: flex; gap: 8px; align-items: center;">
+          <select id="sel-mes-publicado" style="padding: 4px; border: 1px solid #CCC; border-radius: 4px; font-size: 12px;">
+            ${idx.meses.map(m => `<option value="${esc(m.mes)}" ${m.mes === mes ? 'selected' : ''}>${esc(m.mes)}</option>`).join('')}
+          </select>
+          <button id="btn-area-operador" style="${estiloBtn}">Área do operador</button>
+        </span>`;
+      document.getElementById('sel-mes-publicado').addEventListener('change', (e) => entrarModoPublicado(e.target.value));
+      document.getElementById('btn-area-operador').addEventListener('click', sairModoPublicado);
+    } else {
+      el.innerHTML = `
+        <span>💻 Você está vendo os <strong>dados deste navegador</strong>.</span>
+        <button id="btn-ver-publicado" style="${estiloBtn}">Ver resultados publicados</button>`;
+      document.getElementById('btn-ver-publicado').addEventListener('click', () => {
+        const existe = idx.meses.some(m => m.mes === Estado.config.mesAtivo);
+        entrarModoPublicado(existe ? Estado.config.mesAtivo : undefined);
+      });
+    }
+  }
+
+  // Quem não tem dados locais (visitante) cai direto nos resultados publicados.
+  async function iniciarPublicacao() {
+    Publicado.indice = await buscarJSONPublicado(CAMINHO_PUBLICADO + 'indice.json');
+    const temLocal = Object.values(Estado.meses).some(m => m && m.auditoria);
+    const temPublicado = Publicado.indice && Publicado.indice.meses && Publicado.indice.meses.length > 0;
+    if (temPublicado && !temLocal) await entrarModoPublicado();
+    else atualizarBarraFonte();
+  }
+
+  // ── PUBLICAÇÃO (operador) ──
+  // Grava os arquivos no repositório pela API do GitHub, com um token que fica só neste navegador.
+  function lerAcessoGitHub() {
+    let salvo = {};
+    try { salvo = JSON.parse(localStorage.getItem('cockpit_gh') || '{}'); } catch (e) {}
+    const host = location.hostname;
+    return {
+      owner: salvo.owner || (host.endsWith('.github.io') ? host.split('.')[0] : ''),
+      repo: salvo.repo || ((location.pathname.split('/').filter(Boolean)[0] || '').match(/\.html?$/i) ? '' : (location.pathname.split('/').filter(Boolean)[0] || '')),
+      token: salvo.token || ''
+    };
+  }
+
+  function htmlCardPublicacao() {
+    const a = lerAcessoGitHub();
+    const campo = 'width: 100%; padding: 10px; margin: 5px 0 12px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);';
+    const rot = 'font-size: 12px; font-weight: bold; color: var(--cor-texto);';
+    return `
+      <div class="card">
+        <h2>Publicar Resultados</h2>
+        <p style="font-size: 13px; margin-bottom: 12px;">Grava os resultados do mês ativo (<strong>${esc(Estado.config.mesAtivo)}</strong>) no repositório do site, para qualquer pessoa ver pelo link. O processamento continua neste navegador e as <strong>fotos não são publicadas</strong>. Os nomes de redes, lojas e promotores e os valores ficam visíveis a quem tiver o link.</p>
+        <label style="${rot}">Usuário do GitHub:</label>
+        <input type="text" id="gh-owner" value="${esc(a.owner)}" autocomplete="off" style="${campo}">
+        <label style="${rot}">Repositório:</label>
+        <input type="text" id="gh-repo" value="${esc(a.repo)}" autocomplete="off" style="${campo}">
+        <label style="${rot}">Token de acesso:</label>
+        <input type="password" id="gh-token" value="${esc(a.token)}" autocomplete="off" placeholder="github_pat_..." style="${campo}">
+        <p style="font-size: 11px; margin-bottom: 12px; color: var(--cor-texto-secundario);">Como criar: GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token. Em "Repository access" escolha só este repositório e, em "Repository permissions", marque <em>Contents: Read and write</em>. O token fica apenas neste navegador e não entra no backup.</p>
+        <button id="btn-publicar" style="width: 100%; padding: 12px; background: var(--cor-destaque); color: var(--cor-primaria); border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">📢 Publicar resultados</button>
+        <div id="msg-publicar" style="margin-top: 10px; text-align: center; font-weight: bold; font-size: 13px; color: var(--cor-primaria);"></div>
+      </div>`;
+  }
+
+  function paraBase64(texto) {
+    const bytes = new TextEncoder().encode(texto);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+
+  function deBase64(b64) {
+    const bin = atob(String(b64).replace(/\s/g, ''));
+    return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+  }
+
+  function erroGitHub(r) {
+    const textos = {
+      401: 'Token inválido ou expirado.',
+      403: 'Sem permissão. O token precisa de "Contents: Read and write" neste repositório.',
+      404: 'Repositório não encontrado (confira usuário e nome) ou o token não tem acesso a ele.',
+      409: 'Conflito ao gravar (alguém publicou ao mesmo tempo). Tente de novo.',
+      422: 'O GitHub recusou a gravação. Tente de novo.'
+    };
+    return new Error(textos[r.status] || `Erro do GitHub (${r.status}).`);
+  }
+
+  function ghContents(acesso, metodo, caminho, corpo) {
+    return fetch(`https://api.github.com/repos/${encodeURIComponent(acesso.owner)}/${encodeURIComponent(acesso.repo)}/contents/${caminho}`, {
+      method: metodo, cache: 'no-store',
+      headers: Object.assign({
+        'Accept': 'application/vnd.github+json',
+        'Authorization': 'Bearer ' + acesso.token,
+        'X-GitHub-Api-Version': '2022-11-28'
+      }, corpo ? { 'Content-Type': 'application/json' } : {}),
+      body: corpo ? JSON.stringify(corpo) : undefined
+    });
+  }
+
+  async function ghLerArquivo(acesso, caminho) { // { sha, texto } ou null se o arquivo ainda não existe
+    const r = await ghContents(acesso, 'GET', caminho);
+    if (r.status === 404) return null;
+    if (!r.ok) throw erroGitHub(r);
+    const j = await r.json();
+    return { sha: j.sha, texto: j.content ? deBase64(j.content) : null };
+  }
+
+  async function ghGravarArquivo(acesso, caminho, texto, sha, mensagem) {
+    const corpo = { message: mensagem, content: paraBase64(texto) };
+    if (sha) corpo.sha = sha;
+    const r = await ghContents(acesso, 'PUT', caminho, corpo);
+    if (!r.ok) throw erroGitHub(r);
+  }
+
+  function montarSnapshotMes(mes) {
+    const m = Estado.meses[mes];
+    const a = m.auditoria;
+    return {
+      versao: 1, mes, geradoEm: new Date().toISOString(),
+      periodoAuditado: m.periodoAuditado || null,
+      auditoria: Object.assign({}, a, {
+        visitasAgrupadas: (a.visitasAgrupadas || []).map(v => ({
+          promotor: v.promotor, data: v.data, loja: v.loja, rede: v.rede, qtdFotos: v.qtdFotos || 0, statusFinal: v.statusFinal
+        }))
+      }),
+      fotos: (m.fotos || []).map(f => ({ id: f.id, pagina: f.pagina, status: f.status })) // só o status: serve para as contagens do Relatório
+    };
+  }
+
+  async function publicarResultados() {
+    if (Modo !== 'local') return;
+    const msg = document.getElementById('msg-publicar');
+    const btn = document.getElementById('btn-publicar');
+    const mostrar = (t, cor) => { msg.style.color = cor || 'var(--cor-primaria)'; msg.textContent = t; };
+
+    const acesso = {
+      owner: document.getElementById('gh-owner').value.trim(),
+      repo: document.getElementById('gh-repo').value.trim(),
+      token: document.getElementById('gh-token').value.trim()
+    };
+    if (!acesso.owner || !acesso.repo || !acesso.token) { mostrar('Preencha usuário, repositório e token.', '#E74C3C'); return; }
+
+    const mes = Estado.config.mesAtivo;
+    const m = Estado.meses[mes];
+    if (!m || !m.auditoria) { mostrar('Processe a auditoria deste mês antes de publicar.', '#E74C3C'); return; }
+
+    const pend = m.auditoria.total.fotosPendentes || 0;
+    if (pend > 0 && !confirm(`Ainda há ${pend} foto(s) aguardando revisão. Os números podem mudar depois. Publicar assim mesmo?`)) return;
+    if (!confirm(`Publicar os resultados de ${mes} em ${acesso.owner}/${acesso.repo}?\n\nQualquer pessoa com o link do site poderá ver redes, lojas, nomes de promotores e valores. As fotos NÃO são publicadas.`)) return;
+
+    btn.disabled = true;
+    try {
+      localStorage.setItem('cockpit_gh', JSON.stringify(acesso));
+      mostrar('Publicando...');
+      const snap = montarSnapshotMes(mes);
+      const caminhoMes = CAMINHO_PUBLICADO + mes + '.json';
+      const arqMes = await ghLerArquivo(acesso, caminhoMes);
+      await ghGravarArquivo(acesso, caminhoMes, JSON.stringify(snap), arqMes && arqMes.sha, `Resultados da auditoria ${mes}`);
+
+      const caminhoIdx = CAMINHO_PUBLICADO + 'indice.json';
+      const arqIdx = await ghLerArquivo(acesso, caminhoIdx);
+      let indice = { versao: 1, meses: [] };
+      if (arqIdx && arqIdx.texto) { try { indice = JSON.parse(arqIdx.texto); } catch (e) { /* recria o índice */ } }
+      const t = m.auditoria.total;
+      indice.meses = (indice.meses || []).filter(x => x.mes !== mes)
+        .concat([{ mes, geradoEm: snap.geradoEm, periodoAuditado: snap.periodoAuditado, totalDeclaradas: t.totalDeclaradas, comprovadas: t.comprovadas }])
+        .sort((a, b) => b.mes.localeCompare(a.mes));
+      indice.atualizadoEm = snap.geradoEm;
+      await ghGravarArquivo(acesso, caminhoIdx, JSON.stringify(indice), arqIdx && arqIdx.sha, `Índice dos resultados (${mes})`);
+
+      Publicado.indice = indice;
+      atualizarBarraFonte();
+      mostrar('✅ Publicado. O site pode levar de 1 a 10 minutos para mostrar a atualização.');
+    } catch (e) {
+      mostrar('❌ ' + (e instanceof TypeError ? 'Falha de conexão com o GitHub.' : e.message), '#E74C3C');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function configurarPublicacao() {
+    const btn = document.getElementById('btn-publicar');
+    if (btn) btn.addEventListener('click', publicarResultados);
+  }
+</script>
+<!-- ═══ FIM SUBBLOCO 09 ═══ -->
 </body>
 </html>
