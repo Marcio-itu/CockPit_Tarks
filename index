@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CockPit Tarks | Auditoria de Trade Marketing</title>
+    
+    <!-- Bibliotecas via CDN (serão usadas nas próximas Partes) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+    <style>
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 02 — CSS MOBILE-FIRST (CockPit Tarks)
+           ═══════════════════════════════════════════════════════════════ */
+        :root {
+            --cor-primaria: #0A3D2E;
+            --cor-destaque: #D4AF37;
+            --cor-fundo: #121212;
+            --cor-fundo-card: #1E1E1E;
+            --cor-texto: #F5F5F5;
+            --cor-texto-secundario: #A0A0A0;
+            --cor-sucesso: #00C853;
+            --cor-alerta: #FFB300;
+            --cor-perigo: #D32F2F;
+            --cor-borda: #333333;
+            --fonte-principal: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--fonte-principal);
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ── HEADER ────────────────────────────────────────────────── */
+        header {
+            background-color: var(--cor-primaria);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--cor-destaque);
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 120px; height: 100%;
+            background: linear-gradient(135deg, transparent 0%, rgba(212, 175, 55, 0.15) 50%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1;
+        }
+
+        .logo-placeholder {
+            width: 44px; height: 44px;
+            background-color: var(--cor-destaque);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: var(--cor-primaria);
+            font-size: 20px;
+            border: 2px solid var(--cor-fundo);
+        }
+
+        .titulo-header h1 {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: var(--cor-destaque);
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        .titulo-header span {
+            font-size: 9px;
+            color: var(--cor-texto-secundario);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* ── NAV ────────────────────────────────────────────────────── */
+        nav {
+            background-color: var(--cor-fundo-card);
+            display: flex;
+            justify-content: space-around;
+            padding: 6px 4px;
+            border-bottom: 1px solid var(--cor-borda);
+            flex-shrink: 0;
+            overflow-x: auto;
+            gap: 2px;
+        }
+
+        nav button {
+            background: transparent;
+            border: none;
+            color: var(--cor-texto-secundario);
+            font-size: 11px;
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        nav button.ativo {
+            background-color: var(--cor-primaria);
+            color: var(--cor-destaque);
+        }
+
+        nav button:hover { color: var(--cor-texto); }
+
+        /* ── MIOLO ──────────────────────────────────────────────────── */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--cor-borda) var(--cor-fundo);
+        }
+
+        /* ── TELAS ──────────────────────────────────────────────────── */
+        .tela { display: none; animation: fadeIn 0.3s ease; }
+        .tela.ativa { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── CARDS ──────────────────────────────────────────────────── */
+        .card {
+            background-color: var(--cor-fundo-card);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--cor-destaque);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            font-size: 14px;
+            color: var(--cor-destaque);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card p {
+            font-size: 13px;
+            color: var(--cor-texto-secundario);
+            line-height: 1.5;
+        }
+
+        .placeholder-tela {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--cor-texto-secundario);
+            border: 2px dashed var(--cor-borda);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .placeholder-tela h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: var(--cor-texto);
+        }
+
+        /* ── FOOTER ─────────────────────────────────────────────────── */
+        footer {
+            background-color: var(--cor-primaria);
+            padding: 8px;
+            text-align: center;
+            font-size: 10px;
+            color: var(--cor-texto-secundario);
+            border-top: 1px solid var(--cor-borda);
+            flex-shrink: 0;
+        }
+
+        /* ── RESPONSIVIDADE ────────────────────────────────────────── */
+        @media (min-width: 768px) {
+            nav button { font-size: 13px; padding: 10px 18px; }
+            .titulo-header h1 { font-size: 22px; }
+            .titulo-header span { font-size: 10px; }
+            main { padding: 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── HEADER ────────────────────────────────────────────────── -->
+    <header>
+        <div class="logo-container">
+            <div class="logo-placeholder">T</div>
+            <div class="titulo-header">
+                <h1>CockPit Tarks</h1>
+                <span>Grupo Tarks | Auditoria de Trade</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── NAV ────────────────────────────────────────────────────── -->
+    <nav>
+        <button class="ativo" data-tela="dashboard">Dashboard</button>
+        <button data-tela="admin">Admin</button>
+        <button data-tela="auditoria">Auditoria</button>
+        <button data-tela="relatorio">Relatório</button>
+        <button data-tela="config">Configurações</button>
+    </nav>
+
+    <!-- ── MIOLO ──────────────────────────────────────────────────── -->
+    <main>
+
+        <!-- TELA 1: DASHBOARD -->
+        <div id="tela-dashboard" class="tela ativa">
+            <div class="card">
+                <h2>Visão Geral</h2>
+                <p>Resumo do mês: visitas declaradas, comprovadas e % de atingimento.</p>
+            </div>
+            <div class="placeholder-tela">
+                <h3>Dashboard em construção</h3>
+                <p>Os cards de métricas, gráficos e alertas aparecerão aqui.</p>
+            </div>
+        </div>
+
+        <!-- TELA 2: ADMIN -->
+        <div id="tela-admin" class="tela">
+            <div class="card">
+                <h2>Administração</h2>
+                <p>Upload de planilhas (Excel e PDFs), revisão de fotos, backup e configurações.</p>
+            </div>
+            <div class="placeholder-tela">
+                <h3>Área Administrativa em construção</h3>
+                <p>Aqui você poderá subir as planilhas de comprovação e gerenciar o sistema.</p>
+            </div>
+        </div>
+
+        <!-- TELA 3: AUDITORIA -->
+        <div id="tela-auditoria" class="tela">
+            <div class="card">
+                <h2>Auditoria de Lojas</h2>
+                <p>Lista de lojas com status: 100% comprovado, divergência, suspeita ou duplicata.</p>
+            </div>
+            <div class="placeholder-tela">
+                <h3>Auditoria em construção</h3>
+                <p>Após importar os dados, a lista de lojas e os status aparecerão aqui.</p>
+            </div>
+        </div>
+
+        <!-- TELA 4: RELATÓRIO -->
+        <div id="tela-relatorio" class="tela">
+            <div class="card">
+                <h2>Relatório de Auditoria</h2>
+                <p>Relatório executivo com divergências, miniaturas das fotos e status.</p>
+            </div>
+            <div class="placeholder-tela">
+                <h3>Relatório em construção</h3>
+                <p>Após a auditoria, você poderá exportar o relatório em PDF.</p>
+            </div>
+        </div>
+
+        <!-- TELA 5: CONFIGURAÇÕES -->
+        <div id="tela-config" class="tela">
+            <div class="card">
+                <h2>Configurações</h2>
+                <p>Janelas de tempo, redes conhecidas, e outras configurações do sistema.</p>
+            </div>
+            <div class="placeholder-tela">
+                <h3>Configurações em construção</h3>
+                <p>Aqui você poderá ajustar os parâmetros de auditoria.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ── FOOTER ─────────────────────────────────────────────────── -->
+    <footer>
+        CockPit Tarks &copy; 2026 | Grupo Tarks | Auditoria de Trade Marketing
+    </footer>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SUBBLOCO 03 — ESTADO GLOBAL E NAVEGAÇÃO
+         ═══════════════════════════════════════════════════════════════ -->
+    <script>
+        // Navegação entre telas
+        document.addEventListener('DOMContentLoaded', () => {
+            const botoesNav = document.querySelectorAll('nav button');
+            const telas = document.querySelectorAll('.tela');
+
+            botoesNav.forEach(botao => {
+                botao.addEventListener('click', () => {
+                    const nomeTela = botao.dataset.tela;
+                    botoesNav.forEach(b => b.classList.remove('ativo'));
+                    telas.forEach(t => t.classList.remove('ativa'));
+                    botao.classList.add('ativo');
+                    document.getElementById(`tela-${nomeTela}`).classList.add('ativa');
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
+    <!-- ═══════════════════════════════════════════════════════════════
+         PARTE 2 — IMPORTAÇÃO DO EXCEL
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- TELA DE IMPORTAÇÃO DE EXCEL (substitui o placeholder da Tela Admin) -->
+    <script>
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 04 — PARSER DO EXCEL (SheetJS + cálculo de fórmulas)
+           ═══════════════════════════════════════════════════════════════ */
+        const Estado = {
+            config: {
+                janelaDuplicata: 10, // minutos
+                janelaSuspeita: 60,  // minutos
+                mesAtual: '2026-10'
+            },
+            redes: [],
+            lojas: [],
+            visitasDeclaradas: [],
+            fotos: [],
+            visitasComprovadas: [],
+            auditoria: {
+                totalDeclaradas: 0,
+                totalComprovadas: 0,
+                divergencias: [],
+                suspeitas: [],
+                duplicatas: []
+            }
+        };
+
+        // Lê um arquivo Excel e devolve um objeto com as abas
+        function lerExcel(arquivo) {
+            return new Promise((resolve, reject) => {
+                const leitor = new FileReader();
+                leitor.onload = (e) => {
+                    try {
+                        const dados = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(dados, { type: 'array' });
+                        resolve(workbook);
+                    } catch (erro) {
+                        reject(erro);
+                    }
+                };
+                leitor.onerror = reject;
+                leitor.readAsArrayBuffer(arquivo);
+            });
+        }
+
+        // Extrai os dados da aba "sistematica" (fechamento PACTO x TUBAINA)
+        function extrairSistematica(workbook) {
+            const nomeAba = 'sistematica';
+            if (!workbook.SheetNames.includes(nomeAba)) {
+                throw new Error('Aba "sistematica" não encontrada no Excel.');
+            }
+            const aba = workbook.Sheets[nomeAba];
+            const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
+
+            // A linha 3 (índice 2) é o cabeçalho real (as duas primeiras são título)
+            const cabecalho = linhas[2];
+            const dados = linhas.slice(3);
+
+            const redes = [];
+            const visitas = [];
+
+            dados.forEach(linha => {
+                const rede = String(linha[2] || '').trim(); // Coluna C: REDE
+                const custo = parseFloat(linha[3]) || 0;    // Coluna D: CUSTO DA VISITA
+                const qtdLojas = parseInt(linha[4]) || 0;   // Coluna E: QTD LOJAS
+                const visitasSemana = parseInt(linha[5]) || 0; // Coluna F: VISITAS/SEMANA
+                const programadas = parseInt(linha[6]) || 0; // Coluna G: VISITAS PROGRAMADAS/MÊS
+                const realizadas = parseInt(linha[7]) || 0; // Coluna H: VISITAS REALIZADAS/MÊS
+                const custoTotal = parseFloat(linha[8]) || 0; // Coluna I: TOTAL PROGRAMADO
+                const custoEfetivo = parseFloat(linha[9]) || 0; // Coluna J: TOTAL EFETIVO
+                const efetividade = parseFloat(linha[10]) || 0; // Coluna K: EFETIVIDADE
+
+                if (rede && rede !== 'TOTAL') {
+                    redes.push({ rede, custo, qtdLojas, visitasSemana, programadas, realizadas, custoTotal, custoEfetivo, efetividade });
+                    visitas.push({ rede, programadas, realizadas });
+                }
+            });
+
+            return { redes, visitas };
+        }
+
+        // Calcula fórmula simples (fallback para quando o cache não existe)
+        function calcularFormula(formula, aba) {
+            // Remove o "=" inicial
+            let expr = formula.replace(/^=/, '');
+            
+            // Substitui SUM, COUNTA por funções JS
+            // Exemplo: =SUM(F3*4*E3) → SUM(F3*4*E3)
+            // Exemplo: =COUNTA(G3:L3) → COUNTA(G3:L3)
+            // Exemplo: =H3/G3 → H3/G3
+            
+            // Substitui referências de célula por valores
+            expr = expr.replace(/([A-Z]+)(\d+)/g, (match, col, row) => {
+                const cell = aba[`${col}${row}`];
+                if (cell && cell.v !== undefined) {
+                    return cell.v;
+                }
+                return '0';
+            });
+            
+            // Substitui SUM(a,b,c) por a+b+c
+            expr = expr.replace(/SUM\(([^)]+)\)/g, (match, args) => {
+                return `(${args.split(/[,+]/).join('+')})`;
+            });
+            
+            // Substitui COUNTA(a,b,c) por contagem de não-vazios
+            // (simplificado: retorna 1 se algum valor existe)
+            expr = expr.replace(/COUNTA\(([^)]+)\)/g, (match, args) => {
+                return `1`;
+            });
+            
+            try {
+                return eval(expr);
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 05 — NORMALIZAÇÃO DE REDES E LOJAS
+           ═══════════════════════════════════════════════════════════════ */
+        
+        // Dicionário de redes conhecidas (extraído das planilhas)
+        const REDES_CONHECIDAS = [
+            'ATACADÃO', 'NAGUMO', 'CARREFOUR', 'X', 'AKKI', 'MERCADÃO', 
+            'CHAMA', 'AYUMI', 'KAÇULA', 'MEGASTOCK', 'REDE SIMCO', 'TENDA', 
+            'MINI PREÇO', 'PRABAR', 'HIGA', 'ATAC CRESCER', 'G2', 'CATO', 
+            'SÃO VICENTE', 'ALVORADA', 'PARANÁ', 'DELTA', 'COPEBE', 'SINCO',
+            'PISTONI', 'ADEGA CRESCER'
+        ];
+
+        // Normaliza um nome (remove acentos, converte para maiúsculas)
+        function normalizar(texto) {
+            return String(texto)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toUpperCase()
+                .trim();
+        }
+
+        // Separa cidade e complemento do nome da loja
+        function separarCidadeComplemento(nomeLoja) {
+            const palavras = nomeLoja.split(' ');
+            if (palavras.length === 1) {
+                return { cidade: nomeLoja, complemento: '' };
+            }
+            // Heurística: primeira palavra é a cidade, resto é complemento
+            return {
+                cidade: palavras[0],
+                complemento: palavras.slice(1).join(' ')
+            };
+        }
+
+        // Extrai as lojas das abas operacionais (ATACADÃO, CARREFOUR, etc.)
+        function extrairLojas(workbook) {
+            const lojas = [];
+            workbook.SheetNames.forEach(nomeAba => {
+                if (nomeAba === 'sistematica') return; // Pula a aba mestra
+                const aba = workbook.Sheets[nomeAba];
+                const linhas = XLSX.utils.sheet_to_json(aba, { header: 1, defval: '' });
+                
+                // Procura o cabeçalho (linha que contém "Nome da Loja" ou "Promotor")
+                let inicioDados = -1;
+                for (let i = 0; i < linhas.length; i++) {
+                    const linhaStr = linhas[i].join(' ');
+                    if (linhaStr.includes('Nome da Loja') || linhaStr.includes('Promotor')) {
+                        inicioDados = i + 1;
+                        break;
+                    }
+                }
+                if (inicioDados === -1) return; // Não encontrou cabeçalho
+
+                // Extrai as lojas a partir da linha de dados
+                for (let i = inicioDados; i < linhas.length; i++) {
+                    const linha = linhas[i];
+                    const nomeLoja = String(linha[1] || '').trim(); // Coluna B: Nome da Loja
+                    const promotor = String(linha[2] || '').trim(); // Coluna C: Promotor
+                    
+                    if (nomeLoja && nomeLoja !== 'TOTAL' && nomeLoja !== 'Nome da Loja') {
+                        const { cidade, complemento } = separarCidadeComplemento(nomeLoja);
+                        lojas.push({
+                            rede: normalizar(nomeAba),
+                            nomeOriginal: nomeLoja,
+                            cidade: normalizar(cidade),
+                            complemento: normalizar(complemento),
+                            promotor: normalizar(promotor)
+                        });
+                    }
+                }
+            });
+            return lojas;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 06 — TELA DE IMPORTAÇÃO DE EXCEL
+           ═══════════════════════════════════════════════════════════════ */
+        
+        // Função para renderizar a tela de importação
+        function renderizarImportacaoExcel() {
+            const container = document.getElementById('tela-admin');
+            container.innerHTML = `
+                <div class="card">
+                    <h2>Importar Excel (Fechamento Pacto)</h2>
+                    <p>Selecione o arquivo .xlsx do fechamento mensal.</p>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <input type="file" id="input-excel" accept=".xlsx, .xls" 
+                           style="display: none;">
+                    <button id="btn-selecionar-excel" class="card" 
+                            style="width: 100%; cursor: pointer; text-align: center; padding: 20px; color: var(--cor-destaque); font-weight: bold;">
+                        Clique para selecionar o arquivo Excel
+                    </button>
+                </div>
+                <div id="preview-excel" style="display: none;">
+                    <div class="card">
+                        <h2>Prévia da Importação</h2>
+                        <div id="preview-conteudo"></div>
+                    </div>
+                    <button id="btn-confirmar-excel" 
+                            style="width: 100%; padding: 12px; background: var(--cor-sucesso); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                        Confirmar Importação
+                    </button>
+                </div>
+                <div id="mensagem-excel"></div>
+            `;
+
+            // Eventos
+            const btnSelecionar = document.getElementById('btn-selecionar-excel');
+            const inputExcel = document.getElementById('input-excel');
+            const previewExcel = document.getElementById('preview-excel');
+            const previewConteudo = document.getElementById('preview-conteudo');
+            const btnConfirmar = document.getElementById('btn-confirmar-excel');
+            const mensagem = document.getElementById('mensagem-excel');
+
+            let dadosImportados = null;
+
+            btnSelecionar.addEventListener('click', () => inputExcel.click());
+
+            inputExcel.addEventListener('change', async (e) => {
+                const arquivo = e.target.files[0];
+                if (!arquivo) return;
+
+                mensagem.innerHTML = '<p style="color: var(--cor-alerta);">Processando Excel...</p>';
+
+                try {
+                    const workbook = await lerExcel(arquivo);
+                    
+                    // Extrai dados da sistematica
+                    const { redes, visitas } = extrairSistematica(workbook);
+                    
+                    // Extrai lojas das abas operacionais
+                    const lojas = extrairLojas(workbook);
+
+                    dadosImportados = { redes, visitas, lojas, workbook };
+
+                    // Preview
+                    previewConteudo.innerHTML = `
+                        <p><strong>Redes encontradas:</strong> ${redes.length}</p>
+                        <p><strong>Lojas encontradas:</strong> ${lojas.length}</p>
+                        <p><strong>Visitas declaradas:</strong> ${visitas.reduce((acc, v) => acc + v.realizadas, 0)}</p>
+                        <p><strong>Abas do Excel:</strong> ${workbook.SheetNames.join(', ')}</p>
+                    `;
+                    previewExcel.style.display = 'block';
+                    mensagem.innerHTML = '<p style="color: var(--cor-sucesso);">✅ Excel processado com sucesso!</p>';
+                } catch (erro) {
+                    mensagem.innerHTML = `<p style="color: var(--cor-perigo);">❌ Erro: ${erro.message}</p>`;
+                }
+            });
+
+            btnConfirmar.addEventListener('click', () => {
+                if (!dadosImportados) return;
+                
+                // Salva no estado global
+                Estado.redes = dadosImportados.redes;
+                Estado.lojas = dadosImportados.lojas;
+                Estado.visitasDeclaradas = dadosImportados.visitas;
+
+                // Salva no localStorage
+                localStorage.setItem('cockpit_estado', JSON.stringify({
+                    redes: Estado.redes,
+                    lojas: Estado.lojas,
+                    visitasDeclaradas: Estado.visitasDeclaradas,
+                    config: Estado.config
+                }));
+
+                mensagem.innerHTML = '<p style="color: var(--cor-sucesso);">✅ Dados salvos no sistema!</p>';
+                
+                // Muda para a tela de auditoria
+                setTimeout(() => {
+                    document.querySelector('nav button[data-tela="auditoria"]').click();
+                }, 1000);
+            });
+        }
+
+        // Renderiza a tela de importação quando a aba Admin é clicada
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnAdmin = document.querySelector('nav button[data-tela="admin"]');
+            if (btnAdmin) {
+                btnAdmin.addEventListener('click', () => {
+                    renderizarImportacaoExcel();
+                });
+            }
+        });
+    </script>
+        <!-- ═══════════════════════════════════════════════════════════════
+         PARTE 3A — LEITURA DE PDF, OCR E HASH VISUAL
+         ═══════════════════════════════════════════════════════════════ -->
+    <script>
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 07 — EXTRAÇÃO DE TEXTO E IMAGENS DO PDF
+           ═══════════════════════════════════════════════════════════════ */
+        
+        // Configuração do PDF.js (Worker)
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+        // Processa um PDF inteiro, página por página
+        async function processarPDF(arquivo, callbackProgresso) {
+            const arrayBuffer = await arquivo.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const totalPaginas = pdf.numPages;
+            const fotosExtraidas = [];
+
+            for (let i = 1; i <= totalPaginas; i++) {
+                // Atualiza barra de progresso
+                if (callbackProgresso) callbackProgresso(i, totalPaginas);
+
+                const pagina = await pdf.getPage(i);
+                
+                // 1. Extrai o texto lateral (metadados fáceis)
+                const textoConteudo = await pagina.getTextContent();
+                const textoBruto = textoConteudo.items.map(item => item.str).join(' ');
+                
+                // 2. Extrai a imagem (para OCR e Hash)
+                const operacoes = await pagina.getOperatorList();
+                let imagemBase64 = null;
+                
+                // Procura a imagem principal da página (geralmente a primeira imagem grande)
+                for (let j = 0; j < operacoes.fnArray.length; j++) {
+                    if (operacoes.fnArray[j] === pdfjsLib.OPS.paintImageXObject) {
+                        const imgName = operacoes.argsArray[j][0];
+                        try {
+                            const img = await pagina.objs.get(imgName);
+                            if (img && img.width > 100 && img.height > 100) { // Ignora ícones pequenos
+                                imagemBase64 = await converterImagemParaBase64(img);
+                                break;
+                            }
+                        } catch (e) {
+                            console.warn('Erro ao extrair imagem da página', i, e);
+                        }
+                    }
+                }
+
+                // 3. Se encontrou imagem, faz OCR e Hash
+                let dadosFoto = null;
+                if (imagemBase64) {
+                    // OCR na legenda (parte inferior da imagem)
+                    const textoOCR = await fazerOCRnaLegenda(imagemBase64);
+                    
+                    // Hash visual (para detectar duplicatas/fraudes)
+                    const hashVisual = await gerarHashVisual(imagemBase64);
+
+                    dadosFoto = {
+                        pagina: i,
+                        dataHora: extrairDataHora(textoBruto),
+                        promotor: extrairPromotor(textoBruto),
+                        produto: extrairProduto(textoBruto),
+                        textoOCR: textoOCR,
+                        imagemBase64: imagemBase64,
+                        hashVisual: hashVisual,
+                        redeOCR: null, // Será preenchido no cruzamento
+                        lojaOCR: null, // Será preenchido no cruzamento
+                        status: 'pendente'
+                    };
+                    fotosExtraidas.push(dadosFoto);
+                }
+
+                // Salva progresso a cada 50 páginas (segurança)
+                if (i % 50 === 0) {
+                    localStorage.setItem('cockpit_pdf_progresso', JSON.stringify({
+                        paginaAtual: i,
+                        total: totalPaginas,
+                        fotos: fotosExtraidas
+                    }));
+                }
+            }
+
+            return fotosExtraidas;
+        }
+
+        // Converte imagem do PDF.js para Base64
+        function converterImagemParaBase64(img) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                
+                const imageData = ctx.createImageData(img.width, img.height);
+                imageData.data.set(img.data);
+                ctx.putImageData(imageData, 0, 0);
+                
+                resolve(canvas.toDataURL('image/jpeg', 0.8));
+            });
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 08 — OCR DA LEGENDA (Tesseract.js)
+           ═══════════════════════════════════════════════════════════════ */
+        
+        let workerOCR = null;
+
+        // Inicializa o worker do Tesseract (só uma vez)
+        async function inicializarOCR() {
+            if (!workerOCR) {
+                workerOCR = await Tesseract.createWorker('por'); // Português
+            }
+            return workerOCR;
+        }
+
+        // Faz OCR na parte inferior da imagem (onde fica a legenda)
+        async function fazerOCRnaLegenda(imagemBase64) {
+            try {
+                const worker = await inicializarOCR();
+                
+                // Recorta a parte inferior da imagem (legenda)
+                const imagemRecortada = await recortarLegenda(imagemBase64);
+                
+                // Roda o OCR
+                const { data: { text } } = await worker.recognize(imagemRecortada);
+                return text;
+            } catch (erro) {
+                console.warn('Erro no OCR:', erro);
+                return '';
+            }
+        }
+
+        // Recorta a parte inferior da imagem (onde fica a legenda)
+        function recortarLegenda(imagemBase64) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    // Pega só a parte inferior (25% da altura)
+                    const alturaRecorte = Math.floor(img.height * 0.25);
+                    canvas.width = img.width;
+                    canvas.height = alturaRecorte;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, img.height - alturaRecorte, img.width, alturaRecorte, 0, 0, img.width, alturaRecorte);
+                    
+                    resolve(canvas.toDataURL('image/jpeg', 0.9));
+                };
+                img.src = imagemBase64;
+            });
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 09 — EXTRAÇÃO DE METADADOS (Texto Lateral)
+           ═══════════════════════════════════════════════════════════════ */
+        
+        // Extrai Data e Hora do texto lateral
+        function extrairDataHora(texto) {
+            // Padrão: 19/10/2026 - 11:51
+            const match = texto.match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
+            if (match) {
+                return { data: match[1], hora: match[2] };
+            }
+            return null;
+        }
+
+        // Extrai Promotor do texto lateral
+        function extrairPromotor(texto) {
+            const match = texto.match(/Promotor:\s*([A-Za-zÀ-ÿ\s]+?)(?=\s*Produto|$)/i);
+            if (match) {
+                return match[1].trim();
+            }
+            return null;
+        }
+
+        // Extrai Produto do texto lateral
+        function extrairProduto(texto) {
+            const match = texto.match(/Produto:\s*([A-Za-zÀ-ÿ0-9\s.,/]+?)(?=\s*$)/i);
+            if (match) {
+                return match[1].trim().substring(0, 100); // Limita tamanho
+            }
+            return null;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 10 — HASH VISUAL (Detecção de Fotos Idênticas)
+           ═══════════════════════════════════════════════════════════════ */
+        
+        // Gera um hash visual simplificado (baseado em histograma de cores)
+        // Em produção, o ideal seria usar pHash, mas para MVP usamos histograma
+        async function gerarHashVisual(imagemBase64) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 32;  // Reduz para 32x32
+                    canvas.height = 32;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 32, 32);
+                    
+                    const imageData = ctx.getImageData(0, 0, 32, 32);
+                    const data = imageData.data;
+                    
+                    // Calcula histograma de luminância (simplificado)
+                    let hash = '';
+                    for (let i = 0; i < data.length; i += 4) {
+                        const luminancia = (data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114);
+                        hash += luminancia > 128 ? '1' : '0';
+                    }
+                    
+                    // Converte binário para hexadecimal (mais compacto)
+                    let hashHex = '';
+                    for (let i = 0; i < hash.length; i += 4) {
+                        const nibble = hash.substring(i, i + 4);
+                        hashHex += parseInt(nibble, 2).toString(16);
+                    }
+                    
+                    resolve(hashHex);
+                };
+                img.src = imagemBase64;
+            });
+        }
+
+        // Compara dois hashes e retorna similaridade (0 a 1)
+        function compararHashes(hash1, hash2) {
+            if (hash1 === hash2) return 1.0;
+            if (hash1.length !== hash2.length) return 0;
+            
+            let iguais = 0;
+            for (let i = 0; i < hash1.length; i++) {
+                if (hash1[i] === hash2[i]) iguais++;
+            }
+            return iguais / hash1.length;
+        }
+    </script>
+        <!-- ═══════════════════════════════════════════════════════════════
+         PARTE 3B — CRUZAMENTO, AUDITORIA E REVISÃO
+         ═══════════════════════════════════════════════════════════════ -->
+    <script>
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 11 — CRUZAMENTO (OCR + EXCEL)
+           ═══════════════════════════════════════════════════════════════ */
+        
+        // Extrai Rede e Loja do texto do OCR
+        function extrairRedeLojaOCR(textoOCR) {
+            const linhas = textoOCR.split('\n').map(l => l.trim()).filter(l => l);
+            let rede = null;
+            let loja = null;
+
+            // Heurística: procura uma linha que seja uma rede conhecida
+            for (const linha of linhas) {
+                const linhaNorm = normalizar(linha);
+                for (const r of REDES_CONHECIDAS) {
+                    if (linhaNorm === normalizar(r)) {
+                        rede = r;
+                        break;
+                    }
+                }
+                if (rede) break;
+            }
+
+            // Se encontrou a rede, a próxima linha (ou a mesma) deve ser a loja
+            if (rede) {
+                const indexRede = linhas.findIndex(l => normalizar(l) === normalizar(rede));
+                if (indexRede !== -1 && indexRede + 1 < linhas.length) {
+                    loja = linhas[indexRede + 1];
+                }
+            } else {
+                // Fallback: pega a primeira linha que não é data/hora
+                for (const linha of linhas) {
+                    if (!linha.match(/\d{2}\/\d{2}\/\d{4}/) && !linha.includes('Foto:')) {
+                        loja = linha;
+                        break;
+                    }
+                }
+            }
+
+            return { rede, loja };
+        }
+
+        // Calcula similaridade entre duas strings (0 a 1)
+        function similaridade(str1, str2) {
+            const s1 = normalizar(str1);
+            const s2 = normalizar(str2);
+            if (s1 === s2) return 1;
+            if (s1.length === 0 || s2.length === 0) return 0;
+
+            // Distância de Levenshtein
+            const track = Array(s2.length + 1).fill(null).map(() => Array(s1.length + 1).fill(null));
+            for (let i = 0; i <= s1.length; i += 1) track[0][i] = i;
+            for (let j = 0; j <= s2.length; j += 1) track[j][0] = j;
+
+            for (let j = 1; j <= s2.length; j += 1) {
+                for (let i = 1; i <= s1.length; i += 1) {
+                    const indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
+                    track[j][i] = Math.min(
+                        track[j][i - 1] + 1,
+                        track[j - 1][i] + 1,
+                        track[j - 1][i - 1] + indicator
+                    );
+                }
+            }
+            const distancia = track[s2.length][s1.length];
+            return 1 - (distancia / Math.max(s1.length, s2.length));
+        }
+
+        // Cruza uma foto do PDF com uma loja do Excel
+        function cruzarFotoComExcel(foto, lojasExcel) {
+            const { rede, loja } = extrairRedeLojaOCR(foto.textoOCR);
+            
+            if (!loja) {
+                return { status: 'sem_par', lojaExcel: null };
+            }
+
+            // Procura a loja no Excel com tolerância de 20%
+            let melhorMatch = null;
+            let maiorSimilaridade = 0;
+
+            for (const lojaExcel of lojasExcel) {
+                // Se a rede bate (ou não foi identificada), compara o nome da loja
+                const sim = similaridade(loja, lojaExcel.nomeOriginal);
+                if (sim > maiorSimilaridade) {
+                    maiorSimilaridade = sim;
+                    melhorMatch = lojaExcel;
+                }
+            }
+
+            // Se a similaridade for maior que 80% (tolerância de 20%), considera match
+            if (maiorSimilaridade >= 0.8) {
+                return { 
+                    status: 'cruzado', 
+                    lojaExcel: melhorMatch, 
+                    similaridade: maiorSimilaridade,
+                    redeOCR: rede,
+                    lojaOCR: loja
+                };
+            }
+
+            return { status: 'sem_par', lojaOCR: loja, redeOCR: rede };
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 12 — AUDITORIA (DEDUPLICAÇÃO E FRAUDE)
+           ═══════════════════════════════════════════════════════════════ */
+        
+        function auditarFotos(fotos) {
+            const fotosAuditadas = fotos.map(f => ({ ...f }));
+
+            // 1. Cruzamento com Excel
+            fotosAuditadas.forEach(foto => {
+                if (foto.status === 'pendente') {
+                    const resultado = cruzarFotoComExcel(foto, Estado.lojas);
+                    foto.status = resultado.status;
+                    foto.lojaExcel = resultado.lojaExcel;
+                    foto.similaridade = resultado.similaridade;
+                    foto.redeOCR = resultado.redeOCR;
+                    foto.lojaOCR = resultado.lojaOCR;
+                }
+            });
+
+            // 2. Deduplicação técnica (mesma loja, mesmo promotor, mesmo dia)
+            const fotosPorLojaPromotorDia = {};
+            fotosAuditadas.forEach(foto => {
+                if (foto.status !== 'cruzado') return;
+                const chave = `${foto.lojaExcel.nomeOriginal}|${foto.promotor}|${foto.dataHora?.data}`;
+                if (!fotosPorLojaPromotorDia[chave]) fotosPorLojaPromotorDia[chave] = [];
+                fotosPorLojaPromotorDia[chave].push(foto);
+            });
+
+            // Para cada grupo, ordena por hora e verifica duplicatas
+            Object.values(fotosPorLojaPromotorDia).forEach(grupo => {
+                grupo.sort((a, b) => {
+                    const horaA = a.dataHora?.hora || '00:00';
+                    const horaB = b.dataHora?.hora || '00:00';
+                    return horaA.localeCompare(horaB);
+                });
+
+                for (let i = 0; i < grupo.length; i++) {
+                    const fotoAtual = grupo[i];
+                    if (fotoAtual.status === 'duplicata') continue;
+
+                    for (let j = i + 1; j < grupo.length; j++) {
+                        const fotoComparada = grupo[j];
+                        if (fotoComparada.status === 'duplicata') continue;
+
+                        // Calcula diferença de tempo em minutos
+                        const horaA = fotoAtual.dataHora?.hora.split(':').map(Number) || [0, 0];
+                        const horaB = fotoComparada.dataHora?.hora.split(':').map(Number) || [0, 0];
+                        const diffMinutos = Math.abs((horaB[0] * 60 + horaB[1]) - (horaA[0] * 60 + horaA[1]));
+
+                        // Compara hashes visuais
+                        const similaridadeHash = compararHashes(fotoAtual.hashVisual, fotoComparada.hashVisual);
+
+                        if (similaridadeHash > 0.9) {
+                            // Fotos visualmente idênticas
+                            if (diffMinutos <= 10) {
+                                fotoComparada.status = 'duplicata';
+                                fotoComparada.motivo = `Duplicata técnica (${diffMinutos} min de diferença)`;
+                            } else if (diffMinutos <= 60) {
+                                fotoComparada.status = 'duplicata_alerta';
+                                fotoComparada.motivo = `Fotos espaçadas (${diffMinutos} min). Verificar.`;
+                            } else {
+                                fotoComparada.status = 'suspeita_fraude';
+                                fotoComparada.motivo = `Mesma foto em horários distantes (${diffMinutos} min). Suspeita.`;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 3. Detecção de fraude (mesma foto em lojas diferentes)
+            for (let i = 0; i < fotosAuditadas.length; i++) {
+                const foto1 = fotosAuditadas[i];
+                if (foto1.status !== 'cruzado') continue;
+
+                for (let j = i + 1; j < fotosAuditadas.length; j++) {
+                    const foto2 = fotosAuditadas[j];
+                    if (foto2.status !== 'cruzado') continue;
+
+                    // Se são lojas diferentes
+                    if (foto1.lojaExcel.nomeOriginal !== foto2.lojaExcel.nomeOriginal) {
+                        const similaridadeHash = compararHashes(foto1.hashVisual, foto2.hashVisual);
+                        if (similaridadeHash > 0.9) {
+                            foto1.status = 'suspeita_fraude';
+                            foto2.status = 'suspeita_fraude';
+                            foto1.motivo = `Mesma foto usada na loja ${foto2.lojaExcel.nomeOriginal}`;
+                            foto2.motivo = `Mesma foto usada na loja ${foto1.lojaExcel.nomeOriginal}`;
+                        }
+                    }
+                }
+            }
+
+            return fotosAuditadas;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 13 — TELA DE IMPORTAÇÃO DE PDF E REVISÃO
+           ═══════════════════════════════════════════════════════════════ */
+        
+        function renderizarImportacaoPDF() {
+            const container = document.getElementById('tela-admin');
+            container.innerHTML += `
+                <div class="card" style="margin-top: 20px;">
+                    <h2>Importar PDF (Evidências Mob2con)</h2>
+                    <p>Selecione o arquivo PDF (até ~500 páginas).</p>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <input type="file" id="input-pdf" accept=".pdf" style="display: none;">
+                    <button id="btn-selecionar-pdf" class="card" 
+                            style="width: 100%; cursor: pointer; text-align: center; padding: 20px; color: var(--cor-destaque); font-weight: bold;">
+                        Clique para selecionar o PDF
+                    </button>
+                </div>
+                <div id="progresso-pdf" style="display: none; margin-bottom: 16px;">
+                    <div style="background: var(--cor-borda); border-radius: 8px; height: 20px; overflow: hidden;">
+                        <div id="barra-progresso" style="background: var(--cor-destaque); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                    <p id="texto-progresso" style="text-align: center; margin-top: 8px; font-size: 12px; color: var(--cor-texto-secundario);"></p>
+                </div>
+                <div id="mensagem-pdf"></div>
+            `;
+
+            const btnSelecionar = document.getElementById('btn-selecionar-pdf');
+            const inputPdf = document.getElementById('input-pdf');
+            const progressoPdf = document.getElementById('progresso-pdf');
+            const barraProgresso = document.getElementById('barra-progresso');
+            const textoProgresso = document.getElementById('texto-progresso');
+            const mensagem = document.getElementById('mensagem-pdf');
+
+            btnSelecionar.addEventListener('click', () => inputPdf.click());
+
+            inputPdf.addEventListener('change', async (e) => {
+                const arquivo = e.target.files[0];
+                if (!arquivo) return;
+
+                progressoPdf.style.display = 'block';
+                mensagem.innerHTML = '<p style="color: var(--cor-alerta);">Processando PDF. Isso pode levar alguns minutos...</p>';
+
+                try {
+                    const fotos = await processarPDF(arquivo, (atual, total) => {
+                        const porcentagem = Math.floor((atual / total) * 100);
+                        barraProgresso.style.width = porcentagem + '%';
+                        textoProgresso.textContent = `Processando página ${atual} de ${total} (${porcentagem}%)`;
+                    });
+
+                    textoProgresso.textContent = '✅ PDF processado! Cruzando com Excel...';
+                    
+                    // Audita as fotos
+                    const fotosAuditadas = auditarFotos(fotos);
+                    
+                    // Salva no estado
+                    Estado.fotos = fotosAuditadas;
+                    localStorage.setItem('cockpit_fotos', JSON.stringify(fotosAuditadas));
+
+                    // Estatísticas
+                    const total = fotosAuditadas.length;
+                    const cruzadas = fotosAuditadas.filter(f => f.status === 'cruzado').length;
+                    const duplicatas = fotosAuditadas.filter(f => f.status === 'duplicata' || f.status === 'duplicata_alerta').length;
+                    const suspeitas = fotosAuditadas.filter(f => f.status === 'suspeita_fraude').length;
+                    const semPar = fotosAuditadas.filter(f => f.status === 'sem_par').length;
+
+                    mensagem.innerHTML = `
+                        <div class="card" style="border-left-color: var(--cor-sucesso);">
+                            <h2>✅ PDF Processado</h2>
+                            <p><strong>Total de fotos:</strong> ${total}</p>
+                            <p><strong>Cruzadas com Excel:</strong> ${cruzadas}</p>
+                            <p><strong>Duplicatas técnicas:</strong> ${duplicatas}</p>
+                            <p><strong>Suspeitas de fraude:</strong> ${suspeitas}</p>
+                            <p><strong>Sem par (revisar):</strong> ${semPar}</p>
+                        </div>
+                    `;
+
+                    progressoPdf.style.display = 'none';
+
+                    // Muda para a tela de auditoria
+                    setTimeout(() => {
+                        document.querySelector('nav button[data-tela="auditoria"]').click();
+                    }, 2000);
+
+                } catch (erro) {
+                    mensagem.innerHTML = `<p style="color: var(--cor-perigo);">❌ Erro: ${erro.message}</p>`;
+                    progressoPdf.style.display = 'none';
+                }
+            });
+        }
+
+        // Inicializa a tela de PDF quando a aba Admin é clicada
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnAdmin = document.querySelector('nav button[data-tela="admin"]');
+            if (btnAdmin) {
+                // Adiciona um pequeno delay para garantir que a tela de Excel já foi renderizada
+                btnAdmin.addEventListener('click', () => {
+                    setTimeout(renderizarImportacaoPDF, 100);
+                });
+            }
+        });
+    </script>
+        <!-- ═══════════════════════════════════════════════════════════════
+         PARTE 4 — DASHBOARD, AUDITORIA E RELATÓRIO
+         ═══════════════════════════════════════════════════════════════ -->
+    <script>
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 14 — DASHBOARD EXECUTIVO
+           ═══════════════════════════════════════════════════════════════ */
+        
+        function renderizarDashboard() {
+            const container = document.getElementById('tela-dashboard');
+            
+            // Carrega dados do estado
+            const redes = Estado.redes || [];
+            const visitasDeclaradas = Estado.visitasDeclaradas || [];
+            const fotos = Estado.fotos || [];
+
+            // Calcula métricas gerais
+            let totalDeclaradas = 0;
+            let totalComprovadas = 0;
+            let totalDuplicatas = 0;
+            let totalSuspeitas = 0;
+            let totalSemPar = 0;
+
+            visitasDeclaradas.forEach(v => {
+                totalDeclaradas += v.realizadas;
+            });
+
+            fotos.forEach(f => {
+                if (f.status === 'cruzado') totalComprovadas++;
+                else if (f.status === 'duplicata' || f.status === 'duplicata_alerta') totalDuplicatas++;
+                else if (f.status === 'suspeita_fraude') totalSuspeitas++;
+                else if (f.status === 'sem_par') totalSemPar++;
+            });
+
+            const atingimento = totalDeclaradas > 0 ? ((totalComprovadas / totalDeclaradas) * 100).toFixed(1) : 0;
+
+            // Renderiza o Dashboard
+            container.innerHTML = `
+                <div class="card" style="border-left-color: var(--cor-destaque);">
+                    <h2>Visão Geral — Auditoria de Trade Marketing</h2>
+                    <p>Dados consolidados do mês. Fonte: Excel Pacto + PDFs Mob2con.</p>
+                </div>
+
+                <!-- Cards de Métricas Principais -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div class="card" style="margin: 0; border-left-color: var(--cor-destaque);">
+                        <h2 style="font-size: 10px;">Visitas Declaradas</h2>
+                        <p style="font-size: 24px; font-weight: 900; color: var(--cor-destaque); margin: 0;">${totalDeclaradas}</p>
+                        <p style="font-size: 10px;">Excel Pacto</p>
+                    </div>
+                    <div class="card" style="margin: 0; border-left-color: var(--cor-sucesso);">
+                        <h2 style="font-size: 10px;">Visitas Comprovadas</h2>
+                        <p style="font-size: 24px; font-weight: 900; color: var(--cor-sucesso); margin: 0;">${totalComprovadas}</p>
+                        <p style="font-size: 10px;">Fotos PDF</p>
+                    </div>
+                </div>
+
+                <!-- Barra de Atingimento -->
+                <div class="card" style="border-left-color: var(--cor-primaria);">
+                    <h2>Efetividade de Visitas</h2>
+                    <div style="background: var(--cor-borda); border-radius: 8px; height: 24px; overflow: hidden; margin: 12px 0;">
+                        <div style="background: ${atingimento >= 80 ? 'var(--cor-sucesso)' : atingimento >= 50 ? 'var(--cor-alerta)' : 'var(--cor-perigo)'}; height: 100%; width: ${atingimento}%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">
+                            ${atingimento}%
+                        </div>
+                    </div>
+                    <p>${totalComprovadas} de ${totalDeclaradas} visitas comprovadas.</p>
+                </div>
+
+                <!-- Alertas de Auditoria -->
+                <div class="card" style="border-left-color: var(--cor-alerta);">
+                    <h2>Alertas de Auditoria</h2>
+                    <div style="display: flex; justify-content: space-between; margin-top: 12px;">
+                        <div style="text-align: center; flex: 1;">
+                            <p style="font-size: 20px; font-weight: 900; color: var(--cor-sucesso);">${totalComprovadas}</p>
+                            <p style="font-size: 10px;">✅ Válidas</p>
+                        </div>
+                        <div style="text-align: center; flex: 1;">
+                            <p style="font-size: 20px; font-weight: 900; color: var(--cor-alerta);">${totalDuplicatas}</p>
+                            <p style="font-size: 10px;">🔁 Duplicatas</p>
+                        </div>
+                        <div style="text-align: center; flex: 1;">
+                            <p style="font-size: 20px; font-weight: 900; color: var(--cor-perigo);">${totalSuspeitas}</p>
+                            <p style="font-size: 10px;">🚨 Suspeitas</p>
+                        </div>
+                        <div style="text-align: center; flex: 1;">
+                            <p style="font-size: 20px; font-weight: 900; color: var(--cor-texto-secundario);">${totalSemPar}</p>
+                            <p style="font-size: 10px;">❓ Sem Par</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumo por Rede -->
+                <div class="card">
+                    <h2>Resumo por Rede</h2>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--cor-borda);">
+                                    <th style="text-align: left; padding: 8px; color: var(--cor-destaque);">Rede</th>
+                                    <th style="text-align: center; padding: 8px; color: var(--cor-destaque);">Declaradas</th>
+                                    <th style="text-align: center; padding: 8px; color: var(--cor-destaque);">Comprovadas</th>
+                                    <th style="text-align: center; padding: 8px; color: var(--cor-destaque);">Atingimento</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${visitasDeclaradas.map(v => {
+                                    // Conta quantas fotos cruzadas existem para essa rede
+                                    const comprovadasRede = fotos.filter(f => f.status === 'cruzado' && f.lojaExcel && f.lojaExcel.rede === normalizar(v.rede)).length;
+                                    const pct = v.realizadas > 0 ? ((comprovadasRede / v.realizadas) * 100).toFixed(1) : 0;
+                                    return `
+                                        <tr style="border-bottom: 1px solid var(--cor-borda);">
+                                            <td style="padding: 8px;">${v.rede}</td>
+                                            <td style="text-align: center; padding: 8px;">${v.realizadas}</td>
+                                            <td style="text-align: center; padding: 8px;">${comprovadasRede}</td>
+                                            <td style="text-align: center; padding: 8px; color: ${pct >= 80 ? 'var(--cor-sucesso)' : pct >= 50 ? 'var(--cor-alerta)' : 'var(--cor-perigo)'}; font-weight: bold;">${pct}%</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <p style="text-align: center; font-size: 10px; color: var(--cor-texto-secundario); margin-top: 20px;">
+                    Evidência fotográfica com data, hora, promotor e loja declarados pela Mob2con. O sistema não verifica a localização geográfica da foto.
+                </p>
+            `;
+        }
+
+        // Renderiza o Dashboard ao carregar a tela
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tenta carregar dados do localStorage
+            const estadoSalvo = localStorage.getItem('cockpit_estado');
+            if (estadoSalvo) {
+                const dados = JSON.parse(estadoSalvo);
+                Estado.redes = dados.redes || [];
+                Estado.lojas = dados.lojas || [];
+                Estado.visitasDeclaradas = dados.visitasDeclaradas || [];
+            }
+
+            const fotosSalvas = localStorage.getItem('cockpit_fotos');
+            if (fotosSalvas) {
+                Estado.fotos = JSON.parse(fotosSalvas) || [];
+            }
+
+            renderizarDashboard();
+
+            // Atualiza o dashboard quando a aba é clicada
+            const btnDashboard = document.querySelector('nav button[data-tela="dashboard"]');
+            if (btnDashboard) {
+                btnDashboard.addEventListener('click', renderizarDashboard);
+            }
+        });
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 15 — TELA DE AUDITORIA (LISTA DE LOJAS)
+           ═══════════════════════════════════════════════════════════════ */
+        
+        function renderizarAuditoria() {
+            const container = document.getElementById('tela-auditoria');
+            const fotos = Estado.fotos || [];
+            const lojas = Estado.lojas || [];
+
+            if (fotos.length === 0) {
+                container.innerHTML = `
+                    <div class="card">
+                        <h2>Auditoria de Lojas</h2>
+                        <p>Nenhuma foto importada ainda. Vá até a aba <strong>Admin</strong> e importe o Excel e os PDFs.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Agrupa fotos por loja
+            const fotosPorLoja = {};
+            fotos.forEach(foto => {
+                const nomeLoja = foto.lojaExcel ? foto.lojaExcel.nomeOriginal : 'Sem Par';
+                if (!fotosPorLoja[nomeLoja]) fotosPorLoja[nomeLoja] = [];
+                fotosPorLoja[nomeLoja].push(foto);
+            });
+
+            // Renderiza a lista
+            let html = `
+                <div class="card">
+                    <h2>Auditoria de Lojas (${Object.keys(fotosPorLoja).length} lojas)</h2>
+                    <p>Clique em uma loja para ver os detalhes e revisar as fotos.</p>
+                </div>
+            `;
+
+            Object.keys(fotosPorLoja).sort().forEach(nomeLoja => {
+                const fotosLoja = fotosPorLoja[nomeLoja];
+                const validas = fotosLoja.filter(f => f.status === 'cruzado').length;
+                const duplicatas = fotosLoja.filter(f => f.status === 'duplicata' || f.status === 'duplicata_alerta').length;
+                const suspeitas = fotosLoja.filter(f => f.status === 'suspeita_fraude').length;
+                const semPar = fotosLoja.filter(f => f.status === 'sem_par').length;
+
+                let statusIcon = '✅';
+                let statusColor = 'var(--cor-sucesso)';
+                if (suspeitas > 0) { statusIcon = '🚨'; statusColor = 'var(--cor-perigo)'; }
+                else if (semPar > 0) { statusIcon = '❓'; statusColor = 'var(--cor-texto-secundario)'; }
+                else if (duplicatas > 0) { statusIcon = '🔁'; statusColor = 'var(--cor-alerta)'; }
+
+                html += `
+                    <div class="card" style="border-left-color: ${statusColor}; cursor: pointer;" onclick="abrirDetalhesLoja('${nomeLoja.replace(/'/g, "\\'")}')">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h2 style="margin: 0; font-size: 14px;">${statusIcon} ${nomeLoja}</h2>
+                                <p style="font-size: 10px; margin-top: 4px;">${fotosLoja.length} fotos no total</p>
+                            </div>
+                            <div style="text-align: right; font-size: 11px;">
+                                <p style="color: var(--cor-sucesso);">✅ ${validas} válidas</p>
+                                ${duplicatas > 0 ? `<p style="color: var(--cor-alerta);">🔁 ${duplicatas} duplicatas</p>` : ''}
+                                ${suspeitas > 0 ? `<p style="color: var(--cor-perigo);">🚨 ${suspeitas} suspeitas</p>` : ''}
+                                ${semPar > 0 ? `<p style="color: var(--cor-texto-secundario);">❓ ${semPar} sem par</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Abre os detalhes de uma loja
+        function abrirDetalhesLoja(nomeLoja) {
+            const fotos = Estado.fotos.filter(f => {
+                const nome = f.lojaExcel ? f.lojaExcel.nomeOriginal : 'Sem Par';
+                return nome === nomeLoja;
+            });
+
+            const container = document.getElementById('tela-auditoria');
+            
+            let html = `
+                <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+                    <button onclick="renderizarAuditoria()" style="background: transparent; border: none; color: var(--cor-destaque); cursor: pointer; font-weight: bold;">← Voltar</button>
+                    <h2 style="margin: 0; font-size: 14px;">${nomeLoja}</h2>
+                    <div></div>
+                </div>
+            `;
+
+            fotos.sort((a, b) => {
+                const dataA = a.dataHora?.data || '';
+                const dataB = b.dataHora?.data || '';
+                return dataA.localeCompare(dataB);
+            });
+
+            fotos.forEach(foto => {
+                let statusText = '';
+                let statusColor = '';
+                let acaoHtml = '';
+
+                if (foto.status === 'cruzado') {
+                    statusText = '✅ Válida';
+                    statusColor = 'var(--cor-sucesso)';
+                } else if (foto.status === 'duplicata') {
+                    statusText = '🔁 Duplicata Técnica';
+                    statusColor = 'var(--cor-alerta)';
+                } else if (foto.status === 'duplicata_alerta') {
+                    statusText = '⚠️ Fotos Espaçadas';
+                    statusColor = 'var(--cor-alerta)';
+                    acaoHtml = `<button onclick="marcarComoValida(${foto.pagina})" style="background: var(--cor-sucesso); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-top: 4px;">Marcar como Válida</button>`;
+                } else if (foto.status === 'suspeita_fraude') {
+                    statusText = '🚨 Suspeita de Fraude';
+                    statusColor = 'var(--cor-perigo)';
+                    acaoHtml = `
+                        <p style="font-size: 10px; color: var(--cor-perigo); margin-top: 4px;">${foto.motivo || ''}</p>
+                        <button onclick="confirmarFraude(${foto.pagina})" style="background: var(--cor-perigo); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-top: 4px;">Confirmar Fraude</button>
+                        <button onclick="marcarComoValida(${foto.pagina})" style="background: var(--cor-sucesso); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-top: 4px;">Marcar como Válida</button>
+                    `;
+                } else if (foto.status === 'sem_par') {
+                    statusText = '❓ Sem Par';
+                    statusColor = 'var(--cor-texto-secundario)';
+                    acaoHtml = `<p style="font-size: 10px; color: var(--cor-texto-secundario); margin-top: 4px;">OCR não conseguiu identificar a loja. Verifique a legenda.</p>`;
+                }
+
+                html += `
+                    <div class="card" style="border-left-color: ${statusColor};">
+                        <div style="display: flex; gap: 12px;">
+                            <img src="${foto.imagemBase64}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--cor-borda);" />
+                            <div style="flex: 1;">
+                                <p style="font-size: 11px; font-weight: bold; color: ${statusColor};">${statusText}</p>
+                                <p style="font-size: 10px;">Pág. ${foto.pagina} | ${foto.dataHora?.data || '?'} às ${foto.dataHora?.hora || '?'}</p>
+                                <p style="font-size: 10px;">Promotor: ${foto.promotor || '?'}</p>
+                                ${foto.lojaOCR ? `<p style="font-size: 10px; color: var(--cor-texto-secundario);">OCR: ${foto.lojaOCR}</p>` : ''}
+                                ${acaoHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Revisão manual: marcar como válida
+        function marcarComoValida(pagina) {
+            const foto = Estado.fotos.find(f => f.pagina === pagina);
+            if (foto) {
+                foto.status = 'cruzado';
+                foto.revisaoManual = 'valida';
+                localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
+                renderizarAuditoria();
+            }
+        }
+
+        // Revisão manual: confirmar fraude
+        function confirmarFraude(pagina) {
+            const foto = Estado.fotos.find(f => f.pagina === pagina);
+            if (foto) {
+                foto.status = 'fraude_confirmada';
+                foto.revisaoManual = 'fraude';
+                localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
+                renderizarAuditoria();
+            }
+        }
+
+        // Atualiza a auditoria quando a aba é clicada
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnAuditoria = document.querySelector('nav button[data-tela="auditoria"]');
+            if (btnAuditoria) {
+                btnAuditoria.addEventListener('click', renderizarAuditoria);
+            }
+        });
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 16 — RELATÓRIO (EXPORTAR PDF)
+           ═══════════════════════════════════════════════════════════════ */
+        
+        function renderizarRelatorio() {
+            const container = document.getElementById('tela-relatorio');
+            container.innerHTML = `
+                <div class="card">
+                    <h2>Relatório de Auditoria</h2>
+                    <p>Gere um relatório executivo com os dados da auditoria para apresentar à diretoria.</p>
+                </div>
+                <button onclick="window.print()" style="width: 100%; padding: 16px; background: var(--cor-destaque); color: var(--cor-primaria); border: none; border-radius: 8px; font-weight: 900; font-size: 16px; cursor: pointer; margin-bottom: 16px;">
+                    🖨️ Imprimir / Salvar como PDF
+                </button>
+                <div class="card">
+                    <h2>Glossário de Status</h2>
+                    <p><strong>✅ Válida:</strong> a foto foi cruzada com uma loja do Excel e é única no dia. Conta como visita comprovada.</p>
+                    <p><strong>🔁 Duplicata Técnica:</strong> a foto se repete (bug do sistema) na mesma loja, mesmo promotor, no mesmo dia. Conta apenas 1 vez.</p>
+                    <p><strong>⚠️ Fotos Espaçadas:</strong> a foto se repete na mesma loja, mas em horários distantes. Requer revisão manual.</p>
+                    <p><strong>🚨 Suspeita de Fraude:</strong> a mesma foto foi usada em lojas diferentes. O sistema não acusa sozinho. Requer revisão manual.</p>
+                    <p><strong>❓ Sem Par:</strong> o OCR não conseguiu identificar a loja. Requer revisão manual.</p>
+                </div>
+            `;
+        }
+
+        // Atualiza o relatório quando a aba é clicada
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnRelatorio = document.querySelector('nav button[data-tela="relatorio"]');
+            if (btnRelatorio) {
+                btnRelatorio.addEventListener('click', renderizarRelatorio);
+            }
+        });
+    </script>
+        <!-- ═══════════════════════════════════════════════════════════════
+         PARTE 5 — BACKUP E CONFIGURAÇÕES
+         ═══════════════════════════════════════════════════════════════ -->
+    <script>
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 17 — BACKUP (EXPORTAR / IMPORTAR JSON)
+           ═══════════════════════════════════════════════════════════════ */
+        
+        // Exporta todo o estado atual para um arquivo JSON
+        function exportarBackup() {
+            const dados = {
+                versao: '1.0',
+                dataExportacao: new Date().toISOString(),
+                config: Estado.config,
+                redes: Estado.redes,
+                lojas: Estado.lojas,
+                visitasDeclaradas: Estado.visitasDeclaradas,
+                fotos: Estado.fotos
+            };
+
+            const json = JSON.stringify(dados, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cockpit_tarks_backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            
+            URL.revokeObjectURL(url);
+        }
+
+        // Importa um arquivo JSON de backup
+        function importarBackup(arquivo) {
+            return new Promise((resolve, reject) => {
+                const leitor = new FileReader();
+                leitor.onload = (e) => {
+                    try {
+                        const dados = JSON.parse(e.target.result);
+                        
+                        // Restaura o estado
+                        if (dados.config) Estado.config = dados.config;
+                        if (dados.redes) Estado.redes = dados.redes;
+                        if (dados.lojas) Estado.lojas = dados.lojas;
+                        if (dados.visitasDeclaradas) Estado.visitasDeclaradas = dados.visitasDeclaradas;
+                        if (dados.fotos) Estado.fotos = dados.fotos;
+
+                        // Salva no localStorage
+                        localStorage.setItem('cockpit_estado', JSON.stringify({
+                            config: Estado.config,
+                            redes: Estado.redes,
+                            lojas: Estado.lojas,
+                            visitasDeclaradas: Estado.visitasDeclaradas
+                        }));
+                        localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
+
+                        resolve(dados);
+                    } catch (erro) {
+                        reject(erro);
+                    }
+                };
+                leitor.onerror = reject;
+                leitor.readAsText(arquivo);
+            });
+        }
+
+        // Renderiza a tela de Backup
+        function renderizarBackup() {
+            const container = document.getElementById('tela-config');
+            
+            container.innerHTML = `
+                <div class="card">
+                    <h2>Backup e Sincronização</h2>
+                    <p>Exporte os dados do CockPit Tarks para um arquivo JSON. Use esse arquivo para fazer backup ou para sincronizar do notebook para o celular.</p>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                    <button id="btn-exportar" style="flex: 1; padding: 16px; background: var(--cor-destaque); color: var(--cor-primaria); border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                        📥 Exportar Backup
+                    </button>
+                    <button id="btn-importar" style="flex: 1; padding: 16px; background: var(--cor-primaria); color: var(--cor-destaque); border: 1px solid var(--cor-destaque); border-radius: 8px; font-weight: bold; cursor: pointer;">
+                        📤 Importar Backup
+                    </button>
+                </div>
+                <input type="file" id="input-backup" accept=".json" style="display: none;">
+                <div id="mensagem-backup"></div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h2>Configurações de Auditoria</h2>
+                    
+                    <div style="margin-top: 12px;">
+                        <label style="font-size: 12px; color: var(--cor-texto-secundario);">Janela de Duplicata Técnica (minutos):</label>
+                        <input type="number" id="config-janela-duplicata" value="${Estado.config.janelaDuplicata}" 
+                               style="width: 100%; padding: 8px; margin-top: 4px; background: var(--cor-fundo); border: 1px solid var(--cor-borda); color: var(--cor-texto); border-radius: 4px;">
+                        <p style="font-size: 10px; color: var(--cor-texto-secundario); margin-top: 4px;">Fotos com diferença menor que este valor são consideradas duplicatas (bug do sistema).</p>
+                    </div>
+
+                    <div style="margin-top: 12px;">
+                        <label style="font-size: 12px; color: var(--cor-texto-secundario);">Janela de Suspeita de Fraude (minutos):</label>
+                        <input type="number" id="config-janela-suspeita" value="${Estado.config.janelaSuspeita}" 
+                               style="width: 100%; padding: 8px; margin-top: 4px; background: var(--cor-fundo); border: 1px solid var(--cor-borda); color: var(--cor-texto); border-radius: 4px;">
+                        <p style="font-size: 10px; color: var(--cor-texto-secundario); margin-top: 4px;">Fotos com diferença maior que este valor (na mesma loja) são consideradas suspeitas.</p>
+                    </div>
+
+                    <button id="btn-salvar-config" style="width: 100%; margin-top: 16px; padding: 12px; background: var(--cor-sucesso); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                        Salvar Configurações
+                    </button>
+                    <div id="mensagem-config"></div>
+                </div>
+
+                <div class="card" style="margin-top: 20px; border-left-color: var(--cor-perigo);">
+                    <h2>Zona de Perigo</h2>
+                    <p style="font-size: 11px;">Apaga todos os dados importados do sistema (Excel, PDFs e auditorias). Use com cuidado.</p>
+                    <button id="btn-limpar" style="width: 100%; margin-top: 12px; padding: 12px; background: var(--cor-perigo); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                        🗑️ Limpar Todos os Dados
+                    </button>
+                </div>
+            `;
+
+            // Eventos de Backup
+            document.getElementById('btn-exportar').addEventListener('click', exportarBackup);
+            
+            const inputBackup = document.getElementById('input-backup');
+            document.getElementById('btn-importar').addEventListener('click', () => inputBackup.click());
+            
+            inputBackup.addEventListener('change', async (e) => {
+                const arquivo = e.target.files[0];
+                if (!arquivo) return;
+                const msg = document.getElementById('mensagem-backup');
+                msg.innerHTML = '<p style="color: var(--cor-alerta);">Importando...</p>';
+                try {
+                    const dados = await importarBackup(arquivo);
+                    msg.innerHTML = `<p style="color: var(--cor-sucesso);">✅ Backup importado com sucesso! (${dados.fotos?.length || 0} fotos restauradas)</p>`;
+                    renderizarDashboard();
+                } catch (erro) {
+                    msg.innerHTML = `<p style="color: var(--cor-perigo);">❌ Erro: ${erro.message}</p>`;
+                }
+            });
+
+            // Eventos de Configuração
+            document.getElementById('btn-salvar-config').addEventListener('click', () => {
+                const janelaDup = parseInt(document.getElementById('config-janela-duplicata').value) || 10;
+                const janelaSus = parseInt(document.getElementById('config-janela-suspeita').value) || 60;
+                
+                Estado.config.janelaDuplicata = janelaDup;
+                Estado.config.janelaSuspeita = janelaSus;
+                
+                localStorage.setItem('cockpit_estado', JSON.stringify({
+                    config: Estado.config,
+                    redes: Estado.redes,
+                    lojas: Estado.lojas,
+                    visitasDeclaradas: Estado.visitasDeclaradas
+                }));
+
+                const msg = document.getElementById('mensagem-config');
+                msg.innerHTML = '<p style="color: var(--cor-sucesso);">✅ Configurações salvas!</p>';
+                setTimeout(() => msg.innerHTML = '', 3000);
+            });
+
+            // Evento de Limpar Dados
+            document.getElementById('btn-limpar').addEventListener('click', () => {
+                if (confirm('Tem certeza? Todos os dados importados serão apagados do navegador.')) {
+                    localStorage.removeItem('cockpit_estado');
+                    localStorage.removeItem('cockpit_fotos');
+                    localStorage.removeItem('cockpit_pdf_progresso');
+                    Estado.redes = [];
+                    Estado.lojas = [];
+                    Estado.visitasDeclaradas = [];
+                    Estado.fotos = [];
+                    alert('Dados apagados. Recarregue a página.');
+                    window.location.reload();
+                }
+            });
+        }
+
+        // Atualiza a tela de configurações quando a aba é clicada
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnConfig = document.querySelector('nav button[data-tela="config"]');
+            if (btnConfig) {
+                btnConfig.addEventListener('click', renderizarBackup);
+            }
+        });
+    </script>
+        <!-- ═══════════════════════════════════════════════════════════════
+         PARTE 6 — POLIMENTO FINAL (LOGO, ANIMAÇÕES, IMPRESSÃO)
+         ═══════════════════════════════════════════════════════════════ -->
+    <style>
+        /* ── ANIMAÇÕES DE VELOCIDADE (F1) ───────────────────────────── */
+        @keyframes velocidade {
+            0% { transform: translateX(-100%); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+
+        .linha-velocidade {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cor-destaque), transparent);
+            animation: velocidade 2s infinite linear;
+            pointer-events: none;
+        }
+
+        .card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--cor-destaque);
+            opacity: 0.8;
+        }
+
+        /* ── ESTILO DE IMPRESSÃO (PDF) ──────────────────────────────── */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                height: auto;
+                overflow: visible;
+            }
+            header, nav, footer, button, .card::before, .linha-velocidade {
+                display: none !important;
+            }
+            main {
+                padding: 0 !important;
+                max-width: 100% !important;
+                overflow: visible !important;
+            }
+            .card {
+                border: 1px solid #ccc !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+            }
+            .card h2, .card p, .card strong {
+                color: black !important;
+            }
+        }
+
+        /* ── LOGO OFICIAL ──────────────────────────────────────────── */
+        .logo-oficial {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: white;
+            padding: 2px;
+            border: 2px solid var(--cor-destaque);
+        }
+    </style>
+
+    <script>
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 18 — SUBSTITUIÇÃO DO LOGO E ANIMAÇÕES
+           ═══════════════════════════════════════════════════════════════ */
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Substitui o placeholder do logo pela imagem oficial
+            const logoPlaceholder = document.querySelector('.logo-placeholder');
+            if (logoPlaceholder) {
+                // Usando a imagem que você subiu. Se estiver no GitHub, troque o caminho para './logo-tarks.jpg'
+                // Para o MVP, usamos um placeholder com a letra T estilizada se a imagem falhar.
+                const img = document.createElement('img');
+                img.src = 'https://i.ibb.co/3k5Hq0B/logo-tarks.jpg'; // Exemplo de URL. Você deve subir a imagem no GitHub e trocar aqui.
+                img.alt = 'Tarks';
+                img.className = 'logo-oficial';
+                img.onerror = () => {
+                    // Se a imagem não carregar, volta para o placeholder
+                    logoPlaceholder.style.display = 'flex';
+                };
+                logoPlaceholder.style.display = 'none';
+                logoPlaceholder.parentNode.insertBefore(img, logoPlaceholder);
+            }
+
+            // Adiciona a linha de velocidade no header
+            const header = document.querySelector('header');
+            if (header) {
+                const linha = document.createElement('div');
+                linha.className = 'linha-velocidade';
+                header.appendChild(linha);
+            }
+        });
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 19 — TRATAMENTO DE ERROS AMIGÁVEL
+           ═══════════════════════════════════════════════════════════════ */
+        
+        // Verifica se as bibliotecas carregaram (se a internet caiu)
+        window.addEventListener('load', () => {
+            const bibliotecasOk = typeof XLSX !== 'undefined' && typeof pdfjsLib !== 'undefined' && typeof Tesseract !== 'undefined';
+            if (!bibliotecasOk) {
+                alert('⚠️ Atenção: Não foi possível carregar as bibliotecas do sistema. Verifique sua conexão com a internet e recarregue a página.');
+            }
+        });
+
+        // Bloqueia o zoom no celular (para não quebrar o layout)
+        document.addEventListener('gesturestart', function (e) {
+            e.preventDefault();
+        });
+
+        /* ═══════════════════════════════════════════════════════════════
+           SUBBLOCO 20 — REVISÃO MANUAL E IMPRESSÃO
+           ═══════════════════════════════════════════════════════════════ */
+        
+        // Função para imprimir apenas o relatório (esconde as outras abas)
+        function imprimirRelatorio() {
+            // Muda para a aba de relatório antes de imprimir
+            document.querySelector('nav button[data-tela="relatorio"]').click();
+            
+            // Pequeno delay para garantir que a tela renderizou
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        }
+
+        // Sobrescreve a função de impressão da Parte 4 para usar a nova
+        window.imprimirRelatorio = imprimirRelatorio;
+
+        // Adiciona o botão de impressão na tela de relatório
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnRelatorio = document.querySelector('nav button[data-tela="relatorio"]');
+            if (btnRelatorio) {
+                btnRelatorio.addEventListener('click', () => {
+                    setTimeout(() => {
+                        const container = document.getElementById('tela-relatorio');
+                        const btnImprimir = container.querySelector('button[onclick="window.print()"]');
+                        if (btnImprimir) {
+                            btnImprimir.setAttribute('onclick', 'imprimirRelatorio()');
+                        }
+                    }, 100);
+                });
+            }
+        });
+
+        // Função para revisar manualmente as fotos na Tela de Auditoria
+        // (Já implementada na Parte 4, mas garantimos que está acessível globalmente)
+        window.marcarComoValida = function(pagina) {
+            const foto = Estado.fotos.find(f => f.pagina === pagina);
+            if (foto) {
+                foto.status = 'cruzado';
+                foto.revisaoManual = 'valida';
+                localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
+                if (typeof renderizarAuditoria === 'function') renderizarAuditoria();
+                if (typeof renderizarDashboard === 'function') renderizarDashboard();
+            }
+        };
+
+        window.confirmarFraude = function(pagina) {
+            const foto = Estado.fotos.find(f => f.pagina === pagina);
+            if (foto) {
+                foto.status = 'fraude_confirmada';
+                foto.revisaoManual = 'fraude';
+                localStorage.setItem('cockpit_fotos', JSON.stringify(Estado.fotos));
+                if (typeof renderizarAuditoria === 'function') renderizarAuditoria();
+                if (typeof renderizarDashboard === 'function') renderizarDashboard();
+            }
+        };
+    </script>
+    
