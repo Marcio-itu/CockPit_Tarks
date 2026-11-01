@@ -1414,6 +1414,20 @@
   <!-- ═══ SUBBLOCO 07 — ADMIN COMPLETO + DASHBOARD ═══ -->
 <script>
   // ── FUNÇÕES AUXILIARES ──
+  // Quatro números-chave: planejadas → declaradas → comprovadas → gap
+  function htmlCaixasNumeros(pl, de, co, gap, opcoes) {
+    opcoes = opcoes || {};
+    const caixa = (rot, val, cor, sub) => `<div style="flex:1;min-width:70px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};">
+      <div style="font-size:10px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div>
+      <div style="font-family:var(--fonte-titulo);font-size:22px;font-weight:900;color:${cor};">${val}</div>
+      <div style="font-size:10px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
+    const pc = pctCadeia({ planejadas: pl, declaradas: de, comprovadas: co });
+    return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;">
+      ${pl == null ? '' : caixa('Planejadas', pl, '#7F8C8D', opcoes.subPlan || '')}
+      ${caixa('Declaradas', de, '#D4AF37', pc.declDoPlano == null ? '' : formatarPorcentagem(pc.declDoPlano) + ' do plano')}
+      ${caixa('Comprovadas', co, '#27AE60', formatarPorcentagem(pc.compDaDecl) + ' das declaradas')}
+      ${caixa('Gap', gap, '#E74C3C', 'declaradas − comprovadas')}</div>`;
+  }
   function diaSemanaCurto(iso) { const d = new Date(iso + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''); }
   // Dias com visitas declaradas sem comprovação (opcionalmente de uma rede)
   function diasSemComprovacao(aud, redeChave) {
@@ -1889,25 +1903,29 @@
       const porLoja = {};
       visitasAgrupadas.forEach(v => {
         if (v.rede !== chaveRedeAtual) return;
-        if (!porLoja[v.loja]) porLoja[v.loja] = { loja: v.loja, comprovadas: 0, pendentes: 0, semFoto: 0 };
+        if (!porLoja[v.loja]) porLoja[v.loja] = { loja: v.loja, declaradas: 0, comprovadas: 0, pendentes: 0, semFoto: 0, gap: 0 };
+        porLoja[v.loja].declaradas++;
         if (v.statusFinal === 'comprovada') porLoja[v.loja].comprovadas++;
         else if (v.statusFinal === 'suspeita' || v.statusFinal === 'revisao') porLoja[v.loja].pendentes++;
         else porLoja[v.loja].semFoto++;
       });
+      Object.values(porLoja).forEach(l => { l.gap = l.declaradas - l.comprovadas; });
 
-      const lojasArray = Object.values(porLoja).sort((a, b) => (b.semFoto - a.semFoto) || (a.comprovadas - b.comprovadas));
+      const lojasArray = Object.values(porLoja).sort((a, b) => (b.gap - a.gap) || (a.comprovadas - b.comprovadas));
 
       let linhas = '';
       if (lojasArray.length === 0) {
-        linhas = '<tr><td colspan="4" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita registrada para esta rede.</td></tr>';
+        linhas = '<tr><td colspan="6" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita registrada para esta rede.</td></tr>';
       } else {
         lojasArray.forEach(l => {
           linhas += `
             <tr data-loja="${esc(l.loja)}" style="border-bottom: 1px solid #EEE; cursor: pointer;">
               <td style="padding: 10px; font-size: 12px;">${esc(l.loja)} <span style="color: #AAA;">›</span></td>
+              <td style="padding: 10px; text-align: center; font-weight: bold;">${l.declaradas}</td>
               <td style="padding: 10px; text-align: center; color: #27AE60; font-weight: bold;">${l.comprovadas}</td>
               <td style="padding: 10px; text-align: center; color: #F39C12; font-weight: bold;">${l.pendentes}</td>
               <td style="padding: 10px; text-align: center; color: #E74C3C; font-weight: bold;">${l.semFoto}</td>
+              <td style="padding: 10px; text-align: center; color: #E74C3C; font-weight: bold;">${l.gap}</td>
             </tr>
           `;
         });
@@ -1917,16 +1935,19 @@
         <div class="card">
           <button id="btn-voltar-redes" style="padding: 8px 12px; background: transparent; border: 1px solid var(--cor-primaria); color: var(--cor-primaria); border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 15px;">‹ Voltar</button>
           <h2>Rede: ${esc(dadosRede.rede)}</h2>
-          <p style="font-size: 12px; margin-bottom: 5px;">${dadosRede.comprovadas} comprovadas de ${dadosRede.declaradas} declaradas (Gap: ${dadosRede.gap}).</p>
-          <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);">"Sem foto" = visita do Relatório de Tempo, dentro do período dos PDFs importados, sem nenhuma foto cruzada.</p>
+          ${htmlCaixasNumeros(dadosRede.planejadas || 0, dadosRede.declaradas, dadosRede.comprovadas, dadosRede.gap, { subPlan: mesDados.periodoAuditado ? 'no período' : 'no mês' })}
+          <p style="font-size: 12px; margin-bottom: 8px;">Desconto desta rede: <strong>${formatarMoeda(dadosRede.desconto)}</strong>.</p>
+          <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);">"Sem foto" = visita do Relatório de Tempo, dentro do período dos PDFs importados, sem nenhuma foto cruzada. As planejadas vêm do Fechamento por <strong>rede</strong>; o Fechamento não informa o plano de cada loja, por isso a tabela abaixo começa em declaradas.</p>
           <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
               <thead>
                 <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
                   <th style="padding: 10px; text-align: left;">Loja</th>
+                  <th style="padding: 10px; text-align: center;">Declar.</th>
                   <th style="padding: 10px; text-align: center;">Comprov.</th>
                   <th style="padding: 10px; text-align: center;">Pendentes</th>
                   <th style="padding: 10px; text-align: center;">Sem foto</th>
+                  <th style="padding: 10px; text-align: center;">Gap</th>
                 </tr>
               </thead>
               <tbody>${linhas}</tbody>
@@ -1962,6 +1983,7 @@
       <div class="card">
         <button id="btn-voltar-lojas" style="padding: 8px 12px; background: transparent; border: 1px solid var(--cor-primaria); color: var(--cor-primaria); border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 15px;">‹ Voltar para lojas</button>
         <h2>Loja: ${esc(auditoriaDrillState.loja)}</h2>
+        ${(() => { const co = visitas.filter(v => v.statusFinal === 'comprovada').length; return htmlCaixasNumeros(null, visitas.length, co, visitas.length - co); })()}
         <p style="font-size:11px;margin-bottom:10px;color:var(--cor-texto-secundario);">Toque numa visita para ver a evidência.</p>
         <div style="overflow-x: auto;">
           <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
