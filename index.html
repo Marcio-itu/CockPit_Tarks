@@ -13,42 +13,33 @@
     <style>
      <style>
       <style>
+    <style>
         /* ═══════════════════════════════════════════════════════════════
-           SUBBLOCO 02 — CSS MOBILE-FIRST (CockPit Tarks) - F1 EDITION
+           SUBBLOCO 02 — CSS MOBILE-FIRST (CockPit Tarks) - VERDADEIRO F1
            ═══════════════════════════════════════════════════════════════ */
         
-        /* Importando fontes do Google Fonts para dar o ar de velocidade */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Rajdhani:wght@500;700&display=swap');
 
         :root {
-            /* Cores Tarks (F1) - Cockpit */
-            --cor-primaria: #0A3D2E;      /* Verde escuro (Tarks) */
-            --cor-destaque: #D4AF37;       /* Dourado (Logo) */
+            /* Cores F1 */
+            --cor-primaria: #0A3D2E;      /* Verde Tarks (Header) */
+            --cor-destaque: #D4AF37;       /* Dourado Tarks */
+            --cor-fundo: #090B10;          /* Preto profundo (Asfalto) */
+            --cor-fundo-card: #12161F;     /* Grafite (Painel de instrumentos) */
+            --cor-borda: #2A3441;          /* Borda de LED apagado */
             
-            /* Fundo e Cards */
-            --cor-fundo: #0B0F19;          /* Preto/Azul profundo (F1) */
-            --cor-fundo-card: #151B26;     /* Grafite escuro (Cards) */
-            --cor-borda: #2A3441;          /* Borda sutil */
+            --cor-texto: #FFFFFF;          /* Branco */
+            --cor-texto-secundario: #8B949E; /* Cinza */
             
-            /* Textos */
-            --cor-texto: #F8F9FA;          /* Branco off */
-            --cor-texto-secundario: #8B949E; /* Cinza claro */
+            --cor-sucesso: #00E676;        /* Verde Neon */
+            --cor-alerta: #FFEA00;         /* Amarelo Neon */
+            --cor-perigo: #FF3D00;         /* Vermelho Neon */
             
-            /* Status (Velocidade) */
-            --cor-sucesso: #00E676;        /* Verde neon */
-            --cor-alerta: #FFEA00;         /* Amarelo vibrante */
-            --cor-perigo: #FF3D00;         /* Vermelho/laranja de alerta */
-            
-            /* Tipografia */
             --fonte-titulo: 'Rajdhani', sans-serif;
             --fonte-texto: 'Inter', sans-serif;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: var(--fonte-texto);
@@ -60,7 +51,7 @@
             overflow: hidden;
         }
 
-        /* ── HEADER (Visual F1) ────────────────────────────────────── */
+        /* ── HEADER ────────────────────────────────────────────────── */
         header {
             background: linear-gradient(90deg, #051C14 0%, var(--cor-primaria) 100%);
             padding: 12px 16px;
@@ -73,7 +64,7 @@
             overflow: hidden;
         }
 
-        /* Linha de velocidade no header */
+        /* Efeito de velocidade no header */
         header::after {
             content: '';
             position: absolute;
@@ -90,7 +81,6 @@
             z-index: 1;
         }
 
-        /* Mantendo o placeholder "T" bonito até vc subir o logo */
         .logo-placeholder {
             width: 44px; height: 44px;
             background-color: var(--cor-destaque);
@@ -124,16 +114,15 @@
             letter-spacing: 2px;
         }
 
-        /* ── NAV (Menu de Abas) ─────────────────────────────────────── */
+        /* ── NAV ────────────────────────────────────────────────────── */
         nav {
             background-color: var(--cor-fundo-card);
             display: flex;
             justify-content: space-around;
-            padding: 8px 4px;
+            padding: 0 4px;
             border-bottom: 1px solid var(--cor-borda);
             flex-shrink: 0;
             overflow-x: auto;
-            gap: 2px;
         }
 
         nav button {
@@ -143,19 +132,19 @@
             font-family: var(--fonte-titulo);
             font-size: 14px;
             font-weight: 700;
-            padding: 8px 12px;
-            border-radius: 4px;
+            padding: 14px 12px;
             cursor: pointer;
             white-space: nowrap;
             transition: all 0.2s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
+            border-bottom: 3px solid transparent;
         }
 
         nav button.ativo {
-            background-color: rgba(212, 175, 55, 0.1);
             color: var(--cor-destaque);
             border-bottom: 3px solid var(--cor-destaque);
+            background: linear-gradient(0deg, rgba(212, 175, 55, 0.1) 0%, transparent 100%);
         }
 
         nav button:hover { color: var(--cor-texto); }
@@ -169,7 +158,7 @@
             scrollbar-color: var(--cor-borda) var(--cor-fundo);
         }
 
-        /* ── TELAS (Animações) ──────────────────────────────────────── */
+        /* ── TELAS ──────────────────────────────────────────────────── */
         .tela { display: none; animation: subirTela 0.4s ease-out; }
         .tela.ativa { display: block; }
 
@@ -178,21 +167,26 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ── CARDS (Visual Cockpit) ─────────────────────────────────── */
+        /* ── CARDS (Painéis de Instrumentos) ────────────────────────── */
         .card {
             background-color: var(--cor-fundo-card);
-            border-radius: 8px;
+            border-radius: 4px; /* Menos arredondado, mais técnico */
             padding: 16px;
             margin-bottom: 16px;
             border: 1px solid var(--cor-borda);
             border-left: 4px solid var(--cor-destaque);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); /* Sombra profunda */
+            position: relative;
+            overflow: hidden;
         }
 
-        .card:hover {
-            transform: translateY(-2px);
-            border-color: var(--cor-destaque);
+        /* Linha de LED sutil no topo do card */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
         }
 
         .card h2 {
@@ -217,7 +211,7 @@
             padding: 40px 20px;
             color: var(--cor-texto-secundario);
             border: 2px dashed var(--cor-borda);
-            border-radius: 8px;
+            border-radius: 4px;
             margin-top: 20px;
             background: var(--cor-fundo-card);
         }
@@ -229,7 +223,7 @@
             margin-bottom: 8px;
         }
 
-        /* ── FOOTER (F1) ────────────────────────────────────────────── */
+        /* ── FOOTER ─────────────────────────────────────────────────── */
         footer {
             background-color: var(--cor-primaria);
             padding: 8px;
@@ -261,36 +255,18 @@
             pointer-events: none;
         }
 
-        /* ── ESTILO DE IMPRESSÃO (PDF do Relatório) ─────────────────── */
+        /* ── IMPRESSÃO ──────────────────────────────────────────────── */
         @media print {
-            body {
-                background: white !important;
-                color: black !important;
-                height: auto;
-                overflow: visible;
-            }
-            header, nav, footer, button, .card::before, .linha-velocidade {
-                display: none !important;
-            }
-            main {
-                padding: 0 !important;
-                max-width: 100% !important;
-                overflow: visible !important;
-            }
-            .card {
-                border: 1px solid #ccc !important;
-                box-shadow: none !important;
-                page-break-inside: avoid;
-                background: white !important;
-            }
-            .card h2, .card p, .card strong {
-                color: black !important;
-            }
+            body { background: white !important; color: black !important; height: auto; overflow: visible; }
+            header, nav, footer, button, .card::before, .linha-velocidade { display: none !important; }
+            main { padding: 0 !important; max-width: 100% !important; overflow: visible !important; }
+            .card { border: 1px solid #ccc !important; box-shadow: none !important; page-break-inside: avoid; background: white !important; }
+            .card h2, .card p, .card strong { color: black !important; }
         }
 
-        /* ── RESPONSIVIDADE (Notebook) ─────────────────────────────── */
+        /* ── RESPONSIVIDADE ────────────────────────────────────────── */
         @media (min-width: 768px) {
-            nav button { font-size: 15px; padding: 10px 20px; }
+            nav button { font-size: 15px; padding: 15px 20px; }
             .titulo-header h1 { font-size: 26px; }
             .titulo-header span { font-size: 10px; }
             main { padding: 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
