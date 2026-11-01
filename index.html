@@ -1051,6 +1051,34 @@
   <!-- ═══ SUBBLOCO 06 — MOTOR DE AUDITORIA (V2) ═══ -->
 <script>
   /* ── MOTOR DE AUDITORIA (puro: recebe mesDados, devolve o objeto auditoria; ajusta o status das fotos) ── */
+  // Distância de edição → semelhança entre 0 e 1
+  function semelhancaTexto(a, b) {
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    const m = a.length, n = b.length;
+    const d = [];
+    for (let i = 0; i <= m; i++) { d[i] = [i]; }
+    for (let j = 0; j <= n; j++) d[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        const c = a[i - 1] === b[j - 1] ? 0 : 1;
+        d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + c);
+        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1); // letras trocadas de lugar = 1 erro
+      }
+    }
+    return 1 - d[m][n] / Math.max(m, n);
+  }
+  // Compara nomes de loja vindos de fontes diferentes (etiqueta do app × Excel): tolera typo, código "05 -" e prefixos
+  function semelhancaLoja(textoFoto, lojaRelatorio) {
+    const ca = chaveCompacta(textoFoto), cb = chaveCompacta(lojaRelatorio);
+    if (!ca || !cb) return 0;
+    const sem = t => { const r = t.replace(/^\d+/, ''); return r.length >= 3 ? r : t; };
+    let sc = Math.max(semelhancaTexto(ca, cb), semelhancaTexto(sem(ca), sem(cb)));
+    const sa = sem(ca), sb = sem(cb);
+    if (Math.min(sa.length, sb.length) >= 5 && (sa.includes(sb) || sb.includes(sa))) sc = Math.max(sc, 0.9);
+    return sc;
+  }
+
   function lojaCombina(textoFoto, lojaRelatorio) {
     const a = chaveCompacta(textoFoto), b = chaveCompacta(lojaRelatorio);
     if (!a || !b) return false;
@@ -1080,7 +1108,8 @@
     // Normaliza o nome da rede também em dados importados por versões antigas (que guardavam o nome cru da planilha)
     const relatorio = mesDados.relatorioTempo.map(v => ({ ...v, redeOriginal: v.redeOriginal || v.rede, rede: chaveRede(v.rede) })).filter(v => noPeriodo(v.data));
     const fechamento = mesDados.fechamento.map(f => ({ ...f, redeOriginal: f.redeOriginal || f.rede, rede: chaveRede(f.rede) }));
-    const pk = f => f.promotorKey || chaveCompacta(f.promotor);
+    const pk = f => { const b = f.promotorKey || chaveCompacta(f.promotor); return (mapaPromotorRef.m && mapaPromotorRef.m[b]) || b; };
+    const mapaPromotorRef = { m: null };
     const diaDe = f => f.dataHora.split('T')[0];
   
     // Índice do relatório: promotor|dia -> lojas únicas visitadas
@@ -1092,10 +1121,22 @@
       if (!indice[k][kl]) indice[k][kl] = v;
     });
   
+    // Promotor: nome da etiqueta × nome do Excel (tolera typo). Só mapeia quando há UM candidato claramente melhor.
+    mapaPromotorRef.m = null;
+    const chavesRel = new Set(relatorio.map(v => chaveCompacta(v.promotor)));
+    const mapaPromotor = {}, ligacoesPromotor = {};
+    fotos.forEach(f => {
+      const base = f.promotorKey || chaveCompacta(f.promotor);
+      if (!base || chavesRel.has(base) || mapaPromotor[base] !== undefined) return;
+      const rank = Array.from(chavesRel).map(c => ({ c, sc: semelhancaTexto(base, c) })).sort((a, b) => b.sc - a.sc);
+      if (rank.length && rank[0].sc >= 0.86 && (rank.length === 1 || rank[0].sc - rank[1].sc >= 0.05)) mapaPromotor[base] = rank[0].c; else mapaPromotor[base] = null;
+    });
+    mapaPromotorRef.m = mapaPromotor;
+
     // 1. Reset (preserva decisões manuais da tela de Revisão)
     fotos.forEach(f => {
       if (f.revisaoManual) return;
-      f.status = 'pendente'; f.motivoGap = null; f.lojaAuditada = null; f.redeAuditada = null; f.candidatas = null; f.conflitos = null;
+      f.status = 'pendente'; f.motivoGap = null; f.lojaAuditada = null; f.redeAuditada = null; f.candidatas = null; f.conflitos = null; f.assoc = null; f.assocScore = null;
     });
   
     // 2. Duplicatas por hash
@@ -1124,22 +1165,29 @@
         const mesmaRede = cands.filter(c => c.rede === rk);
         if (mesmaRede.length) cands = mesmaRede;
       }
-      const escolher = c => {
+      const escolher = (c, metodo, score) => {
         f.status = 'comprovada'; f.lojaAuditada = c.loja; f.redeAuditada = c.rede; f.promotorNome = c.promotor;
+        f.assoc = metodo || 'unica'; f.assocScore = score != null ? Math.round(score * 100) / 100 : null;
       };
       if (f.lojaTexto) {
         // Prefere nome idêntico; só usa "um contém o outro" se não houver idêntico
         const alvo = chaveCompacta(f.lojaTexto);
-        let iguais = cands.filter(c => chaveCompacta(c.loja) === alvo);
-        if (iguais.length === 0) iguais = cands.filter(c => lojaCombina(f.lojaTexto, c.loja));
-        if (iguais.length === 1) { escolher(iguais[0]); return; }
+        let iguais = cands.filter(c => chaveCompacta(c.loja) === alvo), metodo = 'exata', scoreAssoc = 1;
+        if (iguais.length === 0) { iguais = cands.filter(c => lojaCombina(f.lojaTexto, c.loja)); metodo = 'contida'; scoreAssoc = null; }
+        if (iguais.length === 0) {
+          // Nome com typo ou escrito de outro jeito: escolhe só se UMA loja do dia for claramente a mais parecida
+          const pont = cands.map(c => ({ c, sc: semelhancaLoja(f.lojaTexto, c.loja) })).sort((a, b) => b.sc - a.sc);
+          if (pont.length && pont[0].sc >= 0.82 && (pont.length === 1 || pont[0].sc - pont[1].sc >= 0.08)) { iguais = [pont[0].c]; metodo = 'semelhança'; scoreAssoc = pont[0].sc; }
+          else f.candidatas = pont.map(x => ({ loja: x.c.loja, rede: x.c.rede, redeOriginal: x.c.redeOriginal, promotor: x.c.promotor, sugestao: Math.round(x.sc * 100) / 100 }));
+        }
+        if (iguais.length === 1) { escolher(iguais[0], metodo, scoreAssoc); return; }
         f.status = 'revisao';
         f.motivoGap = iguais.length > 1
           ? 'Foto compatível com mais de uma loja do dia. Escolha a loja.'
           : `Loja do selo da foto (${f.lojaTexto.replace(/\s+/g, ' ')}) não confere com as lojas do Relatório de Tempo neste dia. Escolha a loja.`;
         return;
       }
-      if (cands.length === 1) { escolher(cands[0]); return; }
+      if (cands.length === 1) { escolher(cands[0], 'unica'); return; }
       f.status = 'revisao';
       f.motivoGap = `Promotor visitou ${cands.length} lojas neste dia e a foto não identifica a loja. Escolha a loja.`;
     });
@@ -1221,6 +1269,30 @@
       semFoto[k] = { promotor: v.promotor, data: v.data, loja: v.loja, rede: v.rede, fotos: [], qtdFotos: 0, statusFinal: 'sem_foto' };
     });
   
+    // 6a. Conferência de nomes (etiqueta do app × Excel)
+    const assocMap = {}, totAssoc = { loja: { exata: 0, contida: 0, semelhanca: 0, unica: 0, semAssociacao: 0 }, promotor: { exato: 0, mapeado: 0, semMatch: 0 } };
+    const addAssoc = (tipo, origem, destino, rede, metodo, score) => {
+      const k = tipo + '|' + origem + '|' + destino;
+      const a = assocMap[k] || (assocMap[k] = { tipo, origem, destino, rede, metodo, score, fotos: 0 });
+      a.fotos++;
+    };
+    fotos.forEach(f => {
+      if (!f.dataHora || f.status === 'duplicata' || f.semLegenda) return;
+      const base = f.promotorKey || chaveCompacta(f.promotor);
+      if (chavesRel.has(base)) totAssoc.promotor.exato++;
+      else if (mapaPromotor[base]) {
+        totAssoc.promotor.mapeado++;
+        const dest = (relatorio.find(v => chaveCompacta(v.promotor) === mapaPromotor[base]) || {}).promotor || mapaPromotor[base];
+        addAssoc('promotor', f.promotor || base, dest, '', 'semelhança', semelhancaTexto(base, mapaPromotor[base]));
+      } else totAssoc.promotor.semMatch++;
+      if (f.assoc === 'exata') totAssoc.loja.exata++;
+      else if (f.assoc === 'contida') { totAssoc.loja.contida++; addAssoc('loja', f.lojaTexto, f.lojaAuditada, f.redeAuditada, 'contida', null); }
+      else if (f.assoc === 'semelhança') { totAssoc.loja.semelhanca++; addAssoc('loja', f.lojaTexto, f.lojaAuditada, f.redeAuditada, 'semelhança', f.assocScore); }
+      else if (f.assoc === 'unica') totAssoc.loja.unica++;
+      else if (f.lojaTexto) totAssoc.loja.semAssociacao++;
+    });
+    const associacoes = { totais: totAssoc, itens: Object.values(assocMap).sort((a, b) => (a.score == null ? 1 : a.score) - (b.score == null ? 1 : b.score)) };
+
     // 6b. Volume por promotor/dia: visitas declaradas no Relatório de Tempo acima do limite
     const porPD = {}, vistoV = new Set();
     relatorio.forEach(v => {
@@ -1303,7 +1375,8 @@
         visitasPendentes: todas.filter(v => v.statusFinal === 'suspeita' || v.statusFinal === 'revisao').length,
         fotosPendentes: fotos.filter(f => f.status === 'suspeita' || f.status === 'revisao').length
       },
-      versaoCalculo: 4,
+      versaoCalculo: 5,
+      associacoes,
       volumeAlertas, maxVisitasDia,
       dataProcessamento: new Date().toISOString()
     };
@@ -1341,6 +1414,30 @@
   <!-- ═══ SUBBLOCO 07 — ADMIN COMPLETO + DASHBOARD ═══ -->
 <script>
   // ── FUNÇÕES AUXILIARES ──
+  function diaSemanaCurto(iso) { const d = new Date(iso + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''); }
+  // Dias com visitas declaradas sem comprovação (opcionalmente de uma rede)
+  function diasSemComprovacao(aud, redeChave) {
+    const dias = {};
+    (aud.visitasAgrupadas || []).forEach(v => {
+      if (redeChave && v.rede !== redeChave) return;
+      const d = dias[v.data] || (dias[v.data] = { data: v.data, sem: 0, ok: 0, lojas: new Set(), porRede: {} });
+      if (v.statusFinal === 'comprovada') d.ok++;
+      else { d.sem++; d.lojas.add(v.loja); d.porRede[v.rede] = (d.porRede[v.rede] || 0) + 1; }
+    });
+    return Object.values(dias).sort((a, b) => a.data.localeCompare(b.data));
+  }
+  function htmlDiasSemComprovacao(aud, redeChave) {
+    const dias = diasSemComprovacao(aud, redeChave).filter(d => d.sem > 0);
+    if (!dias.length) return '<p style="font-size:12px;color:#27AE60;">Nenhuma visita declarada sem comprovação.</p>';
+    const nomeR = r => (aud.porRede[r] ? aud.porRede[r].rede : r);
+    const resumo = dias.map(d => `${esc(formatarDataBR(d.data).slice(0, 5))} (${esc(diaSemanaCurto(d.data))})`).join(', ');
+    return `<p style="font-size:12px;margin-bottom:6px;"><strong>Faltam provas nos dias:</strong> ${resumo}.</p>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#F8F9FA;"><th style="padding:5px;text-align:left;">Dia</th><th style="padding:5px;">Sem prova</th><th style="padding:5px;">Comprovadas</th>${redeChave ? '<th style="padding:5px;text-align:left;">Lojas</th>' : '<th style="padding:5px;text-align:left;">Redes com mais pendência</th>'}</tr></thead><tbody>
+      ${dias.map(d => `<tr style="border-top:1px solid #EEE;"><td style="padding:5px;">${esc(formatarDataBR(d.data))} <span style="color:var(--cor-texto-secundario);">${esc(diaSemanaCurto(d.data))}</span></td>
+        <td style="padding:5px;text-align:center;color:var(--cor-perigo);font-weight:bold;">${d.sem}</td><td style="padding:5px;text-align:center;">${d.ok}</td>
+        <td style="padding:5px;">${redeChave ? esc(Array.from(d.lojas).slice(0, 6).join(', ')) + (d.lojas.size > 6 ? ' +' + (d.lojas.size - 6) : '') : Object.entries(d.porRede).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([r, n]) => esc(nomeR(r)) + ' (' + n + ')').join(', ')}</td></tr>`).join('')}
+      </tbody></table>`;
+  }
   // Cadeia da auditoria: planejou X → declarou Y → comprovou Z
   function pctCadeia(r) {
     const pl = r.planejadas || 0, de = r.declaradas || 0, co = r.comprovadas || 0;
@@ -1533,9 +1630,9 @@
       const marcaPlano = (de > pl && pl > 0) ? `<div title="Fim do plano (${pl})" style="position:absolute;left:${w(pl)}%;top:-2px;bottom:-2px;width:2px;background:#333;"></div>` : '';
       const cor = corPct(pc.real);
       return `
-        <div style="margin-bottom: 18px;">
+        <div class="rede-dash" data-rede="${esc(r.chave)}" style="margin-bottom: 18px; cursor: pointer;">
           <div style="display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: bold; margin-bottom: 5px;">
-            <span>${rotulo}${esc(r.rede)}</span>
+            <span>${rotulo}${esc(r.rede)} <span style="color:#AAA;font-weight:normal;">▾</span></span>
             <span style="color: ${cor};">${pc.real == null ? 'sem plano' : formatarPorcentagem(pc.real) + ' do plano comprovado'}</span>
           </div>
           <div style="position:relative;display:flex;width:100%;height:12px;background:#E3E6EA;border-radius:6px;overflow:visible;">
@@ -1549,6 +1646,7 @@
             <span>➜ <strong>${co}</strong> comprovadas (${formatarPorcentagem(pc.compDaDecl)} das declaradas)</span>
             <span>Desconto: ${formatarMoeda(r.desconto)}</span>
           </div>
+          <div class="det-rede" style="display:none;margin-top:10px;padding:10px;background:#F8F9FA;border-radius:6px;cursor:default;"></div>
         </div>`;
     };
     let htmlRanking = ranking.map((r, i) => linhaRede(r, (i + 1) + '. ')).join('');
@@ -1638,6 +1736,11 @@
         </div>
       </div>
 
+      <div class="card" id="card-dias-dash" style="border-left-color: var(--cor-perigo);">
+        <h2>📅 Dias com visitas sem comprovação</h2>
+        <div id="det-dias-dash" style="margin-top:8px;">${htmlDiasSemComprovacao(mesDados.auditoria, null)}</div>
+      </div>
+
       <div class="card">
         <h2>Ranking de Redes (Plano comprovado)</h2>
         <p style="font-size: 12px; margin-bottom: 8px; color: var(--cor-texto-secundario);">Planejou → declarou → comprovou. Da pior para a melhor, pela parcela do <strong>plano</strong> que está comprovada.</p>
@@ -1646,6 +1749,19 @@
       </div>
       ${htmlSemPlano}
     `;
+    container.querySelectorAll('.rede-dash').forEach(el => el.addEventListener('click', (e) => {
+      if (e.target.closest('.det-rede') && !e.target.closest('.btn-abrir-rede')) return;
+      const det = el.querySelector('.det-rede');
+      if (det.style.display === 'block') { det.style.display = 'none'; return; }
+      const chave = el.dataset.rede;
+      det.innerHTML = htmlDiasSemComprovacao(mesDados.auditoria, chave) +
+        `<button type="button" class="btn-abrir-rede" style="margin-top:8px;padding:8px 12px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:12px;">Ver lojas desta rede ›</button>`;
+      det.style.display = 'block';
+      det.querySelector('.btn-abrir-rede').addEventListener('click', (ev) => {
+        ev.stopPropagation(); auditoriaDrillState = { rede: chave, loja: null };
+        document.querySelector('nav button[data-tela="auditoria"]').click();
+      });
+    }));
   }
 </script>
 <!-- ═══ FIM SUBBLOCO 07 ═══ -->
@@ -1741,6 +1857,7 @@
       });
       montarListaNaoComprovadas(container, aud);
       montarListaVolume(container, aud);
+      montarConferenciaNomes(container, aud);
 
       document.getElementById('btn-exportar-csv').addEventListener('click', () => {
         let csv = "Rede;Planejadas;Declaradas;Comprovadas;Gap;Declarado do plano;Efetividade (comp/decl);Plano comprovado (comp/plan);Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
@@ -1893,6 +2010,30 @@
       if (ba.dataset.acao === 'aceitar') mesDados.decisoesVisita[v.chave] = 'aceita'; else delete mesDados.decisoesVisita[v.chave];
       salvarEstado(); executarAuditoriaSilencioso(); renderizarAuditoria();
     });
+  }
+
+  function montarConferenciaNomes(container, aud) {
+    const a = aud.associacoes; if (!a) return;
+    const t = a.totais, nf = n => Number(n || 0).toLocaleString('pt-BR');
+    const nome = r => (aud.porRede[r] ? aud.porRede[r].rede : (r || ''));
+    const itens = (a.itens || []).slice(0, 80).map(i => `<tr style="border-top:1px solid #EEE;">
+      <td style="padding:6px;">${i.tipo === 'loja' ? '🏪' : '👤'}</td>
+      <td style="padding:6px;word-break:break-word;">${esc(limparSelo(i.origem))}</td>
+      <td style="padding:6px;">→</td>
+      <td style="padding:6px;word-break:break-word;"><strong>${esc(i.destino)}</strong>${i.rede ? '<br><span style="color:var(--cor-texto-secundario);">' + esc(nome(i.rede)) + '</span>' : ''}</td>
+      <td style="padding:6px;text-align:center;">${i.score == null ? 'contém' : Math.round(i.score * 100) + '%'}</td>
+      <td style="padding:6px;text-align:center;">${i.fotos}</td></tr>`).join('');
+    container.insertAdjacentHTML('beforeend', `<div class="card">
+      <h2>🔗 Conferência de nomes (etiqueta × Excel)</h2>
+      <p style="font-size:12px;margin-bottom:8px;">Como os nomes do app da agência (etiqueta da foto) foram ligados aos do Excel:</p>
+      <ul style="padding-left:18px;font-size:12px;line-height:1.7;margin-bottom:8px;">
+        <li>🏪 Lojas: <strong>${nf(t.loja.exata)}</strong> nome idêntico · <strong>${nf(t.loja.contida)}</strong> um nome contém o outro · <strong>${nf(t.loja.semelhanca)}</strong> por semelhança (typo/escrita diferente) · <strong>${nf(t.loja.unica)}</strong> única loja do dia · <strong style="color:${t.loja.semAssociacao ? '#E74C3C' : 'inherit'};">${nf(t.loja.semAssociacao)}</strong> sem associação (vão para a Revisão)</li>
+        <li>👤 Promotores: <strong>${nf(t.promotor.exato)}</strong> nome idêntico · <strong>${nf(t.promotor.mapeado)}</strong> por semelhança · <strong style="color:${t.promotor.semMatch ? '#E74C3C' : 'inherit'};">${nf(t.promotor.semMatch)}</strong> sem correspondência no Excel</li>
+      </ul>
+      ${itens ? `<p style="font-size:12px;font-weight:bold;margin-bottom:4px;">Associações não idênticas — confira se estão certas:</p>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#F8F9FA;"><th></th><th style="padding:6px;text-align:left;">Etiqueta (app)</th><th></th><th style="padding:6px;text-align:left;">Excel</th><th style="padding:6px;">Parecido</th><th style="padding:6px;">Fotos</th></tr></thead><tbody>${itens}</tbody></table></div>` : '<p style="font-size:12px;color:#27AE60;">Nenhuma associação por semelhança foi necessária: todos os nomes bateram.</p>'}
+      ${(a.itens || []).length > 80 ? `<p style="font-size:11px;">Mostrando 80 de ${(a.itens || []).length}.</p>` : ''}
+    </div>`);
   }
 
   // Alertas de volume: promotor com mais visitas declaradas no dia do que o limite
@@ -2101,7 +2242,7 @@
           <label style="font-size: 12px; font-weight: bold;">Em qual loja foi tirada?</label>
           <select id="sel-${foto.id}" style="width: 100%; padding: 8px; margin: 5px 0 10px 0; border: 1px solid #CCC; border-radius: 4px; font-size: 14px;">
             <option value="-1">Selecione a loja...</option>
-            ${foto.candidatas.map((c, i) => `<option value="${i}">${esc(c.redeOriginal || c.rede)} - ${esc(c.loja)}</option>`).join('')}
+            ${foto.candidatas.map((c, i) => `<option value="${i}">${esc(c.redeOriginal || c.rede)} - ${esc(c.loja)}${c.sugestao != null ? ' (' + Math.round(c.sugestao * 100) + '% parecido)' : ''}</option>`).join('')}
           </select>`;
       }
 
@@ -2592,7 +2733,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 4) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 5) executarAuditoriaSilencioso();
   }
 
 
