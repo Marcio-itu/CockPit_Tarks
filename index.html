@@ -40,6 +40,11 @@
   #barra-mes button.mes-atual{color:var(--cor-destaque);font-size:26px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:default;}
   #barra-mes .ano{font-size:12px;color:#B8C0CC;font-weight:normal;letter-spacing:0;margin-left:4px;}
   nav button { background: transparent; border: none; color: var(--cor-texto-secundario); font-family: var(--fonte-titulo); font-size: 11px; font-weight: 700; padding: 14px 16px; cursor: pointer; white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; border-bottom: 3px solid transparent; transition: all 0.2s ease; }
+  nav .nav-fonte { display: none; align-items: center; gap: 6px; margin-left: 14px; padding: 0 12px 0 14px; border-left: 1px solid #D5DADF; white-space: nowrap; flex-shrink: 0; }
+  nav .nav-fonte button { padding: 6px 10px; font-size: 11px; letter-spacing: 0; text-transform: none; color: var(--cor-primaria); border: 1px solid var(--cor-primaria); border-bottom: 1px solid var(--cor-primaria); border-radius: 4px; }
+  nav .nav-fonte select { padding: 4px; border: 1px solid #CCC; border-radius: 4px; font-size: 12px; }
+  nav .nav-fonte .fonte-info { font-size: 11px; color: var(--cor-texto-secundario); }
+  nav button.nav-op { margin-left: 14px; border-left: 1px solid #D5DADF; }
   nav button.ativo { color: var(--cor-primaria); border-bottom: 3px solid var(--cor-destaque); background-color: rgba(10,61,46,0.05); }
 
   main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
@@ -66,7 +71,7 @@
 
   @media (min-width: 768px) {
     nav { justify-content: center; }
-    nav button { font-size: 13px; padding: 16px 24px; }
+    nav button[data-tela] { font-size: 13px; padding: 16px 20px; }
     .titulo-header h1 { font-size: 24px; }
     .titulo-header span { font-size: 11px; }
     main { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; }
@@ -98,14 +103,15 @@
 
 <nav>
   <button class="ativo" data-tela="dashboard">Dashboard</button>
-  <button data-tela="admin">Admin</button>
-  <button data-tela="auditoria">Auditoria</button>
   <button data-tela="fechamento">Fechamento</button>
+  <button data-tela="auditoria">Auditoria</button>
   <button data-tela="promotores">Promotores</button>
   <button data-tela="soltas">Livres</button>
   <button data-tela="revisao">Revisão</button>
   <button data-tela="relatorio">Relatório</button>
+  <button data-tela="admin" class="nav-op">Admin</button>
   <button data-tela="config">Config</button>
+  <span id="nav-fonte" class="nav-fonte"></span>
 </nav>
 
 <div id="barra-mes" style="display:none;"></div>
@@ -1465,7 +1471,7 @@
       ${pl == null ? '' : caixa('Planejadas', pl, '#7F8C8D', opcoes.subPlan || '')}
       ${caixa('Declaradas', de, '#D4AF37', pc.declDoPlano == null ? '' : formatarPorcentagem(pc.declDoPlano) + ' do plano')}
       ${caixa('Comprovadas', co, '#27AE60', formatarPorcentagem(pc.compDaDecl) + ' das declaradas')}
-      ${caixa('Gap', gap, '#E74C3C', 'declaradas − comprovadas')}</div>`;
+      ${caixa('Sem comprovação', gap, '#E74C3C', 'declaradas − comprovadas')}</div>`;
   }
   function diaSemanaCurto(iso) { const d = new Date(iso + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''); }
   // Dias com visitas declaradas sem comprovação (opcionalmente de uma rede)
@@ -1958,23 +1964,23 @@
           <div style="font-family:var(--fonte-titulo);font-size:14px;letter-spacing:2px;color:#D4AF37;">FECHAMENTO × RELATÓRIO × BOOK <span style="color:#7F8A96;">· ${perTxt}</span></div>
           <div class="painel-corpo" style="margin-top:6px;">
             <div class="painel-esq" style="padding-top:6px;">
-              <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#D4AF37;">1 · COBRADO × REGISTRADO</div>
+              <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#D4AF37;">1 · DECLARADO × COM FOTO</div>
+              <div style="text-align:center;font-size:11px;color:#7F8A96;margin-bottom:2px;">${perTxt === 'mês inteiro' ? 'mês inteiro' : 'período ' + perTxt + ' (segue o calendário)'}</div>
+              ${svgVelocimetro(pctFoto, { rotulo: 'Declarado que tem foto', max: 230 })}
+              <div style="display:flex;justify-content:space-around;margin-top:6px;text-align:center;gap:6px;">
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">DECLARADO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#C9D1D9;">${T.declPer}</div><div style="font-size:10px;color:#7F8A96;">${p ? 'visitas no Rel. de Tempo' : 'cobradas no Fechamento'}</div></div>
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">COM FOTO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#27AE60;">${T.compPer}</div><div style="font-size:10px;color:#7F8A96;">no Book</div></div>
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">SEM COMPROV.</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#E74C3C;">${T.gapPer}</div><div style="font-size:10px;color:#E74C3C;">${formatarMoeda(audP.total.desconto || 0)}</div></div>
+              </div>
+            </div>
+            <div class="painel-dir" style="padding-top:6px;">
+              <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#D4AF37;">2 · COBRADO × REGISTRADO</div>
               <div style="text-align:center;font-size:11px;color:#7F8A96;margin-bottom:2px;">sempre o mês inteiro (o Fechamento só traz o total do mês)</div>
               ${svgVelocimetro(pctReg, { rotulo: 'Cobrado que consta no Relatório de Tempo', max: 230 })}
               <div style="display:flex;justify-content:space-around;margin-top:6px;text-align:center;gap:6px;">
                 <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">COBRADO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#D4AF37;">${T.cobrado}</div><div style="font-size:10px;color:#7F8A96;">no Fechamento</div></div>
                 <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">REGISTRADO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#C9D1D9;">${T.registrado}</div><div style="font-size:10px;color:#7F8A96;">no Rel. de Tempo</div></div>
                 <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">SEM REGISTRO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#E74C3C;">${T.semRegistro}</div><div style="font-size:10px;color:#E74C3C;">${formatarMoeda(T.valor)}</div></div>
-              </div>
-            </div>
-            <div class="painel-dir" style="padding-top:6px;">
-              <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#D4AF37;">2 · DECLARADO × COM FOTO</div>
-              <div style="text-align:center;font-size:11px;color:#7F8A96;margin-bottom:2px;">${perTxt === 'mês inteiro' ? 'mês inteiro' : 'período ' + perTxt + ' (segue o calendário)'}</div>
-              ${svgVelocimetro(pctFoto, { rotulo: 'Declarado que tem foto', max: 230 })}
-              <div style="display:flex;justify-content:space-around;margin-top:6px;text-align:center;gap:6px;">
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">DECLARADO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#C9D1D9;">${T.declPer}</div><div style="font-size:10px;color:#7F8A96;">${p ? 'visitas no Rel. de Tempo' : 'cobradas no Fechamento'}</div></div>
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">COM FOTO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#27AE60;">${T.compPer}</div><div style="font-size:10px;color:#7F8A96;">no Book</div></div>
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">SEM FOTO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#E74C3C;">${T.gapPer}</div><div style="font-size:10px;color:#E74C3C;">${formatarMoeda(audP.total.desconto || 0)}</div></div>
               </div>
             </div>
           </div>
@@ -1986,17 +1992,17 @@
           <li><strong>Cobrado (${T.cobrado})</strong>: visitas que a Pacto declarou e cobrou no Fechamento do mês.</li>
           <li><strong>Registrado (${T.registrado})</strong>: visitas diferentes (promotor + dia + loja) que o <em>próprio Relatório de Tempo da Pacto</em> registra${d.dMax ? ' (de ' + esc(formatarDataBR(d.dMin)) + ' a ' + esc(formatarDataBR(d.dMax)) + ')' : ''}. É a prova que a Pacto mesma fornece, antes de olhar as fotos.</li>
           <li><strong>Sem registro (${T.semRegistro})</strong> = Cobrado − Registrado. São visitas cobradas que nem o Relatório de Tempo da Pacto mostra. O <strong>R$ ${formatarMoeda(T.valor).replace('R$', '').trim()}</strong> é isso × o custo médio da visita de cada rede, e é um valor <em>separado</em> do desconto por falta de foto.</li>
-          <li><strong>Com foto (${T.compPer})</strong>: dessas visitas, quantas têm foto nos Books enviados. <strong>Sem foto (${T.gapPer})</strong> = Declarado − Com foto, e é o que gera o desconto do velocímetro 2.</li>
+          <li><strong>Com foto (${T.compPer})</strong>: dessas visitas, quantas têm foto nos Books enviados. <strong>Sem comprovação (${T.gapPer})</strong> = Declarado − Com foto, e é o que gera o desconto do velocímetro 1.</li>
         </ol>
-        <p style="font-size:12px;margin-top:8px;color:var(--cor-texto-secundario);">O velocímetro 1 não muda com o calendário porque o Fechamento não informa o dia de cada visita. O velocímetro 2 muda: ao escolher uma semana, o declarado passa a ser o que o Relatório de Tempo registra naquele período.</p>
+        <p style="font-size:12px;margin-top:8px;color:var(--cor-texto-secundario);">O velocímetro 2 não muda com o calendário porque o Fechamento não informa o dia de cada visita. O velocímetro 1 muda: ao escolher uma semana, o declarado passa a ser o que o Relatório de Tempo registra naquele período.</p>
       </div>
       <div class="card">
         <h2>Da planilha da Pacto até a foto</h2>
         <p style="font-size:12px;margin-bottom:8px;">Três níveis, para cada rede: <strong>Cobrado</strong> (Fechamento do mês) → <strong>Registrado</strong> (visitas únicas no Relatório de Tempo) → <strong>Com foto</strong> (Book). O Fechamento só traz o total por rede, não visita a visita; por isso a comparação é por rede.</p>
-        <p style="font-size:11px;margin-bottom:12px;color:var(--cor-texto-secundario);">O Relatório de Tempo cobre de <strong>${esc(formatarDataBR(d.dMin))}</strong> a <strong>${esc(formatarDataBR(d.dMax))}</strong>. Se o Fechamento inclui dias depois dessa data, parte da diferença pode vir deles. As colunas “No Book” valem para <strong>${perTxt}</strong>; até importar todos os Books do período, “sem foto” inclui visitas cujo Book ainda não foi enviado.</p>
+        <p style="font-size:11px;margin-bottom:12px;color:var(--cor-texto-secundario);">O Relatório de Tempo cobre de <strong>${esc(formatarDataBR(d.dMin))}</strong> a <strong>${esc(formatarDataBR(d.dMax))}</strong>. Se o Fechamento inclui dias depois dessa data, parte da diferença pode vir deles. As colunas “No Book” valem para <strong>${perTxt}</strong>; até importar todos os Books do período, “sem comprovação” inclui visitas cujo Book ainda não foi enviado.</p>
         <p style="font-size:10px;color:var(--cor-texto-secundario);margin-bottom:4px;text-align:right;">deslize a tabela para o lado para ver R$ e as colunas do Book →</p>
         <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
-          <thead><tr><th style="${th}text-align:left;">Rede</th><th style="${th}">Cobrado</th><th style="${th}">Regis-<br>trado</th><th style="${th}">Sem registro</th><th style="${th}">R$</th><th style="${th}border-left:1px solid #EEE;">No Book:<br>declar.</th><th style="${th}">Com foto</th><th style="${th}">Sem foto</th></tr></thead>
+          <thead><tr><th style="${th}text-align:left;">Rede</th><th style="${th}">Cobrado</th><th style="${th}">Regis-<br>trado</th><th style="${th}">Sem registro</th><th style="${th}">R$</th><th style="${th}border-left:1px solid #EEE;">No Book:<br>declar.</th><th style="${th}">Com foto</th><th style="${th}">Sem comprovação</th></tr></thead>
           <tbody>${linhas}
           <tr style="border-top:2px solid #CCC;font-weight:bold;"><td style="padding:8px 5px;">TOTAL</td><td style="padding:8px 5px;text-align:right;">${T.cobrado}</td><td style="padding:8px 5px;text-align:right;">${T.registrado}</td><td style="padding:8px 5px;text-align:right;color:var(--cor-perigo);">${T.semRegistro}</td><td style="padding:8px 5px;text-align:right;color:var(--cor-perigo);white-space:nowrap;">${formatarMoeda(T.valor)}</td><td style="padding:8px 5px;text-align:right;border-left:1px solid #EEE;">${T.declPer}</td><td style="padding:8px 5px;text-align:right;color:#27AE60;">${T.compPer}</td><td style="padding:8px 5px;text-align:right;color:var(--cor-perigo);">${T.gapPer}</td></tr></tbody></table></div>
         <p style="font-size:11px;margin-top:10px;color:var(--cor-texto-secundario);"><span style="color:#D4AF37;">■</span> registrado no Relatório &nbsp; <span style="color:#E74C3C;">■</span> cobrado sem registro. “R$” = visitas sem registro × custo médio da visita da rede. É um valor <strong>a mais</strong> para contestar, separado do desconto por falta de foto.</p>
@@ -2005,7 +2011,7 @@
       ${htmlConferenciaPlano(m.auditoria)}`;
     document.getElementById('btn-csv-fechamento').addEventListener('click', () => {
       const nf = n => String(n).replace('.', ',');
-      let csv = 'Rede;Cobrado (Fechamento, mês);Registrado (Relatório de Tempo, mês);Cobrado sem registro;Custo médio da visita;Valor a contestar;No Book: declaradas;No Book: com foto;No Book: sem foto\n';
+      let csv = 'Rede;Cobrado (Fechamento, mês);Registrado (Relatório de Tempo, mês);Cobrado sem registro;Custo médio da visita;Valor a contestar;No Book: declaradas;No Book: com foto;No Book: sem comprovação\n';
       d.linhas.forEach(l => { csv += [l.rede, l.cobrado, l.registrado, l.semRegistro, nf(l.custo.toFixed(2)), nf(l.valor.toFixed(2)), l.declPer, l.compPer, l.gapPer].join(';') + '\n'; });
       csv += ['TOTAL', T.cobrado, T.registrado, T.semRegistro, '', nf(T.valor.toFixed(2)), T.declPer, T.compPer, T.gapPer].join(';') + '\n';
       baixarCSV('fechamento_x_relatorio_' + Estado.config.mesAtivo + '.csv', csv);
@@ -2096,7 +2102,7 @@
             <p style="font-size: 22px; font-weight: bold; color: var(--cor-primaria);">${formatarMoeda(total.valorAuditado)}</p>
           </div>
           <div style="text-align: right;">
-            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Gap (Visitas)</p>
+            <p style="font-size: 12px; color: var(--cor-texto-secundario);">Sem comprovação (visitas)</p>
             <p style="font-size: 22px; font-weight: bold; color: var(--cor-perigo);">${total.gap}</p>
           </div>
         </div>
@@ -2207,7 +2213,7 @@
                   <th style="padding: 10px; text-align: center;">Planej.</th>
                   <th style="padding: 10px; text-align: center;">Declar.</th>
                   <th style="padding: 10px; text-align: center;">Comprov.</th>
-                  <th style="padding: 10px; text-align: center;">Gap</th>
+                  <th style="padding: 10px; text-align: center;">Sem comprov.</th>
                   <th style="padding: 10px; text-align: center;" title="Comprovadas / Planejadas">Plano comprov.</th>
                   <th style="padding: 10px; text-align: right;">Desconto</th>
                 </tr>
@@ -2226,7 +2232,7 @@
       montarConferenciaNomes(container, aud);
 
       document.getElementById('btn-exportar-csv').addEventListener('click', () => {
-        let csv = "Rede;Planejadas;Declaradas;Comprovadas;Gap;Declarado do plano;Efetividade (comp/decl);Plano comprovado (comp/plan);Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
+        let csv = "Rede;Planejadas;Declaradas;Comprovadas;Sem comprovação;Declarado do plano;Efetividade (comp/decl);Plano comprovado (comp/plan);Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
         redesArray.forEach(r => {
           const pc = pctCadeia(r);
           const pf = v => v == null ? '' : v.toFixed(1).replace('.', ',') + '%';
@@ -2267,7 +2273,7 @@
 
       let linhas = '';
       if (lojasArray.length === 0) {
-        linhas = '<tr><td colspan="6" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita registrada para esta rede.</td></tr>';
+        linhas = '<tr><td colspan="5" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita registrada para esta rede.</td></tr>';
       } else {
         lojasArray.forEach(l => {
           linhas += `
@@ -2276,7 +2282,6 @@
               <td style="padding: 10px; text-align: center; font-weight: bold;">${l.declaradas}</td>
               <td style="padding: 10px; text-align: center; color: #27AE60; font-weight: bold;">${l.comprovadas}</td>
               <td style="padding: 10px; text-align: center; color: #F39C12; font-weight: bold;">${l.pendentes}</td>
-              <td style="padding: 10px; text-align: center; color: #E74C3C; font-weight: bold;">${l.semFoto}</td>
               <td style="padding: 10px; text-align: center; color: #E74C3C; font-weight: bold;">${l.gap}</td>
             </tr>
           `;
@@ -2289,7 +2294,7 @@
           <h2>Rede: ${esc(dadosRede.rede)}</h2>
           ${htmlCaixasNumeros(dadosRede.planejadas || 0, dadosRede.declaradas, dadosRede.comprovadas, dadosRede.gap, { subPlan: aud.visao ? 'no período' : 'no mês' })}
           <p style="font-size: 12px; margin-bottom: 8px;">Desconto desta rede: <strong>${formatarMoeda(dadosRede.desconto)}</strong>.</p>
-          <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);">"Sem foto" = visita do Relatório de Tempo, dentro do período dos PDFs importados, sem nenhuma foto cruzada. As planejadas vêm do Fechamento por <strong>rede</strong>; o Fechamento não informa o plano de cada loja, por isso a tabela abaixo começa em declaradas.</p>
+          <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);">"Sem comprovação" = declaradas − comprovadas: visita do Relatório de Tempo sem nenhuma foto cruzada, mais as pendentes de revisão. As planejadas vêm do Fechamento por <strong>rede</strong>; o Fechamento não informa o plano de cada loja, por isso a tabela abaixo começa em declaradas.</p>
           <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
               <thead>
@@ -2297,9 +2302,8 @@
                   <th style="padding: 10px; text-align: left;">Loja</th>
                   <th style="padding: 10px; text-align: center;">Declar.</th>
                   <th style="padding: 10px; text-align: center;">Comprov.</th>
-                  <th style="padding: 10px; text-align: center;">Pendentes</th>
-                  <th style="padding: 10px; text-align: center;">Sem foto</th>
-                  <th style="padding: 10px; text-align: center;">Gap</th>
+                  <th style="padding: 10px; text-align: center;" title="Visitas com foto aguardando revisão manual (aba Revisão). Contam como sem comprovação até serem aprovadas.">Pendentes</th>
+                  <th style="padding: 10px; text-align: center;" title="Declaradas − Comprovadas (inclui as pendentes)">Sem comprovação</th>
                 </tr>
               </thead>
               <tbody>${linhas}</tbody>
@@ -2505,7 +2509,7 @@
     container.insertAdjacentHTML('beforeend', `
       <div class="card" id="card-nao-comp">
         <h2>🔎 Visitas sem comprovação (${todas.length})</h2>
-        <p style="font-size:12px;margin-bottom:10px;">Toque numa linha para abrir a loja. Gap do período: <strong>${aud.total.gap}</strong> (as visitas "em revisão" ou "suspeitas" ainda podem virar comprovadas).</p>
+        <p style="font-size:12px;margin-bottom:10px;">Toque numa linha para abrir a loja. Sem comprovação no período: <strong>${aud.total.gap}</strong> (as visitas "em revisão" ou "suspeitas" ainda podem virar comprovadas).</p>
         <select id="filtro-nc" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #CCC;border-radius:4px;font-size:14px;">
           ${opt('todas', 'Todas (' + todas.length + ')')}${opt('sem_foto', 'Sem foto (' + cont('sem_foto') + ')')}${opt('nao_comprovada', 'Não comprovada (' + cont('nao_comprovada') + ')')}${opt('revisao', 'Em revisão (' + cont('revisao') + ')')}
         </select>
@@ -2712,7 +2716,7 @@
           <span>Comprovadas (Fotos)</span><span>${total.comprovadas}</span>
         </div>
         <div style="display: flex; justify-content: space-between; color: var(--cor-perigo); font-weight: bold;">
-          <span>Gap (Não comprovadas)</span><span>${total.gap}</span>
+          <span>Sem comprovação</span><span>${total.gap}</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 10px; border-top: 1px solid #CCC; font-weight: bold;">
           <span>Efetividade Geral</span><span>${formatarPorcentagem(efetividade)}</span>
@@ -2726,7 +2730,7 @@
           <span style="font-size: 16px; font-weight: bold;">${formatarMoeda(total.valorCobrado)}</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--cor-perigo);">
-          <span style="font-size: 13px;">Desconto Justificado (Gap)</span>
+          <span style="font-size: 13px;">Desconto Justificado (Sem comprovação)</span>
           <span style="font-size: 16px; font-weight: bold;">- ${formatarMoeda(total.desconto)}</span>
         </div>
         <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); border-top: 2px solid var(--cor-primaria); padding-top: 10px; margin-top: 10px;">
@@ -2749,8 +2753,8 @@
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Programadas:</strong> O que foi contratado no plano.</p>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Declaradas:</strong> O que o fornecedor disse que fez.</p>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Comprovadas:</strong> Visitas com foto válida (Promotor + Dia + Loja).</p>
-        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Gap:</strong> Declaradas - Comprovadas.</p>
-        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Desconto Justificado:</strong> Gap × Custo da Visita.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Sem comprovação:</strong> Declaradas − Comprovadas.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Desconto Justificado:</strong> Sem comprovação × Custo da Visita.</p>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Valor Auditado:</strong> Comprovadas × Custo da Visita.</p>
       </div>
 
@@ -2766,11 +2770,11 @@
     atualizarAuditoriaSeNecessario();
     atualizarBarraMes();
 
-    document.querySelectorAll('nav button').forEach(botao => {
+    document.querySelectorAll('nav button[data-tela]').forEach(botao => {
       botao.addEventListener('click', () => {
         const nomeTela = botao.dataset.tela;
         
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('ativo'));
+        document.querySelectorAll('nav button[data-tela]').forEach(b => b.classList.remove('ativo'));
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
         if (nomeTela !== 'admin' && nomeTela !== 'config' && nomeTela !== 'revisao') atualizarBarraPeriodo(); else document.getElementById('barra-periodo').style.display = 'none';
         
@@ -2822,7 +2826,7 @@
 
   // ── MODO LEITURA (quem abre o link só vê os resultados publicados) ──
   function aplicarModoNaInterface() {
-    document.querySelectorAll('nav button').forEach(b => {
+    document.querySelectorAll('nav button[data-tela]').forEach(b => {
       b.style.display = (Modo === 'publicado' && TELAS_DO_OPERADOR.includes(b.dataset.tela)) ? 'none' : '';
     });
     auditoriaDrillState = { rede: null, loja: null };
@@ -2857,29 +2861,22 @@
   }
 
   function atualizarBarraFonte() {
-    const el = document.getElementById('barra-fonte');
+    const el = document.getElementById('nav-fonte');
+    document.getElementById('barra-fonte').style.display = 'none'; // a faixa amarela saiu: os controles ficam na barra de abas
     const idx = Publicado.indice;
     if (!idx || !idx.meses || idx.meses.length === 0) { el.style.display = 'none'; return; }
     el.style.display = 'flex';
-    const estiloBtn = 'padding: 5px 10px; background: transparent; color: var(--cor-primaria); border: 1px solid var(--cor-primaria); border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;';
-
     if (Modo === 'publicado') {
       const mes = Estado.config.mesAtivo;
       const info = idx.meses.find(m => m.mes === mes) || {};
       el.innerHTML = `
-        <span>📢 <strong>Resultados publicados</strong>${info.geradoEm ? ' · atualizados em ' + esc(formatarDataHora(info.geradoEm)) : ''}</span>
-        <span style="display: flex; gap: 8px; align-items: center;">
-          <select id="sel-mes-publicado" style="padding: 4px; border: 1px solid #CCC; border-radius: 4px; font-size: 12px;">
-            ${idx.meses.map(m => `<option value="${esc(m.mes)}" ${m.mes === mes ? 'selected' : ''}>${esc(m.mes)}</option>`).join('')}
-          </select>
-          <button id="btn-area-operador" style="${estiloBtn}">Área do operador</button>
-        </span>`;
+        <span class="fonte-info" title="${info.geradoEm ? 'Atualizado em ' + esc(formatarDataHora(info.geradoEm)) : ''}">📢 Publicado</span>
+        <select id="sel-mes-publicado">${idx.meses.map(m => `<option value="${esc(m.mes)}" ${m.mes === mes ? 'selected' : ''}>${esc(m.mes)}</option>`).join('')}</select>
+        <button id="btn-area-operador">Área do operador</button>`;
       document.getElementById('sel-mes-publicado').addEventListener('change', (e) => entrarModoPublicado(e.target.value));
       document.getElementById('btn-area-operador').addEventListener('click', sairModoPublicado);
     } else {
-      el.innerHTML = `
-        <span>💻 Você está vendo os <strong>dados deste navegador</strong>.</span>
-        <button id="btn-ver-publicado" style="${estiloBtn}">Ver resultados publicados</button>`;
+      el.innerHTML = `<button id="btn-ver-publicado" title="Você está vendo os dados deste navegador">Ver resultados publicados</button>`;
       document.getElementById('btn-ver-publicado').addEventListener('click', () => {
         const existe = idx.meses.some(m => m.mes === Estado.config.mesAtivo);
         entrarModoPublicado(existe ? Estado.config.mesAtivo : undefined);
