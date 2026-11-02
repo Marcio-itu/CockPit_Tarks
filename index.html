@@ -315,9 +315,10 @@
         <p>O CockPit Tarks confere, mês a mês, as visitas de trade marketing da Tubaína/Schincariol feitas pela agência <strong>Pacto</strong>. A cadeia é sempre a mesma:</p>
         <ol style="padding-left:20px;margin:6px 0;">
           <li><strong>Planejadas</strong>: quantas visitas o contrato prevê por rede (lojas cobradas × visitas por semana).</li>
-          <li><strong>Declaradas</strong>: quantas a Pacto declara e cobra no Fechamento.</li>
+          <li><strong>Cobradas</strong>: quantas visitas a Pacto cobra no Fechamento (na planilha dela aparecem como "declaradas"). Depois vêm as <strong>Registradas</strong>, que são as que constam no Relatório de Tempo da própria Pacto.</li>
           <li><strong>Comprovadas</strong>: quantas dessas têm foto nos Books, cruzada com o Relatório de Tempo da própria Pacto.</li>
-          <li><strong>Sem comprovação</strong> = declaradas − comprovadas. Multiplicada pelo custo médio da visita da rede, vira o <strong>desconto a discutir</strong>.</li>
+          <li><strong>Sem registro</strong> = cobradas − registradas: a Pacto cobra, mas nem o relatório dela mostra a visita.</li>
+          <li><strong>Sem comprovação</strong> = cobradas − comprovadas (inclui as sem registro e as registradas sem foto). Multiplicada pelo custo médio da visita da rede, vira o <strong>desconto a discutir</strong>.</li>
         </ol>
         <p>Todo ponto contestado deve poder ser mostrado com evidência: o arquivo e a página do Book, a linha do Relatório, a rede e o dia.</p>`, true)}
 
@@ -327,7 +328,7 @@
         <p>Por isso o sistema nunca "adivinha a favor" nem "contra": na dúvida (nome de loja parecido, foto sem identificação clara), ele manda a foto para a <strong>aba Revisão</strong>, para uma pessoa decidir e registrar a decisão.</p>`, true)}
 
       ${sec('3. De onde vêm os dados (arquivos)', tab(['Arquivo', 'O que traz', 'Como é usado'], [
-        ['Fechamento (xlsx)', 'Por rede: lojas cobradas, visitas por semana, visitas declaradas no mês, valor cobrado.', 'É a <strong>base oficial</strong> de planejadas, declaradas e custo da visita.'],
+        ['Fechamento (xlsx)', 'Por rede: lojas cobradas, visitas por semana, visitas cobradas no mês, valor cobrado.', 'É a <strong>base oficial</strong> de planejadas, cobradas e custo da visita.'],
         ['Relatório de Tempo (xlsx)', 'Cada visita registrada pela Pacto: promotor, rede, loja, dia.', 'Dá o "par" de cada foto (promotor + dia + loja). Visitas repetidas (mesmo promotor, dia e loja) contam uma vez.'],
         ['Books (PDF)', 'As fotos, com legenda impressa no rodapé: data/hora, promotor, rede e loja.', 'São a <strong>prova</strong>. Cada página é uma foto; só capa e contracapa devem ser ignoradas.'],
         ['Plano de Visitas (3 xlsx)', 'Lista de lojas e promotores por rede (Tubaína, Carrefour, Nagumo).', '<strong>Somente conferência</strong>: não entra em nenhuma conta. Serve para comparar a lista de lojas com o que o Fechamento cobra (aba Fechamento).']
@@ -354,10 +355,12 @@
 
       ${sec('5. Os números: o que cada um quer dizer', tab(['Número', 'Como é calculado'], [
         ['Planejadas', 'Mês inteiro: visitas programadas no Fechamento (lojas cobradas × visitas por semana). Num período do calendário: a média semanal × dias ÷ 7 (aproximação).'],
-        ['Declaradas', 'Mês inteiro: visitas declaradas no Fechamento. Num período: visitas diferentes registradas no Relatório de Tempo naqueles dias.'],
-        ['Comprovadas', 'Visitas declaradas que têm foto comprovada.'],
-        ['Sem comprovação', 'Declaradas − comprovadas. Inclui as visitas com foto ainda em revisão.'],
-        ['Desconto', 'Sem comprovação × custo médio da visita da rede (valor cobrado ÷ visitas declaradas).'],
+        ['Cobradas', 'Mês inteiro: visitas cobradas no Fechamento (a Pacto as chama de "declaradas"). Ao escolher um período no calendário, o lugar delas passa a ser das <strong>Registradas</strong>: visitas diferentes registradas no Relatório de Tempo naqueles dias.'],
+        ['Registradas', 'Visitas diferentes (promotor + dia + loja) que o Relatório de Tempo da Pacto registra.'],
+        ['Sem registro', 'Cobradas − registradas. Só existe para o mês inteiro, porque o Fechamento não informa o dia de cada visita.'],
+        ['Comprovadas', 'Visitas cobradas (ou registradas, no período) que têm foto comprovada.'],
+        ['Sem comprovação', 'Cobradas − comprovadas. Inclui as sem registro e as visitas com foto ainda em revisão.'],
+        ['Desconto', 'Sem comprovação × custo médio da visita da rede (valor cobrado ÷ visitas cobradas).'],
         ['Plano comprovado', 'Comprovadas ÷ planejadas.'],
         ['Cobrado × Registrado (Fechamento)', 'Compara o que a Pacto cobra no Fechamento com o que o Relatório de Tempo <em>dela mesma</em> registra. A diferença ("sem registro") e o seu valor em R$ são <strong>separados</strong> do desconto por falta de foto.'],
         ['Execuções Realizadas / Planejadas / Livres', 'Realizadas: execuções vistas nas fotos (promotor + dia + loja, várias fotos = 1). Planejadas: as que têm par no Relatório. Livres: as que não têm par (promotor sem visita registrada naquele dia, loja que não confere, ou rede fora do Fechamento).']
@@ -365,7 +368,7 @@
 
       ${sec('6. As telas', tab(['Tela', 'O que mostra'], [
         ['Dashboard', 'Painel geral do mês: velocímetros por rede e total, valores cobrado, auditado e desconto.'],
-        ['Fechamento', 'Do cobrado até a foto: Cobrado × Registrado (mês) e Declarado × Com foto (período). Inclui a conferência Plano × Fechamento por rede e o CSV para a reunião.'],
+        ['Fechamento', 'Do cobrado até a foto: Cobrado → Registrado → Comprovado, por rede, com o valor em R$ de cada diferença. Inclui a conferência Plano × Fechamento por rede e o CSV para a reunião.'],
         ['Auditoria', 'Detalhe por rede, loja e visita, com a evidência de cada uma (arquivo, página, hora). Lista das não comprovadas e alertas de volume por promotor/dia.'],
         ['Promotores', 'Ranking de execuções por promotor, lido das legendas das fotos. Toque numa linha para ver dia a dia.'],
         ['Livres', 'Execuções que aparecem nas fotos mas não têm par nas planilhas, com o motivo.'],
@@ -1376,7 +1379,7 @@
     });
     const associacoes = { totais: totAssoc, itens: Object.values(assocMap).sort((a, b) => (a.score == null ? 1 : a.score) - (b.score == null ? 1 : b.score)) };
 
-    // 6b. Volume por promotor/dia: visitas declaradas no Relatório de Tempo acima do limite
+    // 6b. Volume por promotor/dia: visitas registradas no Relatório de Tempo acima do limite
     const porPD = {}, vistoV = new Set();
     relatorio.forEach(v => {
       const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja);
@@ -1579,9 +1582,9 @@
     const pc = pctCadeia({ planejadas: pl, declaradas: de, comprovadas: co });
     return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;">
       ${pl == null ? '' : caixa('Planejadas', pl, '#7F8C8D', opcoes.subPlan || '')}
-      ${caixa('Declaradas', de, '#D4AF37', pc.declDoPlano == null ? '' : formatarPorcentagem(pc.declDoPlano) + ' do plano')}
-      ${caixa('Comprovadas', co, '#27AE60', formatarPorcentagem(pc.compDaDecl) + ' das declaradas')}
-      ${caixa('Sem comprovação', gap, '#E74C3C', 'declaradas − comprovadas')}</div>`;
+      ${caixa(opcoes.periodo ? 'Registradas' : 'Cobradas', de, '#D4AF37', pc.declDoPlano == null ? '' : formatarPorcentagem(pc.declDoPlano) + ' do plano')}
+      ${caixa('Comprovadas', co, '#27AE60', formatarPorcentagem(pc.compDaDecl) + (opcoes.periodo ? ' das registradas' : ' das cobradas'))}
+      ${caixa('Sem comprovação', gap, '#E74C3C', (opcoes.periodo ? 'registradas' : 'cobradas') + ' − comprovadas')}</div>`;
   }
   function diaSemanaCurto(iso) { const d = new Date(iso + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''); }
   // Dias com visitas declaradas sem comprovação (opcionalmente de uma rede)
@@ -1597,7 +1600,7 @@
   }
   function htmlDiasSemComprovacao(aud, redeChave) {
     const dias = diasSemComprovacao(aud, redeChave).filter(d => d.sem > 0);
-    if (!dias.length) return '<p style="font-size:12px;color:#27AE60;">Nenhuma visita declarada sem comprovação.</p>';
+    if (!dias.length) return '<p style="font-size:12px;color:#27AE60;">Nenhuma visita registrada sem comprovação.</p>';
     const nomeR = r => (aud.porRede[r] ? aud.porRede[r].rede : r);
     const resumo = dias.map(d => `${esc(formatarDataBR(d.data).slice(0, 5))} (${esc(diaSemanaCurto(d.data))})`).join(', ');
     return `<p style="font-size:12px;margin-bottom:6px;"><strong>Faltam provas nos dias:</strong> ${resumo}.</p>
@@ -1633,7 +1636,7 @@
   // Aviso de cobertura: o fechamento é MENSAL; as fotos cobrem só os PDFs importados.
   function htmlAvisoCobertura(aud) {
     if (!aud) return '';
-    const per = (aud.periodos || []).map(p => `${formatarDataBR(p.inicio)} a ${formatarDataBR(p.fim)}`).join(' | ') || 'não identificado';
+    const per = [...new Set((aud.periodos || []).map(p => `${formatarDataBR(p.inicio)} a ${formatarDataBR(p.fim)}`))].join(' | ') || 'não identificado';
     let extra = '';
     if (aud.total && aud.total.fotosPendentes > 0) {
       extra += `<p style="font-size: 12px; margin-top: 6px; color: #C0392B;">⚠️ ${aud.total.fotosPendentes} foto(s) aguardando revisão${Modo === 'publicado' ? ' manual: o resultado ainda pode mudar' : ' (aba Revisão). Ao decidir, as comprovadas podem subir'}.</p>`;
@@ -1644,7 +1647,7 @@
     }
     const rotMes = `<strong>Mês ${esc(Estado.config.mesAtivo)}</strong> · `;
     const texto = rotMes + (aud.periodoAuditado
-      ? `<strong>Visualizando o período:</strong> ${esc(formatarDataBR(aud.periodoAuditado.inicio))} a ${esc(formatarDataBR(aud.periodoAuditado.fim))}. "Declaradas" são as visitas do Relatório de Tempo nesses dias. Cobrado, desconto e valor auditado referem-se apenas ao período.`
+      ? `<strong>Visualizando o período:</strong> ${esc(formatarDataBR(aud.periodoAuditado.inicio))} a ${esc(formatarDataBR(aud.periodoAuditado.fim))}. "Registradas" são as visitas do Relatório de Tempo nesses dias (no mês inteiro, vale o Cobrado do Fechamento). Cobrado, desconto e valor auditado referem-se apenas ao período.`
       : `<strong>Cobertura das fotos:</strong> ${esc(per)}. O Fechamento é mensal: enquanto faltarem PDFs (ou partes do book) do mês, as comprovadas ficam abaixo do real e o gap/desconto ficam superestimados.`);
     return `${htmlAvisoMesDosDados()}<div class="card" style="border-left-color: #F39C12; padding: 15px;">
       <p style="font-size: 12px; line-height: 1.4;">${texto}</p>
@@ -1670,7 +1673,7 @@
     if (temFechamento) {
       const totalDeclaradas = mesDados.fechamento.reduce((acc, r) => acc + r.declaradasMes, 0);
       resumoFechamento = `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;">
-        <p style="font-size: 13px;"><strong>${mesDados.fechamento.length} redes</strong> | <strong>${totalDeclaradas} visitas declaradas</strong>.</p>
+        <p style="font-size: 13px;"><strong>${mesDados.fechamento.length} redes</strong> | <strong>${totalDeclaradas} visitas cobradas</strong>.</p>
       </div>`;
     }
 
@@ -1815,10 +1818,10 @@
         <div style="font-family:var(--fonte-titulo);font-size:14px;letter-spacing:2px;color:#D4AF37;">PAINEL DA AUDITORIA <span style="color:#7F8A96;">· ${per}</span></div>
         <div class="painel-corpo"><div class="painel-esq">
         ${htmlElo({ rot: 'Planejadas', val: pl, cor: '#C9D1D9', sub: p ? 'no período' : 'contratado no mês' },
-                  { rot: 'Declarado do plano', pct: pg.declDoPlano },
-                  { rot: 'Declaradas', val: de, cor: '#D4AF37', sub: p ? 'Rel. de Tempo' : 'Fechamento' })}
-        ${htmlElo({ rot: 'Declaradas', val: de, cor: '#D4AF37', sub: p ? 'Rel. de Tempo' : 'Fechamento' },
-                  { rot: 'Efetividade', pct: efet },
+                  { rot: p ? 'Registrado do plano' : 'Cobrado do plano', pct: pg.declDoPlano },
+                  { rot: p ? 'Registradas' : 'Cobradas', val: de, cor: '#D4AF37', sub: p ? 'Rel. de Tempo' : 'Fechamento' })}
+        ${htmlElo({ rot: p ? 'Registradas' : 'Cobradas', val: de, cor: '#D4AF37', sub: p ? 'Rel. de Tempo' : 'Fechamento' },
+                  { rot: p ? 'Comprovado do registrado' : 'Comprovado do cobrado', pct: efet },
                   { rot: 'Comprovadas', val: co, cor: '#2ECC71', sub: 'com foto' })}
         </div><div class="painel-dir">
           ${svgVelocimetro(pg.real, { rotulo: 'Plano comprovado', max: 340 })}
@@ -2054,6 +2057,19 @@
       container.innerHTML = `<div class="card"><h2>Fechamento × Relatório</h2><p>Importe o Fechamento e o Relatório de Tempo e processe a auditoria para comparar.</p></div>`; return;
     }
     const audP = audAtiva(m), T = d.total, p = audP.periodoAuditado;
+    const coberturaBooks = (() => {
+      // dias que realmente têm foto (não o período impresso no cabeçalho do PDF), juntando dias seguidos em faixas
+      const dias = [...new Set((m.fotos || []).filter(f => f.status !== 'fora_periodo' && f.dataHora).map(f => f.dataHora.slice(0, 10)))].sort();
+      if (!dias.length) return 'nenhum';
+      const faixas = []; let ini = dias[0], ant = dias[0];
+      const seguido = (a, b) => (new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) === 86400000;
+      for (let k = 1; k <= dias.length; k++) {
+        if (k < dias.length && seguido(ant, dias[k])) { ant = dias[k]; continue; }
+        faixas.push(ini === ant ? formatarDataBR(ini).slice(0, 5) : formatarDataBR(ini).slice(0, 5) + ' a ' + formatarDataBR(ant).slice(0, 5));
+        if (k < dias.length) { ini = ant = dias[k]; }
+      }
+      return faixas.join(' | ');
+    })();
     const pctFoto = T.declPer > 0 ? Math.min(100, T.compPer / T.declPer * 100) : null;
     const pctReg = T.cobrado > 0 ? Math.min(100, T.registrado / T.cobrado * 100) : null;
     const perTxt = p ? `${formatarDataBR(p.inicio).slice(0, 5)} a ${formatarDataBR(p.fim).slice(0, 5)}` : 'mês inteiro';
@@ -2075,26 +2091,24 @@
     container.innerHTML = `
       <div class="painel-f1"><div class="faixa-xadrez"></div>
         <div style="padding:12px 14px 10px;">
-          <div style="font-family:var(--fonte-titulo);font-size:14px;letter-spacing:2px;color:#D4AF37;">FECHAMENTO × RELATÓRIO × BOOK <span style="color:#7F8A96;">· ${perTxt}</span></div>
+          <div style="font-family:var(--fonte-titulo);font-size:14px;letter-spacing:2px;color:#D4AF37;">COBRADO → REGISTRADO → COMPROVADO <span style="color:#7F8A96;">· ${perTxt}</span></div>
           <div class="painel-corpo" style="margin-top:6px;">
             <div class="painel-esq" style="padding-top:6px;">
-              <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#D4AF37;">1 · DECLARADO × COM FOTO</div>
-              <div style="text-align:center;font-size:11px;color:#7F8A96;margin-bottom:2px;">${perTxt === 'mês inteiro' ? 'mês inteiro' : 'período ' + perTxt + ' (segue o calendário)'}</div>
-              ${svgVelocimetro(pctFoto, { rotulo: 'Declarado que tem foto', max: 230 })}
+              <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#D4AF37;">1 · REGISTRO</div>
+              <div style="text-align:center;font-size:11px;color:#7F8A96;margin-bottom:10px;">sempre o mês inteiro (o Fechamento só traz o total do mês)</div>
               <div style="display:flex;justify-content:space-around;margin-top:6px;text-align:center;gap:6px;">
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">DECLARADO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#C9D1D9;">${T.declPer}</div><div style="font-size:10px;color:#7F8A96;">${p ? 'visitas no Rel. de Tempo' : 'cobradas no Fechamento'}</div></div>
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">COM FOTO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#27AE60;">${T.compPer}</div><div style="font-size:10px;color:#7F8A96;">no Book</div></div>
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">SEM COMPROV.</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#E74C3C;">${T.gapPer}</div><div style="font-size:10px;color:#E74C3C;">${formatarMoeda(audP.total.desconto || 0)}</div></div>
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">COBRADO</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#D4AF37;">${T.cobrado}</div><div style="font-size:10px;color:#7F8A96;">no Fechamento</div></div>
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">REGISTRADO</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#C9D1D9;">${T.registrado}</div><div style="font-size:10px;color:#7F8A96;">no Rel. de Tempo${pctReg == null ? '' : ' · ' + formatarPorcentagem(pctReg) + ' do cobrado'}</div></div>
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">SEM REGISTRO</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#E74C3C;">${T.semRegistro}</div><div style="font-size:10px;color:#E74C3C;">${formatarMoeda(T.valor)}</div></div>
               </div>
             </div>
             <div class="painel-dir" style="padding-top:6px;">
-              <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#D4AF37;">2 · COBRADO × REGISTRADO</div>
-              <div style="text-align:center;font-size:11px;color:#7F8A96;margin-bottom:2px;">sempre o mês inteiro (o Fechamento só traz o total do mês)</div>
-              ${svgVelocimetro(pctReg, { rotulo: 'Cobrado que consta no Relatório de Tempo', max: 230 })}
+              <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#D4AF37;">2 · COMPROVAÇÃO</div>
+              <div style="text-align:center;font-size:11px;color:#7F8A96;margin-bottom:10px;">${perTxt === 'mês inteiro' ? 'mês inteiro' : 'período ' + perTxt + ' (segue o calendário)'} · Books recebidos: ${esc(coberturaBooks)}</div>
               <div style="display:flex;justify-content:space-around;margin-top:6px;text-align:center;gap:6px;">
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">COBRADO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#D4AF37;">${T.cobrado}</div><div style="font-size:10px;color:#7F8A96;">no Fechamento</div></div>
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">REGISTRADO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#C9D1D9;">${T.registrado}</div><div style="font-size:10px;color:#7F8A96;">no Rel. de Tempo</div></div>
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">SEM REGISTRO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#E74C3C;">${T.semRegistro}</div><div style="font-size:10px;color:#E74C3C;">${formatarMoeda(T.valor)}</div></div>
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">${p ? 'REGISTRADO' : 'COBRADO'}</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#C9D1D9;">${T.declPer}</div><div style="font-size:10px;color:#7F8A96;">${p ? 'no Rel. de Tempo, no período' : 'base: cobrado no mês'}</div></div>
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">COMPROVADO</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#27AE60;">${T.compPer}</div><div style="font-size:10px;color:#7F8A96;">com foto no Book${pctFoto == null ? '' : ' · ' + formatarPorcentagem(pctFoto) + ' da base'}</div></div>
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">SEM COMPROVAÇÃO</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#E74C3C;">${T.gapPer}</div><div style="font-size:10px;color:#E74C3C;">${formatarMoeda(audP.total.desconto || 0)}</div></div>
               </div>
             </div>
           </div>
@@ -2105,18 +2119,18 @@
         <ol style="font-size:13px;padding-left:20px;line-height:1.55;">
           <li><strong>Cobrado (${T.cobrado})</strong>: visitas que a Pacto declarou e cobrou no Fechamento do mês.</li>
           <li><strong>Registrado (${T.registrado})</strong>: visitas diferentes (promotor + dia + loja) que o <em>próprio Relatório de Tempo da Pacto</em> registra${d.dMax ? ' (de ' + esc(formatarDataBR(d.dMin)) + ' a ' + esc(formatarDataBR(d.dMax)) + ')' : ''}. É a prova que a Pacto mesma fornece, antes de olhar as fotos.</li>
-          <li><strong>Sem registro (${T.semRegistro})</strong> = Cobrado − Registrado. São visitas cobradas que nem o Relatório de Tempo da Pacto mostra. O <strong>R$ ${formatarMoeda(T.valor).replace('R$', '').trim()}</strong> é isso × o custo médio da visita de cada rede, e é um valor <em>separado</em> do desconto por falta de foto.</li>
-          <li><strong>Com foto (${T.compPer})</strong>: dessas visitas, quantas têm foto nos Books enviados. <strong>Sem comprovação (${T.gapPer})</strong> = Declarado − Com foto, e é o que gera o desconto do velocímetro 1.</li>
+          <li><strong>Sem registro (${T.semRegistro})</strong> = Cobrado − Registrado. São visitas cobradas que nem o Relatório de Tempo da Pacto mostra. O <strong>R$ ${formatarMoeda(T.valor).replace('R$', '').trim()}</strong> é isso × o custo médio da visita de cada rede.</li>
+          <li><strong>Comprovado (${T.compPer})</strong>: dessas visitas, quantas têm foto nos Books recebidos. <strong>Sem comprovação (${T.gapPer})</strong> = ${p ? 'Registrado' : 'Cobrado'} − Comprovado. ${p ? 'São visitas registradas no período que ainda não têm foto' : 'Inclui as <em>sem registro</em> e as registradas que ainda não têm foto'} (por exemplo, porque o Book daquele dia ainda não chegou). É o que gera o desconto.</li>
         </ol>
-        <p style="font-size:12px;margin-top:8px;color:var(--cor-texto-secundario);">O velocímetro 2 não muda com o calendário porque o Fechamento não informa o dia de cada visita. O velocímetro 1 muda: ao escolher uma semana, o declarado passa a ser o que o Relatório de Tempo registra naquele período.</p>
+        <p style="font-size:12px;margin-top:8px;color:var(--cor-texto-secundario);">O bloco 1 não muda com o calendário porque o Fechamento não informa o dia de cada visita. O bloco 2 muda: ao escolher uma semana, a base passa a ser o que o Relatório de Tempo registra naquele período.</p>
       </div>
       <div class="card">
         <h2>Da planilha da Pacto até a foto</h2>
-        <p style="font-size:12px;margin-bottom:8px;">Três níveis, para cada rede: <strong>Cobrado</strong> (Fechamento do mês) → <strong>Registrado</strong> (visitas únicas no Relatório de Tempo) → <strong>Com foto</strong> (Book). O Fechamento só traz o total por rede, não visita a visita; por isso a comparação é por rede.</p>
-        <p style="font-size:11px;margin-bottom:12px;color:var(--cor-texto-secundario);">O Relatório de Tempo cobre de <strong>${esc(formatarDataBR(d.dMin))}</strong> a <strong>${esc(formatarDataBR(d.dMax))}</strong>. Se o Fechamento inclui dias depois dessa data, parte da diferença pode vir deles. As colunas “No Book” valem para <strong>${perTxt}</strong>; até importar todos os Books do período, “sem comprovação” inclui visitas cujo Book ainda não foi enviado.</p>
+        <p style="font-size:12px;margin-bottom:8px;">Três níveis, para cada rede: <strong>Cobrado</strong> (Fechamento do mês) → <strong>Registrado</strong> (visitas únicas no Relatório de Tempo) → <strong>Comprovado</strong> (foto no Book). O Fechamento só traz o total por rede, não visita a visita; por isso a comparação é por rede.</p>
+        <p style="font-size:11px;margin-bottom:12px;color:var(--cor-texto-secundario);">O Relatório de Tempo cobre de <strong>${esc(formatarDataBR(d.dMin))}</strong> a <strong>${esc(formatarDataBR(d.dMax))}</strong>. Se o Fechamento inclui dias depois dessa data, parte da diferença pode vir deles. As colunas de comprovação (Base, Comprovado, Sem comprovação) valem para <strong>${perTxt}</strong>; até importar todos os Books do período, “sem comprovação” inclui visitas cujo Book ainda não foi enviado.</p>
         <p style="font-size:10px;color:var(--cor-texto-secundario);margin-bottom:4px;text-align:right;">deslize a tabela para o lado para ver R$ e as colunas do Book →</p>
         <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
-          <thead><tr><th style="${th}text-align:left;">Rede</th><th style="${th}">Cobrado</th><th style="${th}">Regis-<br>trado</th><th style="${th}">Sem registro</th><th style="${th}">R$</th><th style="${th}border-left:1px solid #EEE;">No Book:<br>declar.</th><th style="${th}">Com foto</th><th style="${th}">Sem comprovação</th></tr></thead>
+          <thead><tr><th style="${th}text-align:left;">Rede</th><th style="${th}">Cobrado</th><th style="${th}">Regis-<br>trado</th><th style="${th}">Sem registro</th><th style="${th}">R$</th><th style="${th}border-left:1px solid #EEE;" title="Base da comparação: no mês inteiro, o Cobrado; num período, o Registrado naqueles dias">Base</th><th style="${th}">Compro-<br>vado</th><th style="${th}">Sem comprovação</th></tr></thead>
           <tbody>${linhas}
           <tr style="border-top:2px solid #CCC;font-weight:bold;"><td style="padding:8px 5px;">TOTAL</td><td style="padding:8px 5px;text-align:right;">${T.cobrado}</td><td style="padding:8px 5px;text-align:right;">${T.registrado}</td><td style="padding:8px 5px;text-align:right;color:var(--cor-perigo);">${T.semRegistro}</td><td style="padding:8px 5px;text-align:right;color:var(--cor-perigo);white-space:nowrap;">${formatarMoeda(T.valor)}</td><td style="padding:8px 5px;text-align:right;border-left:1px solid #EEE;">${T.declPer}</td><td style="padding:8px 5px;text-align:right;color:#27AE60;">${T.compPer}</td><td style="padding:8px 5px;text-align:right;color:var(--cor-perigo);">${T.gapPer}</td></tr></tbody></table></div>
         <p style="font-size:11px;margin-top:10px;color:var(--cor-texto-secundario);"><span style="color:#D4AF37;">■</span> registrado no Relatório &nbsp; <span style="color:#E74C3C;">■</span> cobrado sem registro. “R$” = visitas sem registro × custo médio da visita da rede. É um valor <strong>a mais</strong> para contestar, separado do desconto por falta de foto.</p>
@@ -2125,7 +2139,7 @@
       ${htmlConferenciaPlano(m.auditoria)}`;
     document.getElementById('btn-csv-fechamento').addEventListener('click', () => {
       const nf = n => String(n).replace('.', ',');
-      let csv = 'Rede;Cobrado (Fechamento, mês);Registrado (Relatório de Tempo, mês);Cobrado sem registro;Custo médio da visita;Valor a contestar;No Book: declaradas;No Book: com foto;No Book: sem comprovação\n';
+      let csv = 'Rede;Cobrado (Fechamento, mês);Registrado (Relatório de Tempo, mês);Cobrado sem registro;Custo médio da visita;Valor a contestar;Base (cobrado no mês ou registrado no período);Comprovado;Sem comprovação\n';
       d.linhas.forEach(l => { csv += [l.rede, l.cobrado, l.registrado, l.semRegistro, nf(l.custo.toFixed(2)), nf(l.valor.toFixed(2)), l.declPer, l.compPer, l.gapPer].join(';') + '\n'; });
       csv += ['TOTAL', T.cobrado, T.registrado, T.semRegistro, '', nf(T.valor.toFixed(2)), T.declPer, T.compPer, T.gapPer].join(';') + '\n';
       baixarCSV('fechamento_x_relatorio_' + Estado.config.mesAtivo + '.csv', csv);
@@ -2180,8 +2194,8 @@
           </div>
           <div style="display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--cor-texto-secundario);margin-top:4px;">
             <span><strong>${pl}</strong> planejadas</span>
-            <span>➜ <strong>${de}</strong> declaradas${pc.declDoPlano == null ? '' : ' (' + formatarPorcentagem(pc.declDoPlano) + ' do plano)'}</span>
-            <span>➜ <strong>${co}</strong> comprovadas (${formatarPorcentagem(pc.compDaDecl)} das declaradas)</span>
+            <span>➜ <strong>${de}</strong> ${aud.visao ? 'registradas' : 'cobradas'}${pc.declDoPlano == null ? '' : ' (' + formatarPorcentagem(pc.declDoPlano) + ' do plano)'}</span>
+            <span>➜ <strong>${co}</strong> comprovadas (${formatarPorcentagem(pc.compDaDecl)} das ${aud.visao ? 'registradas' : 'cobradas'})</span>
             <span>Desconto: ${formatarMoeda(r.desconto)}</span>
           </div>
           <div class="det-rede" style="display:none;margin-top:10px;padding:10px;background:#F8F9FA;border-radius:6px;cursor:default;"></div>
@@ -2191,7 +2205,7 @@
     const htmlSemPlano = semPlano.length ? `
       <div class="card" style="border-left-color: var(--cor-texto-secundario);">
         <h2>Redes sem visitas planejadas (${semPlano.length})</h2>
-        <p style="font-size: 12px; margin-bottom: 15px; color: var(--cor-texto-secundario);">Planejadas = 0. Se houver visitas declaradas aqui, foram feitas fora do plano.</p>
+        <p style="font-size: 12px; margin-bottom: 15px; color: var(--cor-texto-secundario);">Planejadas = 0. Se houver visitas aqui, foram feitas fora do plano.</p>
         ${semPlano.map(r => linhaRede(r, '')).join('')}
       </div>` : '';
     container.innerHTML = `
@@ -2229,7 +2243,7 @@
       <div class="card">
         <h2>Ranking de Redes (Plano comprovado)</h2>
         <p style="font-size: 12px; margin-bottom: 8px; color: var(--cor-texto-secundario);">Planejou → declarou → comprovou. Da pior para a melhor, pela parcela do <strong>plano</strong> que está comprovada.</p>
-        <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);"><span style="color:#27AE60;">■</span> comprovadas &nbsp; <span style="color:#E74C3C;">■</span> declaradas sem prova &nbsp; <span style="color:#C5CBD3;">■</span> plano não declarado &nbsp; <span style="color:#333;">|</span> fim do plano (quando declarou mais que o plano)</p>
+        <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);"><span style="color:#27AE60;">■</span> comprovadas &nbsp; <span style="color:#E74C3C;">■</span> registradas sem prova &nbsp; <span style="color:#C5CBD3;">■</span> plano ainda sem visita &nbsp; <span style="color:#333;">|</span> fim do plano (quando a Pacto cobrou ou registrou mais que o plano)</p>
         ${htmlRanking || '<p style="font-size: 13px;">Nenhuma rede com visitas planejadas.</p>'}
       </div>
       ${htmlSemPlano}
@@ -2324,7 +2338,7 @@
                 <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
                   <th style="padding: 10px; text-align: left;">Rede</th>
                   <th style="padding: 10px; text-align: center;">Planej.</th>
-                  <th style="padding: 10px; text-align: center;">Declar.</th>
+                  <th style="padding: 10px; text-align: center;" title="${aud.visao ? 'Registradas: visitas do Relatório de Tempo no período' : 'Cobradas: visitas cobradas no Fechamento'}">${aud.visao ? 'Registr.' : 'Cobr.'}</th>
                   <th style="padding: 10px; text-align: center;">Comprov.</th>
                   <th style="padding: 10px; text-align: center;">Sem comprov.</th>
                   <th style="padding: 10px; text-align: center;" title="Comprovadas / Planejadas">Plano comprov.</th>
@@ -2345,7 +2359,7 @@
       montarConferenciaNomes(container, aud);
 
       document.getElementById('btn-exportar-csv').addEventListener('click', () => {
-        let csv = "Rede;Planejadas;Declaradas;Comprovadas;Sem comprovação;Declarado do plano;Efetividade (comp/decl);Plano comprovado (comp/plan);Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
+        let csv = "Rede;Planejadas;Cobradas (ou registradas, no período);Comprovadas;Sem comprovação;Cobrado do plano;Comprovado do cobrado;Plano comprovado (comp/plan);Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
         redesArray.forEach(r => {
           const pc = pctCadeia(r);
           const pf = v => v == null ? '' : v.toFixed(1).replace('.', ',') + '%';
@@ -2405,18 +2419,18 @@
         <div class="card">
           <button id="btn-voltar-redes" style="padding: 8px 12px; background: transparent; border: 1px solid var(--cor-primaria); color: var(--cor-primaria); border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 15px;">‹ Voltar</button>
           <h2>Rede: ${esc(dadosRede.rede)}</h2>
-          ${htmlCaixasNumeros(dadosRede.planejadas || 0, dadosRede.declaradas, dadosRede.comprovadas, dadosRede.gap, { subPlan: aud.visao ? 'no período' : 'no mês' })}
+          ${htmlCaixasNumeros(dadosRede.planejadas || 0, dadosRede.declaradas, dadosRede.comprovadas, dadosRede.gap, { subPlan: aud.visao ? 'no período' : 'no mês', periodo: !!aud.visao })}
           <p style="font-size: 12px; margin-bottom: 8px;">Desconto desta rede: <strong>${formatarMoeda(dadosRede.desconto)}</strong>.</p>
-          <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);">"Sem comprovação" = declaradas − comprovadas: visita do Relatório de Tempo sem nenhuma foto cruzada, mais as pendentes de revisão. As planejadas vêm do Fechamento por <strong>rede</strong>; o Fechamento não informa o plano de cada loja, por isso a tabela abaixo começa em declaradas.</p>
+          <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);">"Sem comprovação" = cobradas − comprovadas (no período: registradas − comprovadas): visita do Relatório de Tempo sem nenhuma foto cruzada, mais as pendentes de revisão. As planejadas vêm do Fechamento por <strong>rede</strong>; o Fechamento não informa o plano de cada loja, por isso a tabela abaixo começa em declaradas.</p>
           <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
               <thead>
                 <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
                   <th style="padding: 10px; text-align: left;">Loja</th>
-                  <th style="padding: 10px; text-align: center;">Declar.</th>
+                  <th style="padding: 10px; text-align: center;" title="Registradas: visitas do Relatório de Tempo nesta loja">Registr.</th>
                   <th style="padding: 10px; text-align: center;">Comprov.</th>
                   <th style="padding: 10px; text-align: center;" title="Visitas com foto aguardando revisão manual (aba Revisão). Contam como sem comprovação até serem aprovadas.">Pendentes</th>
-                  <th style="padding: 10px; text-align: center;" title="Declaradas − Comprovadas (inclui as pendentes)">Sem comprovação</th>
+                  <th style="padding: 10px; text-align: center;" title="Registradas − Comprovadas (inclui as pendentes)">Sem comprovação</th>
                 </tr>
               </thead>
               <tbody>${linhas}</tbody>
@@ -2452,7 +2466,7 @@
       <div class="card">
         <button id="btn-voltar-lojas" style="padding: 8px 12px; background: transparent; border: 1px solid var(--cor-primaria); color: var(--cor-primaria); border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 15px;">‹ Voltar para lojas</button>
         <h2>Loja: ${esc(auditoriaDrillState.loja)}</h2>
-        ${(() => { const co = visitas.filter(v => v.statusFinal === 'comprovada').length; return htmlCaixasNumeros(null, visitas.length, co, visitas.length - co); })()}
+        ${(() => { const co = visitas.filter(v => v.statusFinal === 'comprovada').length; return htmlCaixasNumeros(null, visitas.length, co, visitas.length - co, { periodo: true }); })()}
         <p style="font-size:11px;margin-bottom:10px;color:var(--cor-texto-secundario);">Toque numa visita para ver a evidência.</p>
         <div style="overflow-x: auto;">
           <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
@@ -2529,13 +2543,13 @@
     const itens = lista.slice(0, 60).map(x => {
       const comp = x.lojas.filter(l => l.status === 'comprovada').length;
       return `<details style="border-bottom:1px solid #EEE;padding:8px 0;">
-        <summary style="cursor:pointer;font-size:12px;"><strong>${esc(x.promotor)}</strong> · ${esc(formatarDataBR(x.data))} · <strong>${x.n}</strong> visitas declaradas · ${comp} comprovada(s)</summary>
+        <summary style="cursor:pointer;font-size:12px;"><strong>${esc(x.promotor)}</strong> · ${esc(formatarDataBR(x.data))} · <strong>${x.n}</strong> visitas registradas · ${comp} comprovada(s)</summary>
         <ul style="padding-left:18px;margin:6px 0;font-size:12px;">${x.lojas.map(l => `<li>${esc(nome(l.rede))} › ${esc(l.loja)} — ${esc(ROTULO_STATUS[l.status] || l.status)}${l.primeiraHora ? ' · foto às ' + esc(l.primeiraHora) : ''}</li>`).join('')}</ul>
       </details>`;
     }).join('');
     container.insertAdjacentHTML('beforeend', `<div class="card">
       <h2>📈 Volume alto por promotor/dia (${lista.length})</h2>
-      <p style="font-size:12px;margin-bottom:10px;">Promotores com <strong>mais de ${aud.maxVisitasDia || 7}</strong> visitas declaradas no mesmo dia (limite ajustável na aba Config). É um alerta: confira se o deslocamento e o horário cabem.</p>
+      <p style="font-size:12px;margin-bottom:10px;">Promotores com <strong>mais de ${aud.maxVisitasDia || 7}</strong> visitas registradas no mesmo dia (limite ajustável na aba Config). É um alerta: confira se o deslocamento e o horário cabem.</p>
       ${itens}${lista.length > 60 ? `<p style="font-size:11px;margin-top:8px;">Mostrando 60 de ${lista.length}.</p>` : ''}</div>`);
   }
 
@@ -2558,9 +2572,9 @@
     const soltas = fotosDoDia.filter(f => !f.lojaAuditada || f.status === 'revisao' || f.status === 'sem_par');
     let mesmoDia;
     if (outras.length) {
-      mesmoDia = `No mesmo dia, ${esc(v.promotor)} tem ${outras.length} outra(s) visita(s) declarada(s): ` +
+      mesmoDia = `No mesmo dia, ${esc(v.promotor)} tem ${outras.length} outra(s) visita(s) registrada(s): ` +
         outras.map(o => `${esc((aud.porRede[o.rede] ? aud.porRede[o.rede].rede : o.rede) + ' › ' + o.loja)} (${o.qtdFotos || 0} foto(s))`).join('; ') + '.';
-    } else mesmoDia = `No mesmo dia, ${esc(v.promotor)} não tem outra visita declarada.`;
+    } else mesmoDia = `No mesmo dia, ${esc(v.promotor)} não tem outra visita registrada.`;
     if (fotosDoDia.length) mesmoDia += ` O Book tem <strong>${fotosDoDia.length}</strong> foto(s) desse promotor nesse dia.`;
     else mesmoDia += ' O Book não tem nenhuma foto desse promotor nesse dia.';
 
@@ -2576,7 +2590,7 @@
     // 5) cobertura do Book no dia
     const doDia = fotos.filter(f => diaDeF(f) === v.data);
     const proms = new Set(doDia.map(f => f.promotorKey || chaveCompacta(f.promotor || '')));
-    const per = (aud.periodos || []).map(p => `${formatarDataBR(p.inicio)} a ${formatarDataBR(p.fim)}`).join(' | ') || 'não identificado';
+    const per = [...new Set((aud.periodos || []).map(p => `${formatarDataBR(p.inicio)} a ${formatarDataBR(p.fim)}`))].join(' | ') || 'não identificado';
     const cobertura = `Cobertura do Book importado: ${esc(per)}. Em ${esc(formatarDataBR(v.data))} o Book tem <strong>${doDia.length}</strong> foto(s) de <strong>${proms.size}</strong> promotor(es) no total.`;
 
     const conclusao = (v.statusFinal === 'sem_foto' || v.statusFinal === 'nao_comprovada')
@@ -2823,7 +2837,7 @@
           <span style="font-weight: bold;">Programadas (Contrato)</span><span>${total.totalProgramadas || 0}</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;">
-          <span style="font-weight: bold;">${aud.visao ? 'Declaradas (Rel. de Tempo, período)' : 'Declaradas (Pacto)'}</span><span>${total.totalDeclaradas || 0}</span>
+          <span style="font-weight: bold;">${aud.visao ? 'Registradas (Rel. de Tempo, período)' : 'Cobradas (Fechamento)'}</span><span>${total.totalDeclaradas || 0}</span>
         </div>
         <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); font-weight: bold; margin-bottom: 10px;">
           <span>Comprovadas (Fotos)</span><span>${total.comprovadas}</span>
@@ -2832,14 +2846,14 @@
           <span>Sem comprovação</span><span>${total.gap}</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 10px; border-top: 1px solid #CCC; font-weight: bold;">
-          <span>Efetividade Geral</span><span>${formatarPorcentagem(efetividade)}</span>
+          <span>Comprovado do cobrado</span><span>${formatarPorcentagem(efetividade)}</span>
         </div>
       </div>
 
       <div class="card">
         <h2>Resumo Financeiro</h2>
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-          <span style="font-size: 13px;">Valor Cobrado (Declarado)</span>
+          <span style="font-size: 13px;">Valor Cobrado</span>
           <span style="font-size: 16px; font-weight: bold;">${formatarMoeda(total.valorCobrado)}</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--cor-perigo);">
@@ -2863,10 +2877,10 @@
 
       <div class="card">
         <h2>Glossário</h2>
-        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Programadas:</strong> O que foi contratado no plano.</p>
-        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Declaradas:</strong> O que o fornecedor disse que fez.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Planejadas:</strong> O que foi contratado no plano.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Cobradas:</strong> O que a Pacto cobra no Fechamento. <strong>Registradas:</strong> as que constam no Relatório de Tempo dela.</p>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Comprovadas:</strong> Visitas com foto válida (Promotor + Dia + Loja).</p>
-        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Sem comprovação:</strong> Declaradas − Comprovadas.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Sem comprovação:</strong> Cobradas − Comprovadas.</p>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Desconto Justificado:</strong> Sem comprovação × Custo da Visita.</p>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Valor Auditado:</strong> Comprovadas × Custo da Visita.</p>
       </div>
@@ -3561,7 +3575,7 @@
     return `<div style="margin-top:14px;padding-top:12px;border-top:1px dashed #CCC;">
       <p style="font-size:12px;font-weight:bold;margin-bottom:6px;color:var(--cor-texto);">Meses publicados</p>
       ${ms.map(x => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;padding:5px 0;">
-        <span><strong>${esc(rotuloMes(x.mes))}</strong> · ${x.totalDeclaradas != null ? esc(x.totalDeclaradas) + ' declaradas, ' + esc(x.comprovadas) + ' comprovadas' : ''}</span>
+        <span><strong>${esc(rotuloMes(x.mes))}</strong> · ${x.totalDeclaradas != null ? esc(x.totalDeclaradas) + ' cobradas, ' + esc(x.comprovadas) + ' comprovadas' : ''}</span>
         <button type="button" class="btn-despublicar" data-mes="${esc(x.mes)}" style="padding:6px 10px;border:1px solid var(--cor-perigo);background:transparent;color:var(--cor-perigo);border-radius:6px;font-weight:bold;cursor:pointer;white-space:nowrap;">Remover</button></div>`).join('')}
       <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:4px;">Use “Remover” quando um mês foi publicado errado (por exemplo, dados de outubro publicados como novembro). Depois, publique de novo no mês certo.</p>
     </div>`;
