@@ -53,6 +53,15 @@
 
   .painel-f1 { background: linear-gradient(180deg,#1B1F24,#0F1215); border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,.25); overflow: hidden; color: #F4F6F8; }
   .faixa-xadrez { height: 10px; background: repeating-conic-gradient(#F4F6F8 0 25%, #111 0 50%) 0 0 / 14px 14px; }
+  .painel-corpo { display: grid; grid-template-columns: minmax(0,1fr); }
+  .painel-dir { border-top: 1px solid #2A3038; padding: 12px 0 4px; }
+  @media (min-width: 820px) {
+    .painel-corpo { grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); }
+    .painel-corpo.f2 .painel-esq { order: -1; }
+    .painel-dir { border-top: none; border-left: 1px solid #2A3038; padding: 12px 0 12px 20px; display: flex; flex-direction: column; justify-content: center; }
+    .painel-esq { padding-right: 20px; display: flex; flex-direction: column; justify-content: center; }
+    .painel-esq > div:first-child { border-top: none !important; }
+  }
   footer { background-color: var(--cor-primaria); padding: 10px; text-align: center; font-family: var(--fonte-titulo); font-size: 9px; color: var(--cor-destaque); border-top: 2px solid var(--cor-destaque); flex-shrink: 0; letter-spacing: 1px; position: fixed; bottom: 0; width: 100%; z-index: 10; }
 
   @media (min-width: 768px) {
@@ -1616,17 +1625,18 @@
       <div class="faixa-xadrez"></div>
       <div style="padding:12px 14px 6px;">
         <div style="font-family:var(--fonte-titulo);font-size:14px;letter-spacing:2px;color:#D4AF37;">PAINEL DA AUDITORIA <span style="color:#7F8A96;">· ${per}</span></div>
+        <div class="painel-corpo"><div class="painel-esq">
         ${htmlElo({ rot: 'Planejadas', val: pl, cor: '#C9D1D9', sub: p ? 'no período' : 'contratado no mês' },
                   { rot: 'Declarado do plano', pct: pg.declDoPlano },
                   { rot: 'Declaradas', val: de, cor: '#D4AF37', sub: 'Rel. de Tempo' })}
         ${htmlElo({ rot: 'Declaradas', val: de, cor: '#D4AF37', sub: 'Rel. de Tempo' },
                   { rot: 'Efetividade', pct: efet },
                   { rot: 'Comprovadas', val: co, cor: '#2ECC71', sub: 'com foto' })}
-        <div style="border-top:1px solid #2A3038;padding:12px 0 4px;">
-          ${svgVelocimetro(pg.real, { rotulo: 'Plano comprovado', max: 300 })}
+        </div><div class="painel-dir">
+          ${svgVelocimetro(pg.real, { rotulo: 'Plano comprovado', max: 340 })}
           <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#C9D1D9;margin-top:-2px;">PLANO COMPROVADO</div>
           <div style="text-align:center;font-size:14px;color:#9AA4AF;margin-top:3px;"><strong style="color:#2ECC71;">${co}</strong> comprovadas de <strong style="color:#C9D1D9;">${pl}</strong> planejadas — da promessa da agência, quanto temos prova</div>
-        </div>
+        </div></div>
       </div>
     </div>`;
   }
@@ -1677,14 +1687,14 @@
       <div class="painel-f1"><div class="faixa-xadrez"></div>
         <div style="padding:12px 14px 10px;">
           <div style="font-family:var(--fonte-titulo);font-size:14px;letter-spacing:2px;color:#D4AF37;">FECHAMENTO × RELATÓRIO <span style="color:#7F8A96;">· mês inteiro</span></div>
-          <div style="padding-top:6px;">${svgVelocimetro(pctReg, { rotulo: 'Cobrado que consta no Relatório de Tempo', max: 260 })}
+          <div class="painel-corpo f2"><div class="painel-dir" style="padding-top:6px;">${svgVelocimetro(pctReg, { rotulo: 'Cobrado que consta no Relatório de Tempo', max: 260 })}
             <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#C9D1D9;margin-top:-2px;">COBRADO QUE TEM REGISTRO</div>
             <div style="text-align:center;font-size:14px;color:#9AA4AF;margin-top:3px;">A Pacto cobra <strong style="color:#D4AF37;">${T.cobrado}</strong> visitas no Fechamento; o próprio Relatório de Tempo dela registra <strong style="color:#C9D1D9;">${T.registrado}</strong>.</div>
           </div>
-          <div style="display:flex;justify-content:space-around;margin-top:10px;padding-top:10px;border-top:1px solid #2A3038;text-align:center;">
+          <div class="painel-esq"><div style="display:flex;justify-content:space-around;margin-top:10px;padding-top:10px;border-top:1px solid #2A3038;text-align:center;">
             <div><div style="font-size:12px;letter-spacing:1px;color:#9AA4AF;">COBRADAS SEM REGISTRO</div><div style="font-family:var(--fonte-titulo);font-size:31px;font-weight:900;color:#E74C3C;">${T.semRegistro}</div></div>
             <div><div style="font-size:12px;letter-spacing:1px;color:#9AA4AF;">VALOR A CONTESTAR</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#E74C3C;line-height:1.5;">${formatarMoeda(T.valor)}</div></div>
-          </div>
+          </div></div></div>
         </div>
       </div>
       <div class="card">
