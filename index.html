@@ -101,12 +101,15 @@
   <button data-tela="admin">Admin</button>
   <button data-tela="auditoria">Auditoria</button>
   <button data-tela="fechamento">Fechamento</button>
+  <button data-tela="promotores">Promotores</button>
+  <button data-tela="soltas">Soltas</button>
   <button data-tela="revisao">Revisão</button>
   <button data-tela="relatorio">Relatório</button>
   <button data-tela="config">Config</button>
 </nav>
 
 <div id="barra-mes" style="display:none;"></div>
+<div id="barra-periodo" style="display:none;flex-shrink:0;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:7px 16px;background:#F3F5F7;border-bottom:1px solid #D5DADF;font-size:12px;color:var(--cor-primaria);"></div>
 <div id="barra-fonte" style="display: none; flex-shrink: 0; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 16px; background: #FFF8E1; border-bottom: 1px solid #F0D98C; font-family: var(--fonte-dados); font-size: 13px; color: var(--cor-texto);"></div>
 
 <main>
@@ -114,6 +117,8 @@
   <div id="tela-admin" class="tela"><div class="card"><h2>Admin</h2><p>Importação de arquivos e processamento. (Em construção)</p></div></div>
   <div id="tela-auditoria" class="tela"><div class="card"><h2>Auditoria</h2><p>Drill-down por rede, loja e visita. (Em construção)</p></div></div>
   <div id="tela-fechamento" class="tela"></div>
+  <div id="tela-promotores" class="tela"></div>
+  <div id="tela-soltas" class="tela"></div>
   <div id="tela-revisao" class="tela"><div class="card"><h2>Revisão</h2><p>Fila de fotos com suspeita para revisão manual. (Em construção)</p></div></div>
   <div id="tela-relatorio" class="tela"><div class="card"><h2>Relatório</h2><p>Visão consolidada, impressão e exportação. (Em construção)</p></div></div>
   <div id="tela-config" class="tela"></div>
@@ -257,7 +262,6 @@
         const dados = JSON.parse(salvo);
         if (dados.config) Estado.config = { ...Estado.config, ...dados.config };
         if (dados.meses) Estado.meses = dados.meses;
-        aplicarPeriodosPadrao();
         migrarImagensLegadas(Estado.meses).then(mudou => { if (mudou) salvarEstado(); }).catch(() => {});
       } catch (e) { 
         console.error("Erro ao carregar estado:", e); 
@@ -265,13 +269,6 @@
     }
   }
 
-  // Outubro/2026 é atípico: o sistema começou a ser usado no meio do mês, então só vale 18 a 24/10.
-  const PERIODOS_PADRAO = { '2026-10': { inicio: '2026-10-18', fim: '2026-10-24' } };
-  function aplicarPeriodosPadrao() {
-    Object.keys(PERIODOS_PADRAO).forEach(m => {
-      if (Estado.meses[m] && !('periodoAuditado' in Estado.meses[m])) Estado.meses[m].periodoAuditado = { ...PERIODOS_PADRAO[m] };
-    });
-  }
 
   function garantirMes(mes) {
     if (!Estado.meses[mes]) {
@@ -281,7 +278,7 @@
         relatorioTempo: [], 
         fotos: [],
         periodosPDF: [],
-        periodoAuditado: PERIODOS_PADRAO[mes] ? { ...PERIODOS_PADRAO[mes] } : null, // null = mês inteiro
+        periodoAuditado: null, // sempre o mês inteiro; períodos específicos são só visualização (calendário)
         auditoria: null // Inicia como nulo até ser processada
       };
       salvarEstado();
@@ -322,16 +319,6 @@
         <input type="number" id="config-max-dia" value="${Estado.config.maxVisitasDia || 7}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
         <button id="btn-salvar-config" style="width: 100%; padding: 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Salvar Regras</button>
         <div id="msg-config" style="margin-top: 10px; text-align: center; font-weight: bold; color: var(--cor-primaria);"></div>
-      </div>
-      <div class="card">
-        <h2>Período Auditado do Mês</h2>
-        <p style="font-size: 13px; margin-bottom: 10px;">Para meses em que o sistema não cobriu o mês todo. Só vale para o mês ativo (<strong>${mesAtual}</strong>): "Declaradas" passam a ser as visitas do Relatório de Tempo no período e fotos de outros dias são ignoradas. Deixe em branco para auditar o mês inteiro.</p>
-        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">De:</label>
-        <input type="date" id="periodo-inicio" value="${((Estado.meses[mesAtual] || {}).periodoAuditado || {}).inicio || ''}" style="width: 100%; padding: 10px; margin: 5px 0 10px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
-        <label style="font-size: 12px; font-weight: bold; color: var(--cor-texto);">Até:</label>
-        <input type="date" id="periodo-fim" value="${((Estado.meses[mesAtual] || {}).periodoAuditado || {}).fim || ''}" style="width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #CCC; border-radius: 4px; font-family: var(--fonte-dados);">
-        <button id="btn-salvar-periodo" style="width: 100%; padding: 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Salvar Período</button>
-        <div id="msg-periodo" style="margin-top: 10px; text-align: center; font-weight: bold; color: var(--cor-primaria);"></div>
       </div>
       ${htmlCardPublicacao()}
       <div class="card">
@@ -376,22 +363,6 @@
       setTimeout(() => document.getElementById('msg-config').textContent = '', 3000);
     });
 
-    document.getElementById('btn-salvar-periodo').addEventListener('click', () => {
-      const ini = document.getElementById('periodo-inicio').value;
-      const fim = document.getElementById('periodo-fim').value;
-      const msg = document.getElementById('msg-periodo');
-      const mesDados = garantirMes(Estado.config.mesAtivo);
-      if ((ini && !fim) || (!ini && fim)) { msg.style.color = '#E74C3C'; msg.textContent = 'Preencha as duas datas, ou deixe as duas em branco.'; return; }
-      if (ini && fim && fim < ini) { msg.style.color = '#E74C3C'; msg.textContent = 'A data final é anterior à inicial.'; return; }
-      if (ini && (ini.slice(0, 7) !== Estado.config.mesAtivo || fim.slice(0, 7) !== Estado.config.mesAtivo)) {
-        if (!confirm('O período não está inteiro dentro do mês ' + Estado.config.mesAtivo + '. Salvar assim mesmo?')) return;
-      }
-      mesDados.periodoAuditado = ini ? { inicio: ini, fim: fim } : null;
-      salvarEstado();
-      if (mesDados.auditoria) executarAuditoriaSilencioso(); // recalcula com o novo período
-      msg.style.color = 'var(--cor-primaria)';
-      msg.textContent = ini ? '✅ Período salvo e auditoria recalculada.' : '✅ Auditando o mês inteiro.';
-    });
 
     document.getElementById('btn-exportar').addEventListener('click', async () => {
       const comImagens = confirm('Incluir as imagens das fotos no backup?\n\nOK = backup completo (arquivo grande)\nCancelar = só os dados, sem imagens');
@@ -418,7 +389,6 @@
           if (dados.config && dados.meses) {
             Estado.config = { ...Estado.config, ...dados.config };
             Estado.meses = dados.meses;
-            aplicarPeriodosPadrao();
             if (dados.imagens) {
               for (const [id, url] of Object.entries(dados.imagens)) await BancoImagens.salvar(id, url);
             }
@@ -1328,6 +1298,71 @@
       r.valorAuditado = r.comprovadas * r.custoVisita;
     });
   
+    // 8. Execuções por promotor, lidas das ETIQUETAS das fotos: várias fotos da mesma loja no mesmo dia = 1 execução
+    const arquivosBook = [];
+    const idxArq = n => { if (!n) return -1; let i = arquivosBook.indexOf(n); if (i < 0) { arquivosBook.push(n); i = arquivosBook.length - 1; } return i; };
+    const semEsp = t => String(t || '').replace(/\s+/g, '');
+    const nomeNoRelatorio = {}; relatorio.forEach(v => { nomeNoRelatorio[chaveCompacta(v.promotor)] = v.promotor; });
+    const porProm = {};
+    fotos.forEach(f => {
+      if (!f.dataHora || f.semLegenda || f.status === 'duplicata' || f.status === 'sem_legenda' || f.status === 'fora_periodo') return;
+      const pkey = pk(f); if (!pkey) return;
+      const casada = !!f.lojaAuditada;
+      const redeKey = casada ? f.redeAuditada : chaveRede(f.redeTexto || '');
+      const lojaTxt = casada ? f.lojaAuditada : semEsp(f.lojaTexto);
+      if (!lojaTxt) return;
+      const P = porProm[pkey] || (porProm[pkey] = { nomes: {}, dias: {} });
+      const nome = f.promotorNome || nomeNoRelatorio[pkey] || f.promotor || pkey;
+      P.nomes[nome] = (P.nomes[nome] || 0) + (f.promotorNome ? 10 : 1);
+      const dk = diaDe(f) + '|' + redeKey;
+      const lista = P.dias[dk] || (P.dias[dk] = []);
+      const alvo = casada ? lista.find(e => e.casada && chaveCompacta(e.loja) === chaveCompacta(lojaTxt)) : null;
+      let e = alvo;
+      if (!e && !casada) {
+        // etiqueta sem par (typo): junta à loja parecida do mesmo dia e rede. Lojas já identificadas nunca se juntam por semelhança (ex.: MOGI I e MOGI II)
+        const melhor = lista.map(x => ({ x, sc: semelhancaLoja(lojaTxt, x.loja) })).sort((a, b) => b.sc - a.sc)[0];
+        if (melhor && (melhor.sc >= 0.8 || chaveCompacta(melhor.x.loja) === chaveCompacta(lojaTxt))) e = melhor.x;
+      }
+      if (!e) { e = { loja: lojaTxt, casada, redeKey, dia: diaDe(f), redeTxt: semEsp(f.redeTexto), fotos: [] }; lista.push(e); }
+      e.fotos.push(f);
+    });
+    // etiquetas sem par que ficaram sozinhas e são parecidas com uma loja identificada do mesmo dia: mesma execução
+    Object.values(porProm).forEach(P => Object.values(P.dias).forEach(lista => {
+      lista.filter(e => !e.casada).forEach(e => {
+        const c = lista.filter(x => x.casada).map(x => ({ x, sc: semelhancaLoja(e.loja, x.loja) })).sort((a, b) => b.sc - a.sc)[0];
+        if (c && c.sc >= 0.8) { c.x.fotos.push(...e.fotos); lista.splice(lista.indexOf(e), 1); }
+      });
+    }));
+    const promotores = Object.values(porProm).map(P => {
+      const nome = Object.entries(P.nomes).sort((a, b) => b[1] - a[1])[0][0];
+      const execs = [];
+      Object.values(P.dias).forEach(lista => lista.forEach(e => {
+        const sts = e.fotos.map(f => f.status);
+        const ok = sts.includes('comprovada');
+        const foraFech = !porRede[e.redeKey];
+        let motivo = null;
+        if (!ok) motivo = sts.includes('revisao') ? 'Loja da etiqueta não confere com as lojas do dia no Relatório de Tempo' : 'Promotor sem visita registrada neste dia no Relatório de Tempo';
+        else if (foraFech) motivo = 'Rede não consta no Fechamento';
+        const ord = e.fotos.slice().sort((a, b) => (a.dataHora || '').localeCompare(b.dataHora || ''));
+        execs.push({ d: e.dia, hora: (ord[0].dataHora.split('T')[1] || ''), rede: porRede[e.redeKey] ? porRede[e.redeKey].rede : (e.redeTxt || e.redeKey), loja: e.loja, n: e.fotos.length,
+                     pg: ord[0].pagina, ar: idxArq(ord[0].arquivoOrigem), ok, solta: !!motivo, motivo });
+      }));
+      execs.sort((a, b) => a.d.localeCompare(b.d) || a.hora.localeCompare(b.hora));
+      const porDia = {}; execs.forEach(x => { porDia[x.d] = (porDia[x.d] || 0) + 1; });
+      return { nome, exec: execs.length, fotos: execs.reduce((a, x) => a + x.n, 0), dias: Object.keys(porDia).length,
+               maxDia: Math.max(0, ...Object.values(porDia)), soltas: execs.filter(x => x.solta).length, lista: execs };
+    }).sort((a, b) => b.exec - a.exec || a.nome.localeCompare(b.nome));
+
+    // 9. Visitas por dia e rede (alimenta o calendário: qualquer período é somado a partir daqui)
+    const porDia = {}, vistosDia = new Set();
+    relatorio.forEach(v => {
+      const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja);
+      if (vistosDia.has(k)) return; vistosDia.add(k);
+      const dd = porDia[v.data] || (porDia[v.data] = {});
+      (dd[v.rede] || (dd[v.rede] = { d: 0, c: 0 })).d++;
+    });
+    Object.values(visitas).forEach(v => { if (v.statusFinal === 'comprovada' && porDia[v.data] && porDia[v.data][v.rede]) porDia[v.data][v.rede].c++; });
+
     const soma = campo => Object.values(porRede).reduce((a, r) => a + (r[campo] || 0), 0);
     const todas = Object.values(visitas);
     return {
@@ -1343,9 +1378,9 @@
         totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
         fotosPendentes: fotos.filter(f => f.status === 'revisao').length
       },
-      versaoCalculo: 6,
+      versaoCalculo: 8,
       associacoes,
-      volumeAlertas, maxVisitasDia,
+      volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia,
       dataProcessamento: new Date().toISOString()
     };
   }
@@ -1457,7 +1492,7 @@
     }
     const rotMes = `<strong>Mês ${esc(Estado.config.mesAtivo)}</strong> · `;
     const texto = rotMes + (aud.periodoAuditado
-      ? `<strong>Período auditado:</strong> ${esc(formatarDataBR(aud.periodoAuditado.inicio))} a ${esc(formatarDataBR(aud.periodoAuditado.fim))}. Neste mês a auditoria vale só para este período: "Declaradas" são as visitas do Relatório de Tempo nesses dias e as fotos de outros dias foram ignoradas (${aud.foraPeriodo || 0}). Cobrado, desconto e valor auditado referem-se apenas ao período.`
+      ? `<strong>Visualizando o período:</strong> ${esc(formatarDataBR(aud.periodoAuditado.inicio))} a ${esc(formatarDataBR(aud.periodoAuditado.fim))}. "Declaradas" são as visitas do Relatório de Tempo nesses dias. Cobrado, desconto e valor auditado referem-se apenas ao período.`
       : `<strong>Cobertura das fotos:</strong> ${esc(per)}. O Fechamento é mensal: enquanto faltarem PDFs (ou partes do book) do mês, as comprovadas ficam abaixo do real e o gap/desconto ficam superestimados.`);
     return `${htmlAvisoMesDosDados()}<div class="card" style="border-left-color: #F39C12; padding: 15px;">
       <p style="font-size: 12px; line-height: 1.4;">${texto}</p>
@@ -1617,7 +1652,7 @@
       ${num(dir, dir.cor)}</div>`;
   }
   function htmlPainelF1(total, pg, mesDados) {
-    const p = mesDados.periodoAuditado;
+    const p = mesDados.periodoAuditado; // aqui recebe a auditoria ativa
     const per = p ? `${formatarDataBR(p.inicio).slice(0, 5)} a ${formatarDataBR(p.fim).slice(0, 5)}` : 'mês inteiro';
     const pl = total.totalPlanejadas != null ? total.totalPlanejadas : (total.totalProgramadas || 0), de = total.totalDeclaradas || 0, co = total.comprovadas || 0;
     const efet = de > 0 ? co / de * 100 : 0;
@@ -1628,8 +1663,8 @@
         <div class="painel-corpo"><div class="painel-esq">
         ${htmlElo({ rot: 'Planejadas', val: pl, cor: '#C9D1D9', sub: p ? 'no período' : 'contratado no mês' },
                   { rot: 'Declarado do plano', pct: pg.declDoPlano },
-                  { rot: 'Declaradas', val: de, cor: '#D4AF37', sub: 'Rel. de Tempo' })}
-        ${htmlElo({ rot: 'Declaradas', val: de, cor: '#D4AF37', sub: 'Rel. de Tempo' },
+                  { rot: 'Declaradas', val: de, cor: '#D4AF37', sub: p ? 'Rel. de Tempo' : 'Fechamento' })}
+        ${htmlElo({ rot: 'Declaradas', val: de, cor: '#D4AF37', sub: p ? 'Rel. de Tempo' : 'Fechamento' },
                   { rot: 'Efetividade', pct: efet },
                   { rot: 'Comprovadas', val: co, cor: '#2ECC71', sub: 'com foto' })}
         </div><div class="painel-dir">
@@ -1641,14 +1676,180 @@
     </div>`;
   }
 
+
+  // ── CALENDÁRIO: ver um período específico sem mudar a auditoria do mês ──
+  const Visao = { mes: null, inicio: null, fim: null, cache: null };
+  function audAtiva(m) {
+    const a = m && m.auditoria; if (!a) return a;
+    if (Visao.mes !== Estado.config.mesAtivo || !Visao.inicio || !a.porDia) return a;
+    const ch = a.dataProcessamento + '|' + Visao.inicio + '|' + Visao.fim;
+    if (!Visao.cache || Visao.cache.ch !== ch) Visao.cache = { ch, aud: derivarVisao(a, Visao.inicio, Visao.fim) };
+    return Visao.cache.aud;
+  }
+  function derivarVisao(a, ini, fim) {
+    const dias = Math.max(1, Math.round((new Date(fim + 'T00:00:00Z') - new Date(ini + 'T00:00:00Z')) / 86400000) + 1);
+    const noP = d => d >= ini && d <= fim;
+    const vis = (a.visitasAgrupadas || []).filter(v => noP(v.data));
+    const porRede = {};
+    Object.entries(a.porRede).forEach(([k, r]) => {
+      let de = 0, co = 0;
+      Object.entries(a.porDia).forEach(([dia, redes]) => { if (noP(dia) && redes[k]) { de += redes[k].d; co += redes[k].c; } });
+      const cv = r.custoVisita || 0, gap = de - co;
+      porRede[k] = Object.assign({}, r, { planejadas: Math.round((r.semanal || 0) * dias / 7), declaradas: de, comprovadas: co, gap,
+        desconto: gap * cv, valorCobrado: de * cv, valorAuditado: co * cv, semFoto: vis.filter(v => v.rede === k && v.statusFinal === 'sem_foto').length });
+    });
+    const soma = c => Object.values(porRede).reduce((x, r) => x + (r[c] || 0), 0);
+    const promotores = (a.promotores || []).map(p => {
+      const lista = p.lista.filter(x => noP(x.d)); const porD = {}; lista.forEach(x => { porD[x.d] = (porD[x.d] || 0) + 1; });
+      return Object.assign({}, p, { lista, exec: lista.length, fotos: lista.reduce((t, x) => t + x.n, 0), dias: Object.keys(porD).length,
+        maxDia: Math.max(0, ...Object.values(porD)), soltas: lista.filter(x => x.solta).length });
+    }).filter(p => p.exec > 0).sort((x, y) => y.exec - x.exec || x.nome.localeCompare(y.nome));
+    return Object.assign({}, a, {
+      porRede, visitasAgrupadas: vis, promotores, volumeAlertas: (a.volumeAlertas || []).filter(v => noP(v.data)),
+      periodoAuditado: { inicio: ini, fim: fim }, visao: true,
+      total: Object.assign({}, a.total, { comprovadas: soma('comprovadas'), gap: soma('gap'), desconto: soma('desconto'), valorAuditado: soma('valorAuditado'),
+        valorCobrado: soma('valorCobrado'), totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas') })
+    });
+  }
+  function semanasDoMes(mes) { // semanas de domingo a sábado (como os Books), cortadas no mês
+    const [A, M] = mes.split('-').map(Number), ult = new Date(Date.UTC(A, M, 0)).getUTCDate(), iso = d => d.toISOString().slice(0, 10);
+    const out = []; let d = 1;
+    while (d <= ult) {
+      const ini = new Date(Date.UTC(A, M - 1, d)), fimD = Math.min(ult, d + (6 - ini.getUTCDay()));
+      out.push({ inicio: iso(ini), fim: iso(new Date(Date.UTC(A, M - 1, fimD))) }); d = fimD + 1;
+    }
+    return out;
+  }
+  function atualizarBarraPeriodo() {
+    const el = document.getElementById('barra-periodo'); if (!el) return;
+    const mes = Estado.config.mesAtivo, m = Estado.meses[mes], a = m && m.auditoria;
+    if (!a || !a.porDia || !/^\d{4}-\d{2}$/.test(mes || '')) { el.style.display = 'none'; return; }
+    if (Visao.mes !== mes) { Visao.mes = mes; Visao.inicio = Visao.fim = null; }
+    const [A, M] = mes.split('-').map(Number), ult = new Date(Date.UTC(A, M, 0)).getUTCDate();
+    const min = mes + '-01', max = mes + '-' + String(ult).padStart(2, '0');
+    const chip = (rot, ini, fim) => { const ativo = (!ini && !Visao.inicio) || (ini && Visao.inicio === ini && Visao.fim === fim);
+      return `<button type="button" class="chip-per" data-i="${ini || ''}" data-f="${fim || ''}" style="padding:5px 10px;border-radius:14px;border:1px solid var(--cor-primaria);background:${ativo ? 'var(--cor-primaria)' : 'transparent'};color:${ativo ? 'var(--cor-destaque)' : 'var(--cor-primaria)'};font-size:11px;font-weight:bold;cursor:pointer;">${rot}</button>`; };
+    const br = d => d.slice(8) + '/' + d.slice(5, 7);
+    el.style.display = 'flex';
+    el.innerHTML = `<span style="font-weight:bold;">📅 Período</span>
+      ${chip('Mês inteiro', '', '')}${semanasDoMes(mes).map(w => chip(br(w.inicio) + '–' + br(w.fim), w.inicio, w.fim)).join('')}
+      <span style="display:flex;gap:4px;align-items:center;">De <input type="date" id="per-ini" min="${min}" max="${max}" value="${Visao.inicio || ''}" style="padding:4px;border:1px solid #CCC;border-radius:4px;font-size:12px;"> até <input type="date" id="per-fim" min="${min}" max="${max}" value="${Visao.fim || ''}" style="padding:4px;border:1px solid #CCC;border-radius:4px;font-size:12px;"></span>`;
+    const aplicar = (i, f) => { Visao.mes = mes; Visao.inicio = i || null; Visao.fim = f || null; Visao.cache = null; atualizarBarraPeriodo(); const b = document.querySelector('nav button.ativo'); if (b) b.click(); };
+    el.querySelectorAll('.chip-per').forEach(b => b.addEventListener('click', () => aplicar(b.dataset.i, b.dataset.f)));
+    const ei = document.getElementById('per-ini'), ef = document.getElementById('per-fim');
+    const mudou = () => { if (ei.value && ef.value && ef.value >= ei.value) aplicar(ei.value, ef.value); };
+    ei.addEventListener('change', mudou); ef.addEventListener('change', mudou);
+  }
+
+  // ── PROMOTORES (pelas etiquetas das fotos) e EXECUÇÕES SOLTAS (sem par nas planilhas) ──
+  function nomeArquivoCurto(n) {
+    if (!n) return 'arquivo ?';
+    const m = String(n).match(/__(\d+(?:-\d+)?)_+(?:_\d+)?\.pdf$/i);
+    return m ? 'Book ' + m[1] : String(n).slice(-26);
+  }
+  function origemExec(aud, x) { return `${esc(nomeArquivoCurto((aud.arquivosBook || [])[x.ar]))}, pág. ${x.pg}`; }
+  function dadosPromotores() {
+    const m = Estado.meses[Estado.config.mesAtivo];
+    const a = audAtiva(m); return a && a.promotores ? a : null;
+  }
+  function htmlSemDadosPromotores(titulo) {
+    return `<div class="card"><h2>${titulo}</h2><p>Nenhuma auditoria com execuções por promotor. ${Modo === 'publicado' ? 'O operador precisa publicar o mês novamente.' : 'Processe a auditoria (Admin).'}</p></div>`;
+  }
+  function renderizarPromotores() {
+    const container = document.getElementById('tela-promotores');
+    const aud = dadosPromotores();
+    if (!aud) { container.innerHTML = htmlSemDadosPromotores('Promotores'); return; }
+    const L = aud.promotores, maxDia = aud.maxVisitasDia || 7;
+    const totE = L.reduce((a, p) => a + p.exec, 0), totF = L.reduce((a, p) => a + p.fotos, 0), totS = L.reduce((a, p) => a + p.soltas, 0);
+    const maior = Math.max(1, ...L.map(p => p.exec));
+    const caixa = (rot, val, cor) => `<div style="flex:1;min-width:86px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};">
+      <div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:${cor};">${val}</div></div>`;
+    const linhas = L.map((p, i) => {
+      const ok = p.exec - p.soltas;
+      const med = p.dias ? (p.exec / p.dias).toFixed(1).replace('.', ',') : '0';
+      const dias = {}; p.lista.forEach(x => (dias[x.d] = dias[x.d] || []).push(x));
+      const det = Object.keys(dias).sort().map(d => `<div style="margin-top:8px;"><div style="font-weight:bold;font-size:12px;">${esc(formatarDataBR(d))} <span style="color:var(--cor-texto-secundario);font-weight:normal;">${esc(diaSemanaCurto(d))}</span> · ${dias[d].length} ${dias[d].length === 1 ? 'execução' : 'execuções'}</div>
+        ${dias[d].map(x => `<div style="font-size:12px;padding:3px 0 3px 8px;border-left:3px solid ${x.solta ? '#E67E22' : '#27AE60'};margin-top:3px;">
+          ${esc(x.hora)} · <strong>${esc(x.rede)}</strong> › ${esc(x.loja)} · ${x.n} ${x.n === 1 ? 'foto' : 'fotos'} <span style="color:var(--cor-texto-secundario);">(${origemExec(aud, x)})</span>
+          ${x.solta ? `<div style="color:#C0392B;font-size:11px;">⚠ ${esc(x.motivo)}</div>` : ''}</div>`).join('')}</div>`).join('');
+      return `<div class="prom-linha" style="padding:10px 0;border-top:1px solid #EEE;cursor:pointer;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+          <span style="font-weight:bold;font-size:14px;">${i + 1}. ${esc(p.nome)} <span style="color:#AAA;font-weight:normal;">▾</span></span>
+          <span style="font-family:var(--fonte-titulo);font-size:22px;font-weight:900;color:var(--cor-primaria);white-space:nowrap;">${p.exec}<span style="font-size:11px;font-weight:normal;color:var(--cor-texto-secundario);"> execuções</span></span></div>
+        <div style="display:flex;height:9px;margin:6px 0;background:#E3E6EA;border-radius:5px;overflow:hidden;width:100%;"><div style="width:${ok / maior * 100}%;background:#27AE60;"></div><div style="width:${p.soltas / maior * 100}%;background:#E67E22;"></div></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--cor-texto-secundario);">
+          <span><strong>${p.fotos}</strong> fotos</span><span><strong>${p.dias}</strong> dias</span><span><strong>${med}</strong> por dia</span>
+          <span style="${p.maxDia > maxDia ? 'color:#C0392B;font-weight:bold;' : ''}">máx. <strong>${p.maxDia}</strong> num dia${p.maxDia > maxDia ? ' ⚠ acima de ' + maxDia : ''}</span>
+          ${p.soltas ? `<span style="color:#C0392B;"><strong>${p.soltas}</strong> sem par nas planilhas</span>` : ''}</div>
+        <div class="prom-det" style="display:none;margin-top:8px;padding:10px;background:#F8F9FA;border-radius:6px;cursor:default;">${det}</div></div>`;
+    }).join('');
+    container.innerHTML = `
+      <div class="card">
+        <h2>Ranking de promotores</h2>
+        <p style="font-size:12px;margin-bottom:10px;">Lido das <strong>etiquetas das fotos</strong> (promotor, dia, rede e loja). Todas as fotos da mesma loja no mesmo dia contam <strong>uma execução</strong>, não importa quantas fotos tenham. Fotos repetidas e sem legenda não entram.</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">${caixa('Promotores', L.length, '#7F8C8D')}${caixa('Execuções', totE, '#27AE60')}${caixa('Fotos', totF, '#D4AF37')}${caixa('Fotos por execução', totE ? (totF / totE).toFixed(1).replace('.', ',') : '0', '#7F8C8D')}</div>
+        <p style="font-size:11px;margin:8px 0;color:var(--cor-texto-secundario);"><span style="color:#27AE60;">■</span> execução com par no Relatório de Tempo &nbsp; <span style="color:#E67E22;">■</span> sem par (ver aba Soltas). Toque no nome para ver dia a dia, com arquivo e página.</p>
+        ${linhas || '<p style="font-size:13px;">Nenhuma execução encontrada.</p>'}
+        <button id="btn-csv-prom" style="width:100%;margin-top:14px;padding:12px;background:var(--cor-primaria);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Baixar CSV (ranking e execuções)</button>
+      </div>`;
+    container.querySelectorAll('.prom-linha').forEach(el => el.addEventListener('click', (e) => {
+      if (e.target.closest('.prom-det')) return;
+      const d = el.querySelector('.prom-det'); d.style.display = d.style.display === 'none' ? 'block' : 'none';
+    }));
+    document.getElementById('btn-csv-prom').addEventListener('click', () => {
+      let csv = 'Posição;Promotor;Execuções;Fotos;Dias;Máx. num dia;Sem par nas planilhas\n';
+      L.forEach((p, i) => { csv += [i + 1, p.nome, p.exec, p.fotos, p.dias, p.maxDia, p.soltas].join(';') + '\n'; });
+      csv += '\nPromotor;Data;Hora;Rede;Loja (etiqueta);Fotos;Arquivo;Página;Situação\n';
+      L.forEach(p => p.lista.forEach(x => { csv += [p.nome, formatarDataBR(x.d), x.hora, x.rede, x.loja, x.n, nomeArquivoCurto((aud.arquivosBook || [])[x.ar]), x.pg, x.motivo || 'com par no Relatório'].join(';') + '\n'; }));
+      baixarCSV('promotores_' + Estado.config.mesAtivo + '.csv', csv);
+    });
+  }
+  let filtroSoltas = 'todas';
+  function renderizarSoltas() {
+    const container = document.getElementById('tela-soltas');
+    const aud = dadosPromotores();
+    if (!aud) { container.innerHTML = htmlSemDadosPromotores('Execuções soltas'); return; }
+    const todas = [];
+    aud.promotores.forEach(p => p.lista.forEach(x => { if (x.solta) todas.push(Object.assign({ prom: p.nome }, x)); }));
+    const totalExec = aud.promotores.reduce((a, p) => a + p.exec, 0);
+    const motivos = [...new Set(todas.map(x => x.motivo))];
+    const cont = m => todas.filter(x => x.motivo === m).length;
+    if (filtroSoltas !== 'todas' && !motivos.includes(filtroSoltas)) filtroSoltas = 'todas';
+    const lista = todas.filter(x => filtroSoltas === 'todas' || x.motivo === filtroSoltas)
+      .sort((a, b) => a.motivo.localeCompare(b.motivo) || a.d.localeCompare(b.d) || a.prom.localeCompare(b.prom));
+    const linhas = lista.map(x => `<tr style="border-top:1px solid #EEE;vertical-align:top;">
+        <td style="padding:7px 5px;white-space:nowrap;">${esc(formatarDataBR(x.d).slice(0, 5))}<div style="font-size:10px;color:var(--cor-texto-secundario);">${esc(x.hora)}</div></td>
+        <td style="padding:7px 5px;font-weight:bold;">${esc(x.prom)}</td>
+        <td style="padding:7px 5px;">${esc(x.rede)} › ${esc(x.loja)}<div style="font-size:10px;color:var(--cor-texto-secundario);">${x.n} ${x.n === 1 ? 'foto' : 'fotos'} · ${origemExec(aud, x)}</div></td>
+        <td style="padding:7px 5px;font-size:11px;color:#C0392B;">${esc(x.motivo)}</td></tr>`).join('');
+    container.innerHTML = `
+      <div class="card" style="border-left-color:#E67E22;">
+        <h2>Execuções soltas</h2>
+        <p style="font-size:12px;margin-bottom:10px;">Execuções que aparecem nas <strong>fotos</strong> (promotor + dia + loja) mas <strong>não têm par</strong> nas planilhas: não existem no Relatório de Tempo, ou estão numa rede que não consta no Fechamento. Cada uma vale uma execução, mesmo com várias fotos.</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+          <div style="flex:1;min-width:100px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid #E67E22;"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">Soltas</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#E67E22;">${todas.length}</div></div>
+          <div style="flex:1;min-width:100px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid #7F8C8D;"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">De um total de</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:var(--cor-texto);">${totalExec}</div></div></div>
+        <select id="filtro-soltas" style="width:100%;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;margin-bottom:10px;">
+          <option value="todas">Todas (${todas.length})</option>${motivos.map(m => `<option value="${esc(m)}" ${m === filtroSoltas ? 'selected' : ''}>${esc(m)} (${cont(m)})</option>`).join('')}</select>
+        ${lista.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:6px 5px;text-align:left;">Dia</th><th style="padding:6px 5px;text-align:left;">Promotor</th><th style="padding:6px 5px;text-align:left;">Rede › loja (etiqueta)</th><th style="padding:6px 5px;text-align:left;">Por quê</th></tr></thead><tbody>${linhas}</tbody></table></div>`
+          : '<p style="font-size:13px;color:#27AE60;">Nenhuma execução solta. Todas têm par nas planilhas.</p>'}
+        <button id="btn-csv-soltas" style="width:100%;margin-top:14px;padding:12px;background:var(--cor-primaria);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Baixar CSV das execuções soltas</button>
+      </div>`;
+    document.getElementById('filtro-soltas').addEventListener('change', (e) => { filtroSoltas = e.target.value; renderizarSoltas(); });
+    document.getElementById('btn-csv-soltas').addEventListener('click', () => {
+      let csv = 'Data;Hora;Promotor;Rede;Loja (etiqueta);Fotos;Arquivo;Página;Por quê\n';
+      todas.sort((a, b) => a.d.localeCompare(b.d) || a.prom.localeCompare(b.prom)).forEach(x => { csv += [formatarDataBR(x.d), x.hora, x.prom, x.rede, x.loja, x.n, nomeArquivoCurto((aud.arquivosBook || [])[x.ar]), x.pg, x.motivo].join(';') + '\n'; });
+      baixarCSV('execucoes_soltas_' + Estado.config.mesAtivo + '.csv', csv);
+    });
+  }
+
   // ── FECHAMENTO × RELATÓRIO DE TEMPO × BOOK: do que a Pacto cobra até o que tem foto ──
   function calcularFechamentoXRelatorio(m) {
-    const aud = m.auditoria; if (!aud || !aud.porRede) return null;
-    const vistos = {}, redesRel = {}; let dMin = null, dMax = null;
-    (m.relatorioTempo || []).forEach(v => {
-      const rede = chaveRede(v.rede), k = chaveCompacta(v.promotor) + '_' + v.data + '_' + rede + '_' + chaveCompacta(v.loja);
-      if (vistos[k]) return; vistos[k] = 1; redesRel[rede] = (redesRel[rede] || 0) + 1;
-      if (!dMin || v.data < dMin) dMin = v.data; if (!dMax || v.data > dMax) dMax = v.data;
+    const raw = m.auditoria; if (!raw || !raw.porRede || !raw.porDia) return null;
+    const aud = audAtiva(m), redesRel = {}; let dMin = null, dMax = null;
+    Object.entries(raw.porDia).forEach(([dia, redes]) => {
+      if (!dMin || dia < dMin) dMin = dia; if (!dMax || dia > dMax) dMax = dia;
+      Object.entries(redes).forEach(([r, x]) => { redesRel[r] = (redesRel[r] || 0) + x.d; });
     });
     const linhas = Object.values(aud.porRede).map(r => {
       const cobrado = r.declaradasMes || 0, registrado = redesRel[r.chave] || 0, sem = Math.max(0, cobrado - registrado);
@@ -1662,12 +1863,12 @@
     const container = document.getElementById('tela-fechamento');
     const m = Estado.meses[Estado.config.mesAtivo];
     const d = m && m.auditoria ? calcularFechamentoXRelatorio(m) : null;
-    if (!d || !(m.fechamento || []).length || !(m.relatorioTempo || []).length) {
+    if (!d) {
       container.innerHTML = `<div class="card"><h2>Fechamento × Relatório</h2><p>Importe o Fechamento e o Relatório de Tempo e processe a auditoria para comparar.</p></div>`; return;
     }
-    const T = d.total, p = m.periodoAuditado;
+    const T = d.total, p = audAtiva(m).periodoAuditado;
     const pctReg = T.cobrado > 0 ? Math.min(100, T.registrado / T.cobrado * 100) : null;
-    const perTxt = p ? `${formatarDataBR(p.inicio).slice(0, 5)} a ${formatarDataBR(p.fim).slice(0, 5)}` : 'sem período';
+    const perTxt = p ? `${formatarDataBR(p.inicio).slice(0, 5)} a ${formatarDataBR(p.fim).slice(0, 5)}` : 'mês inteiro';
     const th = 'padding:6px 5px;font-size:10px;text-transform:uppercase;color:var(--cor-texto-secundario);text-align:right;white-space:nowrap;';
     const linhas = d.linhas.map(l => {
       const base = Math.max(l.cobrado, l.registrado, 1), wReg = Math.min(l.registrado, l.cobrado) / base * 100, wSem = l.semRegistro / base * 100;
@@ -1700,7 +1901,7 @@
       <div class="card">
         <h2>Da planilha da Pacto até a foto</h2>
         <p style="font-size:12px;margin-bottom:8px;">Três níveis, para cada rede: <strong>Cobrado</strong> (Fechamento do mês) → <strong>Registrado</strong> (visitas únicas no Relatório de Tempo) → <strong>Com foto</strong> (Book). O Fechamento só traz o total por rede, não visita a visita; por isso a comparação é por rede.</p>
-        <p style="font-size:11px;margin-bottom:12px;color:var(--cor-texto-secundario);">O Relatório de Tempo cobre de <strong>${esc(formatarDataBR(d.dMin))}</strong> a <strong>${esc(formatarDataBR(d.dMax))}</strong>. Se o Fechamento inclui dias depois dessa data, parte da diferença pode vir deles. As colunas “No Book” valem só para o período dos PDFs importados (<strong>${perTxt}</strong>).</p>
+        <p style="font-size:11px;margin-bottom:12px;color:var(--cor-texto-secundario);">O Relatório de Tempo cobre de <strong>${esc(formatarDataBR(d.dMin))}</strong> a <strong>${esc(formatarDataBR(d.dMax))}</strong>. Se o Fechamento inclui dias depois dessa data, parte da diferença pode vir deles. As colunas “No Book” valem para <strong>${perTxt}</strong>; até importar todos os Books do período, “sem foto” inclui visitas cujo Book ainda não foi enviado.</p>
         <p style="font-size:10px;color:var(--cor-texto-secundario);margin-bottom:4px;text-align:right;">deslize a tabela para o lado para ver R$ e as colunas do Book →</p>
         <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
           <thead><tr><th style="${th}text-align:left;">Rede</th><th style="${th}">Cobrado</th><th style="${th}">Regis-<br>trado</th><th style="${th}">Sem registro</th><th style="${th}">R$</th><th style="${th}border-left:1px solid #EEE;">No Book:<br>declar.</th><th style="${th}">Com foto</th><th style="${th}">Sem foto</th></tr></thead>
@@ -1722,7 +1923,8 @@
     const container = document.getElementById('tela-dashboard');
     const mesDados = Estado.meses[Estado.config.mesAtivo];
 
-    if (!mesDados || !mesDados.auditoria || !mesDados.auditoria.porRede) {
+    const aud = audAtiva(mesDados);
+    if (!mesDados || !aud || !aud.porRede) {
       container.innerHTML = `
         <div class="card">
           <h2>Dashboard</h2>
@@ -1733,8 +1935,8 @@
       return;
     }
 
-    const porRede = mesDados.auditoria.porRede;
-    const total = mesDados.auditoria.total;
+    const porRede = aud.porRede;
+    const total = aud.total;
     const pctGeral = pctCadeia({ planejadas: total.totalPlanejadas != null ? total.totalPlanejadas : total.totalProgramadas, declaradas: total.totalDeclaradas, comprovadas: total.comprovadas });
 
     // Ranking ordenado por efetividade (pior para o melhor)
@@ -1780,8 +1982,8 @@
         ${semPlano.map(r => linhaRede(r, '')).join('')}
       </div>` : '';
     container.innerHTML = `
-      ${htmlAvisoCobertura(mesDados.auditoria)}
-      ${htmlPainelF1(total, pctGeral, mesDados)}
+      ${htmlAvisoCobertura(aud)}
+      ${htmlPainelF1(total, pctGeral, aud)}
 
       <div class="card" style="border-left-color: var(--cor-perigo);">
         <h2>Resumo Financeiro</h2>
@@ -1809,7 +2011,7 @@
 
       <div class="card" id="card-dias-dash" style="border-left-color: var(--cor-perigo);">
         <h2>📅 Dias com visitas sem comprovação</h2>
-        <div id="det-dias-dash" style="margin-top:8px;">${htmlDiasSemComprovacao(mesDados.auditoria, null)}</div>
+        <div id="det-dias-dash" style="margin-top:8px;">${htmlDiasSemComprovacao(aud, null)}</div>
       </div>
 
       <div class="card">
@@ -1825,7 +2027,7 @@
       const det = el.querySelector('.det-rede');
       if (det.style.display === 'block') { det.style.display = 'none'; return; }
       const chave = el.dataset.rede;
-      det.innerHTML = htmlDiasSemComprovacao(mesDados.auditoria, chave) +
+      det.innerHTML = htmlDiasSemComprovacao(aud, chave) +
         `<button type="button" class="btn-abrir-rede" style="margin-top:8px;padding:8px 12px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:12px;">Ver lojas desta rede ›</button>`;
       det.style.display = 'block';
       det.querySelector('.btn-abrir-rede').addEventListener('click', (ev) => {
@@ -1858,7 +2060,7 @@
     const container = document.getElementById('tela-auditoria');
     const mesDados = Estado.meses[Estado.config.mesAtivo];
 
-    if (!mesDados || !mesDados.auditoria || !mesDados.auditoria.porRede) {
+    if (!mesDados || !audAtiva(mesDados) || !audAtiva(mesDados).porRede) {
       container.innerHTML = `
         <div class="card">
           <h2>Auditoria</h2>
@@ -1868,7 +2070,7 @@
       return;
     }
 
-    const aud = mesDados.auditoria;
+    const aud = audAtiva(mesDados);
     const porRede = aud.porRede;
     const visitasAgrupadas = aud.visitasAgrupadas || [];
 
@@ -1992,7 +2194,7 @@
         <div class="card">
           <button id="btn-voltar-redes" style="padding: 8px 12px; background: transparent; border: 1px solid var(--cor-primaria); color: var(--cor-primaria); border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 15px;">‹ Voltar</button>
           <h2>Rede: ${esc(dadosRede.rede)}</h2>
-          ${htmlCaixasNumeros(dadosRede.planejadas || 0, dadosRede.declaradas, dadosRede.comprovadas, dadosRede.gap, { subPlan: mesDados.periodoAuditado ? 'no período' : 'no mês' })}
+          ${htmlCaixasNumeros(dadosRede.planejadas || 0, dadosRede.declaradas, dadosRede.comprovadas, dadosRede.gap, { subPlan: aud.visao ? 'no período' : 'no mês' })}
           <p style="font-size: 12px; margin-bottom: 8px;">Desconto desta rede: <strong>${formatarMoeda(dadosRede.desconto)}</strong>.</p>
           <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);">"Sem foto" = visita do Relatório de Tempo, dentro do período dos PDFs importados, sem nenhuma foto cruzada. As planejadas vêm do Fechamento por <strong>rede</strong>; o Fechamento não informa o plano de cada loja, por isso a tabela abaixo começa em declaradas.</p>
           <div style="overflow-x: auto;">
@@ -2382,12 +2584,13 @@
     const container = document.getElementById('tela-relatorio');
     const mesDados = Estado.meses[Estado.config.mesAtivo];
 
-    if (!mesDados || !mesDados.auditoria || !mesDados.auditoria.total) {
+    const aud = audAtiva(mesDados);
+    if (!mesDados || !aud || !aud.total) {
       container.innerHTML = `<div class="card"><h2>Relatório</h2><p>Nenhuma auditoria processada.</p></div>`;
       return;
     }
 
-    const total = mesDados.auditoria.total;
+    const total = aud.total;
     const fotos = mesDados.fotos || [];
     const totalRevisao = fotos.filter(f => f.status === 'revisao').length;
     const totalDuplicatas = fotos.filter(f => f.status === 'duplicata').length;
@@ -2402,7 +2605,7 @@
         <p style="font-size: 12px; color: var(--cor-texto-secundario);">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
       </div>
 
-      ${htmlAvisoCobertura(mesDados.auditoria)}
+      ${htmlAvisoCobertura(aud)}
 
       <div class="card">
         <h2>Funil de Visitas</h2>
@@ -2410,7 +2613,7 @@
           <span style="font-weight: bold;">Programadas (Contrato)</span><span>${total.totalProgramadas || 0}</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;">
-          <span style="font-weight: bold;">${mesDados.periodoAuditado ? 'Declaradas (Rel. de Tempo, período)' : 'Declaradas (Pacto)'}</span><span>${total.totalDeclaradas || 0}</span>
+          <span style="font-weight: bold;">${aud.visao ? 'Declaradas (Rel. de Tempo, período)' : 'Declaradas (Pacto)'}</span><span>${total.totalDeclaradas || 0}</span>
         </div>
         <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); font-weight: bold; margin-bottom: 10px;">
           <span>Comprovadas (Fotos)</span><span>${total.comprovadas}</span>
@@ -2476,12 +2679,13 @@
         
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('ativo'));
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+        if (nomeTela !== 'admin' && nomeTela !== 'config' && nomeTela !== 'revisao') atualizarBarraPeriodo(); else document.getElementById('barra-periodo').style.display = 'none';
         
         botao.classList.add('ativo');
         const telaAlvo = document.getElementById(`tela-${nomeTela}`);
         if (telaAlvo) telaAlvo.classList.add('ativa');
 
-        if (nomeTela === 'dashboard' || nomeTela === 'auditoria' || nomeTela === 'relatorio' || nomeTela === 'fechamento') atualizarAuditoriaSeNecessario();
+        if (nomeTela === 'dashboard' || nomeTela === 'auditoria' || nomeTela === 'relatorio' || nomeTela === 'fechamento' || nomeTela === 'promotores' || nomeTela === 'soltas') atualizarAuditoriaSeNecessario();
         if (nomeTela === 'config') renderizarConfig();
         if (nomeTela === 'admin') renderizarAdmin();
         if (nomeTela === 'dashboard') renderizarDashboard();
@@ -2489,6 +2693,8 @@
         if (nomeTela === 'revisao') renderizarRevisao();
         if (nomeTela === 'relatorio') renderizarRelatorio();
         if (nomeTela === 'fechamento') renderizarFechamento();
+        if (nomeTela === 'promotores') renderizarPromotores();
+        if (nomeTela === 'soltas') renderizarSoltas();
       });
     });
 
@@ -2779,7 +2985,6 @@
     if (!confirm(`Mover todos os dados de ${origem} para ${destino}?` + (temDados ? `\n\n${destino} já tem dados importados, que serão SUBSTITUÍDOS.` : ''))) return;
     Estado.meses[destino] = m;
     delete Estado.meses[origem];
-    if (PERIODOS_PADRAO[destino] && !m.periodoAuditado) m.periodoAuditado = { ...PERIODOS_PADRAO[destino] };
     Estado.config.mesAtivo = destino;
     executarAuditoriaSilencioso();
     salvarEstado();
@@ -2794,7 +2999,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 6) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 8) executarAuditoriaSilencioso();
   }
 
 
@@ -2863,6 +3068,7 @@
   function mesLiberadoParaImportar(m) { return !!m && (temDadosNoMes(m) || m.mesConfirmado === true); }
   function escolherMesInicial() {
     delete Estado.config.janelaSuspeitaMin;
+    Object.values(Estado.meses || {}).forEach(m => { if (m) m.periodoAuditado = null; }); // todo mês é auditado de 1 a 31
     if (!Estado.config.maxVisitasDia) Estado.config.maxVisitasDia = 7;
     const ativo = Estado.config.mesAtivo, ms = Estado.meses || {};
     if (!(ativo in ms) || (!temDadosNoMes(ms[ativo]) && !ms[ativo].mesConfirmado)) {
@@ -3019,6 +3225,7 @@
   // ── BARRA DO MÊS: mês analisado em destaque + 2 anteriores clicáveis ──
   function atualizarBarraMes() {
     const el = document.getElementById('barra-mes'); if (!el) return;
+    Visao.inicio = Visao.fim = null; Visao.cache = null;
     const disp = Modo === 'publicado'
       ? ((Publicado.indice && Publicado.indice.meses) || []).map(m => m.mes)
       : Object.keys(Estado.meses || {}).filter(k => temDadosNoMes(Estado.meses[k]));
