@@ -364,7 +364,7 @@
         ['Desconto', 'Sem comprovação × custo médio da visita da rede (valor cobrado ÷ visitas cobradas).'],
         ['Plano comprovado', 'Comprovadas ÷ planejadas.'],
         ['Plano da loja', 'Visitas por semana da loja (frequência do Plano; ajustável em Config › Lojas) × semanas do mês (padrão 4; use 5 em mês de cinco semanas). Só conta a loja identificada entre Plano e Pacto.'],
-        ['Índice de fidelidade', 'Visitas registradas no mês ÷ plano do mês. Vermelho abaixo do plano, verde em 100%, de volta ao vermelho acima de 120%. As comprovadas aparecem ao lado. Se o Relatório não cobre o mês inteiro, o índice é provisório.'],
+        ['Índice de fidelidade', 'Visitas registradas no mês ÷ plano do mês. Vermelho abaixo do plano, verde em 100%, de volta ao vermelho acima de 120%. As comprovadas aparecem ao lado.'],
         ['Lojas com excesso', 'Lojas com mais de 120% do plano em visitas registradas no mês. Visita feita fora do dia combinado não é problema; passar da quantidade combinada é.'],
         ['Questões em aberto', 'Diferenças entre planilhas que o sistema não decide sozinho (linhas repetidas, Plano × Fechamento, Cobradas × Registradas, dias sem Relatório ou sem Book...). Cada uma pode ser anotada e exportada para levar à Pacto.'],
         ['×N no Relatório', 'Selo que aparece quando o Relatório de Tempo traz a mesma visita (promotor, dia, rede e loja) em mais de uma linha. O sistema conta uma visita só; passe o mouse para ver as linhas do Excel.'],
@@ -395,7 +395,6 @@
           <li><strong>Planejadas por semana é aproximação.</strong> O Fechamento só informa o total do mês por rede, sem o dia de cada visita. Em semanas, planejadas = média semanal × dias ÷ 7.</li>
           <li><strong>Plano de Visitas × Fechamento.</strong> Alguns Planos têm linhas ocultas no Excel (a Admin informa quantas). O que vale como planejado é o Fechamento; o número de lojas do Plano e do Fechamento nem sempre bate, e isso é ponto a esclarecer com a agência.</li>
           <li><strong>As marcas do Plano não entram em conta.</strong> O sistema lê os dias marcados (x, giro, foto+giro), que são os dias previstos de visita, e compara o total com as visitas programadas no Fechamento (Questões em aberto). Em outubro elas cobrem cerca de 38%, e só uma parte pequena coincide com os dias do Relatório de Tempo e das fotos. Precisa ser esclarecido com quem preenche o Plano.</li>
-          <li><strong>Índice de fidelidade é provisório se o Relatório for parcial.</strong> Com o Relatório cobrindo só parte do mês, o índice sai abaixo de 100% mesmo com a Pacto cumprindo o plano. Marque "Proporcional" ou importe o mês inteiro.</li>
           <li><strong>Loja sem identificação fica fora do índice.</strong> O Plano e a Pacto escrevem os nomes de jeitos diferentes; enquanto a loja não for ligada em Config › Lojas, ela não entra no plano nem no excesso.</li>
           <li><strong>Linhas repetidas no Relatório de Tempo.</strong> Se a Pacto cobra por linha, repetições são cobranças que nenhuma foto prova; se cobra por loja e dia, não. Está em Questões em aberto até a Pacto responder.</li>
           <li><strong>Nomes diferentes entre arquivos.</strong> Redes e lojas aparecem com grafias diferentes no Fechamento, no Plano e no Relatório. O sistema normaliza o que consegue; o resto aparece como "rede não consta" ou "livre".</li>
@@ -1746,11 +1745,7 @@
   // Plano por loja × visitas registradas no mês. relatorio = linhas do Relatório; visitas = mapa das visitas com foto (por chave).
   function calcularPlanoLojas(mesDados, relatorio, visitas) {
     const cfg = mesDados.planoCfg || {};
-    const semanas = Number(cfg.semanas) || SEMANAS_PADRAO, prop = !!cfg.proporcional;
-    const mes = mesDeDados(mesDados), diasMes = diasDoMesNum(mes);
-    const datas = [...new Set((mesDados.relatorioTempo || []).map(v => v.data).filter(d => d.startsWith(mes)))].sort();
-    const diasCob = datas.length ? diaNum(datas[datas.length - 1]) - diaNum(datas[0]) + 1 : 0;
-    const fator = diasMes && diasCob ? Math.min(1, diasCob / diasMes) : 1, f = prop ? fator : 1;
+    const semanas = Number(cfg.semanas) || SEMANAS_PADRAO;
     const { linhas, temRelatorio } = construirLojas(mesDados);
     // registradas e comprovadas por loja da Pacto
     const reg = {}, vistos = new Set();
@@ -1776,7 +1771,7 @@
     Object.entries(reg).forEach(([kl, e]) => {
       const p = planoDe[kl];
       if (!p) { semPlano.push({ rede: e.rede, redeOriginal: e.redeOriginal, loja: e.loja, reg: e.reg, comp: e.comp }); return; }
-      const planoEf = p.plano * f;
+      const planoEf = p.plano;
       lojas.push({ rede: e.rede, redeOriginal: e.redeOriginal, loja: e.loja, nomePlano: p.nomesPlano.join(' + '), plano: p.plano, planoEf, reg: e.reg, comp: e.comp,
         idx: planoEf > 0 ? e.reg / planoEf : null });
     });
@@ -1784,7 +1779,7 @@
     Object.entries(planoDe).forEach(([kl, p]) => {
       if (reg[kl]) return;
       const it = linhas.find(x => x.nomePacto && x.rede + '|' + chaveCompacta(x.nomePacto) === kl);
-      if (it) lojas.push({ rede: it.rede, redeOriginal: it.redeNome, loja: it.nomePacto, nomePlano: p.nomesPlano.join(' + '), plano: p.plano, planoEf: p.plano * f, reg: 0, comp: 0, idx: 0 });
+      if (it) lojas.push({ rede: it.rede, redeOriginal: it.redeNome, loja: it.nomePacto, nomePlano: p.nomesPlano.join(' + '), plano: p.plano, planoEf: p.plano, reg: 0, comp: 0, idx: 0 });
     });
     const redes = {};
     lojas.forEach(l => {
@@ -1797,7 +1792,7 @@
     const excesso = lojas.filter(l => l.planoEf > 0 && l.reg > l.planoEf * LIMITE_EXCESSO).sort((a, b) => (b.reg / b.planoEf) - (a.reg / a.planoEf));
     const abaixo = lojas.filter(l => l.planoEf > 0 && l.reg < l.planoEf).sort((a, b) => (a.reg / a.planoEf) - (b.reg / b.planoEf));
     const pend = linhas.filter(ehPendenteLoja).length;
-    return { semanas, prop, fator, diasCob, diasMes, lojas, excesso, abaixo, redes, total: tot, semPlano, semIdent, semFreq, planoSemLoja, pendentes: pend, temRelatorio, limite: LIMITE_EXCESSO };
+    return { semanas, lojas, excesso, abaixo, redes, total: tot, semPlano, semIdent, semFreq, planoSemLoja, pendentes: pend, temRelatorio, limite: LIMITE_EXCESSO };
   }
 
   // ── QUESTÕES EM ABERTO ──
@@ -1829,12 +1824,10 @@
     const regRede = {}, vis1 = new Set();
     relatorio.forEach(v => { const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja); if (vis1.has(k)) return; vis1.add(k); regRede[v.rede] = (regRede[v.rede] || 0) + 1; });
     const datasMes = [...new Set(relatorio.map(v => v.data).filter(d => d.startsWith(mes)))].sort();
-    const dMes = diasDoMesNum(mes), diasCob = datasMes.length ? diaNum(datasMes[datasMes.length - 1]) - diaNum(datasMes[0]) + 1 : 0;
-    const fat = dMes && diasCob ? Math.min(1, diasCob / dMes) : 1;
     if (!mesDados.periodoAuditado) {
       const linhasFR = []; let valorFR = 0, nDiv = 0, totCob = 0, totReg = 0;
       Object.values(porRede).forEach(r => {
-        const cob = r.declaradasMes || 0, pro = cob * fat, rg = regRede[r.chave] || 0, dif = pro - rg;
+        const cob = r.declaradasMes || 0, pro = cob, rg = regRede[r.chave] || 0, dif = pro - rg;
         const div = pro >= 5 && Math.abs(dif) / pro > 0.1;
         if (div) { nDiv++; if (dif > 0) valorFR += dif * (r.custoVisita || 0); }
         totCob += cob; totReg += rg;
@@ -1843,7 +1836,7 @@
       linhasFR.sort((a, b) => Math.abs(b[5]) - Math.abs(a[5])); linhasFR.forEach(l => l.pop());
       const per = datasMes.length ? `${formatarDataBR(datasMes[0])} a ${formatarDataBR(datasMes[datasMes.length - 1])}` : '';
       if (nDiv) q.push({ id: 'fech_x_rel', titulo: 'Cobradas pela Pacto × Registradas pela Pacto', qtd: nDiv, valor: valorFR,
-        resumo: `No Fechamento a Pacto cobra <strong>${nfBR(totCob)}</strong> visitas no mês. O Relatório de Tempo dela registra <strong>${nfBR(totReg)}</strong> (${per}, ${diasCob} de ${dMes} dias). ${fat < 1 ? `Como o Relatório não cobre o mês todo, a coluna "% registrado" compara com ${Math.round(fat * 100)}% do Fechamento (a parte do mês que o Relatório cobre). ` : ''}Em <strong>${nDiv}</strong> rede(s) o registrado fica mais de 10% longe do cobrado. O valor abaixo é o que sobraria nessas redes se as visitas cobradas sem registro fossem indevidas. Um Relatório do mês completo (01 a 31) tira a dúvida.`,
+        resumo: `No Fechamento a Pacto cobra <strong>${nfBR(totCob)}</strong> visitas no mês. O Relatório de Tempo dela registra <strong>${nfBR(totReg)}</strong> (${per}). Em <strong>${nDiv}</strong> rede(s) o registrado fica mais de 10% longe do cobrado. O valor abaixo é o que sobraria nessas redes se as visitas cobradas sem registro fossem indevidas.`,
         cab: ['Rede', 'Cobradas (Fechamento)', 'Registradas (Relatório)', '% registrado', 'Situação'], rows: linhasFR });
     }
 
@@ -1890,14 +1883,6 @@
     if (semFotoBook.length) q.push({ id: 'books_dias', titulo: 'Dias que o Book diz cobrir, mas não têm foto', qtd: semFotoBook.reduce((a, d) => a + visDia[d], 0), valor: null,
       resumo: `O período lido nos nomes dos Books inclui ${semFotoBook.length} dia(s) sem nenhuma foto, apesar de haver visitas registradas nesses dias. Pode faltar parte do Book. Pergunta para a Pacto: existem Books ou fotos desses dias?`,
       cab: ['Dia', 'Dia da semana', 'Visitas registradas', 'Fotos no Book'], rows: semFotoBook.map(d => [formatarDataBR(d), dow(d), visDia[d], 0]) });
-
-    // 6) Dias do mês sem Relatório de Tempo
-    if (!mesDados.periodoAuditado && dMes) {
-      const falta = []; for (let d = 1; d <= dMes; d++) { const iso = mes + '-' + String(d).padStart(2, '0'); if (!datasMes.includes(iso)) falta.push(iso); }
-      if (falta.length) q.push({ id: 'rel_janela', titulo: 'Dias do mês sem Relatório de Tempo', qtd: falta.length, valor: null,
-        resumo: `O Relatório de Tempo importado tem visitas em ${datasMes.length} dos ${dMes} dias do mês. Nos dias abaixo não há nenhum registro, então tudo o que for cobrado neles aparece como "sem registro". Peça o Relatório do mês completo.`,
-        cab: ['Dia', 'Dia da semana'], rows: falta.map(d => [formatarDataBR(d), dow(d)]) });
-    }
 
     // 7) Fotos já usadas como prova de outra visita (carimbo permanente)
     if (conflitos.length) q.push({ id: 'foto_reutilizada', titulo: 'Foto já usada para comprovar outra visita', qtd: conflitos.length, valor: null,
@@ -1999,10 +1984,8 @@
     const redes = Object.values(p.redes).sort((a, b) => (b.idx || 0) - (a.idx || 0));
     const linhasRede = redes.map(R => `<tr style="border-top:1px solid #EEE;"><td style="padding:7px;font-weight:bold;">${esc(R.rede)}</td><td style="padding:7px;text-align:center;">${R.lojas}</td>
       <td style="padding:7px;text-align:center;">${nfBR(Math.round(R.plano))}</td><td style="padding:7px;text-align:center;">${nfBR(R.reg)}</td><td style="padding:7px;text-align:center;">${nfBR(R.comp)}</td><td style="padding:7px;text-align:center;">${chipIndice(R.idx)}</td></tr>`).join('');
-    const parcial = p.diasCob && p.diasCob < p.diasMes;
     const ctrl = leitura ? '' : `<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;margin:8px 0;">
-      <label>Semanas do mês: <select id="plano-semanas" style="padding:5px;border:1px solid #CCC;border-radius:4px;"><option value="4" ${p.semanas === 4 ? 'selected' : ''}>4</option><option value="5" ${p.semanas === 5 ? 'selected' : ''}>5</option></select></label>
-      <label style="display:flex;gap:5px;align-items:center;"><input type="checkbox" id="plano-prop" ${p.prop ? 'checked' : ''}> Proporcional aos dias que o Relatório cobre (${p.diasCob} de ${p.diasMes})</label></div>`;
+      <label>Semanas do mês: <select id="plano-semanas" style="padding:5px;border:1px solid #CCC;border-radius:4px;"><option value="4" ${p.semanas === 4 ? 'selected' : ''}>4</option><option value="5" ${p.semanas === 5 ? 'selected' : ''}>5</option></select></label></div>`;
     container.insertAdjacentHTML('beforeend', `<div class="card" id="card-plano">
       <h2>📐 Fidelidade ao plano de visitas</h2>
       <p style="font-size:12px;margin-bottom:6px;">Índice = visitas <strong>registradas</strong> no mês ÷ plano do mês (visitas por semana da loja × ${p.semanas} semanas). A cor vai de vermelho (muito abaixo) a verde (100%) e volta a vermelho acima de 120%. As comprovadas aparecem ao lado.</p>
@@ -2010,7 +1993,6 @@
       <div style="display:flex;align-items:center;gap:12px;margin:8px 0;"><div style="font-size:11px;color:var(--cor-texto-secundario);">Índice geral</div>${chipIndice(p.total.idx)}
         <div style="font-size:11px;color:var(--cor-texto-secundario);">${nfBR(p.total.reg)} registradas de ${nfBR(Math.round(p.total.plano))} planejadas em ${nfBR(p.total.lojas)} lojas identificadas</div></div>
       <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:7px;text-align:left;">Rede</th><th style="padding:7px;">Lojas</th><th style="padding:7px;">Plano</th><th style="padding:7px;">Registr.</th><th style="padding:7px;">Comprov.</th><th style="padding:7px;">Índice</th></tr></thead><tbody>${linhasRede}</tbody></table></div>
-      ${parcial && !p.prop ? `<p style="font-size:11px;margin-top:8px;color:#C0392B;">⚠️ O Relatório de Tempo cobre só ${p.diasCob} dos ${p.diasMes} dias do mês: os índices abaixo de 100% estão subestimados. Marque "Proporcional" para ver o índice ajustado, ou importe o Relatório do mês inteiro.</p>` : ''}
       ${p.pendentes ? `<p style="font-size:11px;margin-top:6px;color:#C0392B;">⚠️ ${p.pendentes} loja(s) sem identificação ou sem frequência ficaram fora do índice. Resolva em Config › Lojas.</p>` : ''}
       ${p.semPlano.length ? `<p style="font-size:11px;margin-top:6px;">${p.semPlano.length} loja(s) com visitas registradas não têm plano definido (${nfBR(p.semPlano.reduce((a, x) => a + x.reg, 0))} visitas): informe as visitas por semana em Config › Lojas.</p>` : ''}
     </div>`);
@@ -2024,16 +2006,15 @@
       <div id="lst-exc"></div>
     </div>
     <div class="card" id="card-abaixo"><details><summary style="cursor:pointer;font-weight:bold;font-size:14px;color:var(--cor-primaria);">🔻 Lojas abaixo do plano (${p.abaixo.length}) — informativo</summary>
-      <p style="font-size:12px;margin:8px 0;">Lojas com menos visitas registradas do que o plano do mês. ${parcial && !p.prop ? '<strong style="color:#C0392B;">Atenção: o Relatório de Tempo não cobre o mês inteiro, então esta lista está exagerada.</strong>' : 'Não gera desconto; serve para cobrar a Pacto sobre o que não foi atendido.'}</p>
+      <p style="font-size:12px;margin:8px 0;">Lojas com menos visitas registradas do que o plano do mês. Não gera desconto; serve para cobrar a Pacto sobre o que não foi atendido.</p>
       <div id="lst-abx"></div></details></div>`);
     criarListaPaginada(document.getElementById('lst-exc'), cabLoja, (l, i) => linhaLoja(l), { vazio: '<span style="color:#27AE60;">Nenhuma loja acima do limite.</span>' }).definir(p.excesso);
     criarListaPaginada(document.getElementById('lst-abx'), cabLoja, (l, i) => linhaLoja(l), { vazio: 'Nenhuma loja abaixo do plano.' }).definir(p.abaixo);
     const csvLojas = lista => { let csv = 'Rede;Loja na Pacto;Loja no Plano;Plano do mês;Registradas;Índice;Comprovadas;Sem foto\n'; lista.forEach(l => { csv += [csvCampo(l.redeOriginal || l.rede), csvCampo(l.loja), csvCampo(l.nomePlano), String(Math.round(l.planoEf * 10) / 10).replace('.', ','), l.reg, l.planoEf ? Math.round(l.reg / l.planoEf * 100) + '%' : '', l.comp, l.reg - l.comp].join(';') + '\n'; }); return csv; };
     document.getElementById('btn-csv-excesso').addEventListener('click', () => baixarCSV(`excesso_${Estado.config.mesAtivo}.csv`, csvLojas(p.excesso)));
     if (!leitura) {
-      const mudou = () => { const m = Estado.meses[Estado.config.mesAtivo]; m.planoCfg = { semanas: +document.getElementById('plano-semanas').value, proporcional: document.getElementById('plano-prop').checked }; salvarEstado(); executarAuditoriaSilencioso(); renderizarAuditoria(); };
+      const mudou = () => { const m = Estado.meses[Estado.config.mesAtivo]; m.planoCfg = { semanas: +document.getElementById('plano-semanas').value }; salvarEstado(); executarAuditoriaSilencioso(); renderizarAuditoria(); };
       document.getElementById('plano-semanas').addEventListener('change', mudou);
-      document.getElementById('plano-prop').addEventListener('change', mudou);
     }
   }
 
@@ -2290,7 +2271,7 @@
     return `<div class="card"><h2>Fidelidade ao plano</h2>
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px;">${chipIndice(p.total.idx)}
         <div style="font-size:12px;line-height:1.5;"><strong>${nfBR(p.total.reg)}</strong> visitas registradas de <strong>${nfBR(Math.round(p.total.plano))}</strong> planejadas em ${nfBR(p.total.lojas)} lojas.<br>
-        <span style="color:${p.excesso.length ? '#C0392B' : '#27AE60'};">${p.excesso.length} loja(s) acima de ${Math.round(p.limite * 100)}% do plano</span> · ${abertas} questão(ões) em aberto na Auditoria${p.diasCob && p.diasCob < p.diasMes && !p.prop ? ' · <span style="color:#C0392B;">Relatório cobre ' + p.diasCob + ' de ' + p.diasMes + ' dias: índice provisório</span>' : ''}</div></div></div>`;
+        <span style="color:${p.excesso.length ? '#C0392B' : '#27AE60'};">${p.excesso.length} loja(s) acima de ${Math.round(p.limite * 100)}% do plano</span> · ${abertas} questão(ões) em aberto na Auditoria</div></div></div>`;
   }
 
   // Linhas repetidas do Relatório de Tempo mostradas sob a visita (informativo: não entram em nenhuma contagem)
