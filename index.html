@@ -102,7 +102,7 @@
   <button data-tela="auditoria">Auditoria</button>
   <button data-tela="fechamento">Fechamento</button>
   <button data-tela="promotores">Promotores</button>
-  <button data-tela="soltas">Soltas</button>
+  <button data-tela="soltas">Livres</button>
   <button data-tela="revisao">Revisão</button>
   <button data-tela="relatorio">Relatório</button>
   <button data-tela="config">Config</button>
@@ -499,11 +499,11 @@
     return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
-  function lerArquivoComoWorkbook(file) {
+  function lerArquivoComoWorkbook(file, opcoes) {
     return new Promise((resolve, reject) => {
       const leitor = new FileReader();
       leitor.onload = (ev) => {
-        try { resolve(XLSX.read(new Uint8Array(ev.target.result), { type: 'array' })); }
+        try { resolve(XLSX.read(new Uint8Array(ev.target.result), Object.assign({ type: 'array' }, opcoes || {}))); }
         catch (err) { reject(err); }
       };
       leitor.onerror = () => reject(new Error('Falha ao ler o arquivo.'));
@@ -565,6 +565,7 @@
       if (nomeAba === 'sistematica') return;
       const linhas = XLSX.utils.sheet_to_json(workbook.Sheets[nomeAba], { header: 1, defval: '' });
       if (linhas.length < 3) return;
+      const wsPlano = workbook.Sheets[nomeAba], linhasXls = wsPlano['!rows'] || [], deslocLinha = wsPlano['!ref'] ? XLSX.utils.decode_range(wsPlano['!ref']).s.r : 0;
   
       // Acha a linha de cabeçalho. Prefere a linha que tenha "Nome da Loja" E "Promotor" juntos
       // (a aba ATACADÃO tem "Nome da Loja" duas vezes, em linhas diferentes).
@@ -608,7 +609,8 @@
         lojasExtraidas.push({
           rede, redeOriginal, nomeLoja,
           promotor: String(linha[indices.promotor] || '').trim(),
-          diaVisita: String(linha[indices.diaVisita] || '').trim()
+          diaVisita: String(linha[indices.diaVisita] || '').trim(),
+          oculta: !!(linhasXls[i + deslocLinha] && linhasXls[i + deslocLinha].hidden)
         });
       }
     });
@@ -663,7 +665,7 @@
 
       for (const file of files) {
         try {
-          const workbook = await lerArquivoComoWorkbook(file);
+          const workbook = await lerArquivoComoWorkbook(file, { cellStyles: true });
           if (!conferirMesDoArquivo('Plano de Visitas', file.name, detectarMesPlano(workbook), 'datas da planilha')) {
             erros.push(`${esc(file.name)}: não importado (mês diferente)`);
             continue;
@@ -684,7 +686,7 @@
 
       const redesUnicas = [...new Set(lojasAtuais.map(l => l.rede))];
       let html = importadas > 0
-        ? `<span style="color: #27AE60;">✅ Plano importado: ${importadas} lojas lidas. Total no mês: ${lojasAtuais.length} lojas em ${redesUnicas.length} redes.</span>`
+        ? `<span style="color: #27AE60;">✅ Plano importado: ${importadas} lojas lidas. Total no mês: ${lojasAtuais.length} linhas de loja em ${redesUnicas.length} redes, ${lojasAtuais.filter(l => l.oculta).length} delas ocultas no Excel (veja a aba Fechamento).</span>`
         : '';
       if (erros.length) html += `<br><span style="color: #E74C3C;">❌ ${erros.join('<br>❌ ')}</span>`;
       msg.innerHTML = html;
@@ -1280,12 +1282,13 @@
     fechamento.forEach(f => {
       const r = porRede[f.rede] || (porRede[f.rede] = {
         chave: f.rede, rede: String(f.redeOriginal).trim(), custoVisita: 0, declaradas: 0, declaradasMes: 0, programadas: 0, semanal: 0, planejadas: 0,
-        comprovadas: 0, gap: 0, valorCobrado: 0, desconto: 0, valorAuditado: 0, semFoto: 0
+        comprovadas: 0, gap: 0, valorCobrado: 0, desconto: 0, valorAuditado: 0, semFoto: 0, lojasCobradas: 0
       });
       r.declaradas += f.declaradasMes;
       r.declaradasMes += f.declaradasMes;
       r.programadas += f.programadasMes || 0;
       r.semanal += (f.qtdLojas || 0) * (f.visitasSemana || 0);
+      r.lojasCobradas += f.qtdLojas || 0;
       r.valorCobrado += f.declaradasMes * f.custoVisita;
       if (!r.custoVisita) r.custoVisita = f.custoVisita;
     });
@@ -1389,6 +1392,13 @@
     });
     Object.values(visitas).forEach(v => { if (v.statusFinal === 'comprovada' && porDia[v.data] && porDia[v.data][v.rede]) porDia[v.data][v.rede].c++; });
 
+    // Plano × Fechamento: quantas lojas o Plano lista (visíveis e ocultas no Excel) e quantas o Fechamento cobra
+    const planoLojas = {};
+    (mesDados.lojas || []).forEach(l => {
+      const p = planoLojas[l.rede] || (planoLojas[l.rede] = { rede: l.redeOriginal || l.rede, total: 0, ocultas: 0 });
+      p.total++; if (l.oculta) p.ocultas++;
+    });
+
     const soma = campo => Object.values(porRede).reduce((a, r) => a + (r[campo] || 0), 0);
     const todas = Object.values(visitas);
     return {
@@ -1404,9 +1414,9 @@
         totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
         fotosPendentes: fotos.filter(f => f.status === 'revisao').length
       },
-      versaoCalculo: 9,
+      versaoCalculo: 10,
       associacoes,
-      volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia, gemeas,
+      volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia, gemeas, planoLojas,
       dataProcessamento: new Date().toISOString()
     };
   }
@@ -1552,7 +1562,7 @@
     if (temLojas) {
       const redesUnicas = [...new Set(mesDados.lojas.map(l => l.rede))].length;
       resumoLojas = `<div style="margin-top: 10px; padding: 10px; background: #F0FBF4; border-radius: 6px; border: 1px solid #27AE60;">
-        <p style="font-size: 13px;"><strong>${mesDados.lojas.length} lojas</strong> em <strong>${redesUnicas} redes</strong>.</p>
+        <p style="font-size: 13px;"><strong>${mesDados.lojas.length} linhas de loja</strong> em <strong>${redesUnicas} redes</strong>, ${mesDados.lojas.filter(l => l.oculta).length} ocultas no Excel.</p>
       </div>`;
     }
 
@@ -1768,7 +1778,7 @@
     ei.addEventListener('change', mudou); ef.addEventListener('change', mudou);
   }
 
-  // ── PROMOTORES (pelas etiquetas das fotos) e EXECUÇÕES SOLTAS (sem par nas planilhas) ──
+  // ── PROMOTORES (pelas etiquetas das fotos) e EXECUÇÕES LIVRES (sem par nas planilhas) ──
   function nomeArquivoCurto(n) {
     if (!n) return 'arquivo ?';
     const m = String(n).match(/__(\d+(?:-\d+)?)_+(?:_\d+)?\.pdf$/i);
@@ -1799,35 +1809,39 @@
         ${dias[d].map(x => `<div style="font-size:12px;padding:3px 0 3px 8px;border-left:3px solid ${x.solta ? '#E67E22' : '#27AE60'};margin-top:3px;">
           ${esc(x.hora)} · <strong>${esc(x.rede)}</strong> › ${esc(x.loja)} · ${x.n} ${x.n === 1 ? 'foto' : 'fotos'} <span style="color:var(--cor-texto-secundario);">(${origemExec(aud, x)})</span>
           ${x.solta ? `<div style="color:#C0392B;font-size:11px;">⚠ ${esc(x.motivo)}</div>` : ''}</div>`).join('')}</div>`).join('');
-      return `<div class="prom-linha" style="padding:10px 0;border-top:1px solid #EEE;cursor:pointer;">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
-          <span style="font-weight:bold;font-size:14px;">${i + 1}. ${esc(p.nome)} <span style="color:#AAA;font-weight:normal;">▾</span></span>
-          <span style="font-family:var(--fonte-titulo);font-size:22px;font-weight:900;color:var(--cor-primaria);white-space:nowrap;">${p.exec}<span style="font-size:11px;font-weight:normal;color:var(--cor-texto-secundario);"> execuções</span></span></div>
-        <div style="display:flex;height:9px;margin:6px 0;background:#E3E6EA;border-radius:5px;overflow:hidden;width:100%;"><div style="width:${ok / maior * 100}%;background:#27AE60;"></div><div style="width:${p.soltas / maior * 100}%;background:#E67E22;"></div></div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--cor-texto-secundario);">
-          <span><strong>${p.fotos}</strong> fotos</span><span><strong>${p.dias}</strong> dias</span><span><strong>${med}</strong> por dia</span>
-          <span style="${p.maxDia > maxDia ? 'color:#C0392B;font-weight:bold;' : ''}">máx. <strong>${p.maxDia}</strong> num dia${p.maxDia > maxDia ? ' ⚠ acima de ' + maxDia : ''}</span>
-          ${p.soltas ? `<span style="color:#C0392B;"><strong>${p.soltas}</strong> sem par nas planilhas</span>` : ''}</div>
-        <div class="prom-det" style="display:none;margin-top:8px;padding:10px;background:#F8F9FA;border-radius:6px;cursor:default;">${det}</div></div>`;
+      const maxD = p.maxDia > maxDia;
+      return `<tr class="prom-linha" style="border-top:1px solid #EEE;cursor:pointer;">
+        <td style="padding:8px 5px;color:var(--cor-texto-secundario);">${i + 1}</td>
+        <td style="padding:8px 5px;font-weight:bold;min-width:130px;">${esc(p.nome)} <span style="color:#AAA;font-weight:normal;">▾</span>
+          <div style="display:flex;height:6px;margin-top:4px;background:#E3E6EA;border-radius:3px;overflow:hidden;"><div style="width:${ok / maior * 100}%;background:#27AE60;"></div><div style="width:${p.soltas / maior * 100}%;background:#E67E22;"></div></div></td>
+        <td style="padding:8px 5px;text-align:right;font-family:var(--fonte-titulo);font-weight:900;font-size:16px;color:var(--cor-primaria);">${p.exec}</td>
+        <td style="padding:8px 5px;text-align:right;">${p.fotos}</td>
+        <td style="padding:8px 5px;text-align:right;">${p.dias}</td>
+        <td style="padding:8px 5px;text-align:right;">${med}</td>
+        <td style="padding:8px 5px;text-align:right;${maxD ? 'color:#C0392B;font-weight:bold;' : ''}">${p.maxDia}${maxD ? ' ⚠' : ''}</td>
+        <td style="padding:8px 5px;text-align:right;${p.soltas ? 'color:#C0392B;font-weight:bold;' : 'color:#AAA;'}">${p.soltas || '–'}</td></tr>
+        <tr class="prom-det" style="display:none;"><td colspan="8" style="padding:4px 10px 12px;background:#F8F9FA;">${det}</td></tr>`;
     }).join('');
     container.innerHTML = `
       <div class="card">
         <h2>Ranking de promotores</h2>
         <p style="font-size:12px;margin-bottom:10px;">Lido das <strong>etiquetas das fotos</strong> (promotor, dia, rede e loja). Todas as fotos da mesma loja no mesmo dia contam <strong>uma execução</strong>, não importa quantas fotos tenham. Fotos repetidas e sem legenda não entram.</p>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">${caixa('Promotores', L.length, '#7F8C8D')}${caixa('Execuções', totE, '#27AE60')}${caixa('Fotos', totF, '#D4AF37')}${caixa('Fotos por execução', totE ? (totF / totE).toFixed(1).replace('.', ',') : '0', '#7F8C8D')}</div>
-        <p style="font-size:11px;margin:8px 0;color:var(--cor-texto-secundario);"><span style="color:#27AE60;">■</span> execução com par no Relatório de Tempo &nbsp; <span style="color:#E67E22;">■</span> sem par (ver aba Soltas). Toque no nome para ver dia a dia, com arquivo e página.</p>
-        ${linhas || '<p style="font-size:13px;">Nenhuma execução encontrada.</p>'}
+        <p style="font-size:11px;margin:8px 0;color:var(--cor-texto-secundario);"><span style="color:#27AE60;">■</span> execução planejada (com par no Relatório de Tempo) &nbsp; <span style="color:#E67E22;">■</span> execução livre (ver aba Livres). Toque numa linha para ver dia a dia, com arquivo e página.</p>
+        ${linhas ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;">
+          <th style="padding:6px 5px;text-align:left;">#</th><th style="padding:6px 5px;text-align:left;">Promotor</th><th style="padding:6px 5px;text-align:right;">Execuções</th><th style="padding:6px 5px;text-align:right;">Fotos</th><th style="padding:6px 5px;text-align:right;">Dias</th><th style="padding:6px 5px;text-align:right;">Por dia</th><th style="padding:6px 5px;text-align:right;">Máx. dia</th><th style="padding:6px 5px;text-align:right;">Livres</th></tr></thead>
+          <tbody>${linhas}
+          <tr style="border-top:2px solid #CCC;font-weight:bold;"><td></td><td style="padding:8px 5px;">TOTAL</td><td style="padding:8px 5px;text-align:right;">${totE}</td><td style="padding:8px 5px;text-align:right;">${totF}</td><td colspan="3"></td><td style="padding:8px 5px;text-align:right;">${totS}</td></tr></tbody></table></div>` : '<p style="font-size:13px;">Nenhuma execução encontrada.</p>'}
         <button id="btn-csv-prom" style="width:100%;margin-top:14px;padding:12px;background:var(--cor-primaria);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Baixar CSV (ranking e execuções)</button>
       </div>`;
-    container.querySelectorAll('.prom-linha').forEach(el => el.addEventListener('click', (e) => {
-      if (e.target.closest('.prom-det')) return;
-      const d = el.querySelector('.prom-det'); d.style.display = d.style.display === 'none' ? 'block' : 'none';
+    container.querySelectorAll('.prom-linha').forEach(el => el.addEventListener('click', () => {
+      const d = el.nextElementSibling; if (d) d.style.display = d.style.display === 'none' ? 'table-row' : 'none';
     }));
     document.getElementById('btn-csv-prom').addEventListener('click', () => {
-      let csv = 'Posição;Promotor;Execuções;Fotos;Dias;Máx. num dia;Sem par nas planilhas\n';
+      let csv = 'Posição;Promotor;Execuções;Fotos;Dias;Máx. num dia;Execuções Livres\n';
       L.forEach((p, i) => { csv += [i + 1, p.nome, p.exec, p.fotos, p.dias, p.maxDia, p.soltas].join(';') + '\n'; });
       csv += '\nPromotor;Data;Hora;Rede;Loja (etiqueta);Fotos;Arquivo;Página;Situação\n';
-      L.forEach(p => p.lista.forEach(x => { csv += [p.nome, formatarDataBR(x.d), x.hora, x.rede, x.loja, x.n, nomeArquivoCurto((aud.arquivosBook || [])[x.ar]), x.pg, x.motivo || 'com par no Relatório'].join(';') + '\n'; }));
+      L.forEach(p => p.lista.forEach(x => { csv += [p.nome, formatarDataBR(x.d), x.hora, x.rede, x.loja, x.n, nomeArquivoCurto((aud.arquivosBook || [])[x.ar]), x.pg, x.motivo || 'Execução Planejada (com par no Relatório)'].join(';') + '\n'; }));
       baixarCSV('promotores_' + Estado.config.mesAtivo + '.csv', csv);
     });
   }
@@ -1835,7 +1849,7 @@
   function renderizarSoltas() {
     const container = document.getElementById('tela-soltas');
     const aud = dadosPromotores();
-    if (!aud) { container.innerHTML = htmlSemDadosPromotores('Execuções soltas'); return; }
+    if (!aud) { container.innerHTML = htmlSemDadosPromotores('Execuções Livres'); return; }
     const todas = [];
     aud.promotores.forEach(p => p.lista.forEach(x => { if (x.solta) todas.push(Object.assign({ prom: p.nome }, x)); }));
     const totalExec = aud.promotores.reduce((a, p) => a + p.exec, 0);
@@ -1851,22 +1865,24 @@
         <td style="padding:7px 5px;font-size:11px;color:#C0392B;">${esc(x.motivo)}</td></tr>`).join('');
     container.innerHTML = `
       <div class="card" style="border-left-color:#E67E22;">
-        <h2>Execuções soltas</h2>
+        <h2>Execuções Livres</h2>
         <p style="font-size:12px;margin-bottom:10px;">Execuções que aparecem nas <strong>fotos</strong> (promotor + dia + loja) mas <strong>não têm par</strong> nas planilhas: não existem no Relatório de Tempo, ou estão numa rede que não consta no Fechamento. Cada uma vale uma execução, mesmo com várias fotos.</p>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
-          <div style="flex:1;min-width:100px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid #E67E22;"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">Soltas</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#E67E22;">${todas.length}</div></div>
-          <div style="flex:1;min-width:100px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid #7F8C8D;"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">De um total de</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:var(--cor-texto);">${totalExec}</div></div></div>
+          <div style="flex:1;min-width:100px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid #7F8C8D;"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">Execuções Realizadas</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#7F8C8D;">${totalExec}</div></div>
+          <div style="flex:1;min-width:100px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid #27AE60;"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">Execuções Planejadas</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#27AE60;">${totalExec - todas.length}</div></div>
+          <div style="flex:1;min-width:100px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid #E67E22;"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">Execuções Livres</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#E67E22;">${todas.length}</div></div>
+        </div>
         <select id="filtro-soltas" style="width:100%;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;margin-bottom:10px;">
           <option value="todas">Todas (${todas.length})</option>${motivos.map(m => `<option value="${esc(m)}" ${m === filtroSoltas ? 'selected' : ''}>${esc(m)} (${cont(m)})</option>`).join('')}</select>
         ${lista.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:6px 5px;text-align:left;">Dia</th><th style="padding:6px 5px;text-align:left;">Promotor</th><th style="padding:6px 5px;text-align:left;">Rede › loja (etiqueta)</th><th style="padding:6px 5px;text-align:left;">Por quê</th></tr></thead><tbody>${linhas}</tbody></table></div>`
-          : '<p style="font-size:13px;color:#27AE60;">Nenhuma execução solta. Todas têm par nas planilhas.</p>'}
-        <button id="btn-csv-soltas" style="width:100%;margin-top:14px;padding:12px;background:var(--cor-primaria);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Baixar CSV das execuções soltas</button>
+          : '<p style="font-size:13px;color:#27AE60;">Nenhuma execução livre. Todas são planejadas (têm par nas planilhas).</p>'}
+        <button id="btn-csv-soltas" style="width:100%;margin-top:14px;padding:12px;background:var(--cor-primaria);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Baixar CSV das Execuções Livres</button>
       </div>`;
     document.getElementById('filtro-soltas').addEventListener('change', (e) => { filtroSoltas = e.target.value; renderizarSoltas(); });
     document.getElementById('btn-csv-soltas').addEventListener('click', () => {
       let csv = 'Data;Hora;Promotor;Rede;Loja (etiqueta);Fotos;Arquivo;Página;Por quê\n';
       todas.sort((a, b) => a.d.localeCompare(b.d) || a.prom.localeCompare(b.prom)).forEach(x => { csv += [formatarDataBR(x.d), x.hora, x.prom, x.rede, x.loja, x.n, nomeArquivoCurto((aud.arquivosBook || [])[x.ar]), x.pg, x.motivo].join(';') + '\n'; });
-      baixarCSV('execucoes_soltas_' + Estado.config.mesAtivo + '.csv', csv);
+      baixarCSV('execucoes_livres_' + Estado.config.mesAtivo + '.csv', csv);
     });
   }
 
@@ -1886,6 +1902,30 @@
     const S = c => linhas.reduce((a, l) => a + l[c], 0);
     return { linhas, dMin, dMax, total: { cobrado: S('cobrado'), registrado: S('registrado'), semRegistro: S('semRegistro'), valor: S('valor'), declPer: S('declPer'), compPer: S('compPer'), gapPer: S('gapPer') } };
   }
+  function htmlConferenciaPlano(aud) {
+    const P = aud.planoLojas || {};
+    if (!Object.keys(P).length) return '';
+    const redes = {};
+    Object.entries(aud.porRede || {}).forEach(([k, r]) => { redes[k] = { rede: r.rede, cob: r.lojasCobradas || 0, tot: 0, oc: 0 }; });
+    Object.entries(P).forEach(([k, p]) => { const e = redes[k] || (redes[k] = { rede: p.rede, cob: 0, tot: 0, oc: 0 }); e.tot = p.total; e.oc = p.ocultas; });
+    const sit = e => {
+      const vis = e.tot - e.oc;
+      if (!e.cob) return ['Rede não consta no Fechamento', '#C0392B'];
+      if (!e.tot) return ['Rede sem linhas no Plano', '#C0392B'];
+      if (e.tot === e.cob) return ['Fecha com o Plano inteiro' + (e.oc ? ' (ocultas incluídas)' : ''), '#27AE60'];
+      if (vis === e.cob) return ['Fecha só com as visíveis: ' + (e.oc === 1 ? 'a 1 oculta está fora do contrato' : 'as ' + e.oc + ' ocultas estão fora do contrato'), '#27AE60'];
+      const d = e.tot - e.cob;
+      return [`Não fecha: Plano tem ${Math.abs(d)} ${d > 0 ? 'a mais' : 'a menos'} que o Fechamento`, '#E67E22'];
+    };
+    const linhas = Object.values(redes).sort((a, b) => b.tot - a.tot).map(e => { const [t, cor] = sit(e); return `<tr style="border-top:1px solid #EEE;vertical-align:top;">
+      <td style="padding:6px 5px;font-weight:bold;">${esc(e.rede)}</td><td style="padding:6px 5px;text-align:right;">${e.tot}</td><td style="padding:6px 5px;text-align:right;">${e.oc || ''}</td>
+      <td style="padding:6px 5px;text-align:right;">${e.cob}</td><td style="padding:6px 5px;font-size:11px;color:${cor};">${esc(t)}</td></tr>`; }).join('');
+    return `<div class="card">
+      <h2>Lojas: Plano × Fechamento</h2>
+      <p style="font-size:12px;margin-bottom:8px;">O que vale para o planejado é o <strong>Fechamento</strong> (lojas cobradas × visitas por semana). O Plano é só conferência: linhas ocultas no Excel (por filtro ou escondidas à mão) não são somadas, e algumas ocultas são cobradas, outras estão fora do contrato.</p>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:6px 5px;text-align:left;">Rede</th><th style="padding:6px 5px;text-align:right;">No Plano</th><th style="padding:6px 5px;text-align:right;">Ocultas</th><th style="padding:6px 5px;text-align:right;">Cobradas</th><th style="padding:6px 5px;text-align:left;">Situação</th></tr></thead><tbody>${linhas}</tbody></table></div>
+    </div>`;
+  }
   function renderizarFechamento() {
     const container = document.getElementById('tela-fechamento');
     const m = Estado.meses[Estado.config.mesAtivo];
@@ -1893,7 +1933,8 @@
     if (!d) {
       container.innerHTML = `<div class="card"><h2>Fechamento × Relatório</h2><p>Importe o Fechamento e o Relatório de Tempo e processe a auditoria para comparar.</p></div>`; return;
     }
-    const T = d.total, p = audAtiva(m).periodoAuditado;
+    const audP = audAtiva(m), T = d.total, p = audP.periodoAuditado;
+    const pctFoto = T.declPer > 0 ? Math.min(100, T.compPer / T.declPer * 100) : null;
     const pctReg = T.cobrado > 0 ? Math.min(100, T.registrado / T.cobrado * 100) : null;
     const perTxt = p ? `${formatarDataBR(p.inicio).slice(0, 5)} a ${formatarDataBR(p.fim).slice(0, 5)}` : 'mês inteiro';
     const th = 'padding:6px 5px;font-size:10px;text-transform:uppercase;color:var(--cor-texto-secundario);text-align:right;white-space:nowrap;';
@@ -1914,16 +1955,40 @@
     container.innerHTML = `
       <div class="painel-f1"><div class="faixa-xadrez"></div>
         <div style="padding:12px 14px 10px;">
-          <div style="font-family:var(--fonte-titulo);font-size:14px;letter-spacing:2px;color:#D4AF37;">FECHAMENTO × RELATÓRIO <span style="color:#7F8A96;">· mês inteiro</span></div>
-          <div class="painel-corpo f2"><div class="painel-dir" style="padding-top:6px;">${svgVelocimetro(pctReg, { rotulo: 'Cobrado que consta no Relatório de Tempo', max: 260 })}
-            <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#C9D1D9;margin-top:-2px;">COBRADO QUE TEM REGISTRO</div>
-            <div style="text-align:center;font-size:14px;color:#9AA4AF;margin-top:3px;">A Pacto cobra <strong style="color:#D4AF37;">${T.cobrado}</strong> visitas no Fechamento; o próprio Relatório de Tempo dela registra <strong style="color:#C9D1D9;">${T.registrado}</strong>.</div>
+          <div style="font-family:var(--fonte-titulo);font-size:14px;letter-spacing:2px;color:#D4AF37;">FECHAMENTO × RELATÓRIO × BOOK <span style="color:#7F8A96;">· ${perTxt}</span></div>
+          <div class="painel-corpo" style="margin-top:6px;">
+            <div class="painel-esq" style="padding-top:6px;">
+              <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#D4AF37;">1 · COBRADO × REGISTRADO</div>
+              <div style="text-align:center;font-size:11px;color:#7F8A96;margin-bottom:2px;">sempre o mês inteiro (o Fechamento só traz o total do mês)</div>
+              ${svgVelocimetro(pctReg, { rotulo: 'Cobrado que consta no Relatório de Tempo', max: 230 })}
+              <div style="display:flex;justify-content:space-around;margin-top:6px;text-align:center;gap:6px;">
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">COBRADO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#D4AF37;">${T.cobrado}</div><div style="font-size:10px;color:#7F8A96;">no Fechamento</div></div>
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">REGISTRADO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#C9D1D9;">${T.registrado}</div><div style="font-size:10px;color:#7F8A96;">no Rel. de Tempo</div></div>
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">SEM REGISTRO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#E74C3C;">${T.semRegistro}</div><div style="font-size:10px;color:#E74C3C;">${formatarMoeda(T.valor)}</div></div>
+              </div>
+            </div>
+            <div class="painel-dir" style="padding-top:6px;">
+              <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#D4AF37;">2 · DECLARADO × COM FOTO</div>
+              <div style="text-align:center;font-size:11px;color:#7F8A96;margin-bottom:2px;">${perTxt === 'mês inteiro' ? 'mês inteiro' : 'período ' + perTxt + ' (segue o calendário)'}</div>
+              ${svgVelocimetro(pctFoto, { rotulo: 'Declarado que tem foto', max: 230 })}
+              <div style="display:flex;justify-content:space-around;margin-top:6px;text-align:center;gap:6px;">
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">DECLARADO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#C9D1D9;">${T.declPer}</div><div style="font-size:10px;color:#7F8A96;">${p ? 'visitas no Rel. de Tempo' : 'cobradas no Fechamento'}</div></div>
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">COM FOTO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#27AE60;">${T.compPer}</div><div style="font-size:10px;color:#7F8A96;">no Book</div></div>
+                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">SEM FOTO</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:#E74C3C;">${T.gapPer}</div><div style="font-size:10px;color:#E74C3C;">${formatarMoeda(audP.total.desconto || 0)}</div></div>
+              </div>
+            </div>
           </div>
-          <div class="painel-esq"><div style="display:flex;justify-content:space-around;margin-top:10px;padding-top:10px;border-top:1px solid #2A3038;text-align:center;">
-            <div><div style="font-size:12px;letter-spacing:1px;color:#9AA4AF;">COBRADAS SEM REGISTRO</div><div style="font-family:var(--fonte-titulo);font-size:31px;font-weight:900;color:#E74C3C;">${T.semRegistro}</div></div>
-            <div><div style="font-size:12px;letter-spacing:1px;color:#9AA4AF;">VALOR A CONTESTAR</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#E74C3C;line-height:1.5;">${formatarMoeda(T.valor)}</div></div>
-          </div></div></div>
         </div>
+      </div>
+      <div class="card">
+        <h2>Como ler estes números</h2>
+        <ol style="font-size:13px;padding-left:20px;line-height:1.55;">
+          <li><strong>Cobrado (${T.cobrado})</strong>: visitas que a Pacto declarou e cobrou no Fechamento do mês.</li>
+          <li><strong>Registrado (${T.registrado})</strong>: visitas diferentes (promotor + dia + loja) que o <em>próprio Relatório de Tempo da Pacto</em> registra${d.dMax ? ' (de ' + esc(formatarDataBR(d.dMin)) + ' a ' + esc(formatarDataBR(d.dMax)) + ')' : ''}. É a prova que a Pacto mesma fornece, antes de olhar as fotos.</li>
+          <li><strong>Sem registro (${T.semRegistro})</strong> = Cobrado − Registrado. São visitas cobradas que nem o Relatório de Tempo da Pacto mostra. O <strong>R$ ${formatarMoeda(T.valor).replace('R$', '').trim()}</strong> é isso × o custo médio da visita de cada rede, e é um valor <em>separado</em> do desconto por falta de foto.</li>
+          <li><strong>Com foto (${T.compPer})</strong>: dessas visitas, quantas têm foto nos Books enviados. <strong>Sem foto (${T.gapPer})</strong> = Declarado − Com foto, e é o que gera o desconto do velocímetro 2.</li>
+        </ol>
+        <p style="font-size:12px;margin-top:8px;color:var(--cor-texto-secundario);">O velocímetro 1 não muda com o calendário porque o Fechamento não informa o dia de cada visita. O velocímetro 2 muda: ao escolher uma semana, o declarado passa a ser o que o Relatório de Tempo registra naquele período.</p>
       </div>
       <div class="card">
         <h2>Da planilha da Pacto até a foto</h2>
@@ -1936,7 +2001,8 @@
           <tr style="border-top:2px solid #CCC;font-weight:bold;"><td style="padding:8px 5px;">TOTAL</td><td style="padding:8px 5px;text-align:right;">${T.cobrado}</td><td style="padding:8px 5px;text-align:right;">${T.registrado}</td><td style="padding:8px 5px;text-align:right;color:var(--cor-perigo);">${T.semRegistro}</td><td style="padding:8px 5px;text-align:right;color:var(--cor-perigo);white-space:nowrap;">${formatarMoeda(T.valor)}</td><td style="padding:8px 5px;text-align:right;border-left:1px solid #EEE;">${T.declPer}</td><td style="padding:8px 5px;text-align:right;color:#27AE60;">${T.compPer}</td><td style="padding:8px 5px;text-align:right;color:var(--cor-perigo);">${T.gapPer}</td></tr></tbody></table></div>
         <p style="font-size:11px;margin-top:10px;color:var(--cor-texto-secundario);"><span style="color:#D4AF37;">■</span> registrado no Relatório &nbsp; <span style="color:#E74C3C;">■</span> cobrado sem registro. “R$” = visitas sem registro × custo médio da visita da rede. É um valor <strong>a mais</strong> para contestar, separado do desconto por falta de foto.</p>
         <button id="btn-csv-fechamento" style="width:100%;margin-top:12px;padding:12px;background:var(--cor-primaria);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Baixar CSV para a reunião com a agência</button>
-      </div>`;
+      </div>
+      ${htmlConferenciaPlano(m.auditoria)}`;
     document.getElementById('btn-csv-fechamento').addEventListener('click', () => {
       const nf = n => String(n).replace('.', ',');
       let csv = 'Rede;Cobrado (Fechamento, mês);Registrado (Relatório de Tempo, mês);Cobrado sem registro;Custo médio da visita;Valor a contestar;No Book: declaradas;No Book: com foto;No Book: sem foto\n';
@@ -3026,7 +3092,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 9) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 10) executarAuditoriaSilencioso();
   }
 
 
