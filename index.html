@@ -2277,7 +2277,7 @@
   // Selo "×N": quantas linhas o Relatório de Tempo tem para a mesma visita (promotor, dia, rede e loja)
   function seloRel(v) {
     if (!v || !(v.nRel > 1)) return '';
-    return `<span title="O Relatório de Tempo registra esta visita ${v.nRel} vezes${v.linRel && v.linRel.length ? ' (linhas ' + v.linRel.join(', ') + ' do Excel)' : ''}. O sistema conta como uma visita." style="display:inline-block;padding:1px 6px;border-radius:10px;background:#FDEBD0;color:#B9770E;font-size:11px;font-weight:bold;cursor:help;">×${v.nRel}</span>`;
+    return `<span title="O Relatório de Tempo registra esta visita ${v.nRel} vezes${v.linRel && v.linRel.length ? ' (linhas ' + v.linRel.join(', ') + ' do Excel)' : ''}. O sistema conta como uma visita." style="display:inline-block;padding:1px 6px;border-radius:10px;background:#FDEBD0;color:#B9770E;font-size:11px;font-weight:bold;cursor:help;">${v.nRel} linhas</span>`;
   }
 
   // Dashboard: resumo do índice de fidelidade
@@ -2288,6 +2288,11 @@
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px;">${chipIndice(p.total.idx)}
         <div style="font-size:12px;line-height:1.5;"><strong>${nfBR(p.total.reg)}</strong> visitas registradas de <strong>${nfBR(Math.round(p.total.plano))}</strong> planejadas em ${nfBR(p.total.lojas)} lojas.<br>
         <span style="color:${p.excesso.length ? '#C0392B' : '#27AE60'};">${p.excesso.length} loja(s) acima de ${Math.round(p.limite * 100)}% do plano</span> · ${abertas} questão(ões) em aberto na Auditoria${p.diasCob && p.diasCob < p.diasMes && !p.prop ? ' · <span style="color:#C0392B;">Relatório cobre ' + p.diasCob + ' de ' + p.diasMes + ' dias: índice provisório</span>' : ''}</div></div></div>`;
+  }
+
+  // Linhas repetidas do Relatório de Tempo mostradas sob a visita (informativo: não entram em nenhuma contagem)
+  function subLinhasRel(v) {
+    return Array.from({ length: v.nRel }, (_, i) => `<tr class="sub-rel" style="background:#FAFAFA;"><td colspan="5" style="padding:4px 10px 4px 28px;font-size:11px;color:#777;border-bottom:1px dotted #E5E5E5;">↳ ${v.linRel && v.linRel[i] ? 'linha ' + esc(v.linRel[i]) + ' do Excel' : 'linha do Excel (reimporte o Relatório de Tempo para ver o número)'} · ${esc(v.promotor)} · ${esc(formatarDataBR(v.data))}</td></tr>`).join('');
   }
 </script>
 <!-- ═══ FIM SUBBLOCO 06B ═══ -->
@@ -2304,7 +2309,7 @@
     const pc = pctCadeia({ planejadas: pl, declaradas: de, comprovadas: co });
     return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;">
       ${pl == null ? '' : caixa('Planejadas', pl, '#7F8C8D', opcoes.subPlan || '')}
-      ${caixa(opcoes.periodo ? 'Registradas' : 'Cobradas', de, '#D4AF37', pc.declDoPlano == null ? '' : formatarPorcentagem(pc.declDoPlano) + ' do plano')}
+      ${caixa(opcoes.periodo ? 'Registradas' : 'Cobradas', de, '#D4AF37', opcoes.subDe || (pc.declDoPlano == null ? '' : formatarPorcentagem(pc.declDoPlano) + ' do plano'))}
       ${caixa('Comprovadas', co, '#27AE60', formatarPorcentagem(pc.compDaDecl) + (opcoes.periodo ? ' das registradas' : ' das cobradas'))}
       ${caixa('Sem comprovação', gap, '#E74C3C', (opcoes.periodo ? 'registradas' : 'cobradas') + ' − comprovadas')}</div>`;
   }
@@ -3055,14 +3060,16 @@
           <td style="padding: 10px; text-align: center;">${seloRel(v) || '<span style="color:#BBB;">1</span>'}</td>
         </tr>
       `;
+      if (v.nRel > 1) linhas += subLinhasRel(v); // as linhas repetidas do Relatório, em cinza, sem entrar na contagem
     });
 
     container.innerHTML = `
       <div class="card">
         <button id="btn-voltar-lojas" style="padding: 8px 12px; background: transparent; border: 1px solid var(--cor-primaria); color: var(--cor-primaria); border-radius: 4px; font-size: 12px; cursor: pointer; margin-bottom: 15px;">‹ Voltar para lojas</button>
         <h2>Loja: ${esc(auditoriaDrillState.loja)}</h2>
-        ${(() => { const co = visitas.filter(v => v.statusFinal === 'comprovada').length; return htmlCaixasNumeros(null, visitas.length, co, visitas.length - co, { periodo: true }); })()}
-        <p style="font-size:11px;margin-bottom:10px;color:var(--cor-texto-secundario);">Toque numa visita para ver a evidência.</p>
+        ${(() => { const co = visitas.filter(v => v.statusFinal === 'comprovada').length; const linhasRel = visitas.reduce((a, v) => a + (v.nRel || 1), 0); return htmlCaixasNumeros(null, visitas.length, co, visitas.length - co, { periodo: true, subDe: linhasRel > visitas.length ? linhasRel + ' linhas no Relatório' : '' }); })()}
+        <p style="font-size:11px;margin-bottom:4px;color:var(--cor-texto-secundario);">Toque numa visita para ver a evidência.</p>
+        <p style="font-size:11px;margin-bottom:10px;color:var(--cor-texto-secundario);">Cada linha desta tabela é uma visita (promotor + dia + loja). "Linhas no Relatório" mostra quantas vezes a Pacto lançou essa mesma visita.</p>
         <div style="overflow-x: auto;">
           <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
             <thead>
@@ -3071,7 +3078,7 @@
                 <th style="padding: 10px; text-align: left;">Promotor</th>
                 <th style="padding: 10px; text-align: center;">Status</th>
                 <th style="padding: 10px; text-align: center;">Fotos</th>
-                <th style="padding: 10px; text-align: center;" title="Quantas linhas o Relatório de Tempo tem para esta visita">No Relatório</th>
+                <th style="padding: 10px; text-align: center;" title="Quantas vezes a Pacto lançou esta mesma visita no Relatório de Tempo">Linhas no Relatório</th>
               </tr>
             </thead>
             <tbody>${linhas || '<tr><td colspan="5" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita.</td></tr>'}</tbody>
