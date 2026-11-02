@@ -39,7 +39,10 @@
   .guia-corpo li { margin-bottom: 4px; }
   #zona-mes { position: relative; flex-shrink: 0; z-index: 30; }
   #barra-periodo { display: none; position: absolute; top: 100%; left: 0; right: 0; box-shadow: 0 6px 14px rgba(0,0,0,.18); }
-  #zona-mes:hover #barra-periodo[data-disp="1"], #zona-mes.aberta #barra-periodo[data-disp="1"] { display: flex; }
+  /* a barra das semanas desce e sobe suavemente (cortina), em vez de aparecer de uma vez */
+  #barra-periodo[data-disp="1"] { display: flex; visibility: hidden; pointer-events: none; opacity: 0; transform: translateY(-10px); clip-path: inset(0 -20px 100% -20px); transition: opacity .28s ease .12s, transform .28s ease .12s, clip-path .28s ease .12s, visibility 0s linear .4s; }
+  #zona-mes:hover #barra-periodo[data-disp="1"], #zona-mes.aberta #barra-periodo[data-disp="1"] { visibility: visible; pointer-events: auto; opacity: 1; transform: none; clip-path: inset(0 -20px -20px -20px); transition: opacity .28s ease, transform .28s ease, clip-path .28s ease, visibility 0s; }
+  @media (prefers-reduced-motion: reduce) { #barra-periodo[data-disp="1"], #zona-mes:hover #barra-periodo[data-disp="1"] { transition: none; } }
   #dica-per { display: none; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: transparent; border: 1px solid rgba(184,192,204,.5); color: #B8C0CC; border-radius: 14px; padding: 3px 10px; font-size: 11px; font-family: inherit; cursor: pointer; }
   #dica-per.filtrado { color: var(--cor-destaque); border-color: var(--cor-destaque); font-weight: bold; }
   #zona-mes.tem-per #dica-per { display: block; }
@@ -110,7 +113,6 @@
 
 <nav>
   <button class="ativo" data-tela="dashboard">Dashboard</button>
-  <button data-tela="fechamento">Fechamento</button>
   <button data-tela="auditoria">Auditoria</button>
   <button data-tela="promotores">Promotores</button>
   <button data-tela="soltas">Livres</button>
@@ -129,7 +131,6 @@
   <div id="tela-dashboard" class="tela ativa"><div class="card"><h2>Dashboard</h2><p>Visão geral da auditoria. (Em construção)</p></div></div>
   <div id="tela-admin" class="tela"><div class="card"><h2>Admin</h2><p>Importação de arquivos e processamento. (Em construção)</p></div></div>
   <div id="tela-auditoria" class="tela"><div class="card"><h2>Auditoria</h2><p>Drill-down por rede, loja e visita. (Em construção)</p></div></div>
-  <div id="tela-fechamento" class="tela"></div>
   <div id="tela-promotores" class="tela"></div>
   <div id="tela-soltas" class="tela"></div>
   <div id="tela-revisao" class="tela"><div class="card"><h2>Revisão</h2><p>Fila de fotos com suspeita para revisão manual. (Em construção)</p></div></div>
@@ -329,7 +330,7 @@
         ['Fechamento (xlsx)', 'Por rede: lojas cobradas, visitas por semana, visitas cobradas no mês, valor cobrado.', 'É a <strong>base oficial</strong> de planejadas, cobradas e custo da visita.'],
         ['Relatório de Tempo (xlsx)', 'Cada visita registrada pela Pacto: promotor, rede, loja, dia.', 'Dá o "par" de cada foto (promotor + dia + loja). Visitas repetidas (mesmo promotor, dia e loja) contam uma vez.'],
         ['Books (PDF)', 'As fotos, com legenda impressa no rodapé: data/hora, promotor, rede e loja.', 'São a <strong>prova</strong>. Cada página é uma foto; só capa e contracapa devem ser ignoradas.'],
-        ['Plano de Visitas (3 xlsx)', 'Lista de lojas e promotores por rede (Tubaína, Carrefour, Nagumo).', '<strong>Somente conferência</strong>: não entra em nenhuma conta. Serve para comparar a lista de lojas com o que o Fechamento cobra (aba Fechamento).']
+        ['Plano de Visitas (3 xlsx)', 'Lista de lojas e promotores por rede (Tubaína, Carrefour, Nagumo) e, em cada dia, uma marca: <strong>x</strong>, <strong>giro</strong> ou <strong>foto+giro</strong>.', '<strong>Não entra em nenhuma conta.</strong> As marcas são os dias <strong>previstos</strong> para o promotor visitar a loja. O sistema lê e guarda essas marcas, mas ainda não as cruza com o Relatório de Tempo nem com os Books.']
       ]) + '<p>Ao importar, o sistema compara o mês do arquivo com o mês ativo e pede confirmação se forem diferentes.</p>')}
 
       ${sec('4. Como uma visita é comprovada', `
@@ -355,18 +356,17 @@
         ['Planejadas', 'Mês inteiro: visitas programadas no Fechamento (lojas cobradas × visitas por semana). Num período do calendário: a média semanal × dias ÷ 7 (aproximação).'],
         ['Cobradas', 'Mês inteiro: visitas cobradas no Fechamento (a Pacto as chama de "declaradas"). Ao escolher um período no calendário, o lugar delas passa a ser das <strong>Registradas</strong>: visitas diferentes registradas no Relatório de Tempo naqueles dias.'],
         ['Registradas', 'Visitas diferentes (promotor + dia + loja) que o Relatório de Tempo da Pacto registra.'],
-        ['Sem registro', 'Cobradas − registradas. Só existe para o mês inteiro, porque o Fechamento não informa o dia de cada visita.'],
+        ['Sem registro', 'Cobradas − registradas. Só existe para o mês inteiro, porque o Fechamento não informa o dia de cada visita. O sistema não mostra esta diferença como número próprio: compare as caixas Cobradas e Registradas.'],
         ['Comprovadas', 'Visitas cobradas (ou registradas, no período) que têm foto comprovada.'],
         ['Sem comprovação', 'Cobradas − comprovadas. Inclui as sem registro e as visitas com foto ainda em revisão.'],
         ['Desconto', 'Sem comprovação × custo médio da visita da rede (valor cobrado ÷ visitas cobradas).'],
         ['Plano comprovado', 'Comprovadas ÷ planejadas.'],
-        ['Cobrado × Registrado (Fechamento)', 'Compara o que a Pacto cobra no Fechamento com o que o Relatório de Tempo <em>dela mesma</em> registra. A diferença ("sem registro") e o seu valor em R$ são <strong>separados</strong> do desconto por falta de foto.'],
+        ['Cobrado × Registrado', 'Compara o que a Pacto cobra no Fechamento com o que o Relatório de Tempo <em>dela mesma</em> registra. Veja as caixas "Cobradas" e "Registradas" no Dashboard.'],
         ['Execuções Realizadas / Planejadas / Livres', 'Realizadas: execuções vistas nas fotos (promotor + dia + loja, várias fotos = 1). Planejadas: as que têm par no Relatório. Livres: as que não têm par (promotor sem visita registrada naquele dia, loja que não confere, ou rede fora do Fechamento).']
       ]))}
 
       ${sec('6. As telas', tab(['Tela', 'O que mostra'], [
         ['Dashboard', 'Painel geral do mês: velocímetros por rede e total, valores cobrado, auditado e desconto.'],
-        ['Fechamento', 'Do cobrado até a foto: Cobrado → Registrado → Comprovado, por rede, com o valor em R$ de cada diferença. Inclui a conferência Plano × Fechamento por rede e o CSV para a reunião.'],
         ['Auditoria', 'Detalhe por rede, loja e visita, com a evidência de cada uma (arquivo, página, hora). Lista das não comprovadas e alertas de volume por promotor/dia.'],
         ['Promotores', 'Ranking de execuções por promotor, lido das legendas das fotos. Toque numa linha para ver dia a dia.'],
         ['Livres', 'Execuções que aparecem nas fotos mas não têm par nas planilhas, com o motivo.'],
@@ -383,9 +383,10 @@
           <li><strong>Foto prova pouco.</strong> O sistema não verifica local (GPS), qualidade da execução nem se a foto é mesmo daquela loja além do que a legenda diz. Também não detecta fotos de outra visita com legenda alterada.</li>
           <li><strong>Cruzamento por nome.</strong> Loja é comparada por texto (igual, contido ou parecido). Pode errar em nomes muito curtos ou muito parecidos. Os casos duvidosos vão para a Revisão, mas um nome digitado diferente pode virar "livre" ou "sem comprovação" indevidamente.</li>
           <li><strong>Relatório de Tempo pode ser parcial.</strong> Se faltam dias (início ou fim do mês, ou só de algumas redes), a comparação Cobrado × Registrado fica incompleta e o "sem registro" sai exagerado. Peça o relatório do mês inteiro.</li>
-          <li><strong>Books recebidos parcialmente.</strong> A tela Fechamento mostra a linha "Books recebidos: de dd/mm a dd/mm", lida das legendas das fotos. Visitas fora dessa janela aparecem como "sem comprovação" só por falta de Book, não por falta de visita.</li>
-          <li><strong>Planejadas por semana é aproximação.</strong> O Fechamento só informa o total do mês por rede, sem o dia de cada visita. Em semanas, planejadas = média semanal × dias ÷ 7, e o "sem registro" não muda com o calendário (o Fechamento não informa o dia de cada visita).</li>
-          <li><strong>Plano de Visitas × Fechamento.</strong> Alguns Planos têm linhas ocultas no Excel (por filtro ou escondidas à mão; não dá para saber qual). O sistema mostra quantas e se o Fechamento as cobra, mas quem decide o que vale é o Fechamento. O Plano é a fonte mais frágil: os nomes de loja divergem da Pacto até em lojas de nome idêntico, por isso ele não entra em nenhuma conta. Há redes em que o número de lojas do Plano e do Fechamento não bate; isso é ponto a esclarecer com a agência, não conclusão do sistema.</li>
+          <li><strong>Books recebidos parcialmente.</strong> O Dashboard mostra a "Cobertura das fotos" (de dd/mm a dd/mm), lida das legendas. Visitas fora dessa janela aparecem como "sem comprovação" só por falta de Book, não por falta de visita.</li>
+          <li><strong>Planejadas por semana é aproximação.</strong> O Fechamento só informa o total do mês por rede, sem o dia de cada visita. Em semanas, planejadas = média semanal × dias ÷ 7.</li>
+          <li><strong>Plano de Visitas × Fechamento.</strong> Alguns Planos têm linhas ocultas no Excel (a Admin informa quantas). O que vale como planejado é o Fechamento; o número de lojas do Plano e do Fechamento nem sempre bate, e isso é ponto a esclarecer com a agência.</li>
+          <li><strong>As marcas do Plano ainda não são usadas.</strong> O sistema lê os dias marcados (x, giro, foto+giro), que são os dias previstos de visita, mas não os mostra nem os usa em nenhum cálculo. Em outubro elas somam cerca de 38% das visitas programadas no Fechamento e só uma parte pequena coincide com os dias do Relatório de Tempo e das fotos. Isso precisa ser esclarecido com quem preenche o Plano antes de virar auditoria.</li>
           <li><strong>Nomes diferentes entre arquivos.</strong> Redes e lojas aparecem com grafias diferentes no Fechamento, no Plano e no Relatório. O sistema normaliza o que consegue; o resto aparece como "rede não consta" ou "livre".</li>
           <li><strong>Os dados ficam neste navegador.</strong> Limpar os dados do navegador apaga tudo. Faça o backup (Config) e guarde os PDFs originais: eles são a prova oficial, o sistema guarda apenas uma cópia reduzida de cada foto.</li>
           <li><strong>A publicação depende do token do GitHub</strong> guardado só neste navegador. Sem ele não é possível publicar nem remover meses.</li>
@@ -397,7 +398,7 @@
           <li>Admin: importar Fechamento, Planos, Relatório de Tempo e <strong>todos</strong> os Books; conferir os avisos de importação.</li>
           <li>Processar a auditoria.</li>
           <li>Revisão: decidir as fotos pendentes.</li>
-          <li>Fechamento e Auditoria: conferir os números; gerar o CSV para a reunião com a agência.</li>
+          <li>Dashboard e Auditoria: conferir os números; gerar o CSV (Auditoria) para a reunião com a agência.</li>
           <li>Publicar o mês (Config).</li>
         </ol>`)}
     </div>`;
@@ -718,18 +719,37 @@
         if (achada) { rede = achada; redeOriginal = achada; }
       }
   
+      // Colunas dos dias: a linha de cabeçalho (ou acima dela) com várias datas. Cada dia vira uma coluna.
+      const colsDia = {};
+      for (let i = 0, melhorQtd = 0; i <= melhor.linha; i++) {
+        const cand = {};
+        (linhas[i] || []).forEach((cel, c) => {
+          const ehData = cel instanceof Date || (typeof cel === 'number' && cel > 40000 && cel < 60000);
+          if (ehData) { const iso = formatarDataISO(cel); if (iso) cand[c] = iso; }
+        });
+        const q = Object.keys(cand).length;
+        if (q >= 10 && q > melhorQtd) { melhorQtd = q; Object.keys(colsDia).forEach(k => delete colsDia[k]); Object.assign(colsDia, cand); }
+      }
       for (let i = melhor.linha + 1; i < linhas.length; i++) {
         const linha = linhas[i] || [];
         const nomeLoja = String(linha[indices.nomeLoja] || '').trim();
         if (!nomeLoja || nomeLoja.length < 2) continue;
         const nn = normalizarTexto(nomeLoja);
         if (nn.includes('TOTAL') || nn.includes('NOME DA LOJA')) continue;
-        lojasExtraidas.push({
+        // Marcas do dia (x, giro, foto+giro): dia previsto de visita. Guardadas, ainda sem uso nas telas.
+        const marcas = {};
+        Object.entries(colsDia).forEach(([c, iso]) => {
+          const v = normalizarTexto(linha[c]).replace(/\s+/g, '').toLowerCase();
+          if (v === 'x' || v === 'giro' || v === 'foto+giro') marcas[iso] = v;
+        });
+        const reg = {
           rede, redeOriginal, nomeLoja,
           promotor: String(linha[indices.promotor] || '').trim(),
           diaVisita: String(linha[indices.diaVisita] || '').trim(),
           oculta: !!(linhasXls[i + deslocLinha] && linhasXls[i + deslocLinha].hidden)
-        });
+        };
+        if (Object.keys(marcas).length) reg.marcas = marcas;
+        lojasExtraidas.push(reg);
       }
     });
     if (lojasExtraidas.length === 0) {
@@ -804,7 +824,7 @@
 
       const redesUnicas = [...new Set(lojasAtuais.map(l => l.rede))];
       let html = importadas > 0
-        ? `<span style="color: #27AE60;">✅ Plano importado: ${importadas} lojas lidas. Total no mês: ${lojasAtuais.length} linhas de loja em ${redesUnicas.length} redes, ${lojasAtuais.filter(l => l.oculta).length} delas ocultas no Excel (veja a aba Fechamento).</span>`
+        ? `<span style="color: #27AE60;">✅ Plano importado: ${importadas} lojas lidas. Total no mês: ${lojasAtuais.length} linhas de loja em ${redesUnicas.length} redes, ${lojasAtuais.filter(l => l.oculta).length} delas ocultas no Excel.</span>`
         : '';
       if (erros.length) html += `<br><span style="color: #E74C3C;">❌ ${erros.join('<br>❌ ')}</span>`;
       msg.innerHTML = html;
@@ -1400,13 +1420,12 @@
     fechamento.forEach(f => {
       const r = porRede[f.rede] || (porRede[f.rede] = {
         chave: f.rede, rede: String(f.redeOriginal).trim(), custoVisita: 0, declaradas: 0, declaradasMes: 0, programadas: 0, semanal: 0, planejadas: 0,
-        comprovadas: 0, gap: 0, valorCobrado: 0, desconto: 0, valorAuditado: 0, semFoto: 0, lojasCobradas: 0
+        comprovadas: 0, gap: 0, valorCobrado: 0, desconto: 0, valorAuditado: 0, semFoto: 0
       });
       r.declaradas += f.declaradasMes;
       r.declaradasMes += f.declaradasMes;
       r.programadas += f.programadasMes || 0;
       r.semanal += (f.qtdLojas || 0) * (f.visitasSemana || 0);
-      r.lojasCobradas += f.qtdLojas || 0;
       r.valorCobrado += f.declaradasMes * f.custoVisita;
       if (!r.custoVisita) r.custoVisita = f.custoVisita;
     });
@@ -1510,13 +1529,6 @@
     });
     Object.values(visitas).forEach(v => { if (v.statusFinal === 'comprovada' && porDia[v.data] && porDia[v.data][v.rede]) porDia[v.data][v.rede].c++; });
 
-    // Plano × Fechamento: quantas lojas o Plano lista (visíveis e ocultas no Excel) e quantas o Fechamento cobra
-    const planoLojas = {};
-    (mesDados.lojas || []).forEach(l => {
-      const p = planoLojas[l.rede] || (planoLojas[l.rede] = { rede: l.redeOriginal || l.rede, total: 0, ocultas: 0 });
-      p.total++; if (l.oculta) p.ocultas++;
-    });
-
     const soma = campo => Object.values(porRede).reduce((a, r) => a + (r[campo] || 0), 0);
     const todas = Object.values(visitas);
     return {
@@ -1532,9 +1544,9 @@
         totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
         fotosPendentes: fotos.filter(f => f.status === 'revisao').length
       },
-      versaoCalculo: 10,
+      versaoCalculo: 11,
       associacoes,
-      volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia, gemeas, planoLojas,
+      volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia, gemeas,
       dataProcessamento: new Date().toISOString()
     };
   }
@@ -2005,143 +2017,6 @@
       let csv = 'Data;Hora;Promotor;Rede;Loja (etiqueta);Fotos;Arquivo;Página;Por quê\n';
       todas.sort((a, b) => a.d.localeCompare(b.d) || a.prom.localeCompare(b.prom)).forEach(x => { csv += [formatarDataBR(x.d), x.hora, x.prom, x.rede, x.loja, x.n, nomeArquivoCurto((aud.arquivosBook || [])[x.ar]), x.pg, x.motivo].join(';') + '\n'; });
       baixarCSV('execucoes_livres_' + Estado.config.mesAtivo + '.csv', csv);
-    });
-  }
-
-  // ── FECHAMENTO × RELATÓRIO DE TEMPO × BOOK: do que a Pacto cobra até o que tem foto ──
-  function calcularFechamentoXRelatorio(m) {
-    const raw = m.auditoria; if (!raw || !raw.porRede || !raw.porDia) return null;
-    const aud = audAtiva(m), redesRel = {}; let dMin = null, dMax = null;
-    Object.entries(raw.porDia).forEach(([dia, redes]) => {
-      if (!dMin || dia < dMin) dMin = dia; if (!dMax || dia > dMax) dMax = dia;
-      Object.entries(redes).forEach(([r, x]) => { redesRel[r] = (redesRel[r] || 0) + x.d; });
-    });
-    const linhas = Object.values(aud.porRede).map(r => {
-      const cobrado = r.declaradasMes || 0, registrado = redesRel[r.chave] || 0, sem = Math.max(0, cobrado - registrado);
-      return { chave: r.chave, rede: r.rede, cobrado, registrado, semRegistro: sem, valor: sem * (r.custoVisita || 0), custo: r.custoVisita || 0,
-               declPer: r.declaradas || 0, compPer: r.comprovadas || 0, gapPer: r.gap || 0 };
-    }).filter(l => l.cobrado > 0 || l.registrado > 0).sort((a, b) => b.semRegistro - a.semRegistro);
-    const S = c => linhas.reduce((a, l) => a + l[c], 0);
-    return { linhas, dMin, dMax, total: { cobrado: S('cobrado'), registrado: S('registrado'), semRegistro: S('semRegistro'), valor: S('valor'), declPer: S('declPer'), compPer: S('compPer'), gapPer: S('gapPer') } };
-  }
-  function htmlConferenciaPlano(aud) {
-    const P = aud.planoLojas || {};
-    if (!Object.keys(P).length) return '';
-    const redes = {};
-    Object.entries(aud.porRede || {}).forEach(([k, r]) => { redes[k] = { rede: r.rede, cob: r.lojasCobradas || 0, tot: 0, oc: 0 }; });
-    Object.entries(P).forEach(([k, p]) => { const e = redes[k] || (redes[k] = { rede: p.rede, cob: 0, tot: 0, oc: 0 }); e.tot = p.total; e.oc = p.ocultas; });
-    const sit = e => {
-      const vis = e.tot - e.oc;
-      if (!e.cob) return ['Rede não consta no Fechamento', '#C0392B'];
-      if (!e.tot) return ['Rede sem linhas no Plano', '#C0392B'];
-      if (e.tot === e.cob) return ['Fecha com o Plano inteiro' + (e.oc ? ' (ocultas incluídas)' : ''), '#27AE60'];
-      if (vis === e.cob) return ['Fecha só com as visíveis: ' + (e.oc === 1 ? 'a 1 oculta está fora do contrato' : 'as ' + e.oc + ' ocultas estão fora do contrato'), '#27AE60'];
-      const d = e.tot - e.cob;
-      return [`Não fecha: Plano tem ${Math.abs(d)} ${d > 0 ? 'a mais' : 'a menos'} que o Fechamento`, '#E67E22'];
-    };
-    const linhas = Object.values(redes).sort((a, b) => b.tot - a.tot).map(e => { const [t, cor] = sit(e); return `<tr style="border-top:1px solid #EEE;vertical-align:top;">
-      <td style="padding:6px 5px;font-weight:bold;">${esc(e.rede)}</td><td style="padding:6px 5px;text-align:right;">${e.tot}</td><td style="padding:6px 5px;text-align:right;">${e.oc || ''}</td>
-      <td style="padding:6px 5px;text-align:right;">${e.cob}</td><td style="padding:6px 5px;font-size:11px;color:${cor};">${esc(t)}</td></tr>`; }).join('');
-    return `<div class="card">
-      <h2>Lojas: Plano × Fechamento</h2>
-      <p style="font-size:12px;margin-bottom:8px;">O que vale para o planejado é o <strong>Fechamento</strong> (lojas cobradas × visitas por semana). O Plano é só conferência: linhas ocultas no Excel (por filtro ou escondidas à mão) não são somadas, e algumas ocultas são cobradas, outras estão fora do contrato.</p>
-      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:6px 5px;text-align:left;">Rede</th><th style="padding:6px 5px;text-align:right;">No Plano</th><th style="padding:6px 5px;text-align:right;">Ocultas</th><th style="padding:6px 5px;text-align:right;">Cobradas</th><th style="padding:6px 5px;text-align:left;">Situação</th></tr></thead><tbody>${linhas}</tbody></table></div>
-    </div>`;
-  }
-  function renderizarFechamento() {
-    const container = document.getElementById('tela-fechamento');
-    const m = Estado.meses[Estado.config.mesAtivo];
-    const d = m && m.auditoria ? calcularFechamentoXRelatorio(m) : null;
-    if (!d) {
-      container.innerHTML = `<div class="card"><h2>Fechamento × Relatório</h2><p>Importe o Fechamento e o Relatório de Tempo e processe a auditoria para comparar.</p></div>`; return;
-    }
-    const audP = audAtiva(m), T = d.total, p = audP.periodoAuditado;
-    const coberturaBooks = (() => {
-      // dias que realmente têm foto (não o período impresso no cabeçalho do PDF), juntando dias seguidos em faixas
-      const dias = [...new Set((m.fotos || []).filter(f => f.status !== 'fora_periodo' && f.dataHora).map(f => f.dataHora.slice(0, 10)))].sort();
-      if (!dias.length) return 'nenhum';
-      const faixas = []; let ini = dias[0], ant = dias[0];
-      const seguido = (a, b) => (new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) === 86400000;
-      for (let k = 1; k <= dias.length; k++) {
-        if (k < dias.length && seguido(ant, dias[k])) { ant = dias[k]; continue; }
-        faixas.push(ini === ant ? formatarDataBR(ini).slice(0, 5) : formatarDataBR(ini).slice(0, 5) + ' a ' + formatarDataBR(ant).slice(0, 5));
-        if (k < dias.length) { ini = ant = dias[k]; }
-      }
-      return faixas.join(' | ');
-    })();
-    const pctFoto = T.declPer > 0 ? Math.min(100, T.compPer / T.declPer * 100) : null;
-    const pctReg = T.cobrado > 0 ? Math.min(100, T.registrado / T.cobrado * 100) : null;
-    const perTxt = p ? `${formatarDataBR(p.inicio).slice(0, 5)} a ${formatarDataBR(p.fim).slice(0, 5)}` : 'mês inteiro';
-    const th = 'padding:6px 5px;font-size:10px;text-transform:uppercase;color:var(--cor-texto-secundario);text-align:right;white-space:nowrap;';
-    const linhas = d.linhas.map(l => {
-      const base = Math.max(l.cobrado, l.registrado, 1), wReg = Math.min(l.registrado, l.cobrado) / base * 100, wSem = l.semRegistro / base * 100;
-      const corSem = l.semRegistro > 0 ? 'var(--cor-perigo)' : '#27AE60';
-      return `<tr style="border-top:1px solid #EEE;">
-        <td style="padding:7px 5px;font-weight:bold;min-width:96px;">${esc(l.rede)}
-          <div style="display:flex;height:6px;margin-top:4px;background:#E3E6EA;border-radius:3px;overflow:hidden;"><div style="width:${wReg}%;background:#D4AF37;"></div><div style="width:${wSem}%;background:#E74C3C;"></div></div></td>
-        <td style="padding:7px 5px;text-align:right;">${l.cobrado}</td>
-        <td style="padding:7px 5px;text-align:right;">${l.registrado}</td>
-        <td style="padding:7px 5px;text-align:right;font-weight:bold;color:${corSem};">${l.semRegistro}</td>
-        <td style="padding:7px 5px;text-align:right;color:${corSem};white-space:nowrap;">${formatarMoeda(l.valor)}</td>
-        <td style="padding:7px 5px;text-align:right;border-left:1px solid #EEE;">${l.declPer}</td>
-        <td style="padding:7px 5px;text-align:right;color:#27AE60;">${l.compPer}</td>
-        <td style="padding:7px 5px;text-align:right;color:${l.gapPer > 0 ? 'var(--cor-perigo)' : '#27AE60'};font-weight:bold;">${l.gapPer}</td></tr>`;
-    }).join('');
-    container.innerHTML = `
-      <div class="painel-f1"><div class="faixa-xadrez"></div>
-        <div style="padding:12px 14px 10px;">
-          <div style="font-family:var(--fonte-titulo);font-size:14px;letter-spacing:2px;color:#D4AF37;">COBRADO → REGISTRADO → COMPROVADO <span style="color:#7F8A96;">· ${perTxt}</span></div>
-          <div class="painel-corpo" style="margin-top:6px;">
-            <div class="painel-esq" style="padding-top:6px;">
-              <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#D4AF37;">1 · REGISTRO</div>
-              <div style="text-align:center;font-size:11px;color:#7F8A96;margin-bottom:10px;">sempre o mês inteiro (o Fechamento só traz o total do mês)</div>
-              <div style="display:flex;justify-content:space-around;margin-top:6px;text-align:center;gap:6px;">
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">COBRADO</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#D4AF37;">${T.cobrado}</div><div style="font-size:10px;color:#7F8A96;">no Fechamento</div></div>
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">REGISTRADO</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#C9D1D9;">${T.registrado}</div><div style="font-size:10px;color:#7F8A96;">no Rel. de Tempo${pctReg == null ? '' : ' · ' + formatarPorcentagem(pctReg) + ' do cobrado'}</div></div>
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">SEM REGISTRO</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#E74C3C;">${T.semRegistro}</div><div style="font-size:10px;color:#E74C3C;">${formatarMoeda(T.valor)}</div></div>
-              </div>
-            </div>
-            <div class="painel-dir" style="padding-top:6px;">
-              <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#D4AF37;">2 · COMPROVAÇÃO</div>
-              <div style="text-align:center;font-size:11px;color:#7F8A96;margin-bottom:10px;">${perTxt === 'mês inteiro' ? 'mês inteiro' : 'período ' + perTxt + ' (segue o calendário)'} · Books recebidos: ${esc(coberturaBooks)}</div>
-              <div style="display:flex;justify-content:space-around;margin-top:6px;text-align:center;gap:6px;">
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">${p ? 'REGISTRADO' : 'COBRADO'}</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#C9D1D9;">${T.declPer}</div><div style="font-size:10px;color:#7F8A96;">${p ? 'no Rel. de Tempo, no período' : 'base: cobrado no mês'}</div></div>
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">COMPROVADO</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#27AE60;">${T.compPer}</div><div style="font-size:10px;color:#7F8A96;">com foto no Book${pctFoto == null ? '' : ' · ' + formatarPorcentagem(pctFoto) + ' da base'}</div></div>
-                <div><div style="font-size:11px;letter-spacing:1px;color:#9AA4AF;">SEM COMPROVAÇÃO</div><div style="font-family:var(--fonte-titulo);font-size:26px;font-weight:900;color:#E74C3C;">${T.gapPer}</div><div style="font-size:10px;color:#E74C3C;">${formatarMoeda(audP.total.desconto || 0)}</div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <h2>Como ler estes números</h2>
-        <ol style="font-size:13px;padding-left:20px;line-height:1.55;">
-          <li><strong>Cobrado (${T.cobrado})</strong>: visitas que a Pacto declarou e cobrou no Fechamento do mês.</li>
-          <li><strong>Registrado (${T.registrado})</strong>: visitas diferentes (promotor + dia + loja) que o <em>próprio Relatório de Tempo da Pacto</em> registra${d.dMax ? ' (de ' + esc(formatarDataBR(d.dMin)) + ' a ' + esc(formatarDataBR(d.dMax)) + ')' : ''}. É a prova que a Pacto mesma fornece, antes de olhar as fotos.</li>
-          <li><strong>Sem registro (${T.semRegistro})</strong> = Cobrado − Registrado. São visitas cobradas que nem o Relatório de Tempo da Pacto mostra. O <strong>R$ ${formatarMoeda(T.valor).replace('R$', '').trim()}</strong> é isso × o custo médio da visita de cada rede.</li>
-          <li><strong>Comprovado (${T.compPer})</strong>: dessas visitas, quantas têm foto nos Books recebidos. <strong>Sem comprovação (${T.gapPer})</strong> = ${p ? 'Registrado' : 'Cobrado'} − Comprovado. ${p ? 'São visitas registradas no período que ainda não têm foto' : 'Inclui as <em>sem registro</em> e as registradas que ainda não têm foto'} (por exemplo, porque o Book daquele dia ainda não chegou). É o que gera o desconto.</li>
-        </ol>
-        <p style="font-size:12px;margin-top:8px;color:var(--cor-texto-secundario);">O bloco 1 não muda com o calendário porque o Fechamento não informa o dia de cada visita. O bloco 2 muda: ao escolher uma semana, a base passa a ser o que o Relatório de Tempo registra naquele período.</p>
-      </div>
-      <div class="card">
-        <h2>Da planilha da Pacto até a foto</h2>
-        <p style="font-size:12px;margin-bottom:8px;">Três níveis, para cada rede: <strong>Cobrado</strong> (Fechamento do mês) → <strong>Registrado</strong> (visitas únicas no Relatório de Tempo) → <strong>Comprovado</strong> (foto no Book). O Fechamento só traz o total por rede, não visita a visita; por isso a comparação é por rede.</p>
-        <p style="font-size:11px;margin-bottom:12px;color:var(--cor-texto-secundario);">O Relatório de Tempo cobre de <strong>${esc(formatarDataBR(d.dMin))}</strong> a <strong>${esc(formatarDataBR(d.dMax))}</strong>. Se o Fechamento inclui dias depois dessa data, parte da diferença pode vir deles. As colunas de comprovação (Base, Comprovado, Sem comprovação) valem para <strong>${perTxt}</strong>; até importar todos os Books do período, “sem comprovação” inclui visitas cujo Book ainda não foi enviado.</p>
-        <p style="font-size:10px;color:var(--cor-texto-secundario);margin-bottom:4px;text-align:right;">deslize a tabela para o lado para ver R$ e as colunas do Book →</p>
-        <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
-          <thead><tr><th style="${th}text-align:left;">Rede</th><th style="${th}">Cobrado</th><th style="${th}">Regis-<br>trado</th><th style="${th}">Sem registro</th><th style="${th}">R$</th><th style="${th}border-left:1px solid #EEE;" title="Base da comparação: no mês inteiro, o Cobrado; num período, o Registrado naqueles dias">Base</th><th style="${th}">Compro-<br>vado</th><th style="${th}">Sem comprovação</th></tr></thead>
-          <tbody>${linhas}
-          <tr style="border-top:2px solid #CCC;font-weight:bold;"><td style="padding:8px 5px;">TOTAL</td><td style="padding:8px 5px;text-align:right;">${T.cobrado}</td><td style="padding:8px 5px;text-align:right;">${T.registrado}</td><td style="padding:8px 5px;text-align:right;color:var(--cor-perigo);">${T.semRegistro}</td><td style="padding:8px 5px;text-align:right;color:var(--cor-perigo);white-space:nowrap;">${formatarMoeda(T.valor)}</td><td style="padding:8px 5px;text-align:right;border-left:1px solid #EEE;">${T.declPer}</td><td style="padding:8px 5px;text-align:right;color:#27AE60;">${T.compPer}</td><td style="padding:8px 5px;text-align:right;color:var(--cor-perigo);">${T.gapPer}</td></tr></tbody></table></div>
-        <p style="font-size:11px;margin-top:10px;color:var(--cor-texto-secundario);"><span style="color:#D4AF37;">■</span> registrado no Relatório &nbsp; <span style="color:#E74C3C;">■</span> cobrado sem registro. “R$” = visitas sem registro × custo médio da visita da rede. É um valor <strong>a mais</strong> para contestar, separado do desconto por falta de foto.</p>
-        <button id="btn-csv-fechamento" style="width:100%;margin-top:12px;padding:12px;background:var(--cor-primaria);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Baixar CSV para a reunião com a agência</button>
-      </div>
-      ${htmlConferenciaPlano(m.auditoria)}`;
-    document.getElementById('btn-csv-fechamento').addEventListener('click', () => {
-      const nf = n => String(n).replace('.', ',');
-      let csv = 'Rede;Cobrado (Fechamento, mês);Registrado (Relatório de Tempo, mês);Cobrado sem registro;Custo médio da visita;Valor a contestar;Base (cobrado no mês ou registrado no período);Comprovado;Sem comprovação\n';
-      d.linhas.forEach(l => { csv += [l.rede, l.cobrado, l.registrado, l.semRegistro, nf(l.custo.toFixed(2)), nf(l.valor.toFixed(2)), l.declPer, l.compPer, l.gapPer].join(';') + '\n'; });
-      csv += ['TOTAL', T.cobrado, T.registrado, T.semRegistro, '', nf(T.valor.toFixed(2)), T.declPer, T.compPer, T.gapPer].join(';') + '\n';
-      baixarCSV('fechamento_x_relatorio_' + Estado.config.mesAtivo + '.csv', csv);
     });
   }
 
@@ -2908,14 +2783,13 @@
         const telaAlvo = document.getElementById(`tela-${nomeTela}`);
         if (telaAlvo) telaAlvo.classList.add('ativa');
 
-        if (nomeTela === 'dashboard' || nomeTela === 'auditoria' || nomeTela === 'relatorio' || nomeTela === 'fechamento' || nomeTela === 'promotores' || nomeTela === 'soltas') atualizarAuditoriaSeNecessario();
+        if (nomeTela === 'dashboard' || nomeTela === 'auditoria' || nomeTela === 'relatorio' || nomeTela === 'promotores' || nomeTela === 'soltas') atualizarAuditoriaSeNecessario();
         if (nomeTela === 'config') renderizarConfig();
         if (nomeTela === 'admin') renderizarAdmin();
         if (nomeTela === 'dashboard') renderizarDashboard();
         if (nomeTela === 'auditoria') renderizarAuditoria();
         if (nomeTela === 'revisao') renderizarRevisao();
         if (nomeTela === 'relatorio') renderizarRelatorio();
-        if (nomeTela === 'fechamento') renderizarFechamento();
         if (nomeTela === 'promotores') renderizarPromotores();
         if (nomeTela === 'soltas') renderizarSoltas();
       });
@@ -3214,7 +3088,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 10) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 11) executarAuditoriaSilencioso();
   }
 
 
