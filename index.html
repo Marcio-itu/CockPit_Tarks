@@ -587,7 +587,7 @@
   
       const indices = melhor.idx;
       if (indices.promotor === -1) indices.promotor = indices.nomeLoja + 1;
-      if (indices.diaVisita === -1) indices.diaVisita = indices.nomeLoja + 2;
+      if (indices.diaVisita === -1) indices.diaVisita = indices.promotor + 1; // Nagumo/Carrefour: a coluna dos dias não tem título, fica logo após o promotor
   
       // Rede: nome da aba. Se a aba for genérica ("TUBAÍNA"), usa o nome do arquivo (CARREFOUR / NAGUMO).
       let redeOriginal = String(nomeAba).trim();
@@ -1124,6 +1124,27 @@
       else hashes.set(f.hash, f);
     });
   
+    // Lojas com nomes parecidos na mesma rede (ex.: "ALTO IPIRANGA MOGI" e "ALTO IPIRANGA MOGI II"): são lojas diferentes.
+    // Para elas só vale nome IDÊNTICO; qualquer aproximação (typo, "um contém o outro") vai para a Revisão, nunca é decidida sozinha.
+    const catalogo = {};
+    relatorio.forEach(v => {
+      const k = v.rede + '|' + chaveCompacta(v.loja), kv = chaveCompacta(v.promotor) + '_' + v.data;
+      const e = catalogo[k] || (catalogo[k] = { rede: v.rede, redeOriginal: v.redeOriginal, loja: v.loja, c: chaveCompacta(v.loja), vis: new Set() });
+      e.vis.add(kv);
+    });
+    const gemeas = [], gem = new Set();
+    const lojasCat = Object.values(catalogo), semCod = t => { const r = t.replace(/^\d+/, ''); return r.length >= 3 ? r : t; };
+    for (let i = 0; i < lojasCat.length; i++) for (let j = i + 1; j < lojasCat.length; j++) {
+      const A = lojasCat[i], B = lojasCat[j];
+      if (A.rede !== B.rede || A.c === B.c || Math.min(A.c.length, B.c.length) < 5) continue;
+      const sa = semCod(A.c), sb = semCod(B.c);
+      if (sa.includes(sb) || sb.includes(sa) || semelhancaTexto(sa, sb) >= 0.8) {
+        gem.add(A.rede + '|' + A.c); gem.add(B.rede + '|' + B.c);
+        gemeas.push({ rede: A.redeOriginal || A.rede, a: A.loja, b: B.loja, visA: A.vis.size, visB: B.vis.size });
+      }
+    }
+    const ehGemea = c => gem.has(c.rede + '|' + chaveCompacta(c.loja));
+
     // 3. Cruzamento com o Relatório de Tempo
     fotos.forEach(f => {
       if (f.revisaoManual || f.status === 'duplicata') return;
@@ -1150,17 +1171,22 @@
         const alvo = chaveCompacta(f.lojaTexto);
         let iguais = cands.filter(c => chaveCompacta(c.loja) === alvo), metodo = 'exata', scoreAssoc = 1;
         if (iguais.length === 0) { iguais = cands.filter(c => lojaCombina(f.lojaTexto, c.loja)); metodo = 'contida'; scoreAssoc = null; }
+        if (metodo === 'contida' && iguais.some(ehGemea)) {
+          f.status = 'revisao'; f.candidatas = cands.map(c => ({ loja: c.loja, rede: c.rede, redeOriginal: c.redeOriginal, promotor: c.promotor }));
+          f.motivoGap = `Loja do selo da foto (${f.lojaTexto.replace(/\s+/g, ' ')}) é parecida com mais de uma loja real da rede (nomes quase iguais). Escolha a loja.`; return;
+        }
         if (iguais.length === 0) {
           // Nome com typo ou escrito de outro jeito: escolhe só se UMA loja do dia for claramente a mais parecida
           const pont = cands.map(c => ({ c, sc: semelhancaLoja(f.lojaTexto, c.loja) })).sort((a, b) => b.sc - a.sc);
-          if (pont.length && pont[0].sc >= 0.82 && (pont.length === 1 || pont[0].sc - pont[1].sc >= 0.08)) { iguais = [pont[0].c]; metodo = 'semelhança'; scoreAssoc = pont[0].sc; }
+          const gemeo = pont.length && (ehGemea(pont[0].c) || (pont[1] && pont[1].sc >= 0.7 && ehGemea(pont[1].c)));
+          if (!gemeo && pont.length && pont[0].sc >= 0.82 && (pont.length === 1 || pont[0].sc - pont[1].sc >= 0.08)) { iguais = [pont[0].c]; metodo = 'semelhança'; scoreAssoc = pont[0].sc; }
           else f.candidatas = pont.map(x => ({ loja: x.c.loja, rede: x.c.rede, redeOriginal: x.c.redeOriginal, promotor: x.c.promotor, sugestao: Math.round(x.sc * 100) / 100 }));
         }
         if (iguais.length === 1) { escolher(iguais[0], metodo, scoreAssoc); return; }
         f.status = 'revisao';
         f.motivoGap = iguais.length > 1
           ? 'Foto compatível com mais de uma loja do dia. Escolha a loja.'
-          : `Loja do selo da foto (${f.lojaTexto.replace(/\s+/g, ' ')}) não confere com as lojas do Relatório de Tempo neste dia. Escolha a loja.`;
+          : `Loja do selo da foto (${f.lojaTexto.replace(/\s+/g, ' ')}) não confere com as lojas do Relatório de Tempo neste dia${(f.candidatas || []).some(x => x.sugestao != null && ehGemea(x)) ? ' (há lojas com nomes quase iguais: confira o nome)' : ''}. Escolha a loja.`;
         return;
       }
       if (cands.length === 1) { escolher(cands[0], 'unica'); return; }
@@ -1321,7 +1347,7 @@
       if (!e && !casada) {
         // etiqueta sem par (typo): junta à loja parecida do mesmo dia e rede. Lojas já identificadas nunca se juntam por semelhança (ex.: MOGI I e MOGI II)
         const melhor = lista.map(x => ({ x, sc: semelhancaLoja(lojaTxt, x.loja) })).sort((a, b) => b.sc - a.sc)[0];
-        if (melhor && (melhor.sc >= 0.8 || chaveCompacta(melhor.x.loja) === chaveCompacta(lojaTxt))) e = melhor.x;
+        if (melhor && (melhor.sc >= 0.8 || chaveCompacta(melhor.x.loja) === chaveCompacta(lojaTxt)) && !gem.has(redeKey + '|' + chaveCompacta(melhor.x.loja))) e = melhor.x;
       }
       if (!e) { e = { loja: lojaTxt, casada, redeKey, dia: diaDe(f), redeTxt: semEsp(f.redeTexto), fotos: [] }; lista.push(e); }
       e.fotos.push(f);
@@ -1330,7 +1356,7 @@
     Object.values(porProm).forEach(P => Object.values(P.dias).forEach(lista => {
       lista.filter(e => !e.casada).forEach(e => {
         const c = lista.filter(x => x.casada).map(x => ({ x, sc: semelhancaLoja(e.loja, x.loja) })).sort((a, b) => b.sc - a.sc)[0];
-        if (c && c.sc >= 0.8) { c.x.fotos.push(...e.fotos); lista.splice(lista.indexOf(e), 1); }
+        if (c && c.sc >= 0.8 && !gem.has(c.x.redeKey + '|' + chaveCompacta(c.x.loja))) { c.x.fotos.push(...e.fotos); lista.splice(lista.indexOf(e), 1); }
       });
     }));
     const promotores = Object.values(porProm).map(P => {
@@ -1378,9 +1404,9 @@
         totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
         fotosPendentes: fotos.filter(f => f.status === 'revisao').length
       },
-      versaoCalculo: 8,
+      versaoCalculo: 9,
       associacoes,
-      volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia,
+      volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia, gemeas,
       dataProcessamento: new Date().toISOString()
     };
   }
@@ -1587,6 +1613,7 @@
         ${resumoFotos}
       </div>
       ${htmlCardConferencia(mesDados)}
+      ${htmlCardGemeas(mesDados)}
 
       <div class="card" style="border-left-color: ${podeAuditar ? 'var(--cor-destaque)' : '#CCC'}; background: ${podeAuditar ? '#FFFDF5' : 'white'};">
         <h2>5. Processar Auditoria</h2>
@@ -2999,7 +3026,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 8) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 9) executarAuditoriaSilencioso();
   }
 
 
@@ -3282,6 +3309,16 @@
     const soma = k => arquivos.reduce((a, x) => a + (x[k] || 0), 0);
     const tudoOk = arquivos.length > 0 && arquivos.every(x => !x.semControle && x.bate && !x.inesperadas.length && !x.problemas.length);
     return { arquivos, totalFotos: soma('fotos'), completas: soma('completas'), tudoOk };
+  }
+  function htmlCardGemeas(mesDados) {
+    const g = mesDados.auditoria && mesDados.auditoria.gemeas;
+    if (!g || !g.length) return '';
+    return `<div class="card" style="border-left-color:#8E44AD;">
+      <h2>Lojas com nomes parecidos (${g.length})</h2>
+      <p style="font-size:12px;margin-bottom:8px;">São lojas <strong>diferentes</strong> da mesma rede, com nomes quase iguais. Para elas o sistema só aceita a foto quando o nome da etiqueta é <strong>idêntico</strong>; qualquer dúvida (typo, nome incompleto) vai para a aba Revisão, nunca é decidida sozinha.</p>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:6px 5px;text-align:left;">Rede</th><th style="padding:6px 5px;text-align:left;">Loja A</th><th style="padding:6px 5px;text-align:left;">Loja B</th><th style="padding:6px 5px;text-align:right;">Visitas A / B</th></tr></thead>
+      <tbody>${g.map(x => `<tr style="border-top:1px solid #EEE;"><td style="padding:6px 5px;">${esc(x.rede)}</td><td style="padding:6px 5px;">${esc(x.a)}</td><td style="padding:6px 5px;">${esc(x.b)}</td><td style="padding:6px 5px;text-align:right;">${x.visA} / ${x.visB}</td></tr>`).join('')}</tbody></table></div>
+    </div>`;
   }
   function htmlCardConferencia(mesDados) {
     if (!mesDados || !(mesDados.fotos || []).length) return '';
