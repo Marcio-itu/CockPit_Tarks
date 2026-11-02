@@ -367,6 +367,7 @@
         ['Índice de fidelidade', 'Visitas registradas no mês ÷ plano do mês. Vermelho abaixo do plano, verde em 100%, de volta ao vermelho acima de 120%. As comprovadas aparecem ao lado. Se o Relatório não cobre o mês inteiro, o índice é provisório.'],
         ['Lojas com excesso', 'Lojas com mais de 120% do plano em visitas registradas no mês. Visita feita fora do dia combinado não é problema; passar da quantidade combinada é.'],
         ['Questões em aberto', 'Diferenças entre planilhas que o sistema não decide sozinho (linhas repetidas, Plano × Fechamento, Cobradas × Registradas, dias sem Relatório ou sem Book...). Cada uma pode ser anotada e exportada para levar à Pacto.'],
+        ['×N no Relatório', 'Selo que aparece quando o Relatório de Tempo traz a mesma visita (promotor, dia, rede e loja) em mais de uma linha. O sistema conta uma visita só; passe o mouse para ver as linhas do Excel.'],
         ['Carimbo da foto', 'Foto que comprovou uma visita fica carimbada para sempre: não pode comprovar outra. Reenviar a mesma foto para a mesma visita não é problema.'],
         ['Cobrado × Registrado', 'Compara o que a Pacto cobra no Fechamento com o que o Relatório de Tempo <em>dela mesma</em> registra. Veja as caixas "Cobradas" e "Registradas" no Dashboard.'],
         ['Execuções Realizadas / Planejadas / Livres', 'Realizadas: execuções vistas nas fotos (promotor + dia + loja, várias fotos = 1). Planejadas: as que têm par no Relatório. Livres: as que não têm par (promotor sem visita registrada naquele dia, loja que não confere, ou rede fora do Fechamento).']
@@ -1550,6 +1551,11 @@
     });
     Object.values(visitas).forEach(v => { if (v.statusFinal === 'comprovada' && porDia[v.data] && porDia[v.data][v.rede]) porDia[v.data][v.rede].c++; });
 
+    // Quantas linhas do Relatório de Tempo cada visita tem (mesmo promotor, dia, rede e loja)
+    const relLin = {};
+    relatorio.forEach(v => { const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja); (relLin[k] || (relLin[k] = [])).push(v.lin || null); });
+    Object.values(visitas).forEach(v => { const e = relLin[v.chave]; if (e && e.length > 1) { v.nRel = e.length; v.linRel = e.filter(Boolean); } });
+    Object.entries(semFoto).forEach(([k, v]) => { const e = relLin[k]; if (e && e.length > 1) { v.nRel = e.length; v.linRel = e.filter(Boolean); } });
     const planoLojas = calcularPlanoLojas(mesDados, relatorio, visitas);
     mesDados.decisoes = mesDados.decisoes || {};
     const questoes = calcularQuestoes(mesDados, { relatorio, porRede, plano: planoLojas, conflitos, fotos });
@@ -2005,18 +2011,20 @@
       ${p.pendentes ? `<p style="font-size:11px;margin-top:6px;color:#C0392B;">⚠️ ${p.pendentes} loja(s) sem identificação ou sem frequência ficaram fora do índice. Resolva em Config › Lojas.</p>` : ''}
       ${p.semPlano.length ? `<p style="font-size:11px;margin-top:6px;">${p.semPlano.length} loja(s) com visitas registradas não têm plano definido (${nfBR(p.semPlano.reduce((a, x) => a + x.reg, 0))} visitas): informe as visitas por semana em Config › Lojas.</p>` : ''}
     </div>`);
-    const MAX = 100, nomeL = l => `${esc(l.redeOriginal || l.rede)} › ${esc(l.loja)}`;
+    const nomeL = l => `${esc(l.redeOriginal || l.rede)} › ${esc(l.loja)}`;
     const linhaLoja = l => `<tr style="border-top:1px solid #EEE;"><td style="padding:6px;">${nomeL(l)}</td><td style="padding:6px;text-align:center;">${nfBR(Math.round(l.planoEf * 10) / 10)}</td><td style="padding:6px;text-align:center;">${l.reg}</td><td style="padding:6px;text-align:center;">${chipIndice(l.planoEf ? l.reg / l.planoEf : null)}</td><td style="padding:6px;text-align:center;">${l.comp}</td><td style="padding:6px;text-align:center;color:var(--cor-perigo);font-weight:bold;">${l.reg - l.comp}</td></tr>`;
     const cabLoja = '<thead><tr style="background:#F8F9FA;"><th style="padding:6px;text-align:left;">Rede › Loja</th><th style="padding:6px;">Plano</th><th style="padding:6px;">Registr.</th><th style="padding:6px;">Índice</th><th style="padding:6px;">Comprov.</th><th style="padding:6px;">Sem foto</th></tr></thead>';
     container.insertAdjacentHTML('beforeend', `<div class="card" id="card-excesso" style="border-left-color:#E74C3C;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><h2 style="margin:0;">🔺 Lojas com excesso de visitas (${p.excesso.length})</h2>
         <button type="button" id="btn-csv-excesso" style="padding:7px 10px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:12px;">📥 CSV</button></div>
       <p style="font-size:12px;margin:8px 0;">Lojas com mais de <strong>${Math.round(p.limite * 100)}%</strong> do plano em visitas registradas no mês. Visita fora do dia combinado não é problema; passar do combinado é. "Sem foto" = registradas − comprovadas.</p>
-      ${p.excesso.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">${cabLoja}<tbody>${p.excesso.slice(0, MAX).map(linhaLoja).join('')}</tbody></table></div>${p.excesso.length > MAX ? `<p style="font-size:11px;">Mostrando ${MAX} de ${p.excesso.length}. O CSV traz todas.</p>` : ''}` : '<p style="font-size:12px;color:#27AE60;">Nenhuma loja acima do limite.</p>'}
+      <div id="lst-exc"></div>
     </div>
     <div class="card" id="card-abaixo"><details><summary style="cursor:pointer;font-weight:bold;font-size:14px;color:var(--cor-primaria);">🔻 Lojas abaixo do plano (${p.abaixo.length}) — informativo</summary>
       <p style="font-size:12px;margin:8px 0;">Lojas com menos visitas registradas do que o plano do mês. ${parcial && !p.prop ? '<strong style="color:#C0392B;">Atenção: o Relatório de Tempo não cobre o mês inteiro, então esta lista está exagerada.</strong>' : 'Não gera desconto; serve para cobrar a Pacto sobre o que não foi atendido.'}</p>
-      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">${cabLoja}<tbody>${p.abaixo.slice(0, MAX).map(linhaLoja).join('')}</tbody></table></div>${p.abaixo.length > MAX ? `<p style="font-size:11px;">Mostrando ${MAX} de ${p.abaixo.length}.</p>` : ''}</details></div>`);
+      <div id="lst-abx"></div></details></div>`);
+    criarListaPaginada(document.getElementById('lst-exc'), cabLoja, (l, i) => linhaLoja(l), { vazio: '<span style="color:#27AE60;">Nenhuma loja acima do limite.</span>' }).definir(p.excesso);
+    criarListaPaginada(document.getElementById('lst-abx'), cabLoja, (l, i) => linhaLoja(l), { vazio: 'Nenhuma loja abaixo do plano.' }).definir(p.abaixo);
     const csvLojas = lista => { let csv = 'Rede;Loja na Pacto;Loja no Plano;Plano do mês;Registradas;Índice;Comprovadas;Sem foto\n'; lista.forEach(l => { csv += [csvCampo(l.redeOriginal || l.rede), csvCampo(l.loja), csvCampo(l.nomePlano), String(Math.round(l.planoEf * 10) / 10).replace('.', ','), l.reg, l.planoEf ? Math.round(l.reg / l.planoEf * 100) + '%' : '', l.comp, l.reg - l.comp].join(';') + '\n'; }); return csv; };
     document.getElementById('btn-csv-excesso').addEventListener('click', () => baixarCSV(`excesso_${Estado.config.mesAtivo}.csv`, csvLojas(p.excesso)));
     if (!leitura) {
@@ -2027,7 +2035,7 @@
   }
 
   // ═══ TELA: LOJAS (Config) ═══
-  const filtroLojas = { sit: 'pendentes', rede: '', busca: '' };
+  const filtroLojas = { sit: 'pendentes', rede: '', busca: '', pag: 1, tam: 50 };
   function lojasDoMes() { const m = Estado.meses[Estado.config.mesAtivo]; return m && (m.lojas || []).length ? construirLojas(m) : null; }
   function htmlCardLojas() {
     return '<div class="card" id="card-lojas"></div>';
@@ -2055,8 +2063,9 @@
     const rotF = { pendentes: 'Pendentes', sugerida: 'Sugeridas (provável)', conferir: 'Conferir', sem_par: 'Sem par', pacto: 'Pacto sem Plano', semfreq: 'Sem frequência', inativa: 'Inativas', todas: 'Todas' };
     const bus = chaveCompacta(filtroLojas.busca);
     const vis = todas.filter(x => filtros[filtroLojas.sit](x) && (!filtroLojas.rede || x.rede === filtroLojas.rede) && (!bus || chaveCompacta(x.nomePlano + x.nomePacto).includes(bus)));
-    const MAX = 120;
-    const linhasHtml = vis.slice(0, MAX).map(x => {
+    filtroLojas.pag = Math.min(filtroLojas.pag, Math.max(1, Math.ceil(vis.length / filtroLojas.tam)));
+    const iniPg = (filtroLojas.pag - 1) * filtroLojas.tam;
+    const linhasHtml = vis.slice(iniPg, iniPg + filtroLojas.tam).map(x => {
       const idx = todas.indexOf(x), P = Object.values((L.pacto[x.rede] || { lojas: {} }).lojas).sort((a, b) => a.nome.localeCompare(b.nome));
       const visInp = `<input type="number" min="0" max="7" step="1" data-lvis="${idx}" value="${x.vis == null ? '' : x.vis}" placeholder="?" style="width:48px;padding:5px;border:1px solid ${x.vis == null ? '#E74C3C' : '#CCC'};border-radius:4px;text-align:center;">`;
       const nota = x.visFonte === 'diaria' ? '<br><span style="color:#E67E22;font-size:10px;">"Diária" = 6 (confirmar)</span>' : x.visFonte === 'manual' ? '<br><span style="color:#2980B9;font-size:10px;">informada</span>' : '';
@@ -2093,16 +2102,17 @@
       <div id="lj-msg" style="font-size:12px;margin-bottom:8px;"></div>
       <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#F8F9FA;font-size:11px;"><th style="padding:6px;text-align:left;">Rede</th><th style="padding:6px;text-align:left;">Loja no Plano</th><th style="padding:6px;">Vis./semana</th><th style="padding:6px;text-align:left;">Loja na Pacto</th><th style="padding:6px;text-align:left;">Situação</th></tr></thead>
       <tbody>${linhasHtml || '<tr><td colspan="5" style="padding:12px;font-size:12px;">Nenhuma loja neste filtro.</td></tr>'}</tbody></table></div>
-      ${vis.length > MAX ? `<p style="font-size:11px;margin-top:6px;">Mostrando ${MAX} de ${vis.length}. Use os filtros ou a busca.</p>` : ''}`;
+      <div id="lj-pag">${vis.length > 25 ? `<p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">${resumoPag(vis.length, filtroLojas.pag, filtroLojas.tam)}</p>${htmlPaginador(vis.length, filtroLojas.pag, filtroLojas.tam)}` : ''}</div>`;
+    ligarPaginador(card.querySelector('#lj-pag'), m => { if (m.tam) filtroLojas.tam = m.tam; filtroLojas.pag = m.pag; renderizarCardLojas(); });
     ligarCardLojas(card, L, vis);
   }
   function ligarCardLojas(card, L, vis) {
     const todas = L.linhas, reg = regLojas();
     const por = idx => todas[+idx];
     const gravar = (x, campos) => { const r = reg[x.key] || (reg[x.key] = {}); Object.assign(r, campos, { em: new Date().toISOString() }); recalcularAposRegistro(); renderizarCardLojas(); };
-    card.querySelector('#lj-filtro').addEventListener('change', e => { filtroLojas.sit = e.target.value; renderizarCardLojas(); });
-    card.querySelector('#lj-rede').addEventListener('change', e => { filtroLojas.rede = e.target.value; renderizarCardLojas(); });
-    card.querySelector('#lj-busca').addEventListener('change', e => { filtroLojas.busca = e.target.value; renderizarCardLojas(); });
+    card.querySelector('#lj-filtro').addEventListener('change', e => { filtroLojas.sit = e.target.value; filtroLojas.pag = 1; renderizarCardLojas(); });
+    card.querySelector('#lj-rede').addEventListener('change', e => { filtroLojas.rede = e.target.value; filtroLojas.pag = 1; renderizarCardLojas(); });
+    card.querySelector('#lj-busca').addEventListener('change', e => { filtroLojas.busca = e.target.value; filtroLojas.pag = 1; renderizarCardLojas(); });
     card.querySelectorAll('[data-lvis]').forEach(i => i.addEventListener('change', () => { const x = por(i.dataset.lvis); gravar(x, { vis: i.value === '' ? null : Math.max(0, Math.min(7, parseInt(i.value, 10) || 0)) }); }));
     card.querySelectorAll('[data-lsel]').forEach(s => s.addEventListener('change', () => { const x = por(s.dataset.lsel); gravar(x, s.value ? { nomePacto: s.value, estado: 'confirmada', inativa: false } : { nomePacto: null, estado: null }); }));
     card.querySelectorAll('[data-lacc]').forEach(b => b.addEventListener('click', () => { const x = por(b.dataset.lacc); gravar(x, { nomePacto: x.sug.nome, estado: 'confirmada', inativa: false }); }));
@@ -2181,6 +2191,93 @@
       const m2 = document.getElementById('lj-msg');
       m2.innerHTML = `<span style="color:#27AE60;">✅ ${ok.length} linha(s) aplicada(s) como "informada pela agência".</span>` + (rej.length ? `<br><span style="color:#E74C3C;">❌ ${rej.length} recusada(s):<br>${rej.slice(0, 12).map(esc).join('<br>')}${rej.length > 12 ? '<br>...' : ''}</span>` : '');
     } catch (e) { if (msg) msg.innerHTML = `<span style="color:#E74C3C;">❌ ${esc(e.message)}</span>`; }
+  }
+
+  // ═══ PAGINAÇÃO E LISTA "SEM COMPROVAÇÃO" COM FILTROS ═══
+  function resumoPag(total, pag, tam) { const a = (pag - 1) * tam + 1, b = Math.min(total, pag * tam); return `Mostrando ${nfBR(a)} a ${nfBR(b)} de ${nfBR(total)}`; }
+  function htmlPaginador(total, pag, tam) {
+    const n = Math.max(1, Math.ceil(total / tam)); pag = Math.min(pag, n);
+    const btn = (rot, p, ativo, dis) => `<button type="button" data-pg="${p}" ${dis ? 'disabled' : ''} style="min-width:32px;padding:6px 8px;margin:2px;border:1px solid ${ativo ? 'var(--cor-primaria)' : '#CCC'};background:${ativo ? 'var(--cor-primaria)' : '#fff'};color:${ativo ? '#fff' : 'var(--cor-primaria)'};border-radius:4px;font-size:12px;cursor:${dis ? 'default' : 'pointer'};opacity:${dis ? 0.4 : 1};">${rot}</button>`;
+    const nums = [...new Set([1, n, pag - 2, pag - 1, pag, pag + 1, pag + 2].filter(x => x >= 1 && x <= n))].sort((a, b) => a - b);
+    let bt = btn('‹', pag - 1, false, pag <= 1), ult = 0;
+    nums.forEach(x => { if (x - ult > 1) bt += '<span style="padding:0 4px;color:#999;">…</span>'; bt += btn(x, x, x === pag); ult = x; });
+    bt += btn('›', pag + 1, false, pag >= n);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;"><div>${bt}</div>
+      <label style="font-size:12px;">Por página <select data-pgtam style="padding:5px;border:1px solid #CCC;border-radius:4px;">${[25, 50, 100, 200].map(t => `<option value="${t}" ${t === tam ? 'selected' : ''}>${t}</option>`).join('')}</select></label></div>`;
+  }
+  function ligarPaginador(el, aoMudar) {
+    if (!el) return;
+    el.querySelectorAll('[data-pg]').forEach(b => b.addEventListener('click', () => { if (!b.disabled) aoMudar({ pag: +b.dataset.pg }); }));
+    const s = el.querySelector('[data-pgtam]'); if (s) s.addEventListener('change', () => aoMudar({ tam: +s.value, pag: 1 }));
+  }
+  // Tabela paginada que se redesenha sozinha (sem refazer a tela inteira). linhaFn(item, índice) devolve a <tr>.
+  function criarListaPaginada(host, cabHtml, linhaFn, opts) {
+    opts = opts || {};
+    const est = { pag: 1, tam: opts.tam || 50, itens: [] };
+    const desenhar = () => {
+      const n = est.itens.length;
+      est.pag = Math.min(est.pag, Math.max(1, Math.ceil(n / est.tam)));
+      const ini = (est.pag - 1) * est.tam;
+      host.innerHTML = n ? `<p style="font-size:11px;color:var(--cor-texto-secundario);margin:0 0 6px;">${resumoPag(n, est.pag, est.tam)}</p>
+        <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">${cabHtml}<tbody>${est.itens.slice(ini, ini + est.tam).map((it, i) => linhaFn(it, ini + i)).join('')}</tbody></table></div>${n > 25 ? htmlPaginador(n, est.pag, est.tam) : ''}`
+        : `<p style="font-size:12px;">${opts.vazio || 'Nenhum item neste filtro.'}</p>`;
+      ligarPaginador(host, m => { if (m.tam) est.tam = m.tam; est.pag = m.pag; desenhar(); });
+      if (opts.aoClicar) host.querySelectorAll('tr[data-i]').forEach(tr => tr.addEventListener('click', () => opts.aoClicar(est.itens[+tr.dataset.i])));
+    };
+    return { definir(itens) { est.itens = itens; est.pag = 1; desenhar(); } };
+  }
+
+  const estNC = { ini: '', fim: '', rede: '', busca: '' };
+  function montarListaNaoComprovadas(container, aud) {
+    const nome = r => (aud.porRede[r] ? aud.porRede[r].rede : r);
+    const todas = (aud.visitasAgrupadas || []).filter(v => v.statusFinal !== 'comprovada');
+    const datas = todas.map(v => v.data).sort(), dMin = datas[0] || '', dMax = datas[datas.length - 1] || '';
+    const redes = [...new Set(todas.map(v => v.rede))].sort((a, b) => nome(a).localeCompare(nome(b)));
+    const cont = st => todas.filter(v => v.statusFinal === st).length;
+    const contSF = b => todas.filter(v => v.statusFinal === 'sem_foto' && !!v.semBook === b).length;
+    const opt = (v, t) => `<option value="${v}" ${filtroNaoComp === v ? 'selected' : ''}>${t}</option>`;
+    const estilo = 'padding:7px;border:1px solid #CCC;border-radius:4px;font-size:13px;';
+    container.insertAdjacentHTML('beforeend', `<div class="card" id="card-nc">
+      <h2>🔎 Visitas sem comprovação (${nfBR(todas.length)})</h2>
+      <p style="font-size:12px;margin-bottom:10px;">Todas as visitas registradas no Relatório de Tempo que ainda não têm foto vinculada. "Dia sem Book" = nenhuma foto importada naquele dia: falta Book, não necessariamente falta de visita. Toque numa linha para abrir a loja. Sem comprovação (cobradas − comprovadas): <strong>${nfBR(aud.total.gap)}</strong>.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">
+        <select id="nc-status" style="${estilo}">${opt('todas', 'Todas (' + todas.length + ')')}${opt('sf_book', 'Sem foto, dia com Book (' + contSF(false) + ')')}${opt('sf_semBook', 'Sem foto, dia sem Book (' + contSF(true) + ')')}${opt('nao_comprovada', 'Não comprovada (' + cont('nao_comprovada') + ')')}${opt('revisao', 'Em revisão (' + cont('revisao') + ')')}</select>
+        <select id="nc-rede" style="${estilo}"><option value="">Todas as redes</option>${redes.map(r => `<option value="${esc(r)}" ${estNC.rede === r ? 'selected' : ''}>${esc(nome(r))}</option>`).join('')}</select>
+        <label style="font-size:12px;">De <input type="date" id="nc-ini" min="${dMin}" max="${dMax}" value="${estNC.ini}" style="${estilo}"></label>
+        <label style="font-size:12px;">até <input type="date" id="nc-fim" min="${dMin}" max="${dMax}" value="${estNC.fim}" style="${estilo}"></label>
+        <input id="nc-busca" placeholder="Buscar loja ou promotor" value="${esc(estNC.busca)}" style="${estilo}flex:1;min-width:140px;">
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <button type="button" id="nc-csv" style="padding:7px 10px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:12px;">📥 CSV do que está filtrado</button>
+        <a href="#" id="nc-limpar" style="font-size:12px;">limpar filtros</a></div>
+      <div id="lst-nc"></div></div>`);
+    const casa = v => filtroNaoComp === 'todas' || (filtroNaoComp === 'sf_book' ? v.statusFinal === 'sem_foto' && !v.semBook : filtroNaoComp === 'sf_semBook' ? v.statusFinal === 'sem_foto' && v.semBook : v.statusFinal === filtroNaoComp);
+    const filtrar = () => {
+      const bus = chaveCompacta(estNC.busca);
+      return todas.filter(v => casa(v) && (!estNC.ini || v.data >= estNC.ini) && (!estNC.fim || v.data <= estNC.fim) && (!estNC.rede || v.rede === estNC.rede) && (!bus || chaveCompacta(v.loja + v.promotor).includes(bus)))
+        .sort((a, b) => a.data.localeCompare(b.data) || (nome(a.rede) + a.loja).localeCompare(nome(b.rede) + b.loja));
+    };
+    const cab = '<thead><tr style="background:#F8F9FA;border-bottom:2px solid var(--cor-primaria);"><th style="padding:8px;text-align:left;font-size:12px;">Dia</th><th style="padding:8px;text-align:left;font-size:12px;">Rede › Loja</th><th style="padding:8px;text-align:left;font-size:12px;">Promotor</th><th style="padding:8px;text-align:left;font-size:12px;">Status</th></tr></thead>';
+    const linha = (v, i) => `<tr data-i="${i}" style="border-bottom:1px solid #EEE;cursor:pointer;">
+      <td style="padding:8px;font-size:12px;">${esc(formatarDataBR(v.data))}</td><td style="padding:8px;font-size:12px;">${esc(nome(v.rede))} › ${esc(v.loja)} ${seloRel(v)}</td><td style="padding:8px;font-size:12px;">${esc(v.promotor)}</td>
+      <td style="padding:8px;font-size:11px;font-weight:bold;color:${COR_STATUS[v.statusFinal] || '#E74C3C'};text-transform:uppercase;">${ROTULO_STATUS[v.statusFinal] || esc(v.statusFinal)}${v.semBook ? '<br><span style="font-weight:normal;text-transform:none;color:var(--cor-texto-secundario);">dia sem Book</span>' : ''}</td></tr>`;
+    const lista = criarListaPaginada(document.getElementById('lst-nc'), cab, linha, { aoClicar: v => { auditoriaDrillState = { rede: v.rede, loja: v.loja }; renderizarAuditoria(); }, vazio: 'Nenhuma visita neste filtro.' });
+    const atualizar = () => lista.definir(filtrar());
+    const ligar = (id, fn) => document.getElementById(id).addEventListener('change', e => { fn(e.target.value); atualizar(); });
+    ligar('nc-status', v => { filtroNaoComp = v; }); ligar('nc-rede', v => { estNC.rede = v; }); ligar('nc-ini', v => { estNC.ini = v; }); ligar('nc-fim', v => { estNC.fim = v; }); ligar('nc-busca', v => { estNC.busca = v; });
+    document.getElementById('nc-limpar').addEventListener('click', e => { e.preventDefault(); Object.assign(estNC, { ini: '', fim: '', rede: '', busca: '' }); filtroNaoComp = 'todas'; renderizarAuditoria(); });
+    document.getElementById('nc-csv').addEventListener('click', () => {
+      let csv = 'Rede;Loja;Data;Promotor;Status;Dia sem Book\n';
+      filtrar().forEach(v => { csv += [csvCampo(nome(v.rede)), csvCampo(v.loja), formatarDataBR(v.data), csvCampo(v.promotor), ROTULO_STATUS[v.statusFinal] || v.statusFinal, v.semBook ? 'sim' : 'não'].join(';') + '\n'; });
+      baixarCSV(`sem_comprovacao_filtrado_${Estado.config.mesAtivo}.csv`, csv);
+    });
+    atualizar();
+  }
+
+  // Selo "×N": quantas linhas o Relatório de Tempo tem para a mesma visita (promotor, dia, rede e loja)
+  function seloRel(v) {
+    if (!v || !(v.nRel > 1)) return '';
+    return `<span title="O Relatório de Tempo registra esta visita ${v.nRel} vezes${v.linRel && v.linRel.length ? ' (linhas ' + v.linRel.join(', ') + ' do Excel)' : ''}. O sistema conta como uma visita." style="display:inline-block;padding:1px 6px;border-radius:10px;background:#FDEBD0;color:#B9770E;font-size:11px;font-weight:bold;cursor:help;">×${v.nRel}</span>`;
   }
 
   // Dashboard: resumo do índice de fidelidade
@@ -2867,10 +2964,10 @@
       });
 
       document.getElementById('btn-exportar-csv-visitas').addEventListener('click', () => {
-        let csv = "Rede;Loja;Data;Promotor;Status;Fotos\n";
+        let csv = "Rede;Loja;Data;Promotor;Status;Fotos;Vezes no Relatório;Linhas do Excel\n";
         visitasAgrupadas.slice().sort((a, b) => (a.rede + a.loja + a.data).localeCompare(b.rede + b.loja + b.data)).forEach(v => {
           const nomeRede = porRede[v.rede] ? porRede[v.rede].rede : v.rede;
-          csv += `${csvCampo(nomeRede)};${csvCampo(v.loja)};${formatarDataBR(v.data)};${csvCampo(v.promotor)};${ROTULO_STATUS[v.statusFinal] || v.statusFinal};${v.qtdFotos || 0}\n`;
+          csv += `${csvCampo(nomeRede)};${csvCampo(v.loja)};${formatarDataBR(v.data)};${csvCampo(v.promotor)};${ROTULO_STATUS[v.statusFinal] || v.statusFinal};${v.qtdFotos || 0};${v.nRel || 1};${csvCampo((v.linRel || []).join(', '))}\n`;
         });
         baixarCSV(`auditoria_visitas_${Estado.config.mesAtivo}.csv`, csv);
       });
@@ -2955,6 +3052,7 @@
           <td style="padding: 10px; font-size: 12px;">${esc(v.promotor)}</td>
           <td style="padding: 10px; text-align: center; font-size: 11px; color: ${cor}; font-weight: bold; text-transform: uppercase;">${ROTULO_STATUS[v.statusFinal] || esc(v.statusFinal)}</td>
           <td style="padding: 10px; text-align: center; font-size: 12px;">${v.qtdFotos || 0}</td>
+          <td style="padding: 10px; text-align: center;">${seloRel(v) || '<span style="color:#BBB;">1</span>'}</td>
         </tr>
       `;
     });
@@ -2973,9 +3071,10 @@
                 <th style="padding: 10px; text-align: left;">Promotor</th>
                 <th style="padding: 10px; text-align: center;">Status</th>
                 <th style="padding: 10px; text-align: center;">Fotos</th>
+                <th style="padding: 10px; text-align: center;" title="Quantas linhas o Relatório de Tempo tem para esta visita">No Relatório</th>
               </tr>
             </thead>
-            <tbody>${linhas || '<tr><td colspan="4" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita.</td></tr>'}</tbody>
+            <tbody>${linhas || '<tr><td colspan="5" style="padding: 15px; text-align: center; color: #AAA;">Nenhuma visita.</td></tr>'}</tbody>
           </table>
         </div>
       </div>
@@ -2985,7 +3084,7 @@
       const prox = tr.nextElementSibling;
       if (prox && prox.classList.contains('evid')) { prox.remove(); return; }
       const v = visitas[+tr.dataset.vi];
-      tr.insertAdjacentHTML('afterend', `<tr class="evid"><td colspan="4" style="padding:0;">${htmlEvidenciaVisita(v, aud, mesDados, visitas)}</td></tr>`);
+      tr.insertAdjacentHTML('afterend', `<tr class="evid"><td colspan="5" style="padding:0;">${htmlEvidenciaVisita(v, aud, mesDados, visitas)}</td></tr>`);
       ligarEvidencia(tr.nextElementSibling, v, aud, mesDados);
     }));
   }
@@ -3061,7 +3160,7 @@
     const li = t => `<li style="margin-bottom:4px;">${t}</li>`;
 
     // 1) declarado
-    const declarado = `O Relatório de Tempo registra que <strong>${esc(v.promotor)}</strong> visitou <strong>${esc(nomeRede)} › ${esc(v.loja)}</strong> em <strong>${esc(formatarDataBR(v.data))}</strong>.`;
+    const declarado = `O Relatório de Tempo registra que <strong>${esc(v.promotor)}</strong> visitou <strong>${esc(nomeRede)} › ${esc(v.loja)}</strong> em <strong>${esc(formatarDataBR(v.data))}</strong>.` + (v.nRel > 1 ? ` O Relatório registra esta visita <strong>${v.nRel} vezes</strong>${v.linRel && v.linRel.length ? ' (linhas ' + v.linRel.join(', ') + ' do Excel)' : ''}. O sistema conta como <strong>uma</strong> visita; se a Pacto cobra por linha, o ponto está em Questões em aberto.` : '');
 
     // 2) o que o promotor fez no mesmo dia
     const outras = todasV.filter(o => o !== v && o.data === v.data && chaveCompacta(o.promotor || '') === kProm);
@@ -3114,42 +3213,7 @@
       ${botoes}</div>`;
   }
 
-  let filtroNaoComp = 'todas';
-  function montarListaNaoComprovadas(container, aud) {
-    const nome = r => (aud.porRede[r] ? aud.porRede[r].rede : r);
-    const todas = (aud.visitasAgrupadas || []).filter(v => v.statusFinal !== 'comprovada');
-    const cont = st => todas.filter(v => v.statusFinal === st).length;
-    const contSF = b => todas.filter(v => v.statusFinal === 'sem_foto' && !!v.semBook === b).length;
-    const casa = v => filtroNaoComp === 'todas' || (filtroNaoComp === 'sf_book' ? v.statusFinal === 'sem_foto' && !v.semBook : filtroNaoComp === 'sf_semBook' ? v.statusFinal === 'sem_foto' && v.semBook : v.statusFinal === filtroNaoComp);
-    const lista = todas.filter(casa)
-      .sort((a, b) => a.data.localeCompare(b.data) || (nome(a.rede) + a.loja).localeCompare(nome(b.rede) + b.loja));
-    const MAX = 150;
-    const opt = (v, t) => `<option value="${v}" ${filtroNaoComp === v ? 'selected' : ''}>${t}</option>`;
-    const linhas = lista.slice(0, MAX).map((v, i) => `
-      <tr data-nc="${i}" style="border-bottom:1px solid #EEE;cursor:pointer;">
-        <td style="padding:8px;font-size:12px;">${esc(formatarDataBR(v.data))}</td>
-        <td style="padding:8px;font-size:12px;">${esc(nome(v.rede))} › ${esc(v.loja)}</td>
-        <td style="padding:8px;font-size:12px;">${esc(v.promotor)}</td>
-        <td style="padding:8px;font-size:11px;font-weight:bold;color:${COR_STATUS[v.statusFinal] || '#E74C3C'};text-transform:uppercase;">${ROTULO_STATUS[v.statusFinal] || esc(v.statusFinal)}${v.semBook ? '<br><span style="font-weight:normal;text-transform:none;color:var(--cor-texto-secundario);">dia sem Book</span>' : ''}</td>
-      </tr>`).join('');
-    container.insertAdjacentHTML('beforeend', `
-      <div class="card">
-        <h2>🔎 Visitas sem comprovação (${todas.length})</h2>
-        <p style="font-size:12px;margin-bottom:10px;">A lista traz <strong>todas as visitas registradas no Relatório de Tempo que ainda não têm foto vinculada</strong>. "Dia sem Book" = nenhuma foto importada naquele dia: falta Book, não necessariamente falta de visita. Toque numa linha para abrir a loja. Sem comprovação (cobradas − comprovadas): <strong>${aud.total.gap}</strong>.</p>
-        <select id="filtro-nc" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #CCC;border-radius:4px;font-size:14px;">
-          ${opt('todas', 'Todas (' + todas.length + ')')}${opt('sf_book', 'Sem foto, dia com Book (' + contSF(false) + ')')}${opt('sf_semBook', 'Sem foto, dia sem Book (' + contSF(true) + ')')}${opt('nao_comprovada', 'Não comprovada (' + cont('nao_comprovada') + ')')}${opt('revisao', 'Em revisão (' + cont('revisao') + ')')}
-        </select>
-        <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
-          <thead><tr style="background:#F8F9FA;border-bottom:2px solid var(--cor-primaria);"><th style="padding:8px;text-align:left;font-size:12px;">Dia</th><th style="padding:8px;text-align:left;font-size:12px;">Rede › Loja</th><th style="padding:8px;text-align:left;font-size:12px;">Promotor</th><th style="padding:8px;text-align:left;font-size:12px;">Status</th></tr></thead>
-          <tbody>${linhas || '<tr><td colspan="4" style="padding:12px;font-size:12px;">Nenhuma visita neste filtro.</td></tr>'}</tbody>
-        </table></div>
-        ${lista.length > MAX ? `<p style="font-size:11px;margin-top:8px;">Mostrando ${MAX} de ${lista.length}. Use o botão de exportar CSV de visitas para a lista completa.</p>` : ''}
-      </div>`);
-    document.getElementById('filtro-nc').addEventListener('change', e => { filtroNaoComp = e.target.value; renderizarAuditoria(); });
-    container.querySelectorAll('tr[data-nc]').forEach(tr => tr.addEventListener('click', () => {
-      const v = lista[+tr.dataset.nc]; auditoriaDrillState = { rede: v.rede, loja: v.loja }; renderizarAuditoria();
-    }));
-  }
+  let filtroNaoComp = 'todas'; // a lista fica no subbloco 06B (com filtros e paginação)
   function abrirDrillRede(chave) { auditoriaDrillState = { rede: chave, loja: null }; renderizarAuditoria(); }
   function abrirDrillLoja(loja) { auditoriaDrillState.loja = loja; renderizarAuditoria(); }
 
@@ -3610,7 +3674,7 @@
       auditoria: Object.assign({}, a, {
         visitasAgrupadas: (a.visitasAgrupadas || []).map(v => ({
           promotor: v.promotor, data: v.data, loja: v.loja, rede: v.rede, qtdFotos: v.qtdFotos || 0, statusFinal: v.statusFinal,
-          chave: v.chave, provas: v.provas, semBook: v.semBook
+          chave: v.chave, provas: v.provas, semBook: v.semBook, nRel: v.nRel, linRel: v.linRel
         }))
       }),
       fotos: (m.fotos || []).map(f => ({ id: f.id, pagina: f.pagina, status: f.status })) // só o status: serve para as contagens do Relatório
