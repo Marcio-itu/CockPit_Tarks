@@ -35,6 +35,14 @@
   nav::-webkit-scrollbar { display: none; }
   input[type=file]:disabled{opacity:.45;cursor:not-allowed}
   #barra-mes{flex-shrink:0;align-items:baseline;justify-content:center;gap:18px;flex-wrap:wrap;padding:10px 16px;background:var(--cor-primaria);border-bottom:3px solid var(--cor-destaque);}
+  .guia-corpo p { font-size: 13px; color: var(--cor-texto); margin: 6px 0; }
+  .guia-corpo li { margin-bottom: 4px; }
+  #zona-mes { position: relative; flex-shrink: 0; z-index: 30; }
+  #barra-periodo { display: none; position: absolute; top: 100%; left: 0; right: 0; box-shadow: 0 6px 14px rgba(0,0,0,.18); }
+  #zona-mes:hover #barra-periodo[data-disp="1"], #zona-mes.aberta #barra-periodo[data-disp="1"] { display: flex; }
+  #dica-per { display: none; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: transparent; border: 1px solid rgba(184,192,204,.5); color: #B8C0CC; border-radius: 14px; padding: 3px 10px; font-size: 11px; font-family: inherit; cursor: pointer; }
+  #dica-per.filtrado { color: var(--cor-destaque); border-color: var(--cor-destaque); font-weight: bold; }
+  #zona-mes.tem-per #dica-per { display: block; }
   #barra-mes button{background:transparent;border:none;cursor:pointer;font-family:inherit;color:#B8C0CC;font-size:15px;padding:4px 2px;}
   #barra-mes button:disabled{opacity:.35;cursor:not-allowed;text-decoration:line-through;}
   #barra-mes button.mes-atual{color:var(--cor-destaque);font-size:26px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:default;}
@@ -114,8 +122,9 @@
   <span id="nav-fonte" class="nav-fonte"></span>
 </nav>
 
-<div id="barra-mes" style="display:none;"></div>
-<div id="barra-periodo" style="display:none;flex-shrink:0;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:7px 16px;background:#F3F5F7;border-bottom:1px solid #D5DADF;font-size:12px;color:var(--cor-primaria);"></div>
+<div id="zona-mes"><div id="barra-mes" style="display:none;"></div>
+<div id="barra-periodo" style="flex-wrap:wrap;align-items:center;gap:6px 8px;padding:7px 16px;background:#F3F5F7;border-bottom:1px solid #D5DADF;font-size:12px;color:var(--cor-primaria);"></div>
+<button type="button" id="dica-per" title="Escolher semana ou período">📅 período ▾</button></div>
 <div id="barra-fonte" style="display: none; flex-shrink: 0; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 16px; background: #FFF8E1; border-bottom: 1px solid #F0D98C; font-family: var(--fonte-dados); font-size: 13px; color: var(--cor-texto);"></div>
 
 <main>
@@ -292,6 +301,106 @@
     return Estado.meses[mes];
   }
 
+  // ── GUIA DO SISTEMA (aba Config): objetivo, regras, telas, números e limites ──
+  function htmlGuiaSistema() {
+    const sec = (titulo, corpo, aberto) => `<details ${aberto ? 'open' : ''} style="border-top:1px solid #E3E6EA;padding:8px 0;">
+      <summary style="cursor:pointer;font-weight:bold;font-size:14px;color:var(--cor-primaria);padding:4px 0;">${titulo}</summary>
+      <div class="guia-corpo" style="font-size:13px;line-height:1.55;padding:6px 2px 4px;">${corpo}</div></details>`;
+    const tab = (cab, linhas) => `<div style="overflow-x:auto;margin:6px 0;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;">${cab.map(c => `<th style="padding:6px 5px;text-align:left;">${c}</th>`).join('')}</tr></thead><tbody>${linhas.map(l => `<tr style="border-top:1px solid #EEE;vertical-align:top;">${l.map((c, i) => `<td style="padding:6px 5px;${i === 0 ? 'font-weight:bold;white-space:nowrap;' : ''}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    return `<div class="card">
+      <h2>Guia do sistema</h2>
+      <p style="font-size:12px;margin-bottom:8px;color:var(--cor-texto-secundario);">Leia antes de apresentar ou contestar qualquer número. Toque em cada título para abrir.</p>
+
+      ${sec('1. Para que serve', `
+        <p>O CockPit Tarks confere, mês a mês, as visitas de trade marketing da Tubaína/Schincariol feitas pela agência <strong>Pacto</strong>. A cadeia é sempre a mesma:</p>
+        <ol style="padding-left:20px;margin:6px 0;">
+          <li><strong>Planejadas</strong>: quantas visitas o contrato prevê por rede (lojas cobradas × visitas por semana).</li>
+          <li><strong>Declaradas</strong>: quantas a Pacto declara e cobra no Fechamento.</li>
+          <li><strong>Comprovadas</strong>: quantas dessas têm foto nos Books, cruzada com o Relatório de Tempo da própria Pacto.</li>
+          <li><strong>Sem comprovação</strong> = declaradas − comprovadas. Multiplicada pelo custo médio da visita da rede, vira o <strong>desconto a discutir</strong>.</li>
+        </ol>
+        <p>Todo ponto contestado deve poder ser mostrado com evidência: o arquivo e a página do Book, a linha do Relatório, a rede e o dia.</p>`, true)}
+
+      ${sec('2. Imparcialidade: o que o sistema acredita e o que ele faz', `
+        <p><strong>O sistema não acusa ninguém.</strong> As informações que chegam pelas planilhas (Fechamento, Plano de Visitas e Relatório de Tempo) são tratadas como <strong>verdadeiras</strong>. Ele parte da crença de que a visita aconteceu como a planilha diz.</p>
+        <p>O único papel do sistema é procurar a <strong>certificação</strong> dessas informações: a foto, com data, promotor, rede e loja, que confirma o que a planilha afirma. O que não encontra certificação fica como <em>sem comprovação</em>, e isso significa apenas <strong>"ainda não certificado"</strong>. Não significa que a visita não ocorreu, nem que houve má-fé.</p>
+        <p>Por isso o sistema nunca "adivinha a favor" nem "contra": na dúvida (nome de loja parecido, foto sem identificação clara), ele manda a foto para a <strong>aba Revisão</strong>, para uma pessoa decidir e registrar a decisão.</p>`, true)}
+
+      ${sec('3. De onde vêm os dados (arquivos)', tab(['Arquivo', 'O que traz', 'Como é usado'], [
+        ['Fechamento (xlsx)', 'Por rede: lojas cobradas, visitas por semana, visitas declaradas no mês, valor cobrado.', 'É a <strong>base oficial</strong> de planejadas, declaradas e custo da visita.'],
+        ['Relatório de Tempo (xlsx)', 'Cada visita registrada pela Pacto: promotor, rede, loja, dia.', 'Dá o "par" de cada foto (promotor + dia + loja). Visitas repetidas (mesmo promotor, dia e loja) contam uma vez.'],
+        ['Books (PDF)', 'As fotos, com legenda impressa no rodapé: data/hora, promotor, rede e loja.', 'São a <strong>prova</strong>. Cada página é uma foto; só capa e contracapa devem ser ignoradas.'],
+        ['Plano de Visitas (3 xlsx)', 'Lista de lojas e promotores por rede (Tubaína, Carrefour, Nagumo).', '<strong>Somente conferência</strong>: não entra em nenhuma conta. Serve para comparar a lista de lojas com o que o Fechamento cobra (aba Fechamento).']
+      ]) + '<p>Ao importar, o sistema compara o mês do arquivo com o mês ativo e pede confirmação se forem diferentes.</p>')}
+
+      ${sec('4. Como uma visita é comprovada', `
+        <ol style="padding-left:20px;">
+          <li>O sistema lê a <strong>legenda de cada foto</strong> (data, promotor, rede, loja).</li>
+          <li>Procura no Relatório de Tempo uma visita <strong>do mesmo promotor, no mesmo dia</strong>.</li>
+          <li>Confere a <strong>loja</strong>: nome igual; ou um contido no outro; ou muito parecido (para pequenos erros de digitação). Só aceita automaticamente quando há uma única candidata clara.</li>
+          <li><strong>Lojas gêmeas</strong>: se duas lojas da mesma rede têm nomes quase iguais (ex.: MOGI I e MOGI II), a foto só é aceita se o nome for exatamente idêntico. Qualquer variação vai para Revisão.</li>
+          <li>Uma visita fica <strong>comprovada se tiver pelo menos uma foto comprovada</strong>. Várias fotos da mesma loja no mesmo dia continuam sendo <strong>uma</strong> visita.</li>
+          <li><strong>A mesma foto não pode comprovar mais de uma ação</strong>. Imagem repetida vira "duplicata" e não conta de novo.</li>
+        </ol>
+        <p>Não existe mais a regra de intervalo mínimo de 15 minutos entre visitas.</p>
+        ${tab(['Situação da foto', 'Significado'], [
+          ['Comprovada', 'Achou promotor + dia + loja no Relatório de Tempo.'],
+          ['Em revisão', 'Há mais de uma loja possível, ou o nome é parecido demais. Precisa de decisão humana (aba Revisão).'],
+          ['Sem par / suspeita', 'Não há visita desse promotor naquele dia, ou os dados não batem.'],
+          ['Duplicata', 'Mesma imagem já usada como prova em outro lugar.'],
+          ['Sem legenda', 'O rodapé não pôde ser lido; a foto não entra na conta.'],
+          ['Fora do período', 'Foto de dia excluído da auditoria.']
+        ])}`)}
+
+      ${sec('5. Os números: o que cada um quer dizer', tab(['Número', 'Como é calculado'], [
+        ['Planejadas', 'Mês inteiro: visitas programadas no Fechamento (lojas cobradas × visitas por semana). Num período do calendário: a média semanal × dias ÷ 7 (aproximação).'],
+        ['Declaradas', 'Mês inteiro: visitas declaradas no Fechamento. Num período: visitas diferentes registradas no Relatório de Tempo naqueles dias.'],
+        ['Comprovadas', 'Visitas declaradas que têm foto comprovada.'],
+        ['Sem comprovação', 'Declaradas − comprovadas. Inclui as visitas com foto ainda em revisão.'],
+        ['Desconto', 'Sem comprovação × custo médio da visita da rede (valor cobrado ÷ visitas declaradas).'],
+        ['Plano comprovado', 'Comprovadas ÷ planejadas.'],
+        ['Cobrado × Registrado (Fechamento)', 'Compara o que a Pacto cobra no Fechamento com o que o Relatório de Tempo <em>dela mesma</em> registra. A diferença ("sem registro") e o seu valor em R$ são <strong>separados</strong> do desconto por falta de foto.'],
+        ['Execuções Realizadas / Planejadas / Livres', 'Realizadas: execuções vistas nas fotos (promotor + dia + loja, várias fotos = 1). Planejadas: as que têm par no Relatório. Livres: as que não têm par (promotor sem visita registrada naquele dia, loja que não confere, ou rede fora do Fechamento).']
+      ]))}
+
+      ${sec('6. As telas', tab(['Tela', 'O que mostra'], [
+        ['Dashboard', 'Painel geral do mês: velocímetros por rede e total, valores cobrado, auditado e desconto.'],
+        ['Fechamento', 'Do cobrado até a foto: Cobrado × Registrado (mês) e Declarado × Com foto (período). Inclui a conferência Plano × Fechamento por rede e o CSV para a reunião.'],
+        ['Auditoria', 'Detalhe por rede, loja e visita, com a evidência de cada uma (arquivo, página, hora). Lista das não comprovadas e alertas de volume por promotor/dia.'],
+        ['Promotores', 'Ranking de execuções por promotor, lido das legendas das fotos. Toque numa linha para ver dia a dia.'],
+        ['Livres', 'Execuções que aparecem nas fotos mas não têm par nas planilhas, com o motivo.'],
+        ['Revisão', 'Fila de fotos que precisam de decisão humana. Cada decisão fica registrada.'],
+        ['Relatório', 'Visão consolidada para impressão e exportação.'],
+        ['Admin', 'Importação dos arquivos, processamento e publicação (somente operador).'],
+        ['Config', 'Seleção do mês, regras, publicação, backup e este guia (somente operador).']
+      ]) + '<p><strong>Calendário:</strong> passe o mouse sobre a barra verde do mês (ou toque em "período") para escolher mês inteiro, uma semana ou datas livres. Isso só muda a visualização; a auditoria do mês continua inteira.</p><p><strong>Publicação:</strong> o operador publica o mês; quem acessa sem dados próprios vê só os resultados publicados, em modo leitura. "Ver resultados publicados" fica na barra de abas.</p>')}
+
+      ${sec('7. Fragilidades e limites (leia com atenção)', `
+        <ul style="padding-left:18px;">
+          <li><strong>Books incompletos deixam o desconto exagerado.</strong> Enquanto faltarem partes do Book do mês, as comprovadas ficam abaixo do real e o desconto fica superestimado. Só use os valores finais com todos os Books importados.</li>
+          <li><strong>Sem foto não é sem visita.</strong> A foto pode ter sido tirada e não entrar no Book, ou ter legenda ilegível. O sistema mede certificação, não presença.</li>
+          <li><strong>Foto prova pouco.</strong> O sistema não verifica local (GPS), qualidade da execução nem se a foto é mesmo daquela loja além do que a legenda diz. Também não detecta fotos de outra visita com legenda alterada.</li>
+          <li><strong>Cruzamento por nome.</strong> Loja é comparada por texto (igual, contido ou parecido). Pode errar em nomes muito curtos ou muito parecidos. Os casos duvidosos vão para a Revisão, mas um nome digitado diferente pode virar "livre" ou "sem comprovação" indevidamente.</li>
+          <li><strong>Relatório de Tempo pode ser parcial.</strong> Se ele termina antes do fim do mês (ex.: 29/10), a comparação Cobrado × Registrado fica incompleta. Peça o relatório do mês inteiro.</li>
+          <li><strong>Planejadas por semana é aproximação.</strong> O Fechamento só informa o total do mês por rede, sem o dia de cada visita. Em semanas, planejadas = média semanal × dias ÷ 7, e o velocímetro Cobrado × Registrado não muda com o calendário.</li>
+          <li><strong>Plano de Visitas × Fechamento.</strong> Alguns Planos têm linhas ocultas no Excel (por filtro ou escondidas à mão; não dá para saber qual). O sistema mostra quantas e se o Fechamento as cobra, mas quem decide o que vale é o Fechamento. Há redes em que o número de lojas do Plano e do Fechamento não bate; isso é ponto a esclarecer com a agência, não conclusão do sistema.</li>
+          <li><strong>Nomes diferentes entre arquivos.</strong> Redes e lojas aparecem com grafias diferentes no Fechamento, no Plano e no Relatório. O sistema normaliza o que consegue; o resto aparece como "rede não consta" ou "livre".</li>
+          <li><strong>Os dados ficam neste navegador.</strong> Limpar os dados do navegador apaga tudo. Faça o backup (Config) e guarde os PDFs originais: eles são a prova oficial, o sistema guarda apenas uma cópia reduzida de cada foto.</li>
+          <li><strong>A publicação depende do token do GitHub</strong> guardado só neste navegador. Sem ele não é possível publicar nem remover meses.</li>
+        </ul>`)}
+
+      ${sec('8. Roteiro do mês', `
+        <ol style="padding-left:20px;">
+          <li>Config: escolher o mês.</li>
+          <li>Admin: importar Fechamento, Planos, Relatório de Tempo e <strong>todos</strong> os Books; conferir os avisos de importação.</li>
+          <li>Processar a auditoria.</li>
+          <li>Revisão: decidir as fotos pendentes.</li>
+          <li>Fechamento e Auditoria: conferir os números; gerar o CSV para a reunião com a agência.</li>
+          <li>Publicar o mês (Config).</li>
+        </ol>`)}
+    </div>`;
+  }
+
   function renderizarConfig() {
     const container = document.getElementById('tela-config');
     const meses = Object.keys(Estado.meses).sort().reverse();
@@ -311,6 +420,7 @@
     }
 
     container.innerHTML = `
+      ${htmlGuiaSistema()}
       <div class="card">
         <h2>Seletor de Mês</h2>
         <p style="margin-bottom: 10px; font-size: 13px;">Mês ativo para auditoria:</p>
@@ -1766,14 +1876,18 @@
   function atualizarBarraPeriodo() {
     const el = document.getElementById('barra-periodo'); if (!el) return;
     const mes = Estado.config.mesAtivo, m = Estado.meses[mes], a = m && m.auditoria;
-    if (!a || !a.porDia || !/^\d{4}-\d{2}$/.test(mes || '')) { el.style.display = 'none'; return; }
+    if (!a || !a.porDia || !/^\d{4}-\d{2}$/.test(mes || '')) { el.dataset.disp = ''; document.getElementById('zona-mes').classList.remove('tem-per'); return; }
     if (Visao.mes !== mes) { Visao.mes = mes; Visao.inicio = Visao.fim = null; }
     const [A, M] = mes.split('-').map(Number), ult = new Date(Date.UTC(A, M, 0)).getUTCDate();
     const min = mes + '-01', max = mes + '-' + String(ult).padStart(2, '0');
     const chip = (rot, ini, fim) => { const ativo = (!ini && !Visao.inicio) || (ini && Visao.inicio === ini && Visao.fim === fim);
       return `<button type="button" class="chip-per" data-i="${ini || ''}" data-f="${fim || ''}" style="padding:5px 10px;border-radius:14px;border:1px solid var(--cor-primaria);background:${ativo ? 'var(--cor-primaria)' : 'transparent'};color:${ativo ? 'var(--cor-destaque)' : 'var(--cor-primaria)'};font-size:11px;font-weight:bold;cursor:pointer;">${rot}</button>`; };
     const br = d => d.slice(8) + '/' + d.slice(5, 7);
-    el.style.display = 'flex';
+    el.dataset.disp = '1';
+    document.getElementById('zona-mes').classList.add('tem-per');
+    const dica = document.getElementById('dica-per'), brd = d => d.slice(8) + '/' + d.slice(5, 7);
+    dica.textContent = Visao.inicio ? '📅 ' + brd(Visao.inicio) + ' a ' + brd(Visao.fim) + ' ▾' : '📅 período ▾';
+    dica.classList.toggle('filtrado', !!Visao.inicio);
     el.innerHTML = `<span style="font-weight:bold;">📅 Período</span>
       ${chip('Mês inteiro', '', '')}${semanasDoMes(mes).map(w => chip(br(w.inicio) + '–' + br(w.fim), w.inicio, w.fim)).join('')}
       <span style="display:flex;gap:4px;align-items:center;">De <input type="date" id="per-ini" min="${min}" max="${max}" value="${Visao.inicio || ''}" style="padding:4px;border:1px solid #CCC;border-radius:4px;font-size:12px;"> até <input type="date" id="per-fim" min="${min}" max="${max}" value="${Visao.fim || ''}" style="padding:4px;border:1px solid #CCC;border-radius:4px;font-size:12px;"></span>`;
@@ -2081,7 +2195,6 @@
         ${semPlano.map(r => linhaRede(r, '')).join('')}
       </div>` : '';
     container.innerHTML = `
-      ${htmlAvisoCobertura(aud)}
       ${htmlPainelF1(total, pctGeral, aud)}
 
       <div class="card" style="border-left-color: var(--cor-perigo);">
@@ -2776,7 +2889,7 @@
         
         document.querySelectorAll('nav button[data-tela]').forEach(b => b.classList.remove('ativo'));
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
-        if (nomeTela !== 'admin' && nomeTela !== 'config' && nomeTela !== 'revisao') atualizarBarraPeriodo(); else document.getElementById('barra-periodo').style.display = 'none';
+        if (nomeTela !== 'admin' && nomeTela !== 'config' && nomeTela !== 'revisao') atualizarBarraPeriodo(); else { const bp = document.getElementById('barra-periodo'); bp.dataset.disp = ''; document.getElementById('zona-mes').classList.remove('tem-per', 'aberta'); }
         
         botao.classList.add('ativo');
         const telaAlvo = document.getElementById(`tela-${nomeTela}`);
@@ -3343,8 +3456,17 @@
       const ativoBtn = document.querySelector('nav button.ativo') || document.querySelector('nav button[data-tela="dashboard"]');
       ativoBtn.click();
     }));
+    const bAt = document.querySelector('nav button[data-tela].ativo');
+    if (!bAt || !['admin', 'config', 'revisao'].includes(bAt.dataset.tela)) atualizarBarraPeriodo();
   }
 
+
+  (function ligarZonaPeriodo() {
+    const z = document.getElementById('zona-mes'), d = document.getElementById('dica-per');
+    d.addEventListener('click', (e) => { e.stopPropagation(); z.classList.toggle('aberta'); });
+    document.addEventListener('click', (e) => { if (!z.contains(e.target)) z.classList.remove('aberta'); });
+    z.addEventListener('mouseenter', () => { const b = document.querySelector('nav button[data-tela].ativo'); if (b && !['admin', 'config', 'revisao'].includes(b.dataset.tela)) atualizarBarraPeriodo(); });
+  })();
 
   // ── CONFERÊNCIA DA IMPORTAÇÃO: garante que todas as fotos do Book tiveram a legenda lida ──
   function camposFaltando(f) {
