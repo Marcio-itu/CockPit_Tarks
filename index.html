@@ -1574,7 +1574,7 @@
         totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
         fotosPendentes: fotos.filter(f => f.status === 'revisao').length
       },
-      versaoCalculo: 12,
+      versaoCalculo: 13,
       planoLojas, questoes, decisoes: mesDados.decisoes, decRep, fotosReais, conflitosCarimbo: conflitos.length,
       associacoes,
       volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia, gemeas,
@@ -3768,7 +3768,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 12) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 13) executarAuditoriaSilencioso();
   }
 
 
