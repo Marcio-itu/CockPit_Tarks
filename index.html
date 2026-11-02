@@ -70,7 +70,6 @@
   .painel-dir { border-top: 1px solid #2A3038; padding: 12px 0 4px; }
   @media (min-width: 820px) {
     .painel-corpo { grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); }
-    .painel-corpo.f2 .painel-esq { order: -1; }
     .painel-dir { border-top: none; border-left: 1px solid #2A3038; padding: 12px 0 12px 20px; display: flex; flex-direction: column; justify-content: center; }
     .painel-esq { padding-right: 20px; display: flex; flex-direction: column; justify-content: center; }
     .painel-esq > div:first-child { border-top: none !important; }
@@ -89,7 +88,7 @@
   /* Impressão / Salvar PDF: libera a rolagem e esconde a navegação */
   @media print {
     body { display: block; height: auto; overflow: visible; background: #FFF; }
-    header, nav, footer, button, input, select, #barra-fonte { display: none !important; }
+    header, nav, footer, button, input, select { display: none !important; }
     main { overflow: visible; padding: 0; max-width: none; }
     .tela { display: none !important; }
     .tela.ativa { display: block !important; animation: none; }
@@ -125,7 +124,6 @@
 <div id="zona-mes"><div id="barra-mes" style="display:none;"></div>
 <div id="barra-periodo" style="flex-wrap:wrap;align-items:center;gap:6px 8px;padding:7px 16px;background:#F3F5F7;border-bottom:1px solid #D5DADF;font-size:12px;color:var(--cor-primaria);"></div>
 <button type="button" id="dica-per" title="Escolher semana ou período">📅 período ▾</button></div>
-<div id="barra-fonte" style="display: none; flex-shrink: 0; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 16px; background: #FFF8E1; border-bottom: 1px solid #F0D98C; font-family: var(--fonte-dados); font-size: 13px; color: var(--cor-texto);"></div>
 
 <main>
   <div id="tela-dashboard" class="tela ativa"><div class="card"><h2>Dashboard</h2><p>Visão geral da auditoria. (Em construção)</p></div></div>
@@ -384,9 +382,10 @@
           <li><strong>Sem foto não é sem visita.</strong> A foto pode ter sido tirada e não entrar no Book, ou ter legenda ilegível. O sistema mede certificação, não presença.</li>
           <li><strong>Foto prova pouco.</strong> O sistema não verifica local (GPS), qualidade da execução nem se a foto é mesmo daquela loja além do que a legenda diz. Também não detecta fotos de outra visita com legenda alterada.</li>
           <li><strong>Cruzamento por nome.</strong> Loja é comparada por texto (igual, contido ou parecido). Pode errar em nomes muito curtos ou muito parecidos. Os casos duvidosos vão para a Revisão, mas um nome digitado diferente pode virar "livre" ou "sem comprovação" indevidamente.</li>
-          <li><strong>Relatório de Tempo pode ser parcial.</strong> Se ele termina antes do fim do mês (ex.: 29/10), a comparação Cobrado × Registrado fica incompleta. Peça o relatório do mês inteiro.</li>
-          <li><strong>Planejadas por semana é aproximação.</strong> O Fechamento só informa o total do mês por rede, sem o dia de cada visita. Em semanas, planejadas = média semanal × dias ÷ 7, e o velocímetro Cobrado × Registrado não muda com o calendário.</li>
-          <li><strong>Plano de Visitas × Fechamento.</strong> Alguns Planos têm linhas ocultas no Excel (por filtro ou escondidas à mão; não dá para saber qual). O sistema mostra quantas e se o Fechamento as cobra, mas quem decide o que vale é o Fechamento. Há redes em que o número de lojas do Plano e do Fechamento não bate; isso é ponto a esclarecer com a agência, não conclusão do sistema.</li>
+          <li><strong>Relatório de Tempo pode ser parcial.</strong> Se faltam dias (início ou fim do mês, ou só de algumas redes), a comparação Cobrado × Registrado fica incompleta e o "sem registro" sai exagerado. Peça o relatório do mês inteiro.</li>
+          <li><strong>Books recebidos parcialmente.</strong> A tela Fechamento mostra a linha "Books recebidos: de dd/mm a dd/mm", lida das legendas das fotos. Visitas fora dessa janela aparecem como "sem comprovação" só por falta de Book, não por falta de visita.</li>
+          <li><strong>Planejadas por semana é aproximação.</strong> O Fechamento só informa o total do mês por rede, sem o dia de cada visita. Em semanas, planejadas = média semanal × dias ÷ 7, e o "sem registro" não muda com o calendário (o Fechamento não informa o dia de cada visita).</li>
+          <li><strong>Plano de Visitas × Fechamento.</strong> Alguns Planos têm linhas ocultas no Excel (por filtro ou escondidas à mão; não dá para saber qual). O sistema mostra quantas e se o Fechamento as cobra, mas quem decide o que vale é o Fechamento. O Plano é a fonte mais frágil: os nomes de loja divergem da Pacto até em lojas de nome idêntico, por isso ele não entra em nenhuma conta. Há redes em que o número de lojas do Plano e do Fechamento não bate; isso é ponto a esclarecer com a agência, não conclusão do sistema.</li>
           <li><strong>Nomes diferentes entre arquivos.</strong> Redes e lojas aparecem com grafias diferentes no Fechamento, no Plano e no Relatório. O sistema normaliza o que consegue; o resto aparece como "rede não consta" ou "livre".</li>
           <li><strong>Os dados ficam neste navegador.</strong> Limpar os dados do navegador apaga tudo. Faça o backup (Config) e guarde os PDFs originais: eles são a prova oficial, o sistema guarda apenas uma cópia reduzida de cada foto.</li>
           <li><strong>A publicação depende do token do GitHub</strong> guardado só neste navegador. Sem ele não é possível publicar nem remover meses.</li>
@@ -1033,7 +1032,7 @@
       if (!meta.temRodape) {
         // Página sem rodapé: se tiver foto grande, guarda como "sem legenda" (não some); senão é capa/divisória
         let imgSL = null;
-        try { imgSL = await extrairImagemPrincipal(pagina); } catch (e) {}
+        try { imgSL = await extrairImagemPrincipal(pagina); } catch (e) { /* sem imagem legível: cai na regra de página ignorada logo abaixo */ }
         if (!imgSL || Math.max(imgSL.width, imgSL.height) < 500 || Math.min(imgSL.width, imgSL.height) < 250) { ignoradas++; paginasIgnoradas.push({ pagina: i, motivo: imgSL ? `sem legenda e imagem pequena (${imgSL.width}×${imgSL.height})` : 'sem legenda e sem imagem' }); pagina.cleanup(); continue; } // logos/capas são pequenos
         const idSL = Date.now() + '-' + i + '-' + Math.random().toString(36).slice(2, 7);
         let hashSL = null, temImgSL = false;
@@ -1220,7 +1219,7 @@
     // Promotor: nome da etiqueta × nome do Excel (tolera typo). Só mapeia quando há UM candidato claramente melhor.
     mapaPromotorRef.m = null;
     const chavesRel = new Set(relatorio.map(v => chaveCompacta(v.promotor)));
-    const mapaPromotor = {}, ligacoesPromotor = {};
+    const mapaPromotor = {};
     fotos.forEach(f => {
       const base = f.promotorKey || chaveCompacta(f.promotor);
       if (!base || chavesRel.has(base) || mapaPromotor[base] !== undefined) return;
@@ -2235,9 +2234,9 @@
         </div>
       </div>
 
-      <div class="card" id="card-dias-dash" style="border-left-color: var(--cor-perigo);">
+      <div class="card" style="border-left-color: var(--cor-perigo);">
         <h2>📅 Dias com visitas sem comprovação</h2>
-        <div id="det-dias-dash" style="margin-top:8px;">${htmlDiasSemComprovacao(aud, null)}</div>
+        <div style="margin-top:8px;">${htmlDiasSemComprovacao(aud, null)}</div>
       </div>
 
       <div class="card">
@@ -2506,7 +2505,7 @@
     if (bc) bc.addEventListener('click', async () => {
       const txt = trEv.querySelector('.ev-painel').innerText.replace(/\n{3,}/g, '\n\n') + '\n\n(Gerado pelo CockPit Tarks)';
       try { await navigator.clipboard.writeText(txt); }
-      catch (e) { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e2) {} ta.remove(); }
+      catch (e) { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e2) { /* navegador bloqueou a cópia: o usuário copia à mão */ } ta.remove(); }
       bc.textContent = '✅ Copiado!'; setTimeout(() => { bc.textContent = '📋 Copiar resumo para a agência'; }, 2000);
     });
   }
@@ -2634,7 +2633,7 @@
         <td style="padding:8px;font-size:11px;font-weight:bold;color:${COR_STATUS[v.statusFinal] || '#E74C3C'};text-transform:uppercase;">${ROTULO_STATUS[v.statusFinal] || esc(v.statusFinal)}</td>
       </tr>`).join('');
     container.insertAdjacentHTML('beforeend', `
-      <div class="card" id="card-nao-comp">
+      <div class="card">
         <h2>🔎 Visitas sem comprovação (${todas.length})</h2>
         <p style="font-size:12px;margin-bottom:10px;">Toque numa linha para abrir a loja. Sem comprovação no período: <strong>${aud.total.gap}</strong> (as visitas "em revisão" ou "suspeitas" ainda podem virar comprovadas).</p>
         <select id="filtro-nc" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #CCC;border-radius:4px;font-size:14px;">
@@ -2989,7 +2988,6 @@
 
   function atualizarBarraFonte() {
     const el = document.getElementById('nav-fonte');
-    document.getElementById('barra-fonte').style.display = 'none'; // a faixa amarela saiu: os controles ficam na barra de abas
     const idx = Publicado.indice;
     if (!idx || !idx.meses || idx.meses.length === 0) { el.style.display = 'none'; return; }
     el.style.display = 'flex';
@@ -3024,7 +3022,7 @@
   // Grava os arquivos no repositório pela API do GitHub, com um token que fica só neste navegador.
   function lerAcessoGitHub() {
     let salvo = {};
-    try { salvo = JSON.parse(localStorage.getItem('cockpit_gh') || '{}'); } catch (e) {}
+    try { salvo = JSON.parse(localStorage.getItem('cockpit_gh') || '{}'); } catch (e) { /* armazenamento bloqueado ou corrompido: segue sem acesso salvo */ }
     const host = location.hostname;
     return {
       owner: salvo.owner || (host.endsWith('.github.io') ? host.split('.')[0] : ''),
@@ -3251,7 +3249,7 @@
           }
         }
       }
-    } catch (e) {}
+    } catch (e) { /* leitura falhou: devolve o valor padrão */ }
     return null;
   }
   function detectarMesPlano(wb) {
@@ -3270,7 +3268,7 @@
           if (d) datas.push(d.toISOString().slice(0, 10));
         }
       }
-    } catch (e) {}
+    } catch (e) { /* leitura falhou: usa só as datas já coletadas */ }
     return mesMajoritario(datas);
   }
   function conferirMesDoArquivo(rotulo, nomeArquivo, detectado, origem) {
@@ -3354,7 +3352,7 @@
     const old = document.getElementById('modal-original'); if (old) old.remove();
     const d = document.createElement('div'); d.id = 'modal-original';
     d.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;flex-direction:column;';
-    d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:#fff;font-size:13px;"><span>📄 ${esc(foto.arquivoOrigem || '?')} · página ${foto.pagina} · ${r.w}×${r.h}px (toque na imagem para ampliar/reduzir)</span><button type="button" id="fechar-original" style="padding:8px 14px;border:none;border-radius:4px;font-weight:bold;cursor:pointer;">Fechar</button></div><div id="area-original" style="flex:1;overflow:auto;text-align:center;"><img src="${r.url}" id="img-original" style="max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in;"></div>`;
+    d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:#fff;font-size:13px;"><span>📄 ${esc(foto.arquivoOrigem || '?')} · página ${foto.pagina} · ${r.w}×${r.h}px (toque na imagem para ampliar/reduzir)</span><button type="button" id="fechar-original" style="padding:8px 14px;border:none;border-radius:4px;font-weight:bold;cursor:pointer;">Fechar</button></div><div style="flex:1;overflow:auto;text-align:center;"><img src="${r.url}" id="img-original" style="max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in;"></div>`;
     document.body.appendChild(d);
     d.querySelector('#fechar-original').onclick = () => d.remove();
     const im = d.querySelector('#img-original'); let zoom = false;
