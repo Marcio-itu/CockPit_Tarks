@@ -1832,16 +1832,19 @@
     const dMes = diasDoMesNum(mes), diasCob = datasMes.length ? diaNum(datasMes[datasMes.length - 1]) - diaNum(datasMes[0]) + 1 : 0;
     const fat = dMes && diasCob ? Math.min(1, diasCob / dMes) : 1;
     if (!mesDados.periodoAuditado) {
-      const linhasFR = []; let valorFR = 0, nDiv = 0;
+      const linhasFR = []; let valorFR = 0, nDiv = 0, totCob = 0, totReg = 0;
       Object.values(porRede).forEach(r => {
         const cob = r.declaradasMes || 0, pro = cob * fat, rg = regRede[r.chave] || 0, dif = pro - rg;
         const div = pro >= 5 && Math.abs(dif) / pro > 0.1;
         if (div) { nDiv++; if (dif > 0) valorFR += dif * (r.custoVisita || 0); }
-        linhasFR.push([r.rede, cob, Math.round(pro), rg, Math.round(dif), pro ? Math.round(rg / pro * 100) + '%' : '—', div ? 'divergente' : 'ok']);
+        totCob += cob; totReg += rg;
+        linhasFR.push([r.rede, cob, rg, pro ? Math.round(rg / pro * 100) + '%' : '—', !div ? 'Ok' : dif > 0 ? 'Registrado abaixo do cobrado' : 'Registrado acima do cobrado', dif]);
       });
-      if (nDiv) q.push({ id: 'fech_x_rel', titulo: 'Cobradas (Fechamento) × Registradas (Relatório)', qtd: nDiv, valor: valorFR,
-        resumo: `O Relatório de Tempo cobre ${diasCob} dos ${dMes} dias do mês${fat < 1 ? ` (${formatarDataBR(datasMes[0])} a ${formatarDataBR(datasMes[datasMes.length - 1])})` : ''}. Por isso a coluna "Cobradas no período" reduz o Fechamento na mesma proporção. <strong>${nDiv}</strong> rede(s) diferem mais de 10% do que a própria Pacto registra. O valor mostrado é o das cobradas acima do registrado nas redes divergentes. Um Relatório de Tempo do mês completo (01 a 31) tira a dúvida.`,
-        cab: ['Rede', 'Cobradas no mês', 'Cobradas no período', 'Registradas', 'Diferença', 'Registr./Cobr.', 'Situação'], rows: linhasFR.sort((a, b) => Math.abs(b[4]) - Math.abs(a[4])), nota: 'Valor potencial não entra no desconto do sistema.' });
+      linhasFR.sort((a, b) => Math.abs(b[5]) - Math.abs(a[5])); linhasFR.forEach(l => l.pop());
+      const per = datasMes.length ? `${formatarDataBR(datasMes[0])} a ${formatarDataBR(datasMes[datasMes.length - 1])}` : '';
+      if (nDiv) q.push({ id: 'fech_x_rel', titulo: 'Cobradas pela Pacto × Registradas pela Pacto', qtd: nDiv, valor: valorFR,
+        resumo: `No Fechamento a Pacto cobra <strong>${nfBR(totCob)}</strong> visitas no mês. O Relatório de Tempo dela registra <strong>${nfBR(totReg)}</strong> (${per}, ${diasCob} de ${dMes} dias). ${fat < 1 ? `Como o Relatório não cobre o mês todo, a coluna "% registrado" compara com ${Math.round(fat * 100)}% do Fechamento (a parte do mês que o Relatório cobre). ` : ''}Em <strong>${nDiv}</strong> rede(s) o registrado fica mais de 10% longe do cobrado. O valor abaixo é o que sobraria nessas redes se as visitas cobradas sem registro fossem indevidas. Um Relatório do mês completo (01 a 31) tira a dúvida.`,
+        cab: ['Rede', 'Cobradas (Fechamento)', 'Registradas (Relatório)', '% registrado', 'Situação'], rows: linhasFR });
     }
 
     // 3) Plano (lojas × visitas/semana × semanas) × Fechamento (programadas)
