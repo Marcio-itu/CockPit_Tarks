@@ -276,6 +276,8 @@
         const dados = JSON.parse(salvo);
         if (dados.config) Estado.config = { ...Estado.config, ...dados.config };
         if (dados.meses) Estado.meses = dados.meses;
+        if (dados.lojasReg) Estado.lojasReg = dados.lojasReg;
+        if (dados.carimbos) Estado.carimbos = dados.carimbos;
         migrarImagensLegadas(Estado.meses).then(mudou => { if (mudou) salvarEstado(); }).catch(() => {});
       } catch (e) { 
         console.error("Erro ao carregar estado:", e); 
@@ -330,7 +332,7 @@
         ['Fechamento (xlsx)', 'Por rede: lojas cobradas, visitas por semana, visitas cobradas no mês, valor cobrado.', 'É a <strong>base oficial</strong> de planejadas, cobradas e custo da visita.'],
         ['Relatório de Tempo (xlsx)', 'Cada visita registrada pela Pacto: promotor, rede, loja, dia.', 'Dá o "par" de cada foto (promotor + dia + loja). Visitas repetidas (mesmo promotor, dia e loja) contam uma vez.'],
         ['Books (PDF)', 'As fotos, com legenda impressa no rodapé: data/hora, promotor, rede e loja.', 'São a <strong>prova</strong>. Cada página é uma foto; só capa e contracapa devem ser ignoradas.'],
-        ['Plano de Visitas (3 xlsx)', 'Lista de lojas e promotores por rede (Tubaína, Carrefour, Nagumo) e, em cada dia, uma marca: <strong>x</strong>, <strong>giro</strong> ou <strong>foto+giro</strong>.', '<strong>Não entra em nenhuma conta.</strong> As marcas são os dias <strong>previstos</strong> para o promotor visitar a loja. O sistema lê e guarda essas marcas, mas ainda não as cruza com o Relatório de Tempo nem com os Books.']
+        ['Plano de Visitas (3 xlsx: Tubaína, Carrefour, Nagumo)', 'Por rede: lojas, promotor, a <strong>frequência</strong> (ex.: "SEG, QUART E SEXT"; definida pela Tarks) e, em cada dia, uma marca <strong>x</strong>, <strong>giro</strong> ou <strong>foto+giro</strong> (dia previsto, preenchido pela Pacto).', 'A frequência vira o <strong>plano de cada loja</strong> (visitas por semana × semanas do mês) e alimenta o índice de fidelidade. As marcas são guardadas e conferidas contra o Fechamento (Questões em aberto), mas não entram em nenhuma conta.']
       ]) + '<p>Ao importar, o sistema compara o mês do arquivo com o mês ativo e pede confirmação se forem diferentes.</p>')}
 
       ${sec('4. Como uma visita é comprovada', `
@@ -361,19 +363,24 @@
         ['Sem comprovação', 'Cobradas − comprovadas. Inclui as sem registro e as visitas com foto ainda em revisão.'],
         ['Desconto', 'Sem comprovação × custo médio da visita da rede (valor cobrado ÷ visitas cobradas).'],
         ['Plano comprovado', 'Comprovadas ÷ planejadas.'],
+        ['Plano da loja', 'Visitas por semana da loja (frequência do Plano; ajustável em Config › Lojas) × semanas do mês (padrão 4; use 5 em mês de cinco semanas). Só conta a loja identificada entre Plano e Pacto.'],
+        ['Índice de fidelidade', 'Visitas registradas no mês ÷ plano do mês. Vermelho abaixo do plano, verde em 100%, de volta ao vermelho acima de 120%. As comprovadas aparecem ao lado. Se o Relatório não cobre o mês inteiro, o índice é provisório.'],
+        ['Lojas com excesso', 'Lojas com mais de 120% do plano em visitas registradas no mês. Visita feita fora do dia combinado não é problema; passar da quantidade combinada é.'],
+        ['Questões em aberto', 'Diferenças entre planilhas que o sistema não decide sozinho (linhas repetidas, Plano × Fechamento, Cobradas × Registradas, dias sem Relatório ou sem Book...). Cada uma pode ser anotada e exportada para levar à Pacto.'],
+        ['Carimbo da foto', 'Foto que comprovou uma visita fica carimbada para sempre: não pode comprovar outra. Reenviar a mesma foto para a mesma visita não é problema.'],
         ['Cobrado × Registrado', 'Compara o que a Pacto cobra no Fechamento com o que o Relatório de Tempo <em>dela mesma</em> registra. Veja as caixas "Cobradas" e "Registradas" no Dashboard.'],
         ['Execuções Realizadas / Planejadas / Livres', 'Realizadas: execuções vistas nas fotos (promotor + dia + loja, várias fotos = 1). Planejadas: as que têm par no Relatório. Livres: as que não têm par (promotor sem visita registrada naquele dia, loja que não confere, ou rede fora do Fechamento).']
       ]))}
 
       ${sec('6. As telas', tab(['Tela', 'O que mostra'], [
         ['Dashboard', 'Painel geral do mês: velocímetros por rede e total, valores cobrado, auditado e desconto.'],
-        ['Auditoria', 'Detalhe por rede, loja e visita, com a evidência de cada uma (arquivo, página, hora). Lista das não comprovadas e alertas de volume por promotor/dia.'],
+        ['Auditoria', 'Detalhe por rede, loja e visita, com a evidência de cada uma (arquivo, página, hora). Questões em aberto, fidelidade ao plano, lojas com excesso, lista das visitas sem comprovação e alertas de volume por promotor/dia.'],
         ['Promotores', 'Ranking de execuções por promotor, lido das legendas das fotos. Toque numa linha para ver dia a dia.'],
         ['Livres', 'Execuções que aparecem nas fotos mas não têm par nas planilhas, com o motivo.'],
         ['Revisão', 'Fila de fotos que precisam de decisão humana. Cada decisão fica registrada.'],
         ['Relatório', 'Visão consolidada para impressão e exportação.'],
         ['Admin', 'Importação dos arquivos, processamento e publicação (somente operador).'],
-        ['Config', 'Seleção do mês, regras, publicação, backup e este guia (somente operador).']
+        ['Config', 'Seleção do mês, regras, <strong>Lojas</strong> (ligar o nome do Plano ao da Pacto e definir visitas por semana), publicação, backup e este guia (somente operador).']
       ]) + '<p><strong>Calendário:</strong> passe o mouse sobre a barra verde do mês (ou toque em "período") para escolher mês inteiro, uma semana ou datas livres. Isso só muda a visualização; a auditoria do mês continua inteira.</p><p><strong>Publicação:</strong> o operador publica o mês; quem acessa sem dados próprios vê só os resultados publicados, em modo leitura. "Ver resultados publicados" fica na barra de abas.</p>')}
 
       ${sec('7. Fragilidades e limites (leia com atenção)', `
@@ -386,7 +393,10 @@
           <li><strong>Books recebidos parcialmente.</strong> O Dashboard mostra a "Cobertura das fotos" (de dd/mm a dd/mm), lida das legendas. Visitas fora dessa janela aparecem como "sem comprovação" só por falta de Book, não por falta de visita.</li>
           <li><strong>Planejadas por semana é aproximação.</strong> O Fechamento só informa o total do mês por rede, sem o dia de cada visita. Em semanas, planejadas = média semanal × dias ÷ 7.</li>
           <li><strong>Plano de Visitas × Fechamento.</strong> Alguns Planos têm linhas ocultas no Excel (a Admin informa quantas). O que vale como planejado é o Fechamento; o número de lojas do Plano e do Fechamento nem sempre bate, e isso é ponto a esclarecer com a agência.</li>
-          <li><strong>As marcas do Plano ainda não são usadas.</strong> O sistema lê os dias marcados (x, giro, foto+giro), que são os dias previstos de visita, mas não os mostra nem os usa em nenhum cálculo. Em outubro elas somam cerca de 38% das visitas programadas no Fechamento e só uma parte pequena coincide com os dias do Relatório de Tempo e das fotos. Isso precisa ser esclarecido com quem preenche o Plano antes de virar auditoria.</li>
+          <li><strong>As marcas do Plano não entram em conta.</strong> O sistema lê os dias marcados (x, giro, foto+giro), que são os dias previstos de visita, e compara o total com as visitas programadas no Fechamento (Questões em aberto). Em outubro elas cobrem cerca de 38%, e só uma parte pequena coincide com os dias do Relatório de Tempo e das fotos. Precisa ser esclarecido com quem preenche o Plano.</li>
+          <li><strong>Índice de fidelidade é provisório se o Relatório for parcial.</strong> Com o Relatório cobrindo só parte do mês, o índice sai abaixo de 100% mesmo com a Pacto cumprindo o plano. Marque "Proporcional" ou importe o mês inteiro.</li>
+          <li><strong>Loja sem identificação fica fora do índice.</strong> O Plano e a Pacto escrevem os nomes de jeitos diferentes; enquanto a loja não for ligada em Config › Lojas, ela não entra no plano nem no excesso.</li>
+          <li><strong>Linhas repetidas no Relatório de Tempo.</strong> Se a Pacto cobra por linha, repetições são cobranças que nenhuma foto prova; se cobra por loja e dia, não. Está em Questões em aberto até a Pacto responder.</li>
           <li><strong>Nomes diferentes entre arquivos.</strong> Redes e lojas aparecem com grafias diferentes no Fechamento, no Plano e no Relatório. O sistema normaliza o que consegue; o resto aparece como "rede não consta" ou "livre".</li>
           <li><strong>Os dados ficam neste navegador.</strong> Limpar os dados do navegador apaga tudo. Faça o backup (Config) e guarde os PDFs originais: eles são a prova oficial, o sistema guarda apenas uma cópia reduzida de cada foto.</li>
           <li><strong>A publicação depende do token do GitHub</strong> guardado só neste navegador. Sem ele não é possível publicar nem remover meses.</li>
@@ -395,7 +405,8 @@
       ${sec('8. Roteiro do mês', `
         <ol style="padding-left:20px;">
           <li>Config: escolher o mês.</li>
-          <li>Admin: importar Fechamento, Planos, Relatório de Tempo e <strong>todos</strong> os Books; conferir os avisos de importação.</li>
+          <li>Admin: importar o Fechamento, o Relatório de Tempo, <strong>todos</strong> os Books e, por último, os Planos por rede; conferir os avisos de importação.</li>
+          <li>Config › Lojas: ligar as lojas pendentes do Plano às da Pacto (ou exportar a lista para a agência preencher e importar de volta).</li>
           <li>Processar a auditoria.</li>
           <li>Revisão: decidir as fotos pendentes.</li>
           <li>Dashboard e Auditoria: conferir os números; gerar o CSV (Auditoria) para a reunião com a agência.</li>
@@ -439,6 +450,7 @@
         <button id="btn-salvar-config" style="width: 100%; padding: 12px; background: var(--cor-primaria); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Salvar Regras</button>
         <div id="msg-config" style="margin-top: 10px; text-align: center; font-weight: bold; color: var(--cor-primaria);"></div>
       </div>
+      ${htmlCardLojas()}
       ${htmlCardPublicacao()}
       <div class="card">
         <h2>Backup de Dados</h2>
@@ -485,7 +497,7 @@
 
     document.getElementById('btn-exportar').addEventListener('click', async () => {
       const comImagens = confirm('Incluir as imagens das fotos no backup?\n\nOK = backup completo (arquivo grande)\nCancelar = só os dados, sem imagens');
-      const pacote = { config: Estado.config, meses: Estado.meses, imagens: comImagens ? await BancoImagens.todas() : {} };
+      const pacote = { config: Estado.config, meses: Estado.meses, lojasReg: Estado.lojasReg || {}, carimbos: Estado.carimbos || {}, imagens: comImagens ? await BancoImagens.todas() : {} };
       const blob = new Blob([JSON.stringify(pacote)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -508,6 +520,8 @@
           if (dados.config && dados.meses) {
             Estado.config = { ...Estado.config, ...dados.config };
             Estado.meses = dados.meses;
+            Estado.lojasReg = dados.lojasReg || {};
+            Estado.carimbos = dados.carimbos || {};
             if (dados.imagens) {
               for (const [id, url] of Object.entries(dados.imagens)) await BancoImagens.salvar(id, url);
             }
@@ -534,6 +548,7 @@
     });
 
     configurarPublicacao();
+    renderizarCardLojas();
   }
 </script>
 <!-- ═══ FIM SUBBLOCO 02 ═══ -->
@@ -763,6 +778,7 @@
     const nomeAba = workbook.SheetNames.find(n => normalizarTexto(n).includes('RELATORIO DE TEMPO'));
     if (!nomeAba) throw new Error("Aba de 'Relatório de tempo' não encontrada. Verifique se é o arquivo correto.");
     const linhas = XLSX.utils.sheet_to_json(workbook.Sheets[nomeAba], { header: 1, defval: '' });
+    const wsT = workbook.Sheets[nomeAba], deslT = wsT['!ref'] ? XLSX.utils.decode_range(wsT['!ref']).s.r : 0; // para citar a linha exata do Excel
     let linhaCab = -1;
     for (let i = 0; i < Math.min(5, linhas.length); i++) {
       const t = (linhas[i] || []).map(c => normalizarTexto(c)).join('|');
@@ -777,7 +793,7 @@
       const promotor = String(l[2] || '').trim();
       const data = formatarDataISO(l[3]);
       if (redeOriginal && loja && promotor && data) {
-        visitas.push({ rede: chaveRede(redeOriginal), redeOriginal, loja, promotor, data });
+        visitas.push({ rede: chaveRede(redeOriginal), redeOriginal, loja, promotor, data, lin: i + deslT + 1 });
       }
     }
     if (visitas.length === 0) throw new Error("Nenhuma visita encontrada no Relatório de Tempo.");
@@ -1223,6 +1239,7 @@
     // Normaliza o nome da rede também em dados importados por versões antigas (que guardavam o nome cru da planilha)
     const relatorio = mesDados.relatorioTempo.map(v => ({ ...v, redeOriginal: v.redeOriginal || v.rede, rede: chaveRede(v.rede) })).filter(v => noPeriodo(v.data));
     const fechamento = mesDados.fechamento.map(f => ({ ...f, redeOriginal: f.redeOriginal || f.rede, rede: chaveRede(f.rede) }));
+    const decRep = (mesDados.decisoes && mesDados.decisoes.rel_repetidas && mesDados.decisoes.rel_repetidas.estado) || 'aberta';
     const pk = f => { const b = f.promotorKey || chaveCompacta(f.promotor); return (mapaPromotorRef.m && mapaPromotorRef.m[b]) || b; };
     const mapaPromotorRef = { m: null };
     const diaDe = f => f.dataHora.split('T')[0];
@@ -1334,6 +1351,9 @@
       f.motivoGap = `Promotor visitou ${cands.length} lojas neste dia e a foto não identifica a loja. Escolha a loja.`;
     });
   
+    // 4b. Carimbo permanente: foto que já comprovou outra visita (de outro mês/lote) não comprova esta
+    const conflitos = aplicarCarimbos(mesDados, fotos, f => pk(f) + '_' + diaDe(f) + '_' + f.redeAuditada + '_' + chaveCompacta(f.lojaAuditada));
+
     // 5. Agrupamento final (promotor + dia + loja)
     const visitas = {};
     fotos.forEach(f => {
@@ -1364,14 +1384,14 @@
     let periodos = periodo ? [{ inicio: periodo.inicio, fim: periodo.fim, auditado: true }] : (mesDados.periodosPDF || []).filter(p => p && p.inicio && p.fim);
     const datasFotos = fotos.filter(f => f.dataHora).map(diaDe).sort();
     if (!periodo && periodos.length === 0 && datasFotos.length) periodos = [{ inicio: datasFotos[0], fim: datasFotos[datasFotos.length - 1] }];
-    const coberto = d => periodos.some(p => d >= p.inicio && d <= p.fim);
+    // Toda visita registrada no Relatório que não tem foto vinculada. "semBook" = nenhuma foto importada naquele dia (datas reais das legendas).
+    const diasComFoto = new Set(datasFotos);
     const jaTem = new Set(Object.keys(visitas));
     const semFoto = {};
     relatorio.forEach(v => {
-      if (!coberto(v.data)) return;
       const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja);
       if (jaTem.has(k) || semFoto[k]) return;
-      semFoto[k] = { promotor: v.promotor, data: v.data, loja: v.loja, rede: v.rede, fotos: [], qtdFotos: 0, statusFinal: 'sem_foto' };
+      semFoto[k] = { promotor: v.promotor, data: v.data, loja: v.loja, rede: v.rede, fotos: [], qtdFotos: 0, statusFinal: 'sem_foto', semBook: !diasComFoto.has(v.data) };
     });
   
     // 6a. Conferência de nomes (etiqueta do app × Excel)
@@ -1444,7 +1464,7 @@
       const vistos = new Set();
       relatorio.forEach(v => {
         const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja);
-        if (vistos.has(k)) return;
+        if (vistos.has(k)) { if (decRep === 'contar_linha' && porRede[v.rede]) porRede[v.rede].declaradas++; return; }
         vistos.add(k);
         if (porRede[v.rede]) porRede[v.rede].declaradas++;
       });
@@ -1523,12 +1543,17 @@
     const porDia = {}, vistosDia = new Set();
     relatorio.forEach(v => {
       const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja);
-      if (vistosDia.has(k)) return; vistosDia.add(k);
+      if (vistosDia.has(k)) { const d0 = porDia[v.data] && porDia[v.data][v.rede]; if (d0) d0.x = (d0.x || 0) + 1; return; }
+      vistosDia.add(k);
       const dd = porDia[v.data] || (porDia[v.data] = {});
       (dd[v.rede] || (dd[v.rede] = { d: 0, c: 0 })).d++;
     });
     Object.values(visitas).forEach(v => { if (v.statusFinal === 'comprovada' && porDia[v.data] && porDia[v.data][v.rede]) porDia[v.data][v.rede].c++; });
 
+    const planoLojas = calcularPlanoLojas(mesDados, relatorio, visitas);
+    mesDados.decisoes = mesDados.decisoes || {};
+    const questoes = calcularQuestoes(mesDados, { relatorio, porRede, plano: planoLojas, conflitos, fotos });
+    const fotosReais = datasFotos.length ? { inicio: datasFotos[0], fim: datasFotos[datasFotos.length - 1], dias: new Set(datasFotos).size } : null;
     const soma = campo => Object.values(porRede).reduce((a, r) => a + (r[campo] || 0), 0);
     const todas = Object.values(visitas);
     return {
@@ -1544,7 +1569,8 @@
         totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
         fotosPendentes: fotos.filter(f => f.status === 'revisao').length
       },
-      versaoCalculo: 11,
+      versaoCalculo: 12,
+      planoLojas, questoes, decisoes: mesDados.decisoes, decRep, fotosReais, conflitosCarimbo: conflitos.length,
       associacoes,
       volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia, gemeas,
       dataProcessamento: new Date().toISOString()
@@ -1580,6 +1606,594 @@
   }
 </script>
 <!-- ═══ FIM SUBBLOCO 06 ═══ -->
+  <!-- ═══ SUBBLOCO 06B — LOJAS, PLANO POR LOJA, QUESTÕES EM ABERTO, CARIMBO ═══ -->
+<script>
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LOJAS (Config), PLANO POR LOJA, ÍNDICE DE FIDELIDADE, QUESTÕES EM ABERTO, CARIMBO DE FOTOS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Sugestões do glossário Plano × Pacto (outubro/2026): [rede, nome no Plano, nome na Pacto, C=certa P=provável F=conferir].
+  // Servem só de sugestão inicial; quem manda é o registro de Lojas (Config), que o operador confirma.
+  const SEMENTE_LOJAS = [["CARREFOUR","CAI - CAMPINAS IGUATEMI","CAI - CAMPINAS ELDORADO","F"],["MERCADAO","GUARUJÁ (ENSEADA)","14 - ENSEADA","F"],["NAGUMO","GRIMALDI (SAPOPEMBA 1)","JARDIM GRIMALDI","F"],["NAGUMO","ITAQUA (ODETE)","JARDIM ODETE","F"],["NAGUMO","TIBURCIO (ITAIM PAULISTA ESTAÇÃO)","TIBURCIO DE SOUSA","F"],["NAGUMO","TIBURCIO 2 (ITAIM PAULISTA)","ITAIM PAULISTA","F"],["SUPERMERCADO SAO VICENTE","Estádio Itu","CENTRO ITU","F"],["AKKI ATACADISTA","ARICANDUVA","06 - AKKI ARICANDUVA","P"],["AKKI ATACADISTA","EMBÚ DAS ARTES","03 - AKKI EMBU DAS ARTES","P"],["ATACADAO","Botucatu (Chris)","BOTUCATU","P"],["ATACADAO","Carapicuiba KM21 (CENTRO)","CARAPICUIBA KM21","P"],["ATACADAO","Cotia Raposo KM 21","COTIA RAPOSO KM21","P"],["ATACADAO","Dom Aguirre (Santa Rosalia)","SOROCABA DOM AGUIRRE","P"],["ATACADAO","Franca","FRANCA AV. RIO NEGRO","P"],["ATACADAO","Guarulhos Aeroporto (Otavio Braga)","GUARULHOS AEROPORTO","P"],["ATACADAO","Itaquera (Jacu Pessêgo)","ITAQUERA","P"],["ATACADAO","Jacareí Centro (Siqueira Campos)","JACAREI CENTRO","P"],["ATACADAO","Mirandopólis Indianópolis (Jabaquara)","INDIANOPOLIS","P"],["ATACADAO","Piracicaba Santa Terezinha","PIRACICABA STA TEREZINHA","P"],["ATACADAO","Pirituba (Mutinga)","PIRITUBA","P"],["ATACADAO","Ribeirão Anhanguera","RIBEIRAO PRETO ANHANGUERA","P"],["ATACADAO","S.J. Campos Dutra (Aquarius)","SJ CAMPOS DUTRA","P"],["ATACADAO","S.J. Rio Preto América","SAO JOSE RIO PRETO - AMERICA","P"],["ATACADAO","S.J. Rio Preto Falavina","SAO JOSE RIO PRETO - FALAVINA","P"],["ATACADAO","SJC Vale Sul - Shopping","SAO JOSE DOS CAMPOS SHOPPING","P"],["ATACADAO","Santa Barbara D'Oeste","SANTA BARBARA DO OESTE","P"],["ATACADAO","Santo André Av. do Estado (Metalúrgica)","SANTO ANDRE ESTADO","P"],["ATACADAO","São Bernardo do Campo Piraporinha","SAO BERNARDO PIRAPORINHA","P"],["ATACADAO","São José Campos JK","SJ CAMPOS JK","P"],["ATACADAO","Taboão da Serra Centro","TABOAO DA SERRA","P"],["ATACADAO","Taboão da Serra Tesouro","TABOAO DA SERRA RUA DO TESOURO","P"],["AYUMI SUPERMERCADOS","ESTRADA DA BARONESA","08 - BARONESA","P"],["AYUMI SUPERMERCADOS","GUARAPIRANGA","17 - GUARAPIRANGA","P"],["AYUMI SUPERMERCADOS","JABAQUARA","05 - JABAQUARA","P"],["AYUMI SUPERMERCADOS","JD SÃO LUÍS","15 - JARDIM SAO LUIS","P"],["AYUMI SUPERMERCADOS","SANTO ANTÔNIO","11 - PARQUE SANTO ANTONIO","P"],["CARREFOUR","CRB - CRFO BAIRRO RIBEIRAO PRETO (CENTRO)","CRB - RUI BARBOSA","P"],["CARREFOUR","GSC - GIMENES VILA  COSTA","GSC - SÃO CARLOS - VILA COSTA","P"],["CARREFOUR","GSF - GIMENES SAO CARLOS (BAIRRO)","GSF - SÃO CARLOS - STA FEL","P"],["CARREFOUR","SBP - CRFO SAO BERNARDO DO CAMPO PAULICEIA","SBP - SAO BERNARDO PAULICEIA","P"],["CARREFOUR","STO-CRFO SANTO ANDRE RHODIA (ORATORIO)","STO - SANTO ANDRE ORATORIO","P"],["CHAMA SUPERMERCADOS","BRASÍLIA (VALE CORDEIRO)","CHAMA OSVALDO VALLE CORDEIRO","P"],["CHAMA SUPERMERCADOS","JD SANTA MARIA UXI","CHAMA JARDIM SANTA MARIA","P"],["CHAMA SUPERMERCADOS","ORATÓRIO (Alto da Mooca)","CHAMA MOOCA","P"],["CHAMA SUPERMERCADOS","OSASCO | HELENA MARIA","CHAMA JARDIM HELENA MARIA","P"],["CHAMA SUPERMERCADOS","VILA DALILA (Waldemar Carlos Pereira)","CHAMA WALDEMAR CARLOS PEREIRA","P"],["CHAMA SUPERMERCADOS","ÁGUA RASA (Barão de Penedo)","CHAMA AGUA RASA","P"],["CHAMA SUPERMERCADOS","ÁGUIA DE HAIA (Ae Carvalho)","CHAMA AGUIA DE HAIA","P"],["COPEBE","COPEBE","COPEBE ITU","P"],["DELTA","DELTA ITU","ITU","P"],["DELTA","DELTA PORTO FELIZ","Porto Feliz","P"],["DELTA","DELTA SALTO","Salto","P"],["G2 COMERCIO ATACADISTA","Distrib. G2 Sto André","02 - SANTO ANDRE","P"],["G2 COMERCIO ATACADISTA","G2 - SAPOPEMBA","01 - SAPOPEMBA","P"],["G2 COMERCIO ATACADISTA","G2 - SÃO MATHEUS","07 - CIDADE SAO MATEUS","P"],["G2 COMERCIO ATACADISTA","G2 VILA MEDEIROS","04 - VILA MEDEIROS","P"],["HIGA ATACADO","DOM PEDRO | CAMPO DOS AMARAIS","03 - CAMPINAS AMARAIS","P"],["HIGA ATACADO","DUNLOP | BELA ALIANÇA","07 - CAMPINAS BELA ALIANCA","P"],["KACULA SUPERMERCADOS","TABOÃO DA SERRA LOJA 02 |Pq Pinheiros","KAÇULA PARQUE PINHEIROS","P"],["MEGA STOCK","ITANHAEM","01 - ITANHAEM","P"],["MEGA STOCK","MIRIM","NOVA MIRIM","P"],["MERCADAO","COTIA","03 - MERCADÃO COTIA","P"],["MERCADAO","GIOVANNI GRONCHI","01 - MERCADAO GIOVANNI GRONCHI","P"],["MERCADAO","MONGAGUA","11 - MONGAGUA","P"],["MERCADAO","PRAIA GRANDE MIRIM","04 - MERCADAO PRAIA GRANDE","P"],["MERCADO X","ARICANDUVA","LOJA X SHOP ARICANDUVA","P"],["MERCADO X","CECAP","LOJA X PQ. CECAP","P"],["MERCADO X","COCAIA","LOJA X COCAIA","P"],["MERCADO X","FONTALIS | CASA DAS PEDRAS","LOJA X JARDIM FONTALIS","P"],["MERCADO X","MAIRIPORÃ","LOJA X MAIRIPORA","P"],["MERCADO X","MIKAIL","LOJA X MIKAIL","P"],["MERCADO X","MOGI DAS CRUZES","LOJA X MOGI DAS CRUZES","P"],["MERCADO X","PIMENTAS","LOJA X PIMENTAS","P"],["MERCADO X","PIRATININGA","LOJA X PQ. PIRATININGA","P"],["MERCADO X","PONTE ALTA","LOJA X JARDIM PONTE ALTA II","P"],["MERCADO X","POÁ CENTRO","LOJA X CENTRO POA","P"],["MERCADO X","TIMÓTEO PENTEADO","LOJA X TIMOTEO PENTEADO","P"],["MERCADO X","VILA ENDRES (SHOP INTERNACIONAL)","LOJA X VILA ENDRES","P"],["NAGUMO","ATIBAIA 2 ALVINÓPOLIS","ALVINOPOLIS","P"],["NAGUMO","ATIBAIA 4 VILA GIGLIO","VILA GIGLIO","P"],["NAGUMO","BONSUCESSO","VILA NOVA BONSUCESSO","P"],["NAGUMO","COLONIAL","JARDIM COLONIAL","P"],["NAGUMO","CURUÇA (FRANCISCO PERREIRA)","VILA CURUCA","P"],["NAGUMO","DONA BENTA","JARDIM DONA BENTA","P"],["NAGUMO","ELENCO","EST DO ELENCO","P"],["NAGUMO","GUARULHOS ALVORADA","ALVORADA","P"],["NAGUMO","IGUATEMI (RAGUEB)","RAGUEB CHOFF","P"],["NAGUMO","JD. CUMBICA","JARDIM CUMBICA","P"],["NAGUMO","JD. CUMBICA 2 (NOVA CUMBICA)","JARDIM CUMBICA II","P"],["NAGUMO","JD. MORUMBI","JARDIM MORUMBI","P"],["NAGUMO","JUREMA","PARQUE JUREMA","P"],["NAGUMO","MADALENA","PARQUE SANTA MADALENA","P"],["NAGUMO","MOGI IPIRANGA","ALTO IPIRANGA MOGI","P"],["NAGUMO","MOGI IPIRANGA 2","ALTO IPIRANGA MOGI II","P"],["NAGUMO","OLIVEIRA FREIRE","AV OLIVEIRA FREIRE","P"],["NAGUMO","OSASCO","AVESTRUZ OSASCO","P"],["NAGUMO","PARANAGUA/ERMELINO","PARANAGUA","P"],["NAGUMO","PIMENTAS","JARDIM DOS PIMENTAS","P"],["NAGUMO","PIRES DO RIO (ITAQUERA)","AV PIRES DO RIO","P"],["NAGUMO","PRAIA G-1 | VILA SONIA","VILA SONIA PRAIA GRANDE","P"],["NAGUMO","SANTO ANDRÉ - CENTRO (VILA ALZIRA)","CENTRO SANTO ANDRE","P"],["NAGUMO","SANTO ANDRÉ - V. LUZITA - SOLAR","VILA LUZITA","P"],["NAGUMO","SHOP PIMENTAS","PIMENTAS SHOPPING","P"],["NAGUMO","TAUBATÉ","VILA VELHA TAUBATE","P"],["NAGUMO","TAUBATÉ 2 - AREIÃO","AREAO TAUBATE","P"],["NAGUMO","UIRAPURU","PARQUE UIRAPURU","P"],["PRABAR","SANTOS","PRABAR SANTOS","P"],["REDE CINCO","FANTÁSTICO TAUBATÉ","FANTÁSTICO","P"],["REDE CINCO","LEAL DO VALE TREMEMBÉ CENTRO","LEAL DO VALE","P"],["SUPERMERCADO ALVORADA ITU","Ana Lucia Lopes","ALVORADA ANA LUCIA LOPES","P"],["SUPERMERCADO ALVORADA ITU","CAETANO ITU","ALVORADA CAETANO RUGGIERI","P"],["SUPERMERCADO ALVORADA ITU","Cidade Nova 1","ALVORADA CIDADE NOVA I","P"],["SUPERMERCADO ALVORADA ITU","Cidade nova 2 ITU","ALVORADA CIDADE NOVA II","P"],["SUPERMERCADO ALVORADA ITU","Jardim Aeroporto","ALVORADA JARDIM AEROPORTO","P"],["SUPERMERCADO ALVORADA ITU","Jardim Potiguara","ALVORADA JD POTIGUARA","P"],["SUPERMERCADO ALVORADA ITU","Prudente de moraes","ALVORADA PRUDENTE DE MORAES","P"],["SUPERMERCADO ALVORADA ITU","Rancho Grande","ALVORADA RANCHO GRANDE","P"],["SUPERMERCADO ALVORADA ITU","São Judas","ALVORADA SAO JUDAS","P"],["SUPERMERCADO ALVORADA ITU","VILA MARTINS","ALVORADA VILA MARTINS","P"],["SUPERMERCADO ALVORADA ITU","Vila Lucinda","ALVORADA VILA LUCINDA","P"],["SUPERMERCADO ALVORADA ITU","Vila Progresso","ALVORADA VILA PROGRESSO","P"],["SUPERMERCADO MINI PRECO","SÃO VICENTE RIO BRANCO","JARDIM RIO BRANCO","P"],["SUPERMERCADO PARANA ITU","PARANÁ JD AEROPORTO","JARDIM AEROPORTO I","P"],["SUPERMERCADO PARANA ITU","PARANÁ JD POTIGUARA","JARDIM POTIGUARA","P"],["SUPERMERCADO SAO VICENTE","Indaiatuba","INDIATUBA","P"],["SUPERMERCADO SAO VICENTE","São Luís","SAO LUIZ ITU","P"],["TENDA","AMOREIRAS (CAMPINAS)","04 - TENDA AMOREIRAS CAMPINAS","P"],["TENDA","INDAIATUBA","14 - TENDA JD TROPICAL INDAIATUBA","P"],["TENDA","ITU","11 - TENDA ITU","P"],["TENDA","SALTO","18 - TENDA SALTO","P"],["ATACADAO","Anchieta","ANCHIETA","C"],["ATACADAO","Araras","ARARAS","C"],["ATACADAO","Assis","ASSIS","C"],["ATACADAO","Atibaia","ATIBAIA","C"],["ATACADAO","Barretos","BARRETOS","C"],["ATACADAO","Barueri","BARUERI","C"],["ATACADAO","Cambuci","CAMBUCI","C"],["ATACADAO","Campinas Dom Pedro","CAMPINAS DOM PEDRO","C"],["ATACADAO","Campinas Dunlop","CAMPINAS DUNLOP","C"],["ATACADAO","Campinas Jd. Yeda","CAMPINAS JD. YEDA","C"],["ATACADAO","Caraguatatuba","CARAGUATATUBA","C"],["ATACADAO","Catanduva","CATANDUVA","C"],["ATACADAO","Cotia centro","COTIA CENTRO","C"],["ATACADAO","Diadema Canhema","DIADEMA CANHEMA","C"],["ATACADAO","Diadema Cupecê","DIADEMA CUPECE","C"],["ATACADAO","Diadema Serraria","DIADEMA SERRARIA","C"],["ATACADAO","Guaratinguetá","GUARATINGUETA","C"],["ATACADAO","Guarujá","GUARUJA","C"],["ATACADAO","Guarulhos Centro","GUARULHOS CENTRO","C"],["ATACADAO","Guarulhos Dutra","GUARULHOS DUTRA","C"],["ATACADAO","Hortolândia","HORTOLANDIA","C"],["ATACADAO","Inajar de Souza","INAJAR DE SOUZA","C"],["ATACADAO","Indaiatuba","INDAIATUBA","C"],["ATACADAO","Ipiranga","IPIRANGA","C"],["ATACADAO","Itanhaém","ITANHAEM","C"],["ATACADAO","Itaquaquecetuba","ITAQUAQUECETUBA","C"],["ATACADAO","Itu","ITU","C"],["ATACADAO","Jacareí Dutra","JACAREI DUTRA","C"],["ATACADAO","Jacui","JACUI","C"],["ATACADAO","Jandira","JANDIRA","C"],["ATACADAO","Jundiai","JUNDIAI","C"],["ATACADAO","Limeira Anhanguera","LIMEIRA ANHANGUERA","C"],["ATACADAO","Limeira centro","LIMEIRA CENTRO","C"],["ATACADAO","Marilia","MARILIA","C"],["ATACADAO","Mogi Guaçu","MOGI-GUACU","C"],["ATACADAO","Mogi Mirim","MOGI MIRIM","C"],["ATACADAO","Mogi das Cruzes","MOGI DAS CRUZES","C"],["ATACADAO","Osasco Yolanda","OSASCO YOLANDA","C"],["ATACADAO","Osasco centro","OSASCO CENTRO","C"],["ATACADAO","Ourinhos","OURINHOS","C"],["ATACADAO","Parelheiros","PARELHEIROS","C"],["ATACADAO","Penha","PENHA","C"],["ATACADAO","Poa","POA","C"],["ATACADAO","Praia Grande","PRAIA GRANDE","C"],["ATACADAO","Presidente Prudente Monte Alto","PRESIDENTE PRUDENTE MONTE ALTO","C"],["ATACADAO","Ribeirão Via Norte","RIBEIRAO VIA NORTE","C"],["ATACADAO","Rio Claro","RIO CLARO","C"],["ATACADAO","Rio das Pedras","RIO DAS PEDRAS","C"],["ATACADAO","Santo André Capuava","SANTO ANDRE CAPUAVA","C"],["ATACADAO","Santo André Centro","SANTO ANDRE CENTRO","C"],["ATACADAO","Santos","SANTOS","C"],["ATACADAO","Santos - Porto","SANTOS PORTO","C"],["ATACADAO","Sorocaba Campolim","SOROCABA CAMPOLIM","C"],["ATACADAO","Sorocaba Itavuvu","SOROCABA ITAVUVU","C"],["ATACADAO","Sumaré","SUMARE","C"],["ATACADAO","Suzano","SUZANO","C"],["ATACADAO","São Bernardo Centro","SAO BERNARDO CENTRO","C"],["ATACADAO","São Bernardo Demarchi","SÃO BERNARDO DEMARCHI","C"],["ATACADAO","São Caetano do Sul","SAO CAETANO DO SUL","C"],["ATACADAO","São Carlos","SAO CARLOS","C"],["ATACADAO","São Vicente","SAO VICENTE","C"],["ATACADAO","São miguel","SAO MIGUEL","C"],["ATACADAO","Taipas","TAIPAS","C"],["ATACADAO","Tamboré","TAMBORE","C"],["ATACADAO","Taubaté","TAUBATE","C"],["ATACADAO","Varzea Paulista","VARZEA PAULISTA","C"],["ATACADAO","Vila Guilherme","VILA GUILHERME","C"],["CARREFOUR","CAP - CRFO BAIRRO CAMPINAS (NORTE SUL)","CAP - CAMPINAS","C"],["CARREFOUR","CIN - CARREFOUR INDAIATUBA","CIN - INDAIATUBA","C"],["CARREFOUR","CIT - CARREFOUR ITU","CIT - ITU","C"],["CARREFOUR","CPS-CRFO CAMPINAS DOM PEDRO","CPS - CAMPINAS D. PEDRO","C"],["CARREFOUR","CPV-CRFO CAMPINAS VALINHOS","CPV - CAMPINAS VALINHOS","C"],["CARREFOUR","CSB - CRFO BAIRRO SAO BERNARDO","CSB - SÃO BERNARDO","C"],["CARREFOUR","CST - CARREFOUR SALTO","CST - SALTO","C"],["CARREFOUR","CTB - CRFO BAIRRO TAUBATE 2","CTB - TAUBATÉ II","C"],["CARREFOUR","CVA - CRFO BAIRRO CACAPAVA","CVA - CAÇAPAVA","C"],["CARREFOUR","CVN - CRFO BAIRRO VINHEDO","CVN - VINHEDO","C"],["CARREFOUR","GUA - CRFO GUARUJA (ENSEADA)","GUA - GUARUJA","C"],["CARREFOUR","HBT - BARUERI TAMBORE","HBT - BARUERI TAMBORE","C"],["CARREFOUR","PIR-CRFO NOVA PIRACICABA","PIR - PIRACICABA","C"],["CARREFOUR","RPN-CRFO RIBEIRAO PRETO VIA NORTE","RPN - RIBEIRAO PRETO NORTE","C"],["CARREFOUR","SAV-CRFO SAO VICENTE","SAV - SAO VICENTE","C"],["CARREFOUR","SBC-CRFO SAO BERNARDO DO CAMPO (VERGUEIRO)","SBC - SAO BERNARDO","C"],["CARREFOUR","SBD - CRFO DEMARCHI","SBD - DEMARCHI","C"],["CARREFOUR","SCS-CRFO SAO CAETANO DO SUL","SCS - SAO CAETANO","C"],["CARREFOUR","SJC-CRFO SAO JOSE CAMPOS","SJC - SAO JOSE DOS CAMPOS","C"],["CARREFOUR","SJP-CRFO SAO JOSE RIO PRETO 900","SJP - SAO JOSE RIO PRETO","C"],["CARREFOUR","SON-CRFO SOROCABA NORTE (SÔNIA MARIA)","SON - SOROCABA NORTE","C"],["CARREFOUR","SOR-CRFO SOROCABA (ESPLANADA)","SOR - SOROCABA","C"],["CARREFOUR","SPA-CRFO ANCHIETA","SPA - ANCHIETA","C"],["CARREFOUR","SPB-CRFO BUTANTA","SPB - BUTANTA","C"],["CARREFOUR","SPE-CRFO PESSEGO","SPE - PESSEGO","C"],["CARREFOUR","SPR-CRFO ARICANDUVA","SPR - ARICANDUVA","C"],["CARREFOUR","SPS-CRFO IMIGRANTES","SPS - IMIGRANTES","C"],["CARREFOUR","SPT-CRFO TIETE (VILA MARIA)","SPT - TIETE","C"],["CARREFOUR","STA-CRFO SANTO ANDRE (PIRELLI)","STA - SANTO ANDRE","C"],["CARREFOUR","STS-CRFO TABOAO DA SERRA (Shopping)","STS - TABOAO DA SERRA","C"],["CARREFOUR","TAU - CRFO TAUBATE CHARLES (HIPER)","TAU - TAUBATE CHARLES","C"],["KACULA SUPERMERCADOS","EMBU DAS ARTES LOJA 01","KAÇULA 1 - JARDIM SÃO MARCOS","C"],["KACULA SUPERMERCADOS","EMBU DAS ARTES LOJA 04","KAÇULA 4 - JARDIM SÃO FRANCISCO","C"],["KACULA SUPERMERCADOS","JD MARIA SAMPAIO LOJA 05","KAÇULA 5 - JARDIM MARIA SAMPAIO","C"],["KACULA SUPERMERCADOS","PIRAJUSSARA LOJA 03","KAÇULA 3 - PARQUE PIRAJUSSARA","C"],["MEGA STOCK","GUILHERMINA","GUILHERMINA","C"],["MEGA STOCK","SÃO VICENTE","SAO VICENTE","C"],["NAGUMO","BARREIRA GRANDE","BARREIRA GRANDE","C"],["NAGUMO","BIRITIBA","BIRITIBA","C"],["NAGUMO","CALMON VIANA","CALMON VIANA","C"],["NAGUMO","CAMILÓPOLIS","CAMILOPOLIS","C"],["NAGUMO","LAVRAS","LAVRAS","C"],["NAGUMO","LORENA","LORENA","C"],["NAGUMO","MOGI MODERNO","MOGI MODERNO","C"],["NAGUMO","VISTA VERDE","VISTA VERDE","C"],["SUPERMERCADO MINI PRECO","HUMAITÁ","HUMAITA","C"],["SUPERMERCADO SAO VICENTE","Salto","SALTO","C"]];
+
+  function mesDeDados(m) { return Object.keys(Estado.meses).find(k => Estado.meses[k] === m) || Estado.config.mesAtivo; }
+  function regLojas() { if (!Estado.lojasReg) Estado.lojasReg = {}; return Estado.lojasReg; }
+  function carimbosFotos() { if (!Estado.carimbos) Estado.carimbos = {}; return Estado.carimbos; }
+  const chaveReg = (rede, nome) => rede + '|' + chaveCompacta(nome);
+  const chaveRegPacto = (rede, nome) => rede + '|P|' + chaveCompacta(nome);
+  const SEMANAS_PADRAO = 4;
+  const LIMITE_EXCESSO = 1.2; // só entra na lista de excesso a loja com mais de 120% do plano
+  const diaNum = iso => Math.round(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 86400000);
+  const diasDoMesNum = mes => { const [A, M] = mes.split('-').map(Number); return new Date(Date.UTC(A, M, 0)).getUTCDate(); };
+  const nfBR = n => Number(n || 0).toLocaleString('pt-BR');
+  const pctBR = v => (v == null ? '—' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '%');
+
+  // Frequência escrita no Plano ("SEG, QUART E SEXT") → visitas por semana. "Diária" vira 6 (a confirmar pela Tarks).
+  function lerFrequencia(txt) {
+    const t = normalizarTexto(txt);
+    if (!t) return { n: null, tipo: 'vazia' };
+    if (/DIARIA|TODO DIA|TODOS OS DIAS/.test(t)) return { n: 6, tipo: 'diaria' };
+    const dias = new Set();
+    t.split(/[^A-Z]+/).forEach(p => {
+      if (!p) return;
+      if (p.startsWith('SEG')) dias.add(1);
+      else if (p.startsWith('TER')) dias.add(2);
+      else if (p.startsWith('QUA')) dias.add(3);
+      else if (p.startsWith('QUI')) dias.add(4);
+      else if (p.startsWith('SEX') || p === 'SET') dias.add(5);
+      else if (p.startsWith('SAB')) dias.add(6);
+      else if (p.startsWith('DOM')) dias.add(0);
+      else if (p.length >= 4) { // erro de digitação (ex.: "QIINT", "TEÇA")
+        ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'].forEach((nome, i) => {
+          if (semelhancaTexto(p, nome.slice(0, p.length)) >= 0.75 || semelhancaTexto(p, nome) >= 0.75) dias.add((i + 1) % 7);
+        });
+      }
+    });
+    return dias.size ? { n: dias.size, tipo: 'texto' } : { n: null, tipo: 'ilegivel' };
+  }
+
+  // Lojas da Pacto = as do Relatório de Tempo (os nomes dos Books são idênticos)
+  function indicePacto(mesDados) {
+    const redes = {}, vistos = new Set();
+    (mesDados.relatorioTempo || []).forEach(v => {
+      const rede = chaveRede(v.rede), c = chaveCompacta(v.loja);
+      const R = redes[rede] || (redes[rede] = { nome: v.redeOriginal || v.rede, lojas: {} });
+      const L = R.lojas[c] || (R.lojas[c] = { nome: v.loja, c, vis: 0, dias: new Set(), proms: {} });
+      const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + rede + '_' + c;
+      if (vistos.has(k)) return;
+      vistos.add(k); L.vis++; L.dias.add(v.data); L.proms[v.promotor] = (L.proms[v.promotor] || 0) + 1;
+    });
+    return redes;
+  }
+  let _sementeMapa = null;
+  function mapaSemente() {
+    if (_sementeMapa) return _sementeMapa;
+    const m = {};
+    SEMENTE_LOJAS.forEach(([rede, plano, pacto, c]) => { m[chaveRede(rede) + '|' + chaveCompacta(plano)] = { nome: pacto, c }; });
+    return (_sementeMapa = m);
+  }
+
+  // Liga cada linha do Plano a uma loja da Pacto e lista as lojas da Pacto que ficaram sem Plano.
+  // Situações: auto (nome igual), confirmada/informada (registro), sugerida/conferir/sem_par (pendentes), inativa.
+  function construirLojas(mesDados) {
+    const pacto = indicePacto(mesDados), reg = regLojas(), sem = mapaSemente();
+    const reservadas = new Set();
+    const itens = (mesDados.lojas || []).map(l => {
+      const rede = chaveRede(l.rede), key = chaveReg(rede, l.nomeLoja), r = reg[key] || {};
+      const f = lerFrequencia(l.diaVisita);
+      let vis = null, visFonte = 'falta';
+      if (r.vis != null && r.vis !== '') { vis = Number(r.vis); visFonte = 'manual'; }
+      else if (f.n != null) { vis = f.n; visFonte = f.tipo === 'diaria' ? 'diaria' : 'plano'; }
+      const it = { tipo: 'plano', key, rede, redeNome: l.redeOriginal || l.rede, nomePlano: l.nomeLoja, promotor: l.promotor, freqTxt: l.diaVisita,
+        vis, visFonte, oculta: !!l.oculta, marcas: l.marcas || null, reg: r, nomePacto: null, sit: null, sug: null, cand: [] };
+      const P = (pacto[rede] || { lojas: {} }).lojas;
+      if (r.inativa) { it.sit = 'inativa'; return it; }
+      if (r.nomePacto && P[chaveCompacta(r.nomePacto)]) {
+        it.nomePacto = P[chaveCompacta(r.nomePacto)].nome; it.sit = r.estado === 'informada' ? 'informada' : 'confirmada';
+        reservadas.add(rede + '|' + chaveCompacta(r.nomePacto)); return it;
+      }
+      const c = chaveCompacta(l.nomeLoja);
+      if (P[c]) { it.nomePacto = P[c].nome; it.sit = 'auto'; reservadas.add(rede + '|' + c); return it; }
+      const s = sem[key];
+      if (s && s.c === 'C' && P[chaveCompacta(s.nome)]) { it.nomePacto = P[chaveCompacta(s.nome)].nome; it.sit = 'auto'; reservadas.add(rede + '|' + chaveCompacta(s.nome)); }
+      return it;
+    });
+    itens.forEach(it => {
+      if (it.sit) return;
+      const P = (pacto[it.rede] || { lojas: {} }).lojas;
+      const ranque = Object.values(P).filter(x => !reservadas.has(it.rede + '|' + x.c))
+        .map(x => ({ x, sc: semelhancaLoja(it.nomePlano, x.nome) })).sort((a, b) => b.sc - a.sc);
+      it.cand = ranque.slice(0, 3).map(o => ({ nome: o.x.nome, sc: Math.round(o.sc * 100) / 100 }));
+      const s = sem[it.key], sx = s && P[chaveCompacta(s.nome)];
+      if (sx) { it.sug = { nome: sx.nome, sc: null, origem: 'glossário' }; it.sit = s.c === 'F' ? 'conferir' : 'sugerida'; }
+      else if (ranque.length && ranque[0].sc >= 0.6) {
+        it.sug = { nome: ranque[0].x.nome, sc: Math.round(ranque[0].sc * 100) / 100, origem: 'semelhança' };
+        it.sit = ranque[0].sc >= 0.85 && (ranque.length === 1 || ranque[0].sc - ranque[1].sc >= 0.05) ? 'sugerida' : 'conferir';
+      } else it.sit = 'sem_par';
+    });
+    const ligadas = new Set();
+    itens.forEach(it => {
+      if (it.nomePacto) ligadas.add(it.rede + '|' + chaveCompacta(it.nomePacto));
+      if (it.sug && (it.sit === 'sugerida' || it.sit === 'conferir')) ligadas.add(it.rede + '|' + chaveCompacta(it.sug.nome));
+    });
+    const pactoSoh = [];
+    Object.entries(pacto).forEach(([rede, R]) => Object.values(R.lojas).forEach(L => {
+      if (ligadas.has(rede + '|' + L.c)) return;
+      const key = chaveRegPacto(rede, L.nome), r = reg[key] || {};
+      const vis = r.vis != null && r.vis !== '' ? Number(r.vis) : null;
+      const prom = Object.entries(L.proms).sort((a, b) => b[1] - a[1])[0];
+      pactoSoh.push({ tipo: 'pacto', key, rede, redeNome: R.nome, nomePacto: L.nome, nomePlano: '', promotor: prom ? prom[0] : '', vis, visFonte: vis != null ? 'manual' : 'falta',
+        visPacto: L.vis, dias: L.dias.size, reg: r, sit: r.inativa ? 'inativa' : (vis != null ? 'informada' : 'pendente'), cand: [] });
+    }));
+    return { linhas: itens.concat(pactoSoh), pacto, temRelatorio: Object.keys(pacto).length > 0 };
+  }
+  const ehPendenteLoja = it => it.sit !== 'inativa' && (['sugerida', 'conferir', 'sem_par', 'pendente'].includes(it.sit) || it.vis == null);
+
+  // Índice de fidelidade: registradas no mês ÷ plano do mês. Cor: <100% vermelho→verde, 100% verde, 100–120% verde→vermelho, >120% vermelho.
+  function corIndice(v) {
+    if (v == null) return '#999';
+    const h = v < 1 ? Math.max(0, v) * 120 : v <= LIMITE_EXCESSO ? 120 - ((v - 1) / (LIMITE_EXCESSO - 1)) * 120 : 0;
+    return 'hsl(' + Math.round(h) + ',68%,38%)';
+  }
+
+  // Plano por loja × visitas registradas no mês. relatorio = linhas do Relatório; visitas = mapa das visitas com foto (por chave).
+  function calcularPlanoLojas(mesDados, relatorio, visitas) {
+    const cfg = mesDados.planoCfg || {};
+    const semanas = Number(cfg.semanas) || SEMANAS_PADRAO, prop = !!cfg.proporcional;
+    const mes = mesDeDados(mesDados), diasMes = diasDoMesNum(mes);
+    const datas = [...new Set((mesDados.relatorioTempo || []).map(v => v.data).filter(d => d.startsWith(mes)))].sort();
+    const diasCob = datas.length ? diaNum(datas[datas.length - 1]) - diaNum(datas[0]) + 1 : 0;
+    const fator = diasMes && diasCob ? Math.min(1, diasCob / diasMes) : 1, f = prop ? fator : 1;
+    const { linhas, temRelatorio } = construirLojas(mesDados);
+    // registradas e comprovadas por loja da Pacto
+    const reg = {}, vistos = new Set();
+    relatorio.forEach(v => {
+      const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja);
+      if (vistos.has(k)) return; vistos.add(k);
+      const kl = v.rede + '|' + chaveCompacta(v.loja);
+      const e = reg[kl] || (reg[kl] = { rede: v.rede, redeOriginal: v.redeOriginal, loja: v.loja, reg: 0, comp: 0 });
+      e.reg++;
+    });
+    Object.values(visitas).forEach(v => { if (v.statusFinal !== 'comprovada') return; const e = reg[v.rede + '|' + chaveCompacta(v.loja)]; if (e) e.comp++; });
+    const planoDe = {}; // rede|loja Pacto -> { plano, nomesPlano }
+    let semIdent = 0, semFreq = 0, planoSemLoja = 0;
+    linhas.forEach(it => {
+      if (it.sit === 'inativa') return;
+      if (it.vis == null) { semFreq++; return; }
+      if (!it.nomePacto) { semIdent++; planoSemLoja += it.vis * semanas; return; }
+      const kl = it.rede + '|' + chaveCompacta(it.nomePacto);
+      const e = planoDe[kl] || (planoDe[kl] = { plano: 0, nomesPlano: [] });
+      e.plano += it.vis * semanas; if (it.nomePlano) e.nomesPlano.push(it.nomePlano);
+    });
+    const lojas = [], semPlano = [];
+    Object.entries(reg).forEach(([kl, e]) => {
+      const p = planoDe[kl];
+      if (!p) { semPlano.push({ rede: e.rede, redeOriginal: e.redeOriginal, loja: e.loja, reg: e.reg, comp: e.comp }); return; }
+      const planoEf = p.plano * f;
+      lojas.push({ rede: e.rede, redeOriginal: e.redeOriginal, loja: e.loja, nomePlano: p.nomesPlano.join(' + '), plano: p.plano, planoEf, reg: e.reg, comp: e.comp,
+        idx: planoEf > 0 ? e.reg / planoEf : null });
+    });
+    // lojas com plano mas sem nenhuma visita registrada (aparecem com 0)
+    Object.entries(planoDe).forEach(([kl, p]) => {
+      if (reg[kl]) return;
+      const it = linhas.find(x => x.nomePacto && x.rede + '|' + chaveCompacta(x.nomePacto) === kl);
+      if (it) lojas.push({ rede: it.rede, redeOriginal: it.redeNome, loja: it.nomePacto, nomePlano: p.nomesPlano.join(' + '), plano: p.plano, planoEf: p.plano * f, reg: 0, comp: 0, idx: 0 });
+    });
+    const redes = {};
+    lojas.forEach(l => {
+      const R = redes[l.rede] || (redes[l.rede] = { rede: l.redeOriginal || l.rede, lojas: 0, plano: 0, reg: 0, comp: 0 });
+      R.lojas++; R.plano += l.planoEf; R.reg += l.reg; R.comp += l.comp;
+    });
+    Object.values(redes).forEach(R => { R.idx = R.plano > 0 ? R.reg / R.plano : null; });
+    const tot = Object.values(redes).reduce((a, R) => ({ lojas: a.lojas + R.lojas, plano: a.plano + R.plano, reg: a.reg + R.reg, comp: a.comp + R.comp }), { lojas: 0, plano: 0, reg: 0, comp: 0 });
+    tot.idx = tot.plano > 0 ? tot.reg / tot.plano : null;
+    const excesso = lojas.filter(l => l.planoEf > 0 && l.reg > l.planoEf * LIMITE_EXCESSO).sort((a, b) => (b.reg / b.planoEf) - (a.reg / a.planoEf));
+    const abaixo = lojas.filter(l => l.planoEf > 0 && l.reg < l.planoEf).sort((a, b) => (a.reg / a.planoEf) - (b.reg / b.planoEf));
+    const pend = linhas.filter(ehPendenteLoja).length;
+    return { semanas, prop, fator, diasCob, diasMes, lojas, excesso, abaixo, redes, total: tot, semPlano, semIdent, semFreq, planoSemLoja, pendentes: pend, temRelatorio, limite: LIMITE_EXCESSO };
+  }
+
+  // ── QUESTÕES EM ABERTO ──
+  function calcularQuestoes(mesDados, ctx) {
+    const { relatorio, porRede, plano, conflitos, fotos } = ctx;
+    const mes = mesDeDados(mesDados), nomeRede = r => (porRede[r] ? porRede[r].rede : r);
+    const custo = r => (porRede[r] ? porRede[r].custoVisita : 0) || 0;
+    const q = [];
+    const dow = d => { const x = new Date(d + 'T12:00:00'); return isNaN(x) ? '' : x.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''); };
+
+    // 1) linhas repetidas no Relatório de Tempo
+    const grupos = {};
+    relatorio.forEach(v => {
+      const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja);
+      (grupos[k] || (grupos[k] = { rede: v.rede, redeOriginal: v.redeOriginal, loja: v.loja, promotor: v.promotor, data: v.data, lin: [] })).lin.push(v.lin || '?');
+    });
+    const rep = Object.values(grupos).filter(g => g.lin.length > 1).sort((a, b) => b.lin.length - a.lin.length || a.data.localeCompare(b.data) || (a.rede + a.loja).localeCompare(b.rede + b.loja));
+    if (rep.length) {
+      const extras = rep.reduce((a, g) => a + g.lin.length - 1, 0), valor = rep.reduce((a, g) => a + (g.lin.length - 1) * custo(g.rede), 0);
+      q.push({ id: 'rel_repetidas', titulo: 'Linhas repetidas no Relatório de Tempo', qtd: extras, valor,
+        resumo: `${nfBR(rep.length)} combinações (mesmo promotor, dia, rede e loja) aparecem mais de uma vez no Relatório de Tempo, somando <strong>${nfBR(extras)}</strong> linhas a mais. Se a Pacto cobra <strong>uma visita por linha</strong>, essas linhas extras são cobranças que nenhuma foto consegue provar (uma loja/dia tem uma visita). Se cobra <strong>por loja e dia</strong>, não há impacto. Pergunta para a Pacto: cada linha é uma visita ou um registro de tempo?`,
+        cab: ['Rede', 'Loja', 'Promotor', 'Dia', 'Vezes', 'Linhas no Excel'],
+        rows: rep.map(g => [g.redeOriginal || nomeRede(g.rede), g.loja, g.promotor, formatarDataBR(g.data), g.lin.length, g.lin.join(', ')]),
+        opcoes: [['aberta', 'Aguardando resposta da Pacto'], ['contar_um', 'Contar uma visita por loja/dia (extras não pesam)'], ['contar_linha', 'Pacto cobra por linha (extras entram como registradas sem prova)']],
+        nota: 'No mês inteiro o total parte do Fechamento (que já traz o que a Pacto cobrou). Esta decisão muda a contagem de Registradas na visão por período.' });
+    }
+
+    // 2) Fechamento (cobradas) × Relatório (registradas)
+    const regRede = {}, vis1 = new Set();
+    relatorio.forEach(v => { const k = chaveCompacta(v.promotor) + '_' + v.data + '_' + v.rede + '_' + chaveCompacta(v.loja); if (vis1.has(k)) return; vis1.add(k); regRede[v.rede] = (regRede[v.rede] || 0) + 1; });
+    const datasMes = [...new Set(relatorio.map(v => v.data).filter(d => d.startsWith(mes)))].sort();
+    const dMes = diasDoMesNum(mes), diasCob = datasMes.length ? diaNum(datasMes[datasMes.length - 1]) - diaNum(datasMes[0]) + 1 : 0;
+    const fat = dMes && diasCob ? Math.min(1, diasCob / dMes) : 1;
+    if (!mesDados.periodoAuditado) {
+      const linhasFR = []; let valorFR = 0, nDiv = 0;
+      Object.values(porRede).forEach(r => {
+        const cob = r.declaradasMes || 0, pro = cob * fat, rg = regRede[r.chave] || 0, dif = pro - rg;
+        const div = pro >= 5 && Math.abs(dif) / pro > 0.1;
+        if (div) { nDiv++; if (dif > 0) valorFR += dif * (r.custoVisita || 0); }
+        linhasFR.push([r.rede, cob, Math.round(pro), rg, Math.round(dif), pro ? Math.round(rg / pro * 100) + '%' : '—', div ? 'divergente' : 'ok']);
+      });
+      if (nDiv) q.push({ id: 'fech_x_rel', titulo: 'Cobradas (Fechamento) × Registradas (Relatório)', qtd: nDiv, valor: valorFR,
+        resumo: `O Relatório de Tempo cobre ${diasCob} dos ${dMes} dias do mês${fat < 1 ? ` (${formatarDataBR(datasMes[0])} a ${formatarDataBR(datasMes[datasMes.length - 1])})` : ''}. Por isso a coluna "Cobradas no período" reduz o Fechamento na mesma proporção. <strong>${nDiv}</strong> rede(s) diferem mais de 10% do que a própria Pacto registra. O valor mostrado é o das cobradas acima do registrado nas redes divergentes. Um Relatório de Tempo do mês completo (01 a 31) tira a dúvida.`,
+        cab: ['Rede', 'Cobradas no mês', 'Cobradas no período', 'Registradas', 'Diferença', 'Registr./Cobr.', 'Situação'], rows: linhasFR.sort((a, b) => Math.abs(b[4]) - Math.abs(a[4])), nota: 'Valor potencial não entra no desconto do sistema.' });
+    }
+
+    // 3) Plano (lojas × visitas/semana × semanas) × Fechamento (programadas)
+    const planoRede = {}, semFreqRede = {};
+    construirLojas(mesDados).linhas.forEach(it => {
+      if (it.tipo !== 'plano' || it.sit === 'inativa') return;
+      if (it.vis == null) { semFreqRede[it.rede] = (semFreqRede[it.rede] || 0) + 1; return; }
+      planoRede[it.rede] = (planoRede[it.rede] || 0) + it.vis * plano.semanas;
+    });
+    const linhasPF = []; let nPF = 0;
+    Object.values(porRede).forEach(r => {
+      if (planoRede[r.chave] == null) return;
+      const dif = planoRede[r.chave] - (r.programadas || 0), div = dif !== 0;
+      if (div) nPF++;
+      linhasPF.push([r.rede, planoRede[r.chave], r.programadas || 0, dif, semFreqRede[r.chave] || 0, div ? 'diferente' : 'igual']);
+    });
+    if (nPF) q.push({ id: 'plano_x_fech', titulo: 'Plano de Visitas × Fechamento (visitas programadas)', qtd: nPF, valor: null,
+      resumo: `Plano = lojas × visitas por semana × ${plano.semanas} semanas, lido das planilhas por rede. Programadas = o que a Pacto lançou no Fechamento. Em <strong>${nPF}</strong> rede(s) os números não batem. Pode ser loja a mais ou a menos, frequência diferente do combinado, ou frequência do Plano ilegível (coluna "Lojas sem frequência"). Exemplo conhecido: Mini Preço, 12 no Plano e 16 no Fechamento.`,
+      cab: ['Rede', 'Plano', 'Programadas (Fechamento)', 'Diferença', 'Lojas sem frequência', 'Situação'], rows: linhasPF.sort((a, b) => Math.abs(b[3]) - Math.abs(a[3])) });
+
+    // 4) Calendário do Plano (marcas) × programadas
+    const marcasRede = {}; let totMarcas = 0;
+    (mesDados.lojas || []).forEach(l => {
+      if (!l.marcas) return;
+      const n = Object.keys(l.marcas).filter(d => d.startsWith(mes)).length;
+      const rk = chaveRede(l.rede); marcasRede[rk] = (marcasRede[rk] || 0) + n; totMarcas += n;
+    });
+    const totProg = Object.values(porRede).reduce((a, r) => a + (r.programadas || 0), 0);
+    if (totMarcas && totProg) {
+      const linhasM = Object.values(porRede).filter(r => marcasRede[r.chave] != null).map(r => [r.rede, marcasRede[r.chave], r.programadas || 0, r.programadas ? Math.round(marcasRede[r.chave] / r.programadas * 100) + '%' : '—']);
+      const pc = Math.round(totMarcas / totProg * 100);
+      if (pc < 95) q.push({ id: 'plano_marcas', titulo: 'Calendário do Plano cobre só parte das visitas programadas', qtd: totProg - totMarcas, valor: null,
+        resumo: `As marcas do Plano (x, giro, foto+giro) são os dias previstos de visita: ${nfBR(totMarcas)} marcas no mês, contra ${nfBR(totProg)} visitas programadas no Fechamento (<strong>${pc}%</strong>). A diferença são visitas programadas sem dia marcado no calendário. Pergunta para a Pacto: quando o calendário é preenchido, e por que não cobre todas as visitas?`,
+        cab: ['Rede', 'Marcas no calendário', 'Programadas (Fechamento)', 'Marcas ÷ programadas'], rows: linhasM.sort((a, b) => b[2] - a[2]) });
+    }
+
+    // 5) Dias dentro do período dos Books (nome do arquivo) sem nenhuma foto, mas com visitas registradas
+    const diasFoto = new Set(fotos.filter(f => f.dataHora).map(f => f.dataHora.split('T')[0]));
+    const visDia = {}; vis1.forEach(k => { const d = k.split('_')[1]; visDia[d] = (visDia[d] || 0) + 1; });
+    const diasBook = new Set();
+    (mesDados.periodosPDF || []).filter(p => p && p.inicio && p.fim).forEach(p => { for (let n = diaNum(p.inicio); n <= diaNum(p.fim); n++) diasBook.add(new Date(n * 86400000).toISOString().slice(0, 10)); });
+    const semFotoBook = [...diasBook].filter(d => !diasFoto.has(d) && visDia[d]).sort();
+    if (semFotoBook.length) q.push({ id: 'books_dias', titulo: 'Dias que o Book diz cobrir, mas não têm foto', qtd: semFotoBook.reduce((a, d) => a + visDia[d], 0), valor: null,
+      resumo: `O período lido nos nomes dos Books inclui ${semFotoBook.length} dia(s) sem nenhuma foto, apesar de haver visitas registradas nesses dias. Pode faltar parte do Book. Pergunta para a Pacto: existem Books ou fotos desses dias?`,
+      cab: ['Dia', 'Dia da semana', 'Visitas registradas', 'Fotos no Book'], rows: semFotoBook.map(d => [formatarDataBR(d), dow(d), visDia[d], 0]) });
+
+    // 6) Dias do mês sem Relatório de Tempo
+    if (!mesDados.periodoAuditado && dMes) {
+      const falta = []; for (let d = 1; d <= dMes; d++) { const iso = mes + '-' + String(d).padStart(2, '0'); if (!datasMes.includes(iso)) falta.push(iso); }
+      if (falta.length) q.push({ id: 'rel_janela', titulo: 'Dias do mês sem Relatório de Tempo', qtd: falta.length, valor: null,
+        resumo: `O Relatório de Tempo importado tem visitas em ${datasMes.length} dos ${dMes} dias do mês. Nos dias abaixo não há nenhum registro, então tudo o que for cobrado neles aparece como "sem registro". Peça o Relatório do mês completo.`,
+        cab: ['Dia', 'Dia da semana'], rows: falta.map(d => [formatarDataBR(d), dow(d)]) });
+    }
+
+    // 7) Fotos já usadas como prova de outra visita (carimbo permanente)
+    if (conflitos.length) q.push({ id: 'foto_reutilizada', titulo: 'Foto já usada para comprovar outra visita', qtd: conflitos.length, valor: null,
+      resumo: 'Uma foto comprova uma visita só, para sempre. Estas fotos já estão carimbadas em outra visita (de outro mês ou outro lote) e foram recusadas aqui. Reenviar a mesma foto para a mesma visita não é problema.',
+      cab: ['Arquivo', 'Página', 'Já comprova', 'Tentou comprovar'], rows: conflitos.map(c => [c.arquivo, c.pagina, c.antes, c.agora]) });
+
+    // 8) Lojas sem identificação
+    if (plano.pendentes) q.push({ id: 'lojas_sem_id', titulo: 'Lojas sem identificação entre Plano e Pacto', qtd: plano.pendentes, valor: null,
+      resumo: `<strong>${plano.pendentes}</strong> loja(s) ainda não foram ligadas entre o Plano e a Pacto, ou estão sem frequência. Elas ficam fora do índice de fidelidade. Resolva em <strong>Config › Lojas</strong> (dá para exportar a lista para a agência preencher e importar de volta).`,
+      cab: ['Rede', 'Loja no Plano', 'Loja na Pacto', 'Situação'], rows: construirLojas(mesDados).linhas.filter(ehPendenteLoja).map(it => [it.redeNome, it.nomePlano, it.nomePacto || (it.sug ? '(sugestão) ' + it.sug.nome : ''), it.sit]),
+      irLojas: true });
+    return q;
+  }
+  const ROTULO_SIT_LOJA = { auto: 'Identificada', confirmada: 'Confirmada', informada: 'Informada pela agência', sugerida: 'Sugerida', conferir: 'Conferir', sem_par: 'Sem par', inativa: 'Sem visita (inativa)', pendente: 'Pendente' };
+  const COR_SIT_LOJA = { auto: '#27AE60', confirmada: '#27AE60', informada: '#2980B9', sugerida: '#E67E22', conferir: '#E67E22', sem_par: '#E74C3C', inativa: '#7F8C8D', pendente: '#E74C3C' };
+
+  // ── CARIMBO PERMANENTE: uma foto comprova uma única visita, para sempre ──
+  // carimbos[hash] = [mês, chave da visita]. Os carimbos do mês que está sendo recalculado são refeitos; só conflita com outros meses/lotes.
+  function aplicarCarimbos(mesDados, fotos, chaveVisita) {
+    const car = carimbosFotos(), mes = mesDeDados(mesDados), conflitos = [];
+    Object.keys(car).forEach(h => { if (car[h][0] === mes) delete car[h]; });
+    fotos.forEach(f => {
+      if (f.status !== 'comprovada' || !f.hash || !f.lojaAuditada || !f.dataHora) return;
+      const k = chaveVisita(f), c = car[f.hash];
+      if (c && c[1] !== k) {
+        conflitos.push({ arquivo: f.arquivoOrigem || '?', pagina: f.pagina, antes: c[1].split('_').slice(1).join(' · ').replace(/_/g, ' '), agora: k.split('_').slice(1).join(' · ') });
+        if (!f.revisaoManual) { f.status = 'duplicata'; f.motivoGap = 'Esta foto já foi usada como prova de outra visita (' + c[1].split('_').slice(1).join(' › ') + '). Uma foto só comprova uma visita, para sempre.'; f.lojaAuditada = null; f.redeAuditada = null; }
+      } else if (!c) car[f.hash] = [mes, k];
+    });
+    return conflitos;
+  }
+
+  // ═══ TELA: QUESTÕES EM ABERTO (Auditoria) ═══
+  const questoesAbertas = new Set();
+  function estadoDecisao(aud, id) { return ((aud.decisoes || {})[id] || {}).estado || 'aberta'; }
+  function csvDeQuestao(qs) {
+    let csv = qs.cab.map(csvCampo).join(';') + '\n';
+    qs.rows.forEach(r => { csv += r.map(csvCampo).join(';') + '\n'; });
+    return csv;
+  }
+  function montarQuestoesAbertas(container, aud) {
+    const lista = aud.questoes || [];
+    if (!lista.length) return;
+    const leitura = Modo !== 'local';
+    const dec = aud.decisoes || {};
+    const itens = lista.map(qs => {
+      const d = dec[qs.id] || {}, est = d.estado || 'aberta';
+      const resolvida = est !== 'aberta';
+      const opcoes = qs.opcoes || [['aberta', 'Em aberto'], ['esclarecida', 'Esclarecida / aceita']];
+      const MAX = 25;
+      const corpo = `<p style="font-size:12px;line-height:1.5;margin-bottom:8px;">${qs.resumo}</p>
+        ${qs.valor ? `<p style="font-size:12px;margin-bottom:8px;">Valor potencial: <strong>${formatarMoeda(qs.valor)}</strong> <span style="color:var(--cor-texto-secundario);">(não entra no desconto enquanto não for decidido)</span></p>` : ''}
+        <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#F8F9FA;">${qs.cab.map(c => `<th style="padding:5px;text-align:left;">${esc(c)}</th>`).join('')}</tr></thead>
+        <tbody>${qs.rows.slice(0, MAX).map(r => `<tr style="border-top:1px solid #EEE;">${r.map(c => `<td style="padding:5px;">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+        ${qs.rows.length > MAX ? `<p style="font-size:11px;margin-top:4px;">Mostrando ${MAX} de ${qs.rows.length}. O CSV traz a lista completa.</p>` : ''}
+        ${qs.nota ? `<p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:6px;">${esc(qs.nota)}</p>` : ''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;">
+          <select data-qdec="${qs.id}" ${leitura ? 'disabled' : ''} style="padding:7px;border:1px solid #CCC;border-radius:4px;font-size:12px;max-width:100%;">${opcoes.map(([v, t]) => `<option value="${v}" ${est === v ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+          <button type="button" data-qcsv="${qs.id}" style="padding:7px 10px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:12px;">📥 CSV</button>
+          ${qs.irLojas ? '<button type="button" data-qlojas="1" style="padding:7px 10px;border:1px solid var(--cor-primaria);background:var(--cor-primaria);color:#fff;border-radius:4px;cursor:pointer;font-size:12px;">Abrir Config › Lojas</button>' : ''}
+        </div>
+        <textarea data-qobs="${qs.id}" ${leitura ? 'disabled' : ''} placeholder="Anotação: o que a Pacto/Tarks respondeu, data, quem confirmou" rows="2" style="width:100%;margin-top:8px;padding:8px;border:1px solid #CCC;border-radius:4px;font-size:12px;font-family:inherit;">${esc(d.obs || '')}</textarea>`;
+      return `<details data-qid="${qs.id}" ${questoesAbertas.has(qs.id) ? 'open' : ''} style="border-top:1px solid #E3E6EA;padding:8px 0;">
+        <summary style="cursor:pointer;font-size:13px;"><strong>${esc(qs.titulo)}</strong> · ${nfBR(qs.qtd)}${qs.valor ? ' · até ' + formatarMoeda(qs.valor) : ''}
+          <span style="font-size:11px;font-weight:bold;padding:2px 6px;border-radius:10px;margin-left:4px;background:${resolvida ? '#E8F6EE' : '#FDEDEC'};color:${resolvida ? '#1E8449' : '#C0392B'};">${esc((opcoes.find(o => o[0] === est) || [0, 'Em aberto'])[1].split(' (')[0])}</span></summary>
+        <div style="padding:8px 2px;">${corpo}</div></details>`;
+    }).join('');
+    const abertas = lista.filter(qs => estadoDecisao(aud, qs.id) === 'aberta').length;
+    container.insertAdjacentHTML('beforeend', `<div class="card" id="card-questoes" style="border-left-color:#E67E22;">
+      <h2>🧩 Questões em aberto (${abertas} de ${lista.length})</h2>
+      <p style="font-size:12px;margin-bottom:8px;">Pontos que o sistema <strong>não consegue decidir sozinho</strong> e que dependem de resposta da Pacto ou da Tarks. Nada aqui é acusação: são diferenças entre as planilhas que precisam de explicação. Cada uma pode ser exportada e anotada.</p>
+      ${itens}</div>`);
+    const card = container.querySelector('#card-questoes');
+    card.querySelectorAll('details[data-qid]').forEach(dt => dt.addEventListener('toggle', () => { if (dt.open) questoesAbertas.add(dt.dataset.qid); else questoesAbertas.delete(dt.dataset.qid); }));
+    card.querySelectorAll('[data-qcsv]').forEach(b => b.addEventListener('click', () => {
+      const qs = lista.find(x => x.id === b.dataset.qcsv); baixarCSV(`questao_${qs.id}_${Estado.config.mesAtivo}.csv`, csvDeQuestao(qs));
+    }));
+    card.querySelectorAll('[data-qlojas]').forEach(b => b.addEventListener('click', () => { const nb = document.querySelector('nav button[data-tela="config"]'); if (nb) nb.click(); setTimeout(() => { const c = document.getElementById('card-lojas'); if (c) c.scrollIntoView({ behavior: 'smooth' }); }, 200); }));
+    if (leitura) return;
+    const gravar = (id, campo, valor) => {
+      const m = Estado.meses[Estado.config.mesAtivo]; if (!m) return;
+      m.decisoes = m.decisoes || {}; const d = m.decisoes[id] || (m.decisoes[id] = { estado: 'aberta' });
+      d[campo] = valor; d.em = new Date().toISOString(); if (m.auditoria) m.auditoria.decisoes = m.decisoes;
+      salvarEstado();
+    };
+    card.querySelectorAll('[data-qdec]').forEach(s => s.addEventListener('change', () => {
+      gravar(s.dataset.qdec, 'estado', s.value);
+      if (s.dataset.qdec === 'rel_repetidas') executarAuditoriaSilencioso(); // muda a contagem de registradas na visão por período
+      Visao.cache = null; renderizarAuditoria();
+    }));
+    card.querySelectorAll('[data-qobs]').forEach(t => t.addEventListener('change', () => gravar(t.dataset.qobs, 'obs', t.value)));
+  }
+
+  // ═══ TELA: FIDELIDADE AO PLANO (Auditoria) ═══
+  function chipIndice(v) { return `<span style="display:inline-block;min-width:46px;padding:2px 8px;border-radius:10px;background:${corIndice(v)};color:#fff;font-weight:bold;font-size:12px;text-align:center;">${v == null ? '—' : pctBR(v * 100)}</span>`; }
+  function montarPlanoLojas(container, aud) {
+    const p = aud.planoLojas; if (!p) return;
+    const leitura = Modo !== 'local';
+    const redes = Object.values(p.redes).sort((a, b) => (b.idx || 0) - (a.idx || 0));
+    const linhasRede = redes.map(R => `<tr style="border-top:1px solid #EEE;"><td style="padding:7px;font-weight:bold;">${esc(R.rede)}</td><td style="padding:7px;text-align:center;">${R.lojas}</td>
+      <td style="padding:7px;text-align:center;">${nfBR(Math.round(R.plano))}</td><td style="padding:7px;text-align:center;">${nfBR(R.reg)}</td><td style="padding:7px;text-align:center;">${nfBR(R.comp)}</td><td style="padding:7px;text-align:center;">${chipIndice(R.idx)}</td></tr>`).join('');
+    const parcial = p.diasCob && p.diasCob < p.diasMes;
+    const ctrl = leitura ? '' : `<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;margin:8px 0;">
+      <label>Semanas do mês: <select id="plano-semanas" style="padding:5px;border:1px solid #CCC;border-radius:4px;"><option value="4" ${p.semanas === 4 ? 'selected' : ''}>4</option><option value="5" ${p.semanas === 5 ? 'selected' : ''}>5</option></select></label>
+      <label style="display:flex;gap:5px;align-items:center;"><input type="checkbox" id="plano-prop" ${p.prop ? 'checked' : ''}> Proporcional aos dias que o Relatório cobre (${p.diasCob} de ${p.diasMes})</label></div>`;
+    container.insertAdjacentHTML('beforeend', `<div class="card" id="card-plano">
+      <h2>📐 Fidelidade ao plano de visitas</h2>
+      <p style="font-size:12px;margin-bottom:6px;">Índice = visitas <strong>registradas</strong> no mês ÷ plano do mês (visitas por semana da loja × ${p.semanas} semanas). A cor vai de vermelho (muito abaixo) a verde (100%) e volta a vermelho acima de 120%. As comprovadas aparecem ao lado.</p>
+      ${ctrl}
+      <div style="display:flex;align-items:center;gap:12px;margin:8px 0;"><div style="font-size:11px;color:var(--cor-texto-secundario);">Índice geral</div>${chipIndice(p.total.idx)}
+        <div style="font-size:11px;color:var(--cor-texto-secundario);">${nfBR(p.total.reg)} registradas de ${nfBR(Math.round(p.total.plano))} planejadas em ${nfBR(p.total.lojas)} lojas identificadas</div></div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:7px;text-align:left;">Rede</th><th style="padding:7px;">Lojas</th><th style="padding:7px;">Plano</th><th style="padding:7px;">Registr.</th><th style="padding:7px;">Comprov.</th><th style="padding:7px;">Índice</th></tr></thead><tbody>${linhasRede}</tbody></table></div>
+      ${parcial && !p.prop ? `<p style="font-size:11px;margin-top:8px;color:#C0392B;">⚠️ O Relatório de Tempo cobre só ${p.diasCob} dos ${p.diasMes} dias do mês: os índices abaixo de 100% estão subestimados. Marque "Proporcional" para ver o índice ajustado, ou importe o Relatório do mês inteiro.</p>` : ''}
+      ${p.pendentes ? `<p style="font-size:11px;margin-top:6px;color:#C0392B;">⚠️ ${p.pendentes} loja(s) sem identificação ou sem frequência ficaram fora do índice. Resolva em Config › Lojas.</p>` : ''}
+      ${p.semPlano.length ? `<p style="font-size:11px;margin-top:6px;">${p.semPlano.length} loja(s) com visitas registradas não têm plano definido (${nfBR(p.semPlano.reduce((a, x) => a + x.reg, 0))} visitas): informe as visitas por semana em Config › Lojas.</p>` : ''}
+    </div>`);
+    const MAX = 100, nomeL = l => `${esc(l.redeOriginal || l.rede)} › ${esc(l.loja)}`;
+    const linhaLoja = l => `<tr style="border-top:1px solid #EEE;"><td style="padding:6px;">${nomeL(l)}</td><td style="padding:6px;text-align:center;">${nfBR(Math.round(l.planoEf * 10) / 10)}</td><td style="padding:6px;text-align:center;">${l.reg}</td><td style="padding:6px;text-align:center;">${chipIndice(l.planoEf ? l.reg / l.planoEf : null)}</td><td style="padding:6px;text-align:center;">${l.comp}</td><td style="padding:6px;text-align:center;color:var(--cor-perigo);font-weight:bold;">${l.reg - l.comp}</td></tr>`;
+    const cabLoja = '<thead><tr style="background:#F8F9FA;"><th style="padding:6px;text-align:left;">Rede › Loja</th><th style="padding:6px;">Plano</th><th style="padding:6px;">Registr.</th><th style="padding:6px;">Índice</th><th style="padding:6px;">Comprov.</th><th style="padding:6px;">Sem foto</th></tr></thead>';
+    container.insertAdjacentHTML('beforeend', `<div class="card" id="card-excesso" style="border-left-color:#E74C3C;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><h2 style="margin:0;">🔺 Lojas com excesso de visitas (${p.excesso.length})</h2>
+        <button type="button" id="btn-csv-excesso" style="padding:7px 10px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:12px;">📥 CSV</button></div>
+      <p style="font-size:12px;margin:8px 0;">Lojas com mais de <strong>${Math.round(p.limite * 100)}%</strong> do plano em visitas registradas no mês. Visita fora do dia combinado não é problema; passar do combinado é. "Sem foto" = registradas − comprovadas.</p>
+      ${p.excesso.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">${cabLoja}<tbody>${p.excesso.slice(0, MAX).map(linhaLoja).join('')}</tbody></table></div>${p.excesso.length > MAX ? `<p style="font-size:11px;">Mostrando ${MAX} de ${p.excesso.length}. O CSV traz todas.</p>` : ''}` : '<p style="font-size:12px;color:#27AE60;">Nenhuma loja acima do limite.</p>'}
+    </div>
+    <div class="card" id="card-abaixo"><details><summary style="cursor:pointer;font-weight:bold;font-size:14px;color:var(--cor-primaria);">🔻 Lojas abaixo do plano (${p.abaixo.length}) — informativo</summary>
+      <p style="font-size:12px;margin:8px 0;">Lojas com menos visitas registradas do que o plano do mês. ${parcial && !p.prop ? '<strong style="color:#C0392B;">Atenção: o Relatório de Tempo não cobre o mês inteiro, então esta lista está exagerada.</strong>' : 'Não gera desconto; serve para cobrar a Pacto sobre o que não foi atendido.'}</p>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">${cabLoja}<tbody>${p.abaixo.slice(0, MAX).map(linhaLoja).join('')}</tbody></table></div>${p.abaixo.length > MAX ? `<p style="font-size:11px;">Mostrando ${MAX} de ${p.abaixo.length}.</p>` : ''}</details></div>`);
+    const csvLojas = lista => { let csv = 'Rede;Loja na Pacto;Loja no Plano;Plano do mês;Registradas;Índice;Comprovadas;Sem foto\n'; lista.forEach(l => { csv += [csvCampo(l.redeOriginal || l.rede), csvCampo(l.loja), csvCampo(l.nomePlano), String(Math.round(l.planoEf * 10) / 10).replace('.', ','), l.reg, l.planoEf ? Math.round(l.reg / l.planoEf * 100) + '%' : '', l.comp, l.reg - l.comp].join(';') + '\n'; }); return csv; };
+    document.getElementById('btn-csv-excesso').addEventListener('click', () => baixarCSV(`excesso_${Estado.config.mesAtivo}.csv`, csvLojas(p.excesso)));
+    if (!leitura) {
+      const mudou = () => { const m = Estado.meses[Estado.config.mesAtivo]; m.planoCfg = { semanas: +document.getElementById('plano-semanas').value, proporcional: document.getElementById('plano-prop').checked }; salvarEstado(); executarAuditoriaSilencioso(); renderizarAuditoria(); };
+      document.getElementById('plano-semanas').addEventListener('change', mudou);
+      document.getElementById('plano-prop').addEventListener('change', mudou);
+    }
+  }
+
+  // ═══ TELA: LOJAS (Config) ═══
+  const filtroLojas = { sit: 'pendentes', rede: '', busca: '' };
+  function lojasDoMes() { const m = Estado.meses[Estado.config.mesAtivo]; return m && (m.lojas || []).length ? construirLojas(m) : null; }
+  function htmlCardLojas() {
+    return '<div class="card" id="card-lojas"></div>';
+  }
+  function recalcularAposRegistro() {
+    const m = Estado.meses[Estado.config.mesAtivo];
+    salvarEstado();
+    if (m && m.auditoria) executarAuditoriaSilencioso();
+  }
+  function renderizarCardLojas() {
+    const card = document.getElementById('card-lojas'); if (!card) return;
+    const m = Estado.meses[Estado.config.mesAtivo];
+    if (!m || !(m.lojas || []).length) {
+      card.innerHTML = `<h2>Lojas</h2><p style="font-size:13px;">Importe o Plano de Visitas e o Relatório de Tempo do mês (Admin) para ligar as lojas do Plano às lojas da Pacto.</p>`; return;
+    }
+    const L = construirLojas(m);
+    if (!L.temRelatorio) { card.innerHTML = `<h2>Lojas</h2><p style="font-size:13px;">Importe também o Relatório de Tempo: é dele que vêm os nomes das lojas da Pacto.</p>`; return; }
+    const todas = L.linhas, pend = todas.filter(ehPendenteLoja);
+    const cont = f => todas.filter(f).length;
+    const redesOp = [...new Set(todas.map(x => x.rede))].sort();
+    const filtros = {
+      pendentes: x => ehPendenteLoja(x), sugerida: x => x.sit === 'sugerida', conferir: x => x.sit === 'conferir', sem_par: x => x.sit === 'sem_par',
+      pacto: x => x.tipo === 'pacto', semfreq: x => x.sit !== 'inativa' && x.vis == null, inativa: x => x.sit === 'inativa', todas: () => true
+    };
+    const rotF = { pendentes: 'Pendentes', sugerida: 'Sugeridas (provável)', conferir: 'Conferir', sem_par: 'Sem par', pacto: 'Pacto sem Plano', semfreq: 'Sem frequência', inativa: 'Inativas', todas: 'Todas' };
+    const bus = chaveCompacta(filtroLojas.busca);
+    const vis = todas.filter(x => filtros[filtroLojas.sit](x) && (!filtroLojas.rede || x.rede === filtroLojas.rede) && (!bus || chaveCompacta(x.nomePlano + x.nomePacto).includes(bus)));
+    const MAX = 120;
+    const linhasHtml = vis.slice(0, MAX).map(x => {
+      const idx = todas.indexOf(x), P = Object.values((L.pacto[x.rede] || { lojas: {} }).lojas).sort((a, b) => a.nome.localeCompare(b.nome));
+      const visInp = `<input type="number" min="0" max="7" step="1" data-lvis="${idx}" value="${x.vis == null ? '' : x.vis}" placeholder="?" style="width:48px;padding:5px;border:1px solid ${x.vis == null ? '#E74C3C' : '#CCC'};border-radius:4px;text-align:center;">`;
+      const nota = x.visFonte === 'diaria' ? '<br><span style="color:#E67E22;font-size:10px;">"Diária" = 6 (confirmar)</span>' : x.visFonte === 'manual' ? '<br><span style="color:#2980B9;font-size:10px;">informada</span>' : '';
+      let escolha;
+      if (x.tipo === 'plano') {
+        escolha = `<select data-lsel="${idx}" style="padding:5px;border:1px solid #CCC;border-radius:4px;max-width:200px;font-size:11px;"><option value="">— escolher loja da Pacto —</option>
+          ${P.map(p => `<option value="${esc(p.nome)}" ${x.nomePacto && chaveCompacta(x.nomePacto) === p.c ? 'selected' : ''}>${esc(p.nome)}</option>`).join('')}</select>
+          ${x.sug && !x.nomePacto ? `<br><span style="font-size:10px;color:#E67E22;">${x.sug.origem === 'glossário' ? 'Glossário' : 'Parecido ' + Math.round(x.sug.sc * 100) + '%'}: <strong>${esc(x.sug.nome)}</strong></span> <button type="button" data-lacc="${idx}" style="padding:2px 6px;border:1px solid #27AE60;background:transparent;color:#27AE60;border-radius:4px;cursor:pointer;font-size:10px;">aceitar</button>` : ''}
+          ${!x.sug && !x.nomePacto && x.cand.length ? `<br><span style="font-size:10px;color:var(--cor-texto-secundario);">Mais parecidas: ${x.cand.map(c => esc(c.nome)).join(' · ')}</span>` : ''}`;
+      } else escolha = `<span style="font-size:11px;">${x.visPacto} visitas em ${x.dias} dia(s)${x.promotor ? ' · ' + esc(x.promotor) : ''}</span>`;
+      return `<tr style="border-top:1px solid #EEE;vertical-align:top;">
+        <td style="padding:6px;font-size:11px;">${esc(x.redeNome)}</td>
+        <td style="padding:6px;font-size:12px;">${x.tipo === 'plano' ? `<strong>${esc(x.nomePlano)}</strong><br><span style="font-size:10px;color:var(--cor-texto-secundario);">${esc(x.promotor || '')}${x.freqTxt ? ' · ' + esc(x.freqTxt) : ''}${x.oculta ? ' · oculta' : ''}</span>` : `<strong>${esc(x.nomePacto)}</strong><br><span style="font-size:10px;color:#E74C3C;">só na Pacto</span>`}</td>
+        <td style="padding:6px;text-align:center;">${visInp}${nota}</td>
+        <td style="padding:6px;">${escolha}</td>
+        <td style="padding:6px;font-size:11px;font-weight:bold;color:${COR_SIT_LOJA[x.sit]};">${esc(ROTULO_SIT_LOJA[x.sit] || x.sit)}<br><label style="font-weight:normal;font-size:10px;color:var(--cor-texto-secundario);"><input type="checkbox" data-linat="${idx}" ${x.sit === 'inativa' ? 'checked' : ''}> sem visita no mês</label></td></tr>`;
+    }).join('');
+    card.innerHTML = `<h2>Lojas</h2>
+      <p style="font-size:12px;margin-bottom:8px;">O Plano e a Pacto escrevem o nome das lojas de jeitos diferentes. Aqui cada loja do Plano é ligada à loja da Pacto (a do Relatório de Tempo e dos Books), e cada loja ganha suas <strong>visitas por semana</strong> (a frequência é definida pela Tarks). Isso vale para todos os meses e entra no backup.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;">
+        <span style="padding:4px 8px;background:#E8F6EE;border-radius:10px;">Total: <strong>${todas.length}</strong></span>
+        <span style="padding:4px 8px;background:${pend.length ? '#FDEDEC' : '#E8F6EE'};border-radius:10px;">Pendentes: <strong>${pend.length}</strong></span>
+        <span style="padding:4px 8px;background:#F3F5F7;border-radius:10px;">Pacto sem Plano: <strong>${cont(filtros.pacto)}</strong></span>
+        <span style="padding:4px 8px;background:#F3F5F7;border-radius:10px;">Sem frequência: <strong>${cont(filtros.semfreq)}</strong></span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+        <select id="lj-filtro" style="padding:7px;border:1px solid #CCC;border-radius:4px;font-size:12px;">${Object.keys(rotF).map(k => `<option value="${k}" ${filtroLojas.sit === k ? 'selected' : ''}>${rotF[k]} (${cont(filtros[k])})</option>`).join('')}</select>
+        <select id="lj-rede" style="padding:7px;border:1px solid #CCC;border-radius:4px;font-size:12px;"><option value="">Todas as redes</option>${redesOp.map(r => `<option value="${esc(r)}" ${filtroLojas.rede === r ? 'selected' : ''}>${esc((todas.find(x => x.rede === r) || {}).redeNome || r)}</option>`).join('')}</select>
+        <input id="lj-busca" placeholder="Buscar loja" value="${esc(filtroLojas.busca)}" style="padding:7px;border:1px solid #CCC;border-radius:4px;font-size:12px;flex:1;min-width:110px;"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <button type="button" id="lj-aceitar-todas" style="padding:8px 10px;border:1px solid #27AE60;background:transparent;color:#27AE60;border-radius:4px;cursor:pointer;font-size:12px;">✔ Aceitar todas as sugeridas (${cont(filtros.sugerida)})</button>
+        <button type="button" id="lj-exportar" style="padding:8px 10px;border:1px solid var(--cor-primaria);background:var(--cor-primaria);color:#fff;border-radius:4px;cursor:pointer;font-size:12px;">📤 Exportar pendências para a agência</button>
+        <button type="button" id="lj-importar" style="padding:8px 10px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:12px;">📥 Importar planilha preenchida</button>
+        <input type="file" id="lj-arquivo" accept=".xlsx,.xls,.csv" style="display:none;"></div>
+      <div id="lj-msg" style="font-size:12px;margin-bottom:8px;"></div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#F8F9FA;font-size:11px;"><th style="padding:6px;text-align:left;">Rede</th><th style="padding:6px;text-align:left;">Loja no Plano</th><th style="padding:6px;">Vis./semana</th><th style="padding:6px;text-align:left;">Loja na Pacto</th><th style="padding:6px;text-align:left;">Situação</th></tr></thead>
+      <tbody>${linhasHtml || '<tr><td colspan="5" style="padding:12px;font-size:12px;">Nenhuma loja neste filtro.</td></tr>'}</tbody></table></div>
+      ${vis.length > MAX ? `<p style="font-size:11px;margin-top:6px;">Mostrando ${MAX} de ${vis.length}. Use os filtros ou a busca.</p>` : ''}`;
+    ligarCardLojas(card, L, vis);
+  }
+  function ligarCardLojas(card, L, vis) {
+    const todas = L.linhas, reg = regLojas();
+    const por = idx => todas[+idx];
+    const gravar = (x, campos) => { const r = reg[x.key] || (reg[x.key] = {}); Object.assign(r, campos, { em: new Date().toISOString() }); recalcularAposRegistro(); renderizarCardLojas(); };
+    card.querySelector('#lj-filtro').addEventListener('change', e => { filtroLojas.sit = e.target.value; renderizarCardLojas(); });
+    card.querySelector('#lj-rede').addEventListener('change', e => { filtroLojas.rede = e.target.value; renderizarCardLojas(); });
+    card.querySelector('#lj-busca').addEventListener('change', e => { filtroLojas.busca = e.target.value; renderizarCardLojas(); });
+    card.querySelectorAll('[data-lvis]').forEach(i => i.addEventListener('change', () => { const x = por(i.dataset.lvis); gravar(x, { vis: i.value === '' ? null : Math.max(0, Math.min(7, parseInt(i.value, 10) || 0)) }); }));
+    card.querySelectorAll('[data-lsel]').forEach(s => s.addEventListener('change', () => { const x = por(s.dataset.lsel); gravar(x, s.value ? { nomePacto: s.value, estado: 'confirmada', inativa: false } : { nomePacto: null, estado: null }); }));
+    card.querySelectorAll('[data-lacc]').forEach(b => b.addEventListener('click', () => { const x = por(b.dataset.lacc); gravar(x, { nomePacto: x.sug.nome, estado: 'confirmada', inativa: false }); }));
+    card.querySelectorAll('[data-linat]').forEach(c => c.addEventListener('change', () => { const x = por(c.dataset.linat); gravar(x, { inativa: c.checked }); }));
+    card.querySelector('#lj-aceitar-todas').addEventListener('click', () => {
+      const lista = todas.filter(x => x.tipo === 'plano' && x.sit === 'sugerida' && x.sug);
+      if (!lista.length) return;
+      if (!confirm(`Aceitar as ${lista.length} sugestões marcadas como "provável"?\n\nAs marcadas como "conferir" continuam pendentes para você decidir uma a uma.`)) return;
+      lista.forEach(x => { reg[x.key] = Object.assign(reg[x.key] || {}, { nomePacto: x.sug.nome, estado: 'confirmada', inativa: false, em: new Date().toISOString() }); });
+      recalcularAposRegistro(); renderizarCardLojas();
+    });
+    card.querySelector('#lj-exportar').addEventListener('click', () => exportarPendenciasLojas(L));
+    const arq = card.querySelector('#lj-arquivo');
+    card.querySelector('#lj-importar').addEventListener('click', () => arq.click());
+    arq.addEventListener('change', () => { const f = arq.files[0]; if (f) importarPlanilhaLojas(f, L); arq.value = ''; });
+  }
+
+  // Exporta as pendências para a agência preencher (xlsx) — a agência só preenche "LOJA NA PACTO"
+  function exportarPendenciasLojas(L) {
+    const mes = Estado.config.mesAtivo;
+    const pl = L.linhas.filter(x => x.tipo === 'plano' && ehPendenteLoja(x));
+    const pa = L.linhas.filter(x => x.tipo === 'pacto' && x.sit === 'pendente');
+    const sheetA = [['CHAVE', 'REDE', 'LOJA NO PLANO', 'PROMOTOR NO PLANO', 'FREQUÊNCIA LIDA', 'SUGESTÃO DO SISTEMA', 'OUTRAS PARECIDAS', 'LOJA NA PACTO (PREENCHER)', 'OBSERVAÇÃO (PREENCHER)']]
+      .concat(pl.map(x => [x.key, x.redeNome, x.nomePlano, x.promotor, x.freqTxt, x.sug ? x.sug.nome : '', x.cand.map(c => c.nome).join(' | '), '', '']));
+    const sheetB = [['CHAVE', 'REDE', 'LOJA NA PACTO', 'DIAS COM VISITA', 'PROMOTOR PRINCIPAL', 'LOJA NO PLANO (PREENCHER)', 'OBSERVAÇÃO (PREENCHER)']]
+      .concat(pa.map(x => [x.key, x.redeNome, x.nomePacto, x.dias, x.promotor, '', '']));
+    const ajuda = [['Como preencher'], [''],
+      ['Aba "Lojas do Plano": para cada linha, escreva em LOJA NA PACTO o nome EXATO da loja como aparece no Relatório de Tempo/Book da Pacto. Se a loja não foi visitada em ' + mes + ', escreva INATIVA.'],
+      ['Aba "Pacto sem Plano": são lojas que a Pacto visitou e não achamos no Plano. Em LOJA NO PLANO escreva o nome da loja correspondente no Plano, se for uma das lojas da aba anterior.'],
+      ['Não altere a coluna CHAVE. Não preencha a frequência (visitas por semana): quem define é a Tarks.']];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ajuda), 'Como preencher');
+    const wsA = XLSX.utils.aoa_to_sheet(sheetA); wsA['!cols'] = [{ hidden: true }, { wch: 18 }, { wch: 34 }, { wch: 20 }, { wch: 18 }, { wch: 30 }, { wch: 40 }, { wch: 36 }, { wch: 30 }];
+    XLSX.utils.book_append_sheet(wb, wsA, 'Lojas do Plano');
+    const wsB = XLSX.utils.aoa_to_sheet(sheetB); wsB['!cols'] = [{ hidden: true }, { wch: 18 }, { wch: 34 }, { wch: 12 }, { wch: 26 }, { wch: 36 }, { wch: 30 }];
+    XLSX.utils.book_append_sheet(wb, wsB, 'Pacto sem Plano');
+    XLSX.writeFile(wb, `lojas_pendentes_${mes}.xlsx`);
+    const msg = document.getElementById('lj-msg'); if (msg) msg.innerHTML = `<span style="color:#27AE60;">✅ Exportado: ${pl.length} lojas do Plano e ${pa.length} lojas só na Pacto.</span>`;
+  }
+
+  // Importa a planilha devolvida: só aceita nomes que existem no Relatório de Tempo da rede
+  async function importarPlanilhaLojas(file, L) {
+    const msg = document.getElementById('lj-msg');
+    try {
+      const wb = await lerArquivoComoWorkbook(file, {});
+      const reg = regLojas(), ok = [], rej = [];
+      const norm = t => normalizarTexto(t).replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+      wb.SheetNames.forEach(nome => {
+        const linhas = XLSX.utils.sheet_to_json(wb.Sheets[nome], { header: 1, defval: '' });
+        const cab = (linhas[0] || []).map(norm);
+        const cChave = cab.indexOf('CHAVE'); if (cChave < 0) return;
+        const cPacto = cab.findIndex(c => c.startsWith('LOJA NA PACTO') && c.includes('PREENCHER'));
+        const cPlano = cab.findIndex(c => c.startsWith('LOJA NO PLANO') && c.includes('PREENCHER'));
+        const cObs = cab.findIndex(c => c.startsWith('OBSERVACAO'));
+        for (let i = 1; i < linhas.length; i++) {
+          const l = linhas[i], chave = String(l[cChave] || '').trim(); if (!chave) continue;
+          const rede = chave.split('|')[0], P = (L.pacto[rede] || { lojas: {} }).lojas;
+          const obs = cObs >= 0 ? String(l[cObs] || '').trim() : '';
+          if (cPacto >= 0 && String(l[cPacto] || '').trim()) {
+            const v = String(l[cPacto]).trim(), x = L.linhas.find(y => y.tipo === 'plano' && y.key === chave);
+            if (!x) { rej.push(`${nome}, linha ${i + 1}: loja do Plano não encontrada neste mês`); continue; }
+            if (/^(INATIVA|SEM VISITA|NAO VISITADA|NAO VISITOU)$/.test(norm(v))) { reg[chave] = Object.assign(reg[chave] || {}, { inativa: true, obs, estado: 'informada', em: new Date().toISOString() }); ok.push(1); continue; }
+            const alvo = P[chaveCompacta(v)];
+            if (!alvo) { rej.push(`${nome}, linha ${i + 1}: "${v}" não existe no Relatório de Tempo da rede ${x.redeNome}`); continue; }
+            reg[chave] = Object.assign(reg[chave] || {}, { nomePacto: alvo.nome, estado: 'informada', inativa: false, obs, em: new Date().toISOString() }); ok.push(1);
+          } else if (cPlano >= 0 && String(l[cPlano] || '').trim()) {
+            const v = String(l[cPlano]).trim(), pactoNome = String(l[cab.indexOf('LOJA NA PACTO')] || '').trim();
+            const alvoP = Object.values(P).find(p => p.c === chaveCompacta(pactoNome));
+            const plano = L.linhas.find(y => y.tipo === 'plano' && y.rede === rede && chaveCompacta(y.nomePlano) === chaveCompacta(v));
+            if (!alvoP || !plano) { rej.push(`${nome}, linha ${i + 1}: "${v}" não corresponde a uma loja do Plano na rede`); continue; }
+            reg[plano.key] = Object.assign(reg[plano.key] || {}, { nomePacto: alvoP.nome, estado: 'informada', inativa: false, obs, em: new Date().toISOString() }); ok.push(1);
+          }
+        }
+      });
+      recalcularAposRegistro(); renderizarCardLojas();
+      const m2 = document.getElementById('lj-msg');
+      m2.innerHTML = `<span style="color:#27AE60;">✅ ${ok.length} linha(s) aplicada(s) como "informada pela agência".</span>` + (rej.length ? `<br><span style="color:#E74C3C;">❌ ${rej.length} recusada(s):<br>${rej.slice(0, 12).map(esc).join('<br>')}${rej.length > 12 ? '<br>...' : ''}</span>` : '');
+    } catch (e) { if (msg) msg.innerHTML = `<span style="color:#E74C3C;">❌ ${esc(e.message)}</span>`; }
+  }
+
+  // Dashboard: resumo do índice de fidelidade
+  function htmlFidelidadeDash(aud) {
+    const p = aud.planoLojas; if (!p || !p.total || !p.total.plano) return '';
+    const abertas = (aud.questoes || []).filter(q => estadoDecisao(aud, q.id) === 'aberta').length;
+    return `<div class="card"><h2>Fidelidade ao plano</h2>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px;">${chipIndice(p.total.idx)}
+        <div style="font-size:12px;line-height:1.5;"><strong>${nfBR(p.total.reg)}</strong> visitas registradas de <strong>${nfBR(Math.round(p.total.plano))}</strong> planejadas em ${nfBR(p.total.lojas)} lojas.<br>
+        <span style="color:${p.excesso.length ? '#C0392B' : '#27AE60'};">${p.excesso.length} loja(s) acima de ${Math.round(p.limite * 100)}% do plano</span> · ${abertas} questão(ões) em aberto na Auditoria${p.diasCob && p.diasCob < p.diasMes && !p.prop ? ' · <span style="color:#C0392B;">Relatório cobre ' + p.diasCob + ' de ' + p.diasMes + ' dias: índice provisório</span>' : ''}</div></div></div>`;
+  }
+</script>
+<!-- ═══ FIM SUBBLOCO 06B ═══ -->
   <!-- ═══ SUBBLOCO 07 — ADMIN COMPLETO + DASHBOARD ═══ -->
 <script>
   // ── FUNÇÕES AUXILIARES ──
@@ -1656,6 +2270,10 @@
     if (naoMap.length) {
       extra += `<p style="font-size: 12px; margin-top: 6px; color: #C0392B;">⚠️ Visitas comprovadas de rede(s) que não existem no Fechamento (ficaram fora dos totais): ${naoMap.map(([r, q]) => esc(r) + ' (' + q + ')').join(', ')}.</p>`;
     }
+    if (aud.fotosReais && (aud.periodos || []).length) {
+      const pi = aud.periodos.map(p => p.inicio).sort()[0], pf = aud.periodos.map(p => p.fim).sort().slice(-1)[0];
+      if (pi < aud.fotosReais.inicio || pf > aud.fotosReais.fim) extra += `<p style="font-size: 12px; margin-top: 6px; color: #C0392B;">⚠️ Os nomes dos Books indicam ${esc(formatarDataBR(pi))} a ${esc(formatarDataBR(pf))}, mas as fotos só existem de <strong>${esc(formatarDataBR(aud.fotosReais.inicio))} a ${esc(formatarDataBR(aud.fotosReais.fim))}</strong> (${aud.fotosReais.dias} dia(s)). A cobertura vale pelas datas reais das fotos.</p>`;
+    }
     const rotMes = `<strong>Mês ${esc(Estado.config.mesAtivo)}</strong> · `;
     const texto = rotMes + (aud.periodoAuditado
       ? `<strong>Visualizando o período:</strong> ${esc(formatarDataBR(aud.periodoAuditado.inicio))} a ${esc(formatarDataBR(aud.periodoAuditado.fim))}. "Registradas" são as visitas do Relatório de Tempo nesses dias (no mês inteiro, vale o Cobrado do Fechamento). Cobrado, desconto e valor auditado referem-se apenas ao período.`
@@ -1716,32 +2334,24 @@
       ${htmlAvisoMesDosDados()}
       ${htmlCardMesAdmin()}
       <div class="card">
-        <h2>1. Importar Fechamento (Excel)</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Planilha de Fechamento PACTO (aba <em>sistematica</em>).</p>
+        <h2>1. Fechamento da Pacto (Excel)</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Planilha de fechamento do mês (aba <em>sistematica</em>): o que a Pacto cobra, por rede.</p>
         <input type="file" id="input-excel" ${travar} accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
         <div id="msg-excel" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
         ${resumoFechamento}
       </div>
-      
-      <div class="card">
-        <h2>2. Importar Plano de Visitas (Excel)</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Planilhas com as abas de cada rede. Pode selecionar vários arquivos de uma vez (TUBAÍNA, CARREFOUR, NAGUMO...).</p>
-        <input type="file" id="input-plano" ${travar} accept=".xlsx, .xls" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
-        <div id="msg-plano" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
-        ${resumoLojas}
-      </div>
 
       <div class="card">
-        <h2>3. Importar Relatório de Tempo (Excel)</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Arquivo "Visitas - Outubro...".</p>
+        <h2>2. Relatório de Tempo da Pacto, todas as redes (Excel)</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Arquivo "Visitas - Outubro...": cada visita que a Pacto registrou (rede, loja, promotor, dia). Quanto mais completo o mês (dia 01 ao último), melhor.</p>
         <input type="file" id="input-tempo" ${travar} accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
         <div id="msg-tempo" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
         ${resumoTempo}
       </div>
 
       <div class="card">
-        <h2>4. Importar PDFs (Fotos)</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Books de prestação de contas. Pode selecionar múltiplos.</p>
+        <h2>3. Books de comprovação (PDF)</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Books com as fotos e as legendas. Pode selecionar vários de uma vez; os que chegarem depois são somados.</p>
         <input type="file" id="input-pdf" ${travar} accept=".pdf" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
         <div id="progresso-pdf" style="display: none; margin-top: 15px;">
           <div style="width: 100%; height: 8px; background: #EAEAEA; border-radius: 4px; overflow: hidden;">
@@ -1754,6 +2364,15 @@
       </div>
       ${htmlCardConferencia(mesDados)}
       ${htmlCardGemeas(mesDados)}
+
+      <div class="card">
+        <h2>4. Plano de Visitas, planilhas por rede (Excel)</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Os arquivos TUBAÍNA, CARREFOUR e NAGUMO (pode selecionar vários). Trazem lojas, promotores, a <strong>frequência</strong> (definida pela Tarks) e os <strong>dias previstos</strong> (preenchidos pela Pacto). A frequência forma o plano de cada loja.</p>
+        <input type="file" id="input-plano" ${travar} accept=".xlsx, .xls" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
+        <div id="msg-plano" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
+        ${resumoLojas}
+        ${temLojas && temTempo ? '<p style="font-size: 12px; margin-top: 10px;">Depois de importar, ligue as lojas do Plano às da Pacto em <strong>Config › Lojas</strong>.</p>' : ''}
+      </div>
 
       <div class="card" style="border-left-color: ${podeAuditar ? 'var(--cor-destaque)' : '#CCC'}; background: ${podeAuditar ? '#FFFDF5' : 'white'};">
         <h2>5. Processar Auditoria</h2>
@@ -1860,7 +2479,7 @@
     const porRede = {};
     Object.entries(a.porRede).forEach(([k, r]) => {
       let de = 0, co = 0;
-      Object.entries(a.porDia).forEach(([dia, redes]) => { if (noP(dia) && redes[k]) { de += redes[k].d; co += redes[k].c; } });
+      Object.entries(a.porDia).forEach(([dia, redes]) => { if (noP(dia) && redes[k]) { de += redes[k].d + (a.decRep === 'contar_linha' ? (redes[k].x || 0) : 0); co += redes[k].c; } });
       const cv = r.custoVisita || 0, gap = de - co;
       porRede[k] = Object.assign({}, r, { planejadas: Math.round((r.semanal || 0) * dias / 7), declaradas: de, comprovadas: co, gap,
         desconto: gap * cv, valorCobrado: de * cv, valorAuditado: co * cv, semFoto: vis.filter(v => v.rede === k && v.statusFinal === 'sem_foto').length });
@@ -2109,6 +2728,8 @@
         </div>
       </div>
 
+      ${htmlFidelidadeDash(aud)}
+
       <div class="card" style="border-left-color: var(--cor-perigo);">
         <h2>📅 Dias com visitas sem comprovação</h2>
         <div style="margin-top:8px;">${htmlDiasSemComprovacao(aud, null)}</div>
@@ -2228,6 +2849,8 @@
       container.querySelectorAll('tr[data-rede]').forEach(tr => {
         tr.addEventListener('click', () => abrirDrillRede(tr.dataset.rede));
       });
+      montarQuestoesAbertas(container, aud);
+      montarPlanoLojas(container, aud);
       montarListaNaoComprovadas(container, aud);
       montarListaVolume(container, aud);
       montarConferenciaNomes(container, aud);
@@ -2496,7 +3119,9 @@
     const nome = r => (aud.porRede[r] ? aud.porRede[r].rede : r);
     const todas = (aud.visitasAgrupadas || []).filter(v => v.statusFinal !== 'comprovada');
     const cont = st => todas.filter(v => v.statusFinal === st).length;
-    const lista = todas.filter(v => filtroNaoComp === 'todas' || v.statusFinal === filtroNaoComp)
+    const contSF = b => todas.filter(v => v.statusFinal === 'sem_foto' && !!v.semBook === b).length;
+    const casa = v => filtroNaoComp === 'todas' || (filtroNaoComp === 'sf_book' ? v.statusFinal === 'sem_foto' && !v.semBook : filtroNaoComp === 'sf_semBook' ? v.statusFinal === 'sem_foto' && v.semBook : v.statusFinal === filtroNaoComp);
+    const lista = todas.filter(casa)
       .sort((a, b) => a.data.localeCompare(b.data) || (nome(a.rede) + a.loja).localeCompare(nome(b.rede) + b.loja));
     const MAX = 150;
     const opt = (v, t) => `<option value="${v}" ${filtroNaoComp === v ? 'selected' : ''}>${t}</option>`;
@@ -2505,14 +3130,14 @@
         <td style="padding:8px;font-size:12px;">${esc(formatarDataBR(v.data))}</td>
         <td style="padding:8px;font-size:12px;">${esc(nome(v.rede))} › ${esc(v.loja)}</td>
         <td style="padding:8px;font-size:12px;">${esc(v.promotor)}</td>
-        <td style="padding:8px;font-size:11px;font-weight:bold;color:${COR_STATUS[v.statusFinal] || '#E74C3C'};text-transform:uppercase;">${ROTULO_STATUS[v.statusFinal] || esc(v.statusFinal)}</td>
+        <td style="padding:8px;font-size:11px;font-weight:bold;color:${COR_STATUS[v.statusFinal] || '#E74C3C'};text-transform:uppercase;">${ROTULO_STATUS[v.statusFinal] || esc(v.statusFinal)}${v.semBook ? '<br><span style="font-weight:normal;text-transform:none;color:var(--cor-texto-secundario);">dia sem Book</span>' : ''}</td>
       </tr>`).join('');
     container.insertAdjacentHTML('beforeend', `
       <div class="card">
         <h2>🔎 Visitas sem comprovação (${todas.length})</h2>
-        <p style="font-size:12px;margin-bottom:10px;">Toque numa linha para abrir a loja. Sem comprovação no período: <strong>${aud.total.gap}</strong> (as visitas "em revisão" ou "suspeitas" ainda podem virar comprovadas).</p>
+        <p style="font-size:12px;margin-bottom:10px;">A lista traz <strong>todas as visitas registradas no Relatório de Tempo que ainda não têm foto vinculada</strong>. "Dia sem Book" = nenhuma foto importada naquele dia: falta Book, não necessariamente falta de visita. Toque numa linha para abrir a loja. Sem comprovação (cobradas − comprovadas): <strong>${aud.total.gap}</strong>.</p>
         <select id="filtro-nc" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #CCC;border-radius:4px;font-size:14px;">
-          ${opt('todas', 'Todas (' + todas.length + ')')}${opt('sem_foto', 'Sem foto (' + cont('sem_foto') + ')')}${opt('nao_comprovada', 'Não comprovada (' + cont('nao_comprovada') + ')')}${opt('revisao', 'Em revisão (' + cont('revisao') + ')')}
+          ${opt('todas', 'Todas (' + todas.length + ')')}${opt('sf_book', 'Sem foto, dia com Book (' + contSF(false) + ')')}${opt('sf_semBook', 'Sem foto, dia sem Book (' + contSF(true) + ')')}${opt('nao_comprovada', 'Não comprovada (' + cont('nao_comprovada') + ')')}${opt('revisao', 'Em revisão (' + cont('revisao') + ')')}
         </select>
         <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
           <thead><tr style="background:#F8F9FA;border-bottom:2px solid var(--cor-primaria);"><th style="padding:8px;text-align:left;font-size:12px;">Dia</th><th style="padding:8px;text-align:left;font-size:12px;">Rede › Loja</th><th style="padding:8px;text-align:left;font-size:12px;">Promotor</th><th style="padding:8px;text-align:left;font-size:12px;">Status</th></tr></thead>
@@ -2985,7 +3610,7 @@
       auditoria: Object.assign({}, a, {
         visitasAgrupadas: (a.visitasAgrupadas || []).map(v => ({
           promotor: v.promotor, data: v.data, loja: v.loja, rede: v.rede, qtdFotos: v.qtdFotos || 0, statusFinal: v.statusFinal,
-          chave: v.chave, provas: v.provas
+          chave: v.chave, provas: v.provas, semBook: v.semBook
         }))
       }),
       fotos: (m.fotos || []).map(f => ({ id: f.id, pagina: f.pagina, status: f.status })) // só o status: serve para as contagens do Relatório
@@ -3088,7 +3713,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 11) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 12) executarAuditoriaSilencioso();
   }
 
 
