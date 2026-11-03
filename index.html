@@ -1987,6 +1987,10 @@
         </div>`;
       }
     }
+    container.insertAdjacentHTML('afterbegin', quadro);
+  }
+  // Legenda dos números: fica no fim da Auditoria
+  function montarLegenda(container) {
     const linha = (nome, fonte, quer) => `<tr style="border-top:1px solid #EEE;"><td style="padding:5px;font-weight:bold;">${nome}</td><td style="padding:5px;">${fonte}</td><td style="padding:5px;">${quer}</td></tr>`;
     const leg = `<div class="card" id="card-legenda"><details open><summary style="cursor:pointer;font-weight:bold;font-size:14px;color:var(--cor-primaria);">Legenda dos números</summary>
       <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:8px;"><thead><tr style="background:#F8F9FA;"><th style="padding:5px;text-align:left;">Nome na tela</th><th style="padding:5px;text-align:left;">Fonte</th><th style="padding:5px;text-align:left;">O que é</th></tr></thead><tbody>
@@ -1997,7 +2001,7 @@
         ${linha('Comprovadas (Books)', 'Fotos dos Books', 'O que dá para provar com foto')}
       </tbody></table></div>
       <p style="font-size:10px;color:var(--cor-texto-secundario);margin-top:6px;">No Dashboard, "Visitas Realizadas" e "Visitas Cobradas" são o mesmo número do Fechamento: o que a Pacto declara ter feito é também a base do que ela cobra.</p></details></div>`;
-    container.insertAdjacentHTML('afterbegin', quadro + leg);
+    container.insertAdjacentHTML('beforeend', leg);
   }
   function montarPlanoLojas(container, aud) {
     const p = aud.planoLojas; if (!p) return;
@@ -2278,15 +2282,6 @@
   }
 
   // Dashboard: resumo do índice de fidelidade
-  function htmlFidelidadeDash(aud) {
-    const p = aud.planoLojas; if (!p || !p.total || !p.total.plano) return '';
-    const abertas = (aud.questoes || []).filter(q => estadoDecisao(aud, q.id) === 'aberta').length;
-    return `<div class="card"><h2>Fidelidade ao plano</h2>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px;">${chipIndice(p.total.idx)}
-        <div style="font-size:12px;line-height:1.5;"><strong>${nfBR(p.total.reg)}</strong> visitas registradas de <strong>${nfBR(Math.round(p.total.plano))}</strong> planejadas em ${nfBR(p.total.lojas)} lojas.<br>
-        <span style="color:${p.excesso.length ? '#C0392B' : '#27AE60'};">${p.excesso.length} loja(s) acima de ${Math.round(p.limite * 100)}% do plano</span> · ${abertas} questão(ões) em aberto na Auditoria</div></div></div>`;
-  }
-
   // Linhas repetidas do Relatório de Tempo mostradas sob a visita (informativo: não entram em nenhuma contagem)
   function subLinhasRel(v) {
     return Array.from({ length: v.nRel }, (_, i) => `<tr class="sub-rel" style="background:#FAFAFA;"><td colspan="5" style="padding:4px 10px 4px 28px;font-size:11px;color:#777;border-bottom:1px dotted #E5E5E5;">↳ ${v.linRel && v.linRel[i] ? 'linha ' + esc(v.linRel[i]) + ' do Excel' : 'linha do Excel (reimporte o Relatório de Tempo para ver o número)'} · ${esc(v.promotor)} · ${esc(formatarDataBR(v.data))}</td></tr>`).join('');
@@ -2830,8 +2825,6 @@
         </div>
       </div>
 
-      ${htmlFidelidadeDash(aud)}
-
       <div class="card" style="border-left-color: var(--cor-perigo);">
         <h2>📅 Dias com visitas sem comprovação</h2>
         <div style="margin-top:8px;">${htmlDiasSemComprovacao(aud, null)}</div>
@@ -2957,6 +2950,7 @@
       montarListaNaoComprovadas(container, aud);
       montarListaVolume(container, aud);
       montarConferenciaNomes(container, aud);
+      montarLegenda(container);
 
       document.getElementById('btn-exportar-csv').addEventListener('click', () => {
         let csv = "Rede;Planejadas;Cobradas (ou registradas, no período);Comprovadas;Sem comprovação;Cobrado do plano;Comprovado do cobrado;Plano comprovado (comp/plan);Custo Visita;Valor Cobrado;Desconto;Valor Auditado\n";
