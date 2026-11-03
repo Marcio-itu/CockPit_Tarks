@@ -1504,6 +1504,7 @@
     const semEsp = t => String(t || '').replace(/\s+/g, '');
     const nomeNoRelatorio = {}; relatorio.forEach(v => { nomeNoRelatorio[chaveCompacta(v.promotor)] = v.promotor; });
     const porProm = {};
+    const ultDiaRel = relatorio.reduce((m, v) => (v.data && v.data > m ? v.data : m), '');
     fotos.forEach(f => {
       if (!f.dataHora || f.semLegenda || f.status === 'duplicata' || f.status === 'sem_legenda' || f.status === 'fora_periodo') return;
       const pkey = pk(f); if (!pkey) return;
@@ -1518,6 +1519,8 @@
       const lista = P.dias[dk] || (P.dias[dk] = []);
       const alvo = casada ? lista.find(e => e.casada && chaveCompacta(e.loja) === chaveCompacta(lojaTxt)) : null;
       let e = alvo;
+      // etiqueta idêntica à de uma execução já aberta no mesmo dia e rede = mesma execução, mesmo em loja gêmea (I/II)
+      if (!e && !casada) e = lista.find(x => chaveCompacta(x.loja) === chaveCompacta(lojaTxt)) || null;
       if (!e && !casada) {
         // etiqueta sem par (typo): junta à loja parecida do mesmo dia e rede. Lojas já identificadas nunca se juntam por semelhança (ex.: MOGI I e MOGI II)
         const melhor = lista.map(x => ({ x, sc: semelhancaLoja(lojaTxt, x.loja) })).sort((a, b) => b.sc - a.sc)[0];
@@ -1541,7 +1544,7 @@
         const ok = sts.includes('comprovada');
         const foraFech = !porRede[e.redeKey];
         let motivo = null;
-        if (!ok) motivo = sts.includes('revisao') ? 'Loja da etiqueta não confere com as lojas do dia no Relatório de Tempo' : 'Promotor sem visita registrada neste dia no Relatório de Tempo';
+        if (!ok) motivo = sts.includes('revisao') ? 'Loja da etiqueta não confere com as lojas do dia no Relatório de Tempo' : (ultDiaRel && e.dia > ultDiaRel ? 'Dia depois do fim do Relatório de Tempo (' + formatarDataBR(ultDiaRel) + '): ainda não há registro para comparar' : 'Promotor sem visita registrada neste dia no Relatório de Tempo');
         else if (foraFech) motivo = 'Rede não consta no Fechamento';
         const ord = e.fotos.slice().sort((a, b) => (a.dataHora || '').localeCompare(b.dataHora || ''));
         execs.push({ d: e.dia, hora: (ord[0].dataHora.split('T')[1] || ''), rede: porRede[e.redeKey] ? porRede[e.redeKey].rede : (e.redeTxt || e.redeKey), loja: e.loja, n: e.fotos.length,
@@ -1588,7 +1591,7 @@
         totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
         fotosPendentes: fotos.filter(f => f.status === 'revisao').length
       },
-      versaoCalculo: 16,
+      versaoCalculo: 17,
       planoLojas, questoes, decisoes: mesDados.decisoes, decRep, fotosReais, conflitosCarimbo: conflitos.length,
       associacoes,
       volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia, gemeas,
@@ -3779,7 +3782,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 16) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 17) executarAuditoriaSilencioso();
   }
 
 
