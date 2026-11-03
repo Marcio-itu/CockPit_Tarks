@@ -332,7 +332,7 @@
         ['Fechamento (xlsx)', 'Por rede: lojas cobradas, visitas por semana, visitas cobradas no mês, valor cobrado.', 'É a <strong>base oficial</strong> de planejadas, cobradas e custo da visita.'],
         ['Relatório de Tempo (xlsx)', 'Cada visita registrada pela Pacto: promotor, rede, loja, dia.', 'Dá o "par" de cada foto (promotor + dia + loja). Visitas repetidas (mesmo promotor, dia e loja) contam uma vez.'],
         ['Books (PDF)', 'As fotos, com legenda impressa no rodapé: data/hora, promotor, rede e loja.', 'São a <strong>prova</strong>. Cada página é uma foto; só capa e contracapa devem ser ignoradas.'],
-        ['Plano de Visitas (3 xlsx: Tubaína, Carrefour, Nagumo)', 'Por rede: lojas, promotor, a <strong>frequência</strong> (ex.: "SEG, QUART E SEXT"; definida pela Tarks) e, em cada dia, uma marca <strong>x</strong>, <strong>giro</strong> ou <strong>foto+giro</strong> (dia previsto, preenchido pela Pacto).', 'A frequência vira o <strong>plano de cada loja</strong> (visitas por semana × semanas do mês) e alimenta o índice de fidelidade. As marcas são guardadas e conferidas contra o Fechamento (Questões em aberto), mas não entram em nenhuma conta.']
+        ['Plano de Visitas (3 xlsx: Tubaína, Carrefour, Nagumo)', 'Por rede: lojas, promotor, e o calendário do mês, com uma marca em cada dia de visita. O <strong>total do mês</strong> está escrito na própria planilha (linha TOTAL).', 'O total do mês de cada loja é o <strong>Plano da Rede</strong> e alimenta o índice de fidelidade. O texto da frequência (ex.: "SEG, QUART E SEXT") não é lido.']
       ]) + '<p>Ao importar, o sistema compara o mês do arquivo com o mês ativo e pede confirmação se forem diferentes.</p>')}
 
       ${sec('4. Como uma visita é comprovada', `
@@ -363,7 +363,7 @@
         ['Sem comprovação', 'Cobradas − comprovadas. Inclui as sem registro e as visitas com foto ainda em revisão.'],
         ['Desconto', 'Sem comprovação × custo médio da visita da rede (valor cobrado ÷ visitas cobradas).'],
         ['Plano comprovado', 'Comprovadas ÷ planejadas.'],
-        ['Plano da loja', 'Visitas por semana da loja (frequência do Plano; ajustável em Config › Lojas) × semanas do mês (padrão 4; use 5 em mês de cinco semanas). Só conta a loja identificada entre Plano e Pacto.'],
+        ['Plano da loja', 'Total do mês da loja, lido da própria planilha do Plano da Rede (ajustável em Config › Lojas). Só conta a loja identificada entre Plano e Pacto.'],
         ['Índice de fidelidade', 'Visitas registradas no mês ÷ plano do mês. Vermelho abaixo do plano, verde em 100%, de volta ao vermelho acima de 120%. As comprovadas aparecem ao lado.'],
         ['Lojas com excesso', 'Lojas com mais de 120% do plano em visitas registradas no mês. Visita feita fora do dia combinado não é problema; passar da quantidade combinada é.'],
         ['Questões em aberto', 'Diferenças entre planilhas que o sistema não decide sozinho (linhas repetidas, Plano × Fechamento, Cobradas × Registradas, dias sem Relatório ou sem Book...). Cada uma pode ser anotada e exportada para levar à Pacto.'],
@@ -381,7 +381,7 @@
         ['Revisão', 'Fila de fotos que precisam de decisão humana. Cada decisão fica registrada.'],
         ['Relatório', 'Visão consolidada para impressão e exportação.'],
         ['Admin', 'Importação dos arquivos, processamento e publicação (somente operador).'],
-        ['Config', 'Seleção do mês, regras, <strong>Lojas</strong> (ligar o nome do Plano ao da Pacto e definir visitas por semana), publicação, backup e este guia (somente operador).']
+        ['Config', 'Seleção do mês, regras, <strong>Lojas</strong> (ligar o nome do Plano ao da Pacto e informar o plano que faltar), publicação, backup e este guia (somente operador).']
       ]) + '<p><strong>Calendário:</strong> passe o mouse sobre a barra verde do mês (ou toque em "período") para escolher mês inteiro, uma semana ou datas livres. Isso só muda a visualização; a auditoria do mês continua inteira.</p><p><strong>Publicação:</strong> o operador publica o mês; quem acessa sem dados próprios vê só os resultados publicados, em modo leitura. "Ver resultados publicados" fica na barra de abas.</p>')}
 
       ${sec('7. Fragilidades e limites (leia com atenção)', `
@@ -394,7 +394,7 @@
           <li><strong>Books recebidos parcialmente.</strong> O Dashboard mostra a "Cobertura das fotos" (de dd/mm a dd/mm), lida das legendas. Visitas fora dessa janela aparecem como "sem comprovação" só por falta de Book, não por falta de visita.</li>
           <li><strong>Planejadas por semana é aproximação.</strong> O Fechamento só informa o total do mês por rede, sem o dia de cada visita. Em semanas, planejadas = média semanal × dias ÷ 7.</li>
           <li><strong>Plano de Visitas × Fechamento.</strong> Alguns Planos têm linhas ocultas no Excel (a Admin informa quantas). O que vale como planejado é o Fechamento; o número de lojas do Plano e do Fechamento nem sempre bate, e isso é ponto a esclarecer com a agência.</li>
-          <li><strong>As marcas do Plano não entram em conta.</strong> O sistema lê os dias marcados (x, giro, foto+giro), que são os dias previstos de visita, e compara o total com as visitas programadas no Fechamento (Questões em aberto). Em outubro elas cobrem cerca de 38%, e só uma parte pequena coincide com os dias do Relatório de Tempo e das fotos. Precisa ser esclarecido com quem preenche o Plano.</li>
+          <li><strong>O Plano da Rede é o total de cada planilha.</strong> O sistema lê o número da linha TOTAL de cada aba e o de cada loja. Se uma aba vier com erro (#REF!, #VALUE!) ou sem total, aparece em Questões em aberto e a loja sem número fica sem plano até alguém informar.</li>
           <li><strong>Loja sem identificação fica fora do índice.</strong> O Plano e a Pacto escrevem os nomes de jeitos diferentes; enquanto a loja não for ligada em Config › Lojas, ela não entra no plano nem no excesso.</li>
           <li><strong>Linhas repetidas no Relatório de Tempo.</strong> Se a Pacto cobra por linha, repetições são cobranças que nenhuma foto prova; se cobra por loja e dia, não. Está em Questões em aberto até a Pacto responder.</li>
           <li><strong>Nomes diferentes entre arquivos.</strong> Redes e lojas aparecem com grafias diferentes no Fechamento, no Plano e no Relatório. O sistema normaliza o que consegue; o resto aparece como "rede não consta" ou "livre".</li>
@@ -734,16 +734,25 @@
         if (achada) { rede = achada; redeOriginal = achada; }
       }
   
-      // Colunas dos dias: a linha de cabeçalho (ou acima dela) com várias datas. Cada dia vira uma coluna.
-      const colsDia = {};
-      for (let i = 0, melhorQtd = 0; i <= melhor.linha; i++) {
-        const cand = {};
-        (linhas[i] || []).forEach((cel, c) => {
-          const ehData = cel instanceof Date || (typeof cel === 'number' && cel > 40000 && cel < 60000);
-          if (ehData) { const iso = formatarDataISO(cel); if (iso) cand[c] = iso; }
-        });
-        const q = Object.keys(cand).length;
-        if (q >= 10 && q > melhorQtd) { melhorQtd = q; Object.keys(colsDia).forEach(k => delete colsDia[k]); Object.assign(colsDia, cand); }
+      // Plano da Rede = total do mês escrito na própria planilha: na linha "TOTAL" (de baixo para cima), o primeiro número à sua direita
+      // (ex.: =SUM(AP3:AP63)). Se não houver total legível, vale a coluna "MÊS" de maior soma.
+      const numCel = (i, c) => { const cel = wsPlano[XLSX.utils.encode_cell({ r: i + deslocLinha, c })]; return cel && cel.t === 'n' && typeof cel.v === 'number' ? cel : null; };
+      let colMes = -1, totalAba = null, celTotal = '';
+      for (let i = linhas.length - 1; i > melhor.linha && colMes === -1; i--) {
+        const linha = linhas[i] || [];
+        for (let c = 0; c < linha.length && colMes === -1; c++) {
+          if (!normalizarTexto(linha[c]).startsWith('TOTAL')) continue;
+          for (let c2 = c + 1; c2 < linha.length; c2++) { const cel = numCel(i, c2); if (cel) { colMes = c2; totalAba = cel.v; celTotal = XLSX.utils.encode_cell({ r: i + deslocLinha, c: c2 }); break; } }
+        }
+      }
+      if (colMes === -1) {
+        let melhorSoma = -1;
+        for (let c = 0; c < 80; c++) {
+          let ehMes = false; for (let i = 0; i <= melhor.linha; i++) if (normalizarTexto((linhas[i] || [])[c]) === 'MES') ehMes = true;
+          if (!ehMes) continue;
+          let soma = 0; for (let i = melhor.linha + 1; i < linhas.length; i++) { const cel = numCel(i, c); if (cel) soma += cel.v; }
+          if (soma > melhorSoma) { melhorSoma = soma; colMes = c; }
+        }
       }
       for (let i = melhor.linha + 1; i < linhas.length; i++) {
         const linha = linhas[i] || [];
@@ -751,19 +760,15 @@
         if (!nomeLoja || nomeLoja.length < 2) continue;
         const nn = normalizarTexto(nomeLoja);
         if (nn.includes('TOTAL') || nn.includes('NOME DA LOJA')) continue;
-        // Marcas do dia (x, giro, foto+giro): dia previsto de visita. Guardadas, ainda sem uso nas telas.
-        const marcas = {};
-        Object.entries(colsDia).forEach(([c, iso]) => {
-          const v = normalizarTexto(linha[c]).replace(/\s+/g, '').toLowerCase();
-          if (v === 'x' || v === 'giro' || v === 'foto+giro') marcas[iso] = v;
-        });
         const reg = {
           rede, redeOriginal, nomeLoja,
           promotor: String(linha[indices.promotor] || '').trim(),
           diaVisita: String(linha[indices.diaVisita] || '').trim(),
           oculta: !!(linhasXls[i + deslocLinha] && linhasXls[i + deslocLinha].hidden)
         };
-        if (Object.keys(marcas).length) reg.marcas = marcas;
+        const cm = colMes >= 0 ? numCel(i, colMes) : null;
+        reg.abaPlano = nomeAba; reg.totalAba = totalAba; reg.celTotal = celTotal;
+        if (cm) reg.planoMes = cm.v;
         lojasExtraidas.push(reg);
       }
     });
@@ -1574,7 +1579,7 @@
         totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
         fotosPendentes: fotos.filter(f => f.status === 'revisao').length
       },
-      versaoCalculo: 13,
+      versaoCalculo: 14,
       planoLojas, questoes, decisoes: mesDados.decisoes, decRep, fotosReais, conflitosCarimbo: conflitos.length,
       associacoes,
       volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia, gemeas,
@@ -1627,36 +1632,11 @@
   function carimbosFotos() { if (!Estado.carimbos) Estado.carimbos = {}; return Estado.carimbos; }
   const chaveReg = (rede, nome) => rede + '|' + chaveCompacta(nome);
   const chaveRegPacto = (rede, nome) => rede + '|P|' + chaveCompacta(nome);
-  const SEMANAS_PADRAO = 4;
   const LIMITE_EXCESSO = 1.2; // só entra na lista de excesso a loja com mais de 120% do plano
   const diaNum = iso => Math.round(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 86400000);
   const diasDoMesNum = mes => { const [A, M] = mes.split('-').map(Number); return new Date(Date.UTC(A, M, 0)).getUTCDate(); };
   const nfBR = n => Number(n || 0).toLocaleString('pt-BR');
   const pctBR = v => (v == null ? '—' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '%');
-
-  // Frequência escrita no Plano ("SEG, QUART E SEXT") → visitas por semana. "Diária" vira 6 (a confirmar pela Tarks).
-  function lerFrequencia(txt) {
-    const t = normalizarTexto(txt);
-    if (!t) return { n: null, tipo: 'vazia' };
-    if (/DIARIA|TODO DIA|TODOS OS DIAS/.test(t)) return { n: 6, tipo: 'diaria' };
-    const dias = new Set();
-    t.split(/[^A-Z]+/).forEach(p => {
-      if (!p) return;
-      if (p.startsWith('SEG')) dias.add(1);
-      else if (p.startsWith('TER')) dias.add(2);
-      else if (p.startsWith('QUA')) dias.add(3);
-      else if (p.startsWith('QUI')) dias.add(4);
-      else if (p.startsWith('SEX') || p === 'SET') dias.add(5);
-      else if (p.startsWith('SAB')) dias.add(6);
-      else if (p.startsWith('DOM')) dias.add(0);
-      else if (p.length >= 4) { // erro de digitação (ex.: "QIINT", "TEÇA")
-        ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'].forEach((nome, i) => {
-          if (semelhancaTexto(p, nome.slice(0, p.length)) >= 0.75 || semelhancaTexto(p, nome) >= 0.75) dias.add((i + 1) % 7);
-        });
-      }
-    });
-    return dias.size ? { n: dias.size, tipo: 'texto' } : { n: null, tipo: 'ilegivel' };
-  }
 
   // Lojas da Pacto = as do Relatório de Tempo (os nomes dos Books são idênticos)
   function indicePacto(mesDados) {
@@ -1686,12 +1666,11 @@
     const reservadas = new Set();
     const itens = (mesDados.lojas || []).map(l => {
       const rede = chaveRede(l.rede), key = chaveReg(rede, l.nomeLoja), r = reg[key] || {};
-      const f = lerFrequencia(l.diaVisita);
       let vis = null, visFonte = 'falta';
       if (r.vis != null && r.vis !== '') { vis = Number(r.vis); visFonte = 'manual'; }
-      else if (f.n != null) { vis = f.n; visFonte = f.tipo === 'diaria' ? 'diaria' : 'plano'; }
-      const it = { tipo: 'plano', key, rede, redeNome: l.redeOriginal || l.rede, nomePlano: l.nomeLoja, promotor: l.promotor, freqTxt: l.diaVisita,
-        vis, visFonte, oculta: !!l.oculta, marcas: l.marcas || null, reg: r, nomePacto: null, sit: null, sug: null, cand: [] };
+      else if (typeof l.planoMes === 'number') { vis = l.planoMes; visFonte = 'plano'; }
+      const it = { tipo: 'plano', key, rede, redeNome: l.redeOriginal || l.rede, nomePlano: l.nomeLoja, promotor: l.promotor, 
+        vis, visFonte, oculta: !!l.oculta, reg: r, nomePacto: null, sit: null, sug: null, cand: [] };
       const P = (pacto[rede] || { lojas: {} }).lojas;
       if (r.inativa) { it.sit = 'inativa'; return it; }
       if (r.nomePacto && P[chaveCompacta(r.nomePacto)]) {
@@ -1744,8 +1723,6 @@
 
   // Plano por loja × visitas registradas no mês. relatorio = linhas do Relatório; visitas = mapa das visitas com foto (por chave).
   function calcularPlanoLojas(mesDados, relatorio, visitas) {
-    const cfg = mesDados.planoCfg || {};
-    const semanas = Number(cfg.semanas) || SEMANAS_PADRAO;
     const { linhas, temRelatorio } = construirLojas(mesDados);
     // registradas e comprovadas por loja da Pacto
     const reg = {}, vistos = new Set();
@@ -1762,10 +1739,10 @@
     linhas.forEach(it => {
       if (it.sit === 'inativa') return;
       if (it.vis == null) { semFreq++; return; }
-      if (!it.nomePacto) { semIdent++; planoSemLoja += it.vis * semanas; return; }
+      if (!it.nomePacto) { semIdent++; planoSemLoja += it.vis; return; }
       const kl = it.rede + '|' + chaveCompacta(it.nomePacto);
       const e = planoDe[kl] || (planoDe[kl] = { plano: 0, nomesPlano: [] });
-      e.plano += it.vis * semanas; if (it.nomePlano) e.nomesPlano.push(it.nomePlano);
+      e.plano += it.vis; if (it.nomePlano) e.nomesPlano.push(it.nomePlano);
     });
     const lojas = [], semPlano = [];
     Object.entries(reg).forEach(([kl, e]) => {
@@ -1792,7 +1769,7 @@
     const excesso = lojas.filter(l => l.planoEf > 0 && l.reg > l.planoEf * LIMITE_EXCESSO).sort((a, b) => (b.reg / b.planoEf) - (a.reg / a.planoEf));
     const abaixo = lojas.filter(l => l.planoEf > 0 && l.reg < l.planoEf).sort((a, b) => (a.reg / a.planoEf) - (b.reg / b.planoEf));
     const pend = linhas.filter(ehPendenteLoja).length;
-    return { semanas, lojas, excesso, abaixo, redes, total: tot, semPlano, semIdent, semFreq, planoSemLoja, pendentes: pend, temRelatorio, limite: LIMITE_EXCESSO };
+    return { lojas, excesso, abaixo, redes, total: tot, semPlano, semIdent, semFreq, planoSemLoja, pendentes: pend, temRelatorio, limite: LIMITE_EXCESSO };
   }
 
   // ── QUESTÕES EM ABERTO ──
@@ -1840,12 +1817,12 @@
         cab: ['Rede', 'Cobradas (Fechamento)', 'Registradas (Relatório)', '% registrado', 'Situação'], rows: linhasFR });
     }
 
-    // 3) Plano (lojas × visitas/semana × semanas) × Fechamento (programadas)
+    // 3) Plano da Rede (total do mês de cada planilha) × Fechamento (programadas)
     const planoRede = {}, semFreqRede = {};
     construirLojas(mesDados).linhas.forEach(it => {
       if (it.tipo !== 'plano' || it.sit === 'inativa') return;
       if (it.vis == null) { semFreqRede[it.rede] = (semFreqRede[it.rede] || 0) + 1; return; }
-      planoRede[it.rede] = (planoRede[it.rede] || 0) + it.vis * plano.semanas;
+      planoRede[it.rede] = (planoRede[it.rede] || 0) + it.vis;
     });
     const linhasPF = []; let nPF = 0;
     Object.values(porRede).forEach(r => {
@@ -1855,24 +1832,21 @@
       linhasPF.push([r.rede, planoRede[r.chave], r.programadas || 0, dif, semFreqRede[r.chave] || 0, div ? 'diferente' : 'igual']);
     });
     if (nPF) q.push({ id: 'plano_x_fech', titulo: 'Plano de Visitas × Fechamento (visitas programadas)', qtd: nPF, valor: null,
-      resumo: `Plano = lojas × visitas por semana × ${plano.semanas} semanas, lido das planilhas por rede. Programadas = o que a Pacto lançou no Fechamento. Em <strong>${nPF}</strong> rede(s) os números não batem. Pode ser loja a mais ou a menos, frequência diferente do combinado, ou frequência do Plano ilegível (coluna "Lojas sem frequência"). Exemplo conhecido: Mini Preço, 12 no Plano e 16 no Fechamento.`,
-      cab: ['Rede', 'Plano', 'Programadas (Fechamento)', 'Diferença', 'Lojas sem frequência', 'Situação'], rows: linhasPF.sort((a, b) => Math.abs(b[3]) - Math.abs(a[3])) });
+      resumo: `Plano = o total do mês escrito na própria planilha de cada rede (soma dos dias marcados no calendário). Programadas = o que a Pacto lançou no Fechamento. Em <strong>${nPF}</strong> rede(s) os números não batem. Pode ser loja a mais ou a menos, ou calendário incompleto (coluna "Lojas sem plano").`,
+      cab: ['Rede', 'Plano', 'Programadas (Fechamento)', 'Diferença', 'Lojas sem plano', 'Situação'], rows: linhasPF.sort((a, b) => Math.abs(b[3]) - Math.abs(a[3])) });
 
-    // 4) Calendário do Plano (marcas) × programadas
-    const marcasRede = {}; let totMarcas = 0;
+    // 4) Total escrito na planilha do Plano × soma das lojas
+    const abasPl = {};
     (mesDados.lojas || []).forEach(l => {
-      if (!l.marcas) return;
-      const n = Object.keys(l.marcas).filter(d => d.startsWith(mes)).length;
-      const rk = chaveRede(l.rede); marcasRede[rk] = (marcasRede[rk] || 0) + n; totMarcas += n;
+      const k = (l.abaPlano || '') + '|' + l.rede;
+      const A = abasPl[k] || (abasPl[k] = { rede: l.redeOriginal || l.rede, total: l.totalAba != null ? l.totalAba : null, cel: l.celTotal || '', soma: 0, semNum: 0 });
+      if (typeof l.planoMes === 'number') A.soma += l.planoMes; else A.semNum++;
     });
-    const totProg = Object.values(porRede).reduce((a, r) => a + (r.programadas || 0), 0);
-    if (totMarcas && totProg) {
-      const linhasM = Object.values(porRede).filter(r => marcasRede[r.chave] != null).map(r => [r.rede, marcasRede[r.chave], r.programadas || 0, r.programadas ? Math.round(marcasRede[r.chave] / r.programadas * 100) + '%' : '—']);
-      const pc = Math.round(totMarcas / totProg * 100);
-      if (pc < 95) q.push({ id: 'plano_marcas', titulo: 'Calendário do Plano cobre só parte das visitas programadas', qtd: totProg - totMarcas, valor: null,
-        resumo: `As marcas do Plano (x, giro, foto+giro) são os dias previstos de visita: ${nfBR(totMarcas)} marcas no mês, contra ${nfBR(totProg)} visitas programadas no Fechamento (<strong>${pc}%</strong>). A diferença são visitas programadas sem dia marcado no calendário. Pergunta para a Pacto: quando o calendário é preenchido, e por que não cobre todas as visitas?`,
-        cab: ['Rede', 'Marcas no calendário', 'Programadas (Fechamento)', 'Marcas ÷ programadas'], rows: linhasM.sort((a, b) => b[2] - a[2]) });
-    }
+    const linhasT = Object.values(abasPl).filter(A => A.semNum > 0 || A.total == null || A.total !== A.soma)
+      .map(A => [A.rede, A.total != null ? nfBR(A.total) + ' (célula ' + A.cel + ')' : 'não encontrado ou com erro', A.soma, A.semNum, A.total == null ? 'sem total legível na planilha' : A.total !== A.soma ? 'total diferente da soma das lojas' : 'loja(s) sem número']);
+    if (linhasT.length) q.push({ id: 'plano_total', titulo: 'Plano da Rede: total da planilha não confere', qtd: linhasT.length, valor: null,
+      resumo: 'O Plano da Rede de cada rede é o total do mês escrito na própria planilha. Nestas abas o total não bate com a soma das lojas, não foi encontrado, ou há loja sem número no mês (por exemplo, célula com erro). Peça a planilha corrigida; enquanto isso, a loja sem número fica sem plano em Config › Lojas, onde dá para informar o valor.',
+      cab: ['Rede', 'Total na planilha', 'Soma das lojas', 'Lojas sem número', 'Situação'], rows: linhasT });
 
     // 5) Dias dentro do período dos Books (nome do arquivo) sem nenhuma foto, mas com visitas registradas
     const diasFoto = new Set(fotos.filter(f => f.dataHora).map(f => f.dataHora.split('T')[0]));
@@ -1891,7 +1865,7 @@
 
     // 8) Lojas sem identificação
     if (plano.pendentes) q.push({ id: 'lojas_sem_id', titulo: 'Lojas sem identificação entre Plano e Pacto', qtd: plano.pendentes, valor: null,
-      resumo: `<strong>${plano.pendentes}</strong> loja(s) ainda não foram ligadas entre o Plano e a Pacto, ou estão sem frequência. Elas ficam fora do índice de fidelidade. Resolva em <strong>Config › Lojas</strong> (dá para exportar a lista para a agência preencher e importar de volta).`,
+      resumo: `<strong>${plano.pendentes}</strong> loja(s) ainda não foram ligadas entre o Plano e a Pacto, ou estão sem plano. Elas ficam fora do índice de fidelidade. Resolva em <strong>Config › Lojas</strong> (dá para exportar a lista para a agência preencher e importar de volta).`,
       cab: ['Rede', 'Loja no Plano', 'Loja na Pacto', 'Situação'], rows: construirLojas(mesDados).linhas.filter(ehPendenteLoja).map(it => [it.redeNome, it.nomePlano, it.nomePacto || (it.sug ? '(sugestão) ' + it.sug.nome : ''), it.sit]),
       irLojas: true });
     return q;
@@ -1980,21 +1954,17 @@
   function chipIndice(v) { return `<span style="display:inline-block;min-width:46px;padding:2px 8px;border-radius:10px;background:${corIndice(v)};color:#fff;font-weight:bold;font-size:12px;text-align:center;">${v == null ? '—' : pctBR(v * 100)}</span>`; }
   function montarPlanoLojas(container, aud) {
     const p = aud.planoLojas; if (!p) return;
-    const leitura = Modo !== 'local';
     const redes = Object.values(p.redes).sort((a, b) => (b.idx || 0) - (a.idx || 0));
     const linhasRede = redes.map(R => `<tr style="border-top:1px solid #EEE;"><td style="padding:7px;font-weight:bold;">${esc(R.rede)}</td><td style="padding:7px;text-align:center;">${R.lojas}</td>
       <td style="padding:7px;text-align:center;">${nfBR(Math.round(R.plano))}</td><td style="padding:7px;text-align:center;">${nfBR(R.reg)}</td><td style="padding:7px;text-align:center;">${nfBR(R.comp)}</td><td style="padding:7px;text-align:center;">${chipIndice(R.idx)}</td></tr>`).join('');
-    const ctrl = leitura ? '' : `<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;margin:8px 0;">
-      <label>Semanas do mês: <select id="plano-semanas" style="padding:5px;border:1px solid #CCC;border-radius:4px;"><option value="4" ${p.semanas === 4 ? 'selected' : ''}>4</option><option value="5" ${p.semanas === 5 ? 'selected' : ''}>5</option></select></label></div>`;
     container.insertAdjacentHTML('beforeend', `<div class="card" id="card-plano">
       <h2>📐 Fidelidade ao plano de visitas</h2>
-      <p style="font-size:12px;margin-bottom:6px;">Índice = visitas <strong>registradas</strong> no mês ÷ plano do mês (visitas por semana da loja × ${p.semanas} semanas). A cor vai de vermelho (muito abaixo) a verde (100%) e volta a vermelho acima de 120%. As comprovadas aparecem ao lado.</p>
-      ${ctrl}
+      <p style="font-size:12px;margin-bottom:6px;">Índice = visitas <strong>registradas</strong> no mês ÷ Plano da Rede (o total do mês de cada planilha, por loja). A cor vai de vermelho (muito abaixo) a verde (100%) e volta a vermelho acima de 120%. As comprovadas aparecem ao lado.</p>
       <div style="display:flex;align-items:center;gap:12px;margin:8px 0;"><div style="font-size:11px;color:var(--cor-texto-secundario);">Índice geral</div>${chipIndice(p.total.idx)}
         <div style="font-size:11px;color:var(--cor-texto-secundario);">${nfBR(p.total.reg)} registradas de ${nfBR(Math.round(p.total.plano))} planejadas em ${nfBR(p.total.lojas)} lojas identificadas</div></div>
       <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:7px;text-align:left;">Rede</th><th style="padding:7px;">Lojas</th><th style="padding:7px;">Plano</th><th style="padding:7px;">Registr.</th><th style="padding:7px;">Comprov.</th><th style="padding:7px;">Índice</th></tr></thead><tbody>${linhasRede}</tbody></table></div>
-      ${p.pendentes ? `<p style="font-size:11px;margin-top:6px;color:#C0392B;">⚠️ ${p.pendentes} loja(s) sem identificação ou sem frequência ficaram fora do índice. Resolva em Config › Lojas.</p>` : ''}
-      ${p.semPlano.length ? `<p style="font-size:11px;margin-top:6px;">${p.semPlano.length} loja(s) com visitas registradas não têm plano definido (${nfBR(p.semPlano.reduce((a, x) => a + x.reg, 0))} visitas): informe as visitas por semana em Config › Lojas.</p>` : ''}
+      ${p.pendentes ? `<p style="font-size:11px;margin-top:6px;color:#C0392B;">⚠️ ${p.pendentes} loja(s) sem identificação ou sem plano ficaram fora do índice. Resolva em Config › Lojas.</p>` : ''}
+      ${p.semPlano.length ? `<p style="font-size:11px;margin-top:6px;">${p.semPlano.length} loja(s) com visitas registradas não têm plano definido (${nfBR(p.semPlano.reduce((a, x) => a + x.reg, 0))} visitas): informe o plano do mês em Config › Lojas.</p>` : ''}
     </div>`);
     const nomeL = l => `${esc(l.redeOriginal || l.rede)} › ${esc(l.loja)}`;
     const linhaLoja = l => `<tr style="border-top:1px solid #EEE;"><td style="padding:6px;">${nomeL(l)}</td><td style="padding:6px;text-align:center;">${nfBR(Math.round(l.planoEf * 10) / 10)}</td><td style="padding:6px;text-align:center;">${l.reg}</td><td style="padding:6px;text-align:center;">${chipIndice(l.planoEf ? l.reg / l.planoEf : null)}</td><td style="padding:6px;text-align:center;">${l.comp}</td><td style="padding:6px;text-align:center;color:var(--cor-perigo);font-weight:bold;">${l.reg - l.comp}</td></tr>`;
@@ -2012,10 +1982,6 @@
     criarListaPaginada(document.getElementById('lst-abx'), cabLoja, (l, i) => linhaLoja(l), { vazio: 'Nenhuma loja abaixo do plano.' }).definir(p.abaixo);
     const csvLojas = lista => { let csv = 'Rede;Loja na Pacto;Loja no Plano;Plano do mês;Registradas;Índice;Comprovadas;Sem foto\n'; lista.forEach(l => { csv += [csvCampo(l.redeOriginal || l.rede), csvCampo(l.loja), csvCampo(l.nomePlano), String(Math.round(l.planoEf * 10) / 10).replace('.', ','), l.reg, l.planoEf ? Math.round(l.reg / l.planoEf * 100) + '%' : '', l.comp, l.reg - l.comp].join(';') + '\n'; }); return csv; };
     document.getElementById('btn-csv-excesso').addEventListener('click', () => baixarCSV(`excesso_${Estado.config.mesAtivo}.csv`, csvLojas(p.excesso)));
-    if (!leitura) {
-      const mudou = () => { const m = Estado.meses[Estado.config.mesAtivo]; m.planoCfg = { semanas: +document.getElementById('plano-semanas').value }; salvarEstado(); executarAuditoriaSilencioso(); renderizarAuditoria(); };
-      document.getElementById('plano-semanas').addEventListener('change', mudou);
-    }
   }
 
   // ═══ TELA: LOJAS (Config) ═══
@@ -2044,15 +2010,15 @@
       pendentes: x => ehPendenteLoja(x), sugerida: x => x.sit === 'sugerida', conferir: x => x.sit === 'conferir', sem_par: x => x.sit === 'sem_par',
       pacto: x => x.tipo === 'pacto', semfreq: x => x.sit !== 'inativa' && x.vis == null, inativa: x => x.sit === 'inativa', todas: () => true
     };
-    const rotF = { pendentes: 'Pendentes', sugerida: 'Sugeridas (provável)', conferir: 'Conferir', sem_par: 'Sem par', pacto: 'Pacto sem Plano', semfreq: 'Sem frequência', inativa: 'Inativas', todas: 'Todas' };
+    const rotF = { pendentes: 'Pendentes', sugerida: 'Sugeridas (provável)', conferir: 'Conferir', sem_par: 'Sem par', pacto: 'Pacto sem Plano', semfreq: 'Sem plano', inativa: 'Inativas', todas: 'Todas' };
     const bus = chaveCompacta(filtroLojas.busca);
     const vis = todas.filter(x => filtros[filtroLojas.sit](x) && (!filtroLojas.rede || x.rede === filtroLojas.rede) && (!bus || chaveCompacta(x.nomePlano + x.nomePacto).includes(bus)));
     filtroLojas.pag = Math.min(filtroLojas.pag, Math.max(1, Math.ceil(vis.length / filtroLojas.tam)));
     const iniPg = (filtroLojas.pag - 1) * filtroLojas.tam;
     const linhasHtml = vis.slice(iniPg, iniPg + filtroLojas.tam).map(x => {
       const idx = todas.indexOf(x), P = Object.values((L.pacto[x.rede] || { lojas: {} }).lojas).sort((a, b) => a.nome.localeCompare(b.nome));
-      const visInp = `<input type="number" min="0" max="7" step="1" data-lvis="${idx}" value="${x.vis == null ? '' : x.vis}" placeholder="?" style="width:48px;padding:5px;border:1px solid ${x.vis == null ? '#E74C3C' : '#CCC'};border-radius:4px;text-align:center;">`;
-      const nota = x.visFonte === 'diaria' ? '<br><span style="color:#E67E22;font-size:10px;">"Diária" = 6 (confirmar)</span>' : x.visFonte === 'manual' ? '<br><span style="color:#2980B9;font-size:10px;">informada</span>' : '';
+      const visInp = `<input type="number" min="0" step="1" data-lvis="${idx}" value="${x.vis == null ? '' : x.vis}" placeholder="?" style="width:48px;padding:5px;border:1px solid ${x.vis == null ? '#E74C3C' : '#CCC'};border-radius:4px;text-align:center;">`;
+      const nota = x.visFonte === 'manual' ? '<br><span style="color:#2980B9;font-size:10px;">informada</span>' : '';
       let escolha;
       if (x.tipo === 'plano') {
         escolha = `<select data-lsel="${idx}" style="padding:5px;border:1px solid #CCC;border-radius:4px;max-width:200px;font-size:11px;"><option value="">— escolher loja da Pacto —</option>
@@ -2068,12 +2034,12 @@
         <td style="padding:6px;font-size:11px;font-weight:bold;color:${COR_SIT_LOJA[x.sit]};">${esc(ROTULO_SIT_LOJA[x.sit] || x.sit)}<br><label style="font-weight:normal;font-size:10px;color:var(--cor-texto-secundario);"><input type="checkbox" data-linat="${idx}" ${x.sit === 'inativa' ? 'checked' : ''}> sem visita no mês</label></td></tr>`;
     }).join('');
     card.innerHTML = `<h2>Lojas</h2>
-      <p style="font-size:12px;margin-bottom:8px;">O Plano e a Pacto escrevem o nome das lojas de jeitos diferentes. Aqui cada loja do Plano é ligada à loja da Pacto (a do Relatório de Tempo e dos Books), e cada loja ganha suas <strong>visitas por semana</strong> (a frequência é definida pela Tarks). Isso vale para todos os meses e entra no backup.</p>
+      <p style="font-size:12px;margin-bottom:8px;">O Plano e a Pacto escrevem o nome das lojas de jeitos diferentes. Aqui cada loja do Plano é ligada à loja da Pacto (a do Relatório de Tempo e dos Books), e cada loja traz o <strong>Plano da Rede</strong> (o total do mês escrito na planilha dela; se faltar, dá para informar aqui). Isso vale para todos os meses e entra no backup.</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;">
         <span style="padding:4px 8px;background:#E8F6EE;border-radius:10px;">Total: <strong>${todas.length}</strong></span>
         <span style="padding:4px 8px;background:${pend.length ? '#FDEDEC' : '#E8F6EE'};border-radius:10px;">Pendentes: <strong>${pend.length}</strong></span>
         <span style="padding:4px 8px;background:#F3F5F7;border-radius:10px;">Pacto sem Plano: <strong>${cont(filtros.pacto)}</strong></span>
-        <span style="padding:4px 8px;background:#F3F5F7;border-radius:10px;">Sem frequência: <strong>${cont(filtros.semfreq)}</strong></span></div>
+        <span style="padding:4px 8px;background:#F3F5F7;border-radius:10px;">Sem plano: <strong>${cont(filtros.semfreq)}</strong></span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
         <select id="lj-filtro" style="padding:7px;border:1px solid #CCC;border-radius:4px;font-size:12px;">${Object.keys(rotF).map(k => `<option value="${k}" ${filtroLojas.sit === k ? 'selected' : ''}>${rotF[k]} (${cont(filtros[k])})</option>`).join('')}</select>
         <select id="lj-rede" style="padding:7px;border:1px solid #CCC;border-radius:4px;font-size:12px;"><option value="">Todas as redes</option>${redesOp.map(r => `<option value="${esc(r)}" ${filtroLojas.rede === r ? 'selected' : ''}>${esc((todas.find(x => x.rede === r) || {}).redeNome || r)}</option>`).join('')}</select>
@@ -2084,7 +2050,7 @@
         <button type="button" id="lj-importar" style="padding:8px 10px;border:1px solid var(--cor-primaria);background:transparent;color:var(--cor-primaria);border-radius:4px;cursor:pointer;font-size:12px;">📥 Importar planilha preenchida</button>
         <input type="file" id="lj-arquivo" accept=".xlsx,.xls,.csv" style="display:none;"></div>
       <div id="lj-msg" style="font-size:12px;margin-bottom:8px;"></div>
-      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#F8F9FA;font-size:11px;"><th style="padding:6px;text-align:left;">Rede</th><th style="padding:6px;text-align:left;">Loja no Plano</th><th style="padding:6px;">Vis./semana</th><th style="padding:6px;text-align:left;">Loja na Pacto</th><th style="padding:6px;text-align:left;">Situação</th></tr></thead>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#F8F9FA;font-size:11px;"><th style="padding:6px;text-align:left;">Rede</th><th style="padding:6px;text-align:left;">Loja no Plano</th><th style="padding:6px;">Plano do mês</th><th style="padding:6px;text-align:left;">Loja na Pacto</th><th style="padding:6px;text-align:left;">Situação</th></tr></thead>
       <tbody>${linhasHtml || '<tr><td colspan="5" style="padding:12px;font-size:12px;">Nenhuma loja neste filtro.</td></tr>'}</tbody></table></div>
       <div id="lj-pag">${vis.length > 25 ? `<p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">${resumoPag(vis.length, filtroLojas.pag, filtroLojas.tam)}</p>${htmlPaginador(vis.length, filtroLojas.pag, filtroLojas.tam)}` : ''}</div>`;
     ligarPaginador(card.querySelector('#lj-pag'), m => { if (m.tam) filtroLojas.tam = m.tam; filtroLojas.pag = m.pag; renderizarCardLojas(); });
@@ -2097,7 +2063,7 @@
     card.querySelector('#lj-filtro').addEventListener('change', e => { filtroLojas.sit = e.target.value; filtroLojas.pag = 1; renderizarCardLojas(); });
     card.querySelector('#lj-rede').addEventListener('change', e => { filtroLojas.rede = e.target.value; filtroLojas.pag = 1; renderizarCardLojas(); });
     card.querySelector('#lj-busca').addEventListener('change', e => { filtroLojas.busca = e.target.value; filtroLojas.pag = 1; renderizarCardLojas(); });
-    card.querySelectorAll('[data-lvis]').forEach(i => i.addEventListener('change', () => { const x = por(i.dataset.lvis); gravar(x, { vis: i.value === '' ? null : Math.max(0, Math.min(7, parseInt(i.value, 10) || 0)) }); }));
+    card.querySelectorAll('[data-lvis]').forEach(i => i.addEventListener('change', () => { const x = por(i.dataset.lvis); gravar(x, { vis: i.value === '' ? null : Math.max(0, parseInt(i.value, 10) || 0) }); }));
     card.querySelectorAll('[data-lsel]').forEach(s => s.addEventListener('change', () => { const x = por(s.dataset.lsel); gravar(x, s.value ? { nomePacto: s.value, estado: 'confirmada', inativa: false } : { nomePacto: null, estado: null }); }));
     card.querySelectorAll('[data-lacc]').forEach(b => b.addEventListener('click', () => { const x = por(b.dataset.lacc); gravar(x, { nomePacto: x.sug.nome, estado: 'confirmada', inativa: false }); }));
     card.querySelectorAll('[data-linat]').forEach(c => c.addEventListener('change', () => { const x = por(c.dataset.linat); gravar(x, { inativa: c.checked }); }));
@@ -2119,14 +2085,14 @@
     const mes = Estado.config.mesAtivo;
     const pl = L.linhas.filter(x => x.tipo === 'plano' && ehPendenteLoja(x));
     const pa = L.linhas.filter(x => x.tipo === 'pacto' && x.sit === 'pendente');
-    const sheetA = [['CHAVE', 'REDE', 'LOJA NO PLANO', 'PROMOTOR NO PLANO', 'FREQUÊNCIA LIDA', 'SUGESTÃO DO SISTEMA', 'OUTRAS PARECIDAS', 'LOJA NA PACTO (PREENCHER)', 'OBSERVAÇÃO (PREENCHER)']]
-      .concat(pl.map(x => [x.key, x.redeNome, x.nomePlano, x.promotor, x.freqTxt, x.sug ? x.sug.nome : '', x.cand.map(c => c.nome).join(' | '), '', '']));
+    const sheetA = [['CHAVE', 'REDE', 'LOJA NO PLANO', 'PROMOTOR NO PLANO', 'PLANO DO MÊS (LIDO)', 'SUGESTÃO DO SISTEMA', 'OUTRAS PARECIDAS', 'LOJA NA PACTO (PREENCHER)', 'OBSERVAÇÃO (PREENCHER)']]
+      .concat(pl.map(x => [x.key, x.redeNome, x.nomePlano, x.promotor, x.vis == null ? '' : x.vis, x.sug ? x.sug.nome : '', x.cand.map(c => c.nome).join(' | '), '', '']));
     const sheetB = [['CHAVE', 'REDE', 'LOJA NA PACTO', 'DIAS COM VISITA', 'PROMOTOR PRINCIPAL', 'LOJA NO PLANO (PREENCHER)', 'OBSERVAÇÃO (PREENCHER)']]
       .concat(pa.map(x => [x.key, x.redeNome, x.nomePacto, x.dias, x.promotor, '', '']));
     const ajuda = [['Como preencher'], [''],
       ['Aba "Lojas do Plano": para cada linha, escreva em LOJA NA PACTO o nome EXATO da loja como aparece no Relatório de Tempo/Book da Pacto. Se a loja não foi visitada em ' + mes + ', escreva INATIVA.'],
       ['Aba "Pacto sem Plano": são lojas que a Pacto visitou e não achamos no Plano. Em LOJA NO PLANO escreva o nome da loja correspondente no Plano, se for uma das lojas da aba anterior.'],
-      ['Não altere a coluna CHAVE. Não preencha a frequência (visitas por semana): quem define é a Tarks.']];
+      ['Não altere a coluna CHAVE. Não preencha o plano do mês: ele vem da planilha de cada rede.']];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ajuda), 'Como preencher');
     const wsA = XLSX.utils.aoa_to_sheet(sheetA); wsA['!cols'] = [{ hidden: true }, { wch: 18 }, { wch: 34 }, { wch: 20 }, { wch: 18 }, { wch: 30 }, { wch: 40 }, { wch: 36 }, { wch: 30 }];
@@ -2453,7 +2419,7 @@
 
       <div class="card">
         <h2>4. Plano de Visitas, planilhas por rede (Excel)</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Os arquivos TUBAÍNA, CARREFOUR e NAGUMO (pode selecionar vários). Trazem lojas, promotores, a <strong>frequência</strong> (definida pela Tarks) e os <strong>dias previstos</strong> (preenchidos pela Pacto). A frequência forma o plano de cada loja.</p>
+        <p style="font-size: 13px; margin-bottom: 15px;">Os arquivos TUBAÍNA, CARREFOUR e NAGUMO (pode selecionar vários). Trazem lojas, promotores e o calendário do mês. O <strong>total do mês</strong> escrito em cada planilha forma o Plano da Rede.</p>
         <input type="file" id="input-plano" ${travar} accept=".xlsx, .xls" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
         <div id="msg-plano" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
         ${resumoLojas}
@@ -3768,7 +3734,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 13) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 14) executarAuditoriaSilencioso();
   }
 
 
