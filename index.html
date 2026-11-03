@@ -1974,16 +1974,16 @@
     let quadro = '';
     if (q && q.rows.length) {
       const totPl = q.rows.reduce((a, r) => a + (+r[1] || 0), 0), totPg = q.rows.reduce((a, r) => a + (+r[2] || 0), 0);
-      const pc = totPg ? Math.round(totPl / totPg * 100) : null;
+      const base = (aud.total || {}).totalDeclaradas || totPg, pc = base ? Math.round(totPl / base * 100) : null;
       if (pc != null && pc < 95) {
         const top = q.rows.slice(0, 3).map(r => `${esc(r[0])} ${nfBR(r[1])} × ${nfBR(r[2])}`).join(', ');
-        quadro = `<div class="card" id="card-quadro-plano" style="border-left-color:#E67E22;">
-          <h2>⚠️ O Plano da Rede cobre só ${pc}% do que a Pacto programou</h2>
-          <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:13px;margin:8px 0;">
+        quadro = `<div class="card" id="card-quadro-plano" style="background:#FFE14D;border-left:8px solid #E09B00;color:#3B2F00;">
+          <h2 style="color:#3B2F00;">⚠️ O Plano Individual das Redes (sistemática) justifica só ${pc}% das visitas que a Pacto realizou (${nfBR(totPl)} / ${nfBR(base)})</h2>
+          <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:13px;margin:8px 0;color:#3B2F00;">
             <span>Plano da Rede (sistemática): <strong>${nfBR(totPl)}</strong></span>
             <span>Programadas (Fechamento): <strong>${nfBR(totPg)}</strong></span>
             <span>Realizadas (Fechamento): <strong>${nfBR((aud.total || {}).totalDeclaradas || 0)}</strong></span></div>
-          <p style="font-size:12px;line-height:1.5;">São planilhas que não batem e precisam de explicação (o calendário do Plano pode estar preenchido só em parte). Maiores diferenças, Plano da Rede × Programadas: ${top}. A lista completa está em Questões em aberto.</p>
+          <p style="font-size:12px;line-height:1.5;color:#3B2F00;">São planilhas que não batem e precisam de explicação (o calendário do Plano pode estar preenchido só em parte). Maiores diferenças, Plano da Rede × Programadas: ${top}. A lista completa está em Questões em aberto.</p>
         </div>`;
       }
     }
