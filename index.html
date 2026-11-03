@@ -315,11 +315,11 @@
       ${sec('1. Para que serve', `
         <p>O CockPit Tarks confere, mês a mês, as visitas de trade marketing da Tubaína/Schincariol feitas pela agência <strong>Pacto</strong>. A cadeia é sempre a mesma:</p>
         <ol style="padding-left:20px;margin:6px 0;">
-          <li><strong>Planejadas</strong>: quantas visitas o contrato prevê por rede (lojas cobradas × visitas por semana).</li>
-          <li><strong>Cobradas</strong>: quantas visitas a Pacto cobra no Fechamento (na planilha dela aparecem como "declaradas"). Depois vêm as <strong>Registradas</strong>, que são as que constam no Relatório de Tempo da própria Pacto.</li>
-          <li><strong>Comprovadas</strong>: quantas dessas têm foto nos Books, cruzada com o Relatório de Tempo da própria Pacto.</li>
-          <li><strong>Sem registro</strong> = cobradas − registradas: a Pacto cobra, mas nem o relatório dela mostra a visita.</li>
-          <li><strong>Sem comprovação</strong> = cobradas − comprovadas (inclui as sem registro e as registradas sem foto). Multiplicada pelo custo médio da visita da rede, vira o <strong>desconto a discutir</strong>.</li>
+          <li><strong>Plano da Rede (sistemática)</strong>: os dias de visita marcados no calendário de cada rede (planilhas da Tarks).</li>
+          <li><strong>Programadas e Realizadas (Fechamento)</strong>: o que a Pacto programou para o mês e o que ela declara ter feito e cobra (colunas "visitas programadas / mês" e "visitas realizadas / mês" da planilha dela). Depois vêm as <strong>Registradas (Relatório)</strong>, que constam no Relatório de Tempo da própria Pacto.</li>
+          <li><strong>Comprovadas (Books)</strong>: quantas dessas têm foto nos Books, cruzada com o Relatório de Tempo da própria Pacto.</li>
+          <li><strong>Sem registro</strong> = realizadas − registradas: a Pacto cobra, mas nem o relatório dela mostra a visita.</li>
+          <li><strong>Sem comprovação</strong> = realizadas − comprovadas (inclui as sem registro e as registradas sem foto). Multiplicada pelo custo médio da visita da rede, vira o <strong>desconto a discutir</strong>.</li>
         </ol>
         <p>Todo ponto contestado deve poder ser mostrado com evidência: o arquivo e a página do Book, a linha do Relatório, a rede e o dia.</p>`, true)}
 
@@ -355,18 +355,19 @@
         ])}`)}
 
       ${sec('5. Os números: o que cada um quer dizer', tab(['Número', 'Como é calculado'], [
-        ['Planejadas', 'Mês inteiro: visitas programadas no Fechamento (lojas cobradas × visitas por semana). Num período do calendário: a média semanal × dias ÷ 7 (aproximação).'],
-        ['Cobradas', 'Mês inteiro: visitas cobradas no Fechamento (a Pacto as chama de "declaradas"). Ao escolher um período no calendário, o lugar delas passa a ser das <strong>Registradas</strong>: visitas diferentes registradas no Relatório de Tempo naqueles dias.'],
-        ['Registradas', 'Visitas diferentes (promotor + dia + loja) que o Relatório de Tempo da Pacto registra.'],
-        ['Sem registro', 'Cobradas − registradas. Só existe para o mês inteiro, porque o Fechamento não informa o dia de cada visita. O sistema não mostra esta diferença como número próprio: compare as caixas Cobradas e Registradas.'],
-        ['Comprovadas', 'Visitas cobradas (ou registradas, no período) que têm foto comprovada.'],
-        ['Sem comprovação', 'Cobradas − comprovadas. Inclui as sem registro e as visitas com foto ainda em revisão.'],
+        ['Plano da Rede (sistemática)', 'Soma dos dias marcados (x, giro, foto+giro) no calendário do mês de cada loja, nas planilhas da Tarks. Não vem do Fechamento.'],
+        ['Programadas (Fechamento)', 'Mês inteiro: visitas que a Pacto programou no Fechamento (coluna "visitas programadas / mês"). No Dashboard o cartão se chama "Planejadas". Num período do calendário: a média semanal × dias ÷ 7 (aproximação).'],
+        ['Realizadas (Fechamento)', 'Mês inteiro: visitas que a Pacto declara ter feito no Fechamento (coluna "visitas realizadas / mês") e cobra. No Dashboard o cartão se chama "Cobradas". Ao escolher um período no calendário, o lugar delas passa a ser das <strong>Registradas</strong>: visitas diferentes registradas no Relatório de Tempo naqueles dias.'],
+        ['Registradas (Relatório)', 'Visitas diferentes (promotor + dia + loja) que o Relatório de Tempo da Pacto registra.'],
+        ['Sem registro', 'Realizadas − registradas. Só existe para o mês inteiro, porque o Fechamento não informa o dia de cada visita. O sistema não mostra esta diferença como número próprio: compare as caixas Realizadas e Registradas.'],
+        ['Comprovadas (Books)', 'Visitas realizadas (ou registradas, no período) que têm foto comprovada.'],
+        ['Sem comprovação', 'Realizadas − comprovadas. Inclui as sem registro e as visitas com foto ainda em revisão.'],
         ['Desconto', 'Sem comprovação × custo médio da visita da rede (valor cobrado ÷ visitas cobradas).'],
-        ['Plano comprovado', 'Comprovadas ÷ planejadas.'],
+        ['Plano comprovado', 'Comprovadas ÷ programadas.'],
         ['Plano da loja', 'Dias marcados no calendário do mês da loja, na planilha do Plano da Rede (ajustável em Config › Lojas). Só conta a loja identificada entre Plano e Pacto.'],
         ['Índice de fidelidade', 'Visitas registradas no mês ÷ plano do mês. Vermelho abaixo do plano, verde em 100%, de volta ao vermelho acima de 120%. As comprovadas aparecem ao lado.'],
         ['Lojas com excesso', 'Lojas com mais de 120% do plano em visitas registradas no mês. Visita feita fora do dia combinado não é problema; passar da quantidade combinada é.'],
-        ['Questões em aberto', 'Diferenças entre planilhas que o sistema não decide sozinho (linhas repetidas, Plano × Fechamento, Cobradas × Registradas, dias sem Relatório ou sem Book...). Cada uma pode ser anotada e exportada para levar à Pacto.'],
+        ['Questões em aberto', 'Diferenças entre planilhas que o sistema não decide sozinho (linhas repetidas, Plano da Rede × Programadas, Realizadas × Registradas, dias sem Relatório ou sem Book...). Cada uma pode ser anotada e exportada para levar à Pacto.'],
         ['×N no Relatório', 'Selo que aparece quando o Relatório de Tempo traz a mesma visita (promotor, dia, rede e loja) em mais de uma linha. O sistema conta uma visita só; passe o mouse para ver as linhas do Excel.'],
         ['Carimbo da foto', 'Foto que comprovou uma visita fica carimbada para sempre: não pode comprovar outra. Reenviar a mesma foto para a mesma visita não é problema.'],
         ['Cobrado × Registrado', 'Compara o que a Pacto cobra no Fechamento com o que o Relatório de Tempo <em>dela mesma</em> registra. Veja as caixas "Cobradas" e "Registradas" no Dashboard.'],
@@ -1587,7 +1588,7 @@
         totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
         fotosPendentes: fotos.filter(f => f.status === 'revisao').length
       },
-      versaoCalculo: 14,
+      versaoCalculo: 15,
       planoLojas, questoes, decisoes: mesDados.decisoes, decRep, fotosReais, conflitosCarimbo: conflitos.length,
       associacoes,
       volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia, gemeas,
@@ -1816,13 +1817,13 @@
         const div = pro >= 5 && Math.abs(dif) / pro > 0.1;
         if (div) { nDiv++; if (dif > 0) valorFR += dif * (r.custoVisita || 0); }
         totCob += cob; totReg += rg;
-        linhasFR.push([r.rede, cob, rg, pro ? Math.round(rg / pro * 100) + '%' : '—', !div ? 'Ok' : dif > 0 ? 'Registrado abaixo do cobrado' : 'Registrado acima do cobrado', dif]);
+        linhasFR.push([r.rede, cob, rg, pro ? Math.round(rg / pro * 100) + '%' : '—', !div ? 'Ok' : dif > 0 ? 'Registradas abaixo das realizadas' : 'Registradas acima das realizadas', dif]);
       });
       linhasFR.sort((a, b) => Math.abs(b[5]) - Math.abs(a[5])); linhasFR.forEach(l => l.pop());
       const per = datasMes.length ? `${formatarDataBR(datasMes[0])} a ${formatarDataBR(datasMes[datasMes.length - 1])}` : '';
-      if (nDiv) q.push({ id: 'fech_x_rel', titulo: 'Cobradas pela Pacto × Registradas pela Pacto', qtd: nDiv, valor: valorFR,
-        resumo: `No Fechamento a Pacto cobra <strong>${nfBR(totCob)}</strong> visitas no mês. O Relatório de Tempo dela registra <strong>${nfBR(totReg)}</strong> (${per}). Em <strong>${nDiv}</strong> rede(s) o registrado fica mais de 10% longe do cobrado. O valor abaixo é o que sobraria nessas redes se as visitas cobradas sem registro fossem indevidas.`,
-        cab: ['Rede', 'Cobradas (Fechamento)', 'Registradas (Relatório)', '% registrado', 'Situação'], rows: linhasFR });
+      if (nDiv) q.push({ id: 'fech_x_rel', titulo: 'Realizadas (Fechamento) × Registradas (Relatório)', qtd: nDiv, valor: valorFR,
+        resumo: `No Fechamento a Pacto declara <strong>${nfBR(totCob)}</strong> visitas realizadas no mês. O Relatório de Tempo dela registra <strong>${nfBR(totReg)}</strong> (${per}). Em <strong>${nDiv}</strong> rede(s) as registradas ficam mais de 10% longe das realizadas. O valor abaixo é o que sobraria nessas redes se as visitas realizadas sem registro fossem indevidas.`,
+        cab: ['Rede', 'Realizadas (Fechamento)', 'Registradas (Relatório)', '% registradas', 'Situação'], rows: linhasFR });
     }
 
     // 3) Plano da Rede (total do mês de cada planilha) × Fechamento (programadas)
@@ -1839,9 +1840,9 @@
       if (div) nPF++;
       linhasPF.push([r.rede, planoRede[r.chave], r.programadas || 0, dif, semFreqRede[r.chave] || 0, div ? 'diferente' : 'igual']);
     });
-    if (nPF) q.push({ id: 'plano_x_fech', titulo: 'Plano de Visitas × Fechamento (visitas programadas)', qtd: nPF, valor: null,
-      resumo: `Plano = dias marcados no calendário de cada loja no mês (x, giro, foto+giro; dias de outro mês não entram). Programadas = o que a Pacto lançou no Fechamento. Em <strong>${nPF}</strong> rede(s) os números não batem. Pode ser loja a mais ou a menos, ou calendário incompleto (coluna "Lojas sem plano").`,
-      cab: ['Rede', 'Plano', 'Programadas (Fechamento)', 'Diferença', 'Lojas sem plano', 'Situação'], rows: linhasPF.sort((a, b) => Math.abs(b[3]) - Math.abs(a[3])) });
+    if (nPF) q.push({ id: 'plano_x_fech', titulo: 'Plano da Rede (sistemática) × Programadas (Fechamento)', qtd: nPF, valor: null,
+      resumo: `Plano da Rede (sistemática) = dias marcados no calendário de cada loja no mês, nas planilhas da Tarks (x, giro, foto+giro; dias de outro mês não entram). Programadas (Fechamento) = o que a Pacto programou para o mês. Em <strong>${nPF}</strong> rede(s) os números não batem. Pode ser loja a mais ou a menos, ou calendário incompleto (coluna "Lojas sem plano").`,
+      cab: ['Rede', 'Plano da Rede (sistemática)', 'Programadas (Fechamento)', 'Diferença', 'Lojas sem plano', 'Situação'], rows: linhasPF.sort((a, b) => Math.abs(b[3]) - Math.abs(a[3])) });
 
     // 4) Total escrito na planilha do Plano × soma das lojas
     const abasPl = {};
@@ -1909,6 +1910,8 @@
     qs.rows.forEach(r => { csv += r.map(csvCampo).join(';') + '\n'; });
     return csv;
   }
+  // coluna só de números (ou %): fica centralizada
+  const numCol = (qs, i) => qs.rows.length > 0 && qs.rows.slice(0, 12).every(r => typeof r[i] === 'number' || /^[-+]?[\d.,]+%?$/.test(String(r[i])));
   function montarQuestoesAbertas(container, aud) {
     const lista = aud.questoes || [];
     if (!lista.length) return;
@@ -1921,8 +1924,8 @@
       const MAX = 25;
       const corpo = `<p style="font-size:12px;line-height:1.5;margin-bottom:8px;">${qs.resumo}</p>
         ${qs.valor ? `<p style="font-size:12px;margin-bottom:8px;">Valor potencial: <strong>${formatarMoeda(qs.valor)}</strong> <span style="color:var(--cor-texto-secundario);">(não entra no desconto enquanto não for decidido)</span></p>` : ''}
-        <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#F8F9FA;">${qs.cab.map(c => `<th style="padding:5px;text-align:left;">${esc(c)}</th>`).join('')}</tr></thead>
-        <tbody>${qs.rows.slice(0, MAX).map(r => `<tr style="border-top:1px solid #EEE;">${r.map(c => `<td style="padding:5px;">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+        <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#F8F9FA;">${qs.cab.map((c, i) => `<th style="padding:5px;text-align:${numCol(qs, i) ? 'center' : 'left'};">${esc(c)}</th>`).join('')}</tr></thead>
+        <tbody>${qs.rows.slice(0, MAX).map(r => `<tr style="border-top:1px solid #EEE;">${r.map((c, i) => `<td style="padding:5px;text-align:${numCol(qs, i) ? 'center' : 'left'};">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
         ${qs.rows.length > MAX ? `<p style="font-size:11px;margin-top:4px;">Mostrando ${MAX} de ${qs.rows.length}. O CSV traz a lista completa.</p>` : ''}
         ${qs.nota ? `<p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:6px;">${esc(qs.nota)}</p>` : ''}
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;">
@@ -1964,6 +1967,38 @@
 
   // ═══ TELA: FIDELIDADE AO PLANO (Auditoria) ═══
   function chipIndice(v) { return `<span style="display:inline-block;min-width:46px;padding:2px 8px;border-radius:10px;background:${corIndice(v)};color:#fff;font-weight:bold;font-size:12px;text-align:center;">${v == null ? '—' : pctBR(v * 100)}</span>`; }
+  // Quadro de destaque (Plano × Programadas) e legenda dos números. Não é acusação: são planilhas que não batem.
+  function montarQuadroPlano(container, aud) {
+    if (aud.visao) return;
+    const q = (aud.questoes || []).find(x => x.id === 'plano_x_fech');
+    let quadro = '';
+    if (q && q.rows.length) {
+      const totPl = q.rows.reduce((a, r) => a + (+r[1] || 0), 0), totPg = q.rows.reduce((a, r) => a + (+r[2] || 0), 0);
+      const pc = totPg ? Math.round(totPl / totPg * 100) : null;
+      if (pc != null && pc < 95) {
+        const top = q.rows.slice(0, 3).map(r => `${esc(r[0])} ${nfBR(r[1])} × ${nfBR(r[2])}`).join(', ');
+        quadro = `<div class="card" id="card-quadro-plano" style="border-left-color:#E67E22;">
+          <h2>⚠️ O Plano da Rede cobre só ${pc}% do que a Pacto programou</h2>
+          <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:13px;margin:8px 0;">
+            <span>Plano da Rede (sistemática): <strong>${nfBR(totPl)}</strong></span>
+            <span>Programadas (Fechamento): <strong>${nfBR(totPg)}</strong></span>
+            <span>Realizadas (Fechamento): <strong>${nfBR((aud.total || {}).totalDeclaradas || 0)}</strong></span></div>
+          <p style="font-size:12px;line-height:1.5;">Isto não é acusação: são planilhas que não batem e precisam de explicação (o calendário do Plano pode estar preenchido só em parte). Maiores diferenças, Plano da Rede × Programadas: ${top}. A lista completa está em Questões em aberto.</p>
+        </div>`;
+      }
+    }
+    const linha = (nome, fonte, quer) => `<tr style="border-top:1px solid #EEE;"><td style="padding:5px;font-weight:bold;">${nome}</td><td style="padding:5px;">${fonte}</td><td style="padding:5px;">${quer}</td></tr>`;
+    const leg = `<div class="card" id="card-legenda"><details open><summary style="cursor:pointer;font-weight:bold;font-size:14px;color:var(--cor-primaria);">Legenda dos números</summary>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:8px;"><thead><tr style="background:#F8F9FA;"><th style="padding:5px;text-align:left;">Nome na tela</th><th style="padding:5px;text-align:left;">Fonte</th><th style="padding:5px;text-align:left;">O que é</th></tr></thead><tbody>
+        ${linha('Plano da Rede (sistemática)', 'Tarks, planilha de cada rede', 'Dias marcados no calendário do mês')}
+        ${linha('Programadas (Fechamento)', 'Pacto, Fechamento', 'O que ela programou para o mês')}
+        ${linha('Realizadas (Fechamento)', 'Pacto, Fechamento', 'O que ela declara ter feito e cobra')}
+        ${linha('Registradas (Relatório)', 'Pacto, aba Export do Relatório de Tempo', 'Visitas registradas (promotor + dia + rede + loja)')}
+        ${linha('Comprovadas (Books)', 'Fotos dos Books', 'O que dá para provar com foto')}
+      </tbody></table></div>
+      <p style="font-size:10px;color:var(--cor-texto-secundario);margin-top:6px;">No Dashboard, os cartões "Planejadas" e "Cobradas" mostram as Programadas e as Realizadas do Fechamento.</p></details></div>`;
+    container.insertAdjacentHTML('beforeend', quadro + leg);
+  }
   function montarPlanoLojas(container, aud) {
     const p = aud.planoLojas; if (!p) return;
     const redes = Object.values(p.redes).sort((a, b) => (b.idx || 0) - (a.idx || 0));
@@ -1971,9 +2006,9 @@
       <td style="padding:7px;text-align:center;">${nfBR(Math.round(R.plano))}</td><td style="padding:7px;text-align:center;">${nfBR(R.reg)}</td><td style="padding:7px;text-align:center;">${nfBR(R.comp)}</td><td style="padding:7px;text-align:center;">${chipIndice(R.idx)}</td></tr>`).join('');
     container.insertAdjacentHTML('beforeend', `<div class="card" id="card-plano">
       <h2>📐 Fidelidade ao plano de visitas</h2>
-      <p style="font-size:12px;margin-bottom:6px;">Índice = visitas <strong>registradas</strong> no mês ÷ Plano da Rede (dias marcados no calendário de cada loja no mês). A cor vai de vermelho (muito abaixo) a verde (100%) e volta a vermelho acima de 120%. As comprovadas aparecem ao lado.</p>
+      <p style="font-size:12px;margin-bottom:6px;">Índice = visitas <strong>registradas</strong> no mês ÷ Plano da Rede (sistemática: dias marcados no calendário de cada loja no mês). A cor vai de vermelho (muito abaixo) a verde (100%) e volta a vermelho acima de 120%. As comprovadas aparecem ao lado.</p>
       <div style="display:flex;align-items:center;gap:12px;margin:8px 0;"><div style="font-size:11px;color:var(--cor-texto-secundario);">Índice geral</div>${chipIndice(p.total.idx)}
-        <div style="font-size:11px;color:var(--cor-texto-secundario);">${nfBR(p.total.reg)} registradas de ${nfBR(Math.round(p.total.plano))} planejadas em ${nfBR(p.total.lojas)} lojas identificadas</div></div>
+        <div style="font-size:11px;color:var(--cor-texto-secundario);">${nfBR(p.total.reg)} registradas (Relatório) de ${nfBR(Math.round(p.total.plano))} no Plano da Rede (sistemática) em ${nfBR(p.total.lojas)} lojas identificadas</div></div>
       <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:7px;text-align:left;">Rede</th><th style="padding:7px;">Lojas</th><th style="padding:7px;">Plano</th><th style="padding:7px;">Registr.</th><th style="padding:7px;">Comprov.</th><th style="padding:7px;">Índice</th></tr></thead><tbody>${linhasRede}</tbody></table></div>
       ${p.pendentes ? `<p style="font-size:11px;margin-top:6px;color:#C0392B;">⚠️ ${p.pendentes} loja(s) sem identificação ou sem plano ficaram fora do índice. Resolva em Config › Lojas.</p>` : ''}
       ${p.semPlano.length ? `<p style="font-size:11px;margin-top:6px;">${p.semPlano.length} loja(s) com visitas registradas não têm plano definido (${nfBR(p.semPlano.reduce((a, x) => a + x.reg, 0))} visitas): informe o plano do mês em Config › Lojas.</p>` : ''}
@@ -2201,7 +2236,7 @@
     const estilo = 'padding:7px;border:1px solid #CCC;border-radius:4px;font-size:13px;';
     container.insertAdjacentHTML('beforeend', `<div class="card" id="card-nc">
       <h2>🔎 Visitas sem comprovação (${nfBR(todas.length)})</h2>
-      <p style="font-size:12px;margin-bottom:10px;">Todas as visitas registradas no Relatório de Tempo que ainda não têm foto vinculada. "Dia sem Book" = nenhuma foto importada naquele dia: falta Book, não necessariamente falta de visita. Toque numa linha para abrir a loja. Sem comprovação (cobradas − comprovadas): <strong>${nfBR(aud.total.gap)}</strong>.</p>
+      <p style="font-size:12px;margin-bottom:10px;">Todas as visitas registradas no Relatório de Tempo que ainda não têm foto vinculada. "Dia sem Book" = nenhuma foto importada naquele dia: falta Book, não necessariamente falta de visita. Toque numa linha para abrir a loja. Sem comprovação (realizadas − comprovadas): <strong>${nfBR(aud.total.gap)}</strong>.</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">
         <select id="nc-status" style="${estilo}">${opt('todas', 'Todas (' + todas.length + ')')}${opt('sf_book', 'Sem foto, dia com Book (' + contSF(false) + ')')}${opt('sf_semBook', 'Sem foto, dia sem Book (' + contSF(true) + ')')}${opt('nao_comprovada', 'Não comprovada (' + cont('nao_comprovada') + ')')}${opt('revisao', 'Em revisão (' + cont('revisao') + ')')}</select>
         <select id="nc-rede" style="${estilo}"><option value="">Todas as redes</option>${redes.map(r => `<option value="${esc(r)}" ${estNC.rede === r ? 'selected' : ''}>${esc(nome(r))}</option>`).join('')}</select>
@@ -2896,11 +2931,11 @@
               <thead>
                 <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
                   <th style="padding: 10px; text-align: left;">Rede</th>
-                  <th style="padding: 10px; text-align: center;">Planej.</th>
-                  <th style="padding: 10px; text-align: center;" title="${aud.visao ? 'Registradas: visitas do Relatório de Tempo no período' : 'Cobradas: visitas cobradas no Fechamento'}">${aud.visao ? 'Registr.' : 'Cobr.'}</th>
+                  <th style="padding: 10px; text-align: center;" title="Programadas (Fechamento): o que a Pacto programou para o mês">Program.</th>
+                  <th style="padding: 10px; text-align: center;" title="${aud.visao ? 'Registradas (Relatório): visitas do Relatório de Tempo no período' : 'Realizadas (Fechamento): o que a Pacto declara ter feito e cobra'}">${aud.visao ? 'Registr.' : 'Realiz.'}</th>
                   <th style="padding: 10px; text-align: center;">Comprov.</th>
                   <th style="padding: 10px; text-align: center;">Sem comprov.</th>
-                  <th style="padding: 10px; text-align: center;" title="Comprovadas / Planejadas">Plano comprov.</th>
+                  <th style="padding: 10px; text-align: center;" title="Comprovadas / Programadas">Plano comprov.</th>
                   <th style="padding: 10px; text-align: right;">Desconto</th>
                 </tr>
               </thead>
@@ -2913,6 +2948,7 @@
       container.querySelectorAll('tr[data-rede]').forEach(tr => {
         tr.addEventListener('click', () => abrirDrillRede(tr.dataset.rede));
       });
+      montarQuadroPlano(container, aud);
       montarQuestoesAbertas(container, aud);
       montarPlanoLojas(container, aud);
       montarListaNaoComprovadas(container, aud);
@@ -2982,13 +3018,13 @@
           <h2>Rede: ${esc(dadosRede.rede)}</h2>
           ${htmlCaixasNumeros(dadosRede.planejadas || 0, dadosRede.declaradas, dadosRede.comprovadas, dadosRede.gap, { subPlan: aud.visao ? 'no período' : 'no mês', periodo: !!aud.visao })}
           <p style="font-size: 12px; margin-bottom: 8px;">Desconto desta rede: <strong>${formatarMoeda(dadosRede.desconto)}</strong>.</p>
-          <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);">"Sem comprovação" = cobradas − comprovadas (no período: registradas − comprovadas): visita do Relatório de Tempo sem nenhuma foto cruzada, mais as pendentes de revisão. As planejadas vêm do Fechamento por <strong>rede</strong>; o Fechamento não informa o plano de cada loja, por isso a tabela abaixo começa em declaradas.</p>
+          <p style="font-size: 11px; margin-bottom: 15px; color: var(--cor-texto-secundario);">"Sem comprovação" = realizadas − comprovadas (no período: registradas − comprovadas): visita do Relatório de Tempo sem nenhuma foto cruzada, mais as pendentes de revisão. As programadas vêm do Fechamento por <strong>rede</strong>; o Fechamento não informa o plano de cada loja, por isso a tabela abaixo começa em registradas.</p>
           <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
               <thead>
                 <tr style="background: #F8F9FA; border-bottom: 2px solid var(--cor-primaria);">
                   <th style="padding: 10px; text-align: left;">Loja</th>
-                  <th style="padding: 10px; text-align: center;" title="Registradas: visitas do Relatório de Tempo nesta loja">Registr.</th>
+                  <th style="padding: 10px; text-align: center;" title="Registradas (Relatório): visitas do Relatório de Tempo nesta loja">Registr.</th>
                   <th style="padding: 10px; text-align: center;">Comprov.</th>
                   <th style="padding: 10px; text-align: center;" title="Visitas com foto aguardando revisão manual (aba Revisão). Contam como sem comprovação até serem aprovadas.">Pendentes</th>
                   <th style="padding: 10px; text-align: center;" title="Registradas − Comprovadas (inclui as pendentes)">Sem comprovação</th>
@@ -3366,10 +3402,10 @@
       <div class="card">
         <h2>Funil de Visitas</h2>
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;">
-          <span style="font-weight: bold;">Programadas (Contrato)</span><span>${total.totalProgramadas || 0}</span>
+          <span style="font-weight: bold;">Programadas (Fechamento)</span><span>${total.totalProgramadas || 0}</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #EEE;">
-          <span style="font-weight: bold;">${aud.visao ? 'Registradas (Rel. de Tempo, período)' : 'Cobradas (Fechamento)'}</span><span>${total.totalDeclaradas || 0}</span>
+          <span style="font-weight: bold;">${aud.visao ? 'Registradas (Relatório, período)' : 'Realizadas (Fechamento)'}</span><span>${total.totalDeclaradas || 0}</span>
         </div>
         <div style="display: flex; justify-content: space-between; color: var(--cor-primaria); font-weight: bold; margin-bottom: 10px;">
           <span>Comprovadas (Fotos)</span><span>${total.comprovadas}</span>
@@ -3409,10 +3445,10 @@
 
       <div class="card">
         <h2>Glossário</h2>
-        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Planejadas:</strong> O que foi contratado no plano.</p>
-        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Cobradas:</strong> O que a Pacto cobra no Fechamento. <strong>Registradas:</strong> as que constam no Relatório de Tempo dela.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Plano da Rede (sistemática):</strong> Dias marcados no calendário das planilhas da Tarks.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Programadas / Realizadas (Fechamento):</strong> O que a Pacto programou e o que declara ter feito e cobra. <strong>Registradas (Relatório):</strong> as que constam no Relatório de Tempo dela.</p>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Comprovadas:</strong> Visitas com foto válida (Promotor + Dia + Loja).</p>
-        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Sem comprovação:</strong> Cobradas − Comprovadas.</p>
+        <p style="font-size: 11px; margin-bottom: 5px;"><strong>Sem comprovação:</strong> Realizadas − Comprovadas.</p>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Desconto Justificado:</strong> Sem comprovação × Custo da Visita.</p>
         <p style="font-size: 11px; margin-bottom: 5px;"><strong>Valor Auditado:</strong> Comprovadas × Custo da Visita.</p>
       </div>
@@ -3746,7 +3782,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 14) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 15) executarAuditoriaSilencioso();
   }
 
 
