@@ -1877,9 +1877,9 @@
       cab: ['Arquivo', 'Página', 'Já comprova', 'Tentou comprovar'], rows: conflitos.map(c => [c.arquivo, c.pagina, c.antes, c.agora]) });
 
     // 8) Lojas sem identificação
-    if (plano.pendentes) q.push({ id: 'lojas_sem_id', titulo: 'Lojas sem identificação entre Plano e Pacto', qtd: plano.pendentes, valor: null,
-      resumo: `<strong>${plano.pendentes}</strong> loja(s) ainda não foram ligadas entre o Plano e a Pacto, ou estão sem plano. Elas ficam fora do índice de fidelidade. Resolva em <strong>Config › Lojas</strong> (dá para exportar a lista para a agência preencher e importar de volta).`,
-      cab: ['Rede', 'Loja no Plano', 'Loja na Pacto', 'Situação'], rows: construirLojas(mesDados).linhas.filter(ehPendenteLoja).map(it => [it.redeNome, it.nomePlano, it.nomePacto || (it.sug ? '(sugestão) ' + it.sug.nome : ''), it.sit]),
+    if (plano.pendentes) q.push({ id: 'lojas_sem_id', titulo: 'Lojas ainda não ligadas entre as duas fontes', qtd: plano.pendentes, valor: null,
+      resumo: `<strong>${plano.pendentes}</strong> loja(s): a mesma loja pode ter nomes diferentes no Plano da Rede (planilhas da Tarks) e no Relatório de Visitas (Pacto). Enquanto não forem ligadas, ficam fora da comparação loja a loja. Para resolver, vá em <strong>Config › Lojas</strong> exporte a lista, peça para a agência preencher o nome correto e importe de volta.`,
+      cab: ['Rede', 'Loja no Plano da Rede (sistemática)', 'Loja no Relatório de Visitas (Pacto)', 'Situação'], rows: construirLojas(mesDados).linhas.filter(ehPendenteLoja).map(it => [it.redeNome, it.nomePlano, it.nomePacto || (it.sug ? '(sugestão) ' + it.sug.nome : ''), ({ sem_par: 'Sem correspondência', sugerida: 'Sugestão: confirmar', conferir: 'Conferir', pendente: 'Pendente' })[it.sit] || it.sit]),
       irLojas: true });
     return q;
   }
