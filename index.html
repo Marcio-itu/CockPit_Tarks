@@ -356,8 +356,8 @@
 
       ${sec('5. Os números: o que cada um quer dizer', tab(['Número', 'Como é calculado'], [
         ['Plano da Rede (sistemática)', 'Soma dos dias marcados (x, giro, foto+giro) no calendário do mês de cada loja, nas planilhas da Tarks. Não vem do Fechamento.'],
-        ['Programadas (Fechamento)', 'Mês inteiro: visitas que a Pacto programou no Fechamento (coluna "visitas programadas / mês"). No Dashboard o cartão se chama "Planejadas". Num período do calendário: a média semanal × dias ÷ 7 (aproximação).'],
-        ['Realizadas (Fechamento)', 'Mês inteiro: visitas que a Pacto declara ter feito no Fechamento (coluna "visitas realizadas / mês") e cobra. No Dashboard o cartão se chama "Cobradas". Ao escolher um período no calendário, o lugar delas passa a ser das <strong>Registradas</strong>: visitas diferentes registradas no Relatório de Tempo naqueles dias.'],
+        ['Programadas (Fechamento)', 'Mês inteiro: visitas que a Pacto programou no Fechamento (coluna "visitas programadas / mês"). No Dashboard o cartão se chama "Visitas Programadas". Num período do calendário: a média semanal × dias ÷ 7 (aproximação).'],
+        ['Realizadas (Fechamento)', 'Mês inteiro: visitas que a Pacto declara ter feito no Fechamento (coluna "visitas realizadas / mês") e cobra. No Dashboard aparece como "Visitas Realizadas" e, na segunda linha, como "Visitas Cobradas" (mesmo número). Ao escolher um período no calendário, o lugar delas passa a ser das <strong>Registradas</strong>: visitas diferentes registradas no Relatório de Tempo naqueles dias.'],
         ['Registradas (Relatório)', 'Visitas diferentes (promotor + dia + loja) que o Relatório de Tempo da Pacto registra.'],
         ['Sem registro', 'Realizadas − registradas. Só existe para o mês inteiro, porque o Fechamento não informa o dia de cada visita. O sistema não mostra esta diferença como número próprio: compare as caixas Realizadas e Registradas.'],
         ['Comprovadas (Books)', 'Visitas realizadas (ou registradas, no período) que têm foto comprovada.'],
@@ -392,7 +392,7 @@
           <li><strong>Foto prova pouco.</strong> O sistema não verifica local (GPS), qualidade da execução nem se a foto é mesmo daquela loja além do que a legenda diz. Também não detecta fotos de outra visita com legenda alterada.</li>
           <li><strong>Cruzamento por nome.</strong> Loja é comparada por texto (igual, contido ou parecido). Pode errar em nomes muito curtos ou muito parecidos. Os casos duvidosos vão para a Revisão, mas um nome digitado diferente pode virar "livre" ou "sem comprovação" indevidamente.</li>
           <li><strong>Relatório de Tempo pode ser parcial.</strong> Se faltam dias (início ou fim do mês, ou só de algumas redes), a comparação Cobrado × Registrado fica incompleta e o "sem registro" sai exagerado. Peça o relatório do mês inteiro.</li>
-          <li><strong>Books recebidos parcialmente.</strong> O Dashboard mostra a "Cobertura das fotos" (de dd/mm a dd/mm), lida das legendas. Visitas fora dessa janela aparecem como "sem comprovação" só por falta de Book, não por falta de visita.</li>
+          <li><strong>Books recebidos parcialmente.</strong> A aba Relatório mostra a "Cobertura das fotos" (de dd/mm a dd/mm), lida das legendas. Visitas fora dessa janela aparecem como "sem comprovação" só por falta de Book, não por falta de visita.</li>
           <li><strong>Planejadas por semana é aproximação.</strong> O Fechamento só informa o total do mês por rede, sem o dia de cada visita. Em semanas, planejadas = média semanal × dias ÷ 7.</li>
           <li><strong>Plano de Visitas × Fechamento.</strong> Alguns Planos têm linhas ocultas no Excel (a Admin informa quantas). O que vale como planejado é o Fechamento; o número de lojas do Plano e do Fechamento nem sempre bate, e isso é ponto a esclarecer com a agência.</li>
           <li><strong>O Plano da Rede é contado no calendário.</strong> O sistema conta os dias marcados (x, giro, foto+giro) só no mês auditado; o total escrito nas planilhas não é usado, porque em várias abas a fórmula está errada ou inclui dias de agosto e setembro. As diferenças aparecem em Questões em aberto. Marcações como “ruptura” e “inventário” não contam como visita prevista.</li>
@@ -1588,7 +1588,7 @@
         totalPlanejadas: soma('planejadas'), totalDeclaradas: soma('declaradas'), totalDeclaradasMes: soma('declaradasMes'), totalProgramadas: soma('programadas'),
         fotosPendentes: fotos.filter(f => f.status === 'revisao').length
       },
-      versaoCalculo: 15,
+      versaoCalculo: 16,
       planoLojas, questoes, decisoes: mesDados.decisoes, decRep, fotosReais, conflitosCarimbo: conflitos.length,
       associacoes,
       volumeAlertas, maxVisitasDia, promotores, arquivosBook, porDia, gemeas,
@@ -1852,14 +1852,14 @@
       A.soma += l.planoMes || 0; A.fora += l.marcasFora || 0;
     });
     const linhasT = Object.values(abasPl).filter(A => A.fora > 0 || (A.total != null && A.total !== A.soma))
-      .map(A => [A.rede, A.total != null ? nfBR(A.total) + ' (célula ' + A.cel + ')' : 'sem total', A.soma, A.fora, A.fora > 0 ? 'calendário tem dias de outro mês (ignorados)' : 'total escrito na planilha não confere com as marcas']);
+      .map(A => [A.rede, A.total != null ? nfBR(A.total) + ' (célula ' + A.cel + ')' : 'sem total', A.soma, A.fora, A.fora > 0 ? 'calendário começa antes de outubro' : 'total escrito difere dos dias marcados']);
     const planoAntigo = (mesDados.lojas || []).length > 0 && !(mesDados.lojas || []).some(l => l.abaPlano);
     if (planoAntigo) q.push({ id: 'plano_total', titulo: 'Plano da Rede: reimporte os arquivos do Plano', qtd: 1, valor: null,
       resumo: 'O Plano deste mês foi importado antes desta versão e não guardou o total de cada planilha. Em Admin, importe de novo os 3 arquivos de Plano (Tubaína, Carrefour e Nagumo) e processe a auditoria. Até lá, o Plano da Rede não aparece nos cálculos.',
       cab: ['Aviso'], rows: [['Reimportar os arquivos do Plano']] });
-    else if (linhasT.length) q.push({ id: 'plano_total', titulo: 'Plano da Rede: o total escrito na planilha não confere com o calendário', qtd: linhasT.length, valor: null,
-      resumo: 'O Plano da Rede é a contagem de dias marcados (x, giro, foto+giro) no calendário do mês de cada loja. O sistema não usa o total escrito na planilha porque, nestas abas, ele não confere (fórmula contando células erradas, ou calendário que começa em agosto/setembro). Dias de outro mês são ignorados. Vale avisar quem mantém a planilha.',
-      cab: ['Rede', 'Total escrito na planilha', 'Marcas de outubro (usadas)', 'Marcas de outros meses (ignoradas)', 'Situação'], rows: linhasT });
+    else if (linhasT.length) q.push({ id: 'plano_total', titulo: 'Plano da Rede: o total da planilha não bate com os dias marcados', qtd: linhasT.length, valor: null,
+      resumo: 'Cada planilha de rede traz um total escrito. O sistema não usa esse total: ele conta os dias marcados no calendário de outubro, loja a loja (x, giro ou foto+giro). Nas redes abaixo o total escrito é diferente dessa contagem, ou o calendário começa em agosto/setembro (esses dias são ignorados). Serve para avisar quem mantém a planilha.',
+      cab: ['Rede (planilha)', 'Total escrito na planilha', 'Dias marcados em outubro (usados)', 'Dias marcados em outros meses (ignorados)', 'Situação'], rows: linhasT });
 
     // 5) Dias dentro do período dos Books (nome do arquivo) sem nenhuma foto, mas com visitas registradas
     const diasFoto = new Set(fotos.filter(f => f.dataHora).map(f => f.dataHora.split('T')[0]));
@@ -1942,7 +1942,7 @@
     const abertas = lista.filter(qs => estadoDecisao(aud, qs.id) === 'aberta').length;
     container.insertAdjacentHTML('beforeend', `<div class="card" id="card-questoes" style="border-left-color:#E67E22;">
       <h2>🧩 Questões em aberto (${abertas} de ${lista.length})</h2>
-      <p style="font-size:12px;margin-bottom:8px;">Pontos que o sistema <strong>não consegue decidir sozinho</strong> e que dependem de resposta da Pacto ou da Tarks. Nada aqui é acusação: são diferenças entre as planilhas que precisam de explicação. Cada uma pode ser exportada e anotada.</p>
+      <p style="font-size:12px;margin-bottom:8px;">Pontos que o sistema <strong>não consegue decidir sozinho</strong> e que dependem de resposta da Pacto ou da Tarks. São diferenças entre as planilhas que precisam de explicação. Cada uma pode ser exportada e anotada.</p>
       ${itens}</div>`);
     const card = container.querySelector('#card-questoes');
     card.querySelectorAll('details[data-qid]').forEach(dt => dt.addEventListener('toggle', () => { if (dt.open) questoesAbertas.add(dt.dataset.qid); else questoesAbertas.delete(dt.dataset.qid); }));
@@ -1967,7 +1967,7 @@
 
   // ═══ TELA: FIDELIDADE AO PLANO (Auditoria) ═══
   function chipIndice(v) { return `<span style="display:inline-block;min-width:46px;padding:2px 8px;border-radius:10px;background:${corIndice(v)};color:#fff;font-weight:bold;font-size:12px;text-align:center;">${v == null ? '—' : pctBR(v * 100)}</span>`; }
-  // Quadro de destaque (Plano × Programadas) e legenda dos números. Não é acusação: são planilhas que não batem.
+  // Quadro de destaque (Plano × Programadas) e legenda dos números.
   function montarQuadroPlano(container, aud) {
     if (aud.visao) return;
     const q = (aud.questoes || []).find(x => x.id === 'plano_x_fech');
@@ -1983,7 +1983,7 @@
             <span>Plano da Rede (sistemática): <strong>${nfBR(totPl)}</strong></span>
             <span>Programadas (Fechamento): <strong>${nfBR(totPg)}</strong></span>
             <span>Realizadas (Fechamento): <strong>${nfBR((aud.total || {}).totalDeclaradas || 0)}</strong></span></div>
-          <p style="font-size:12px;line-height:1.5;">Isto não é acusação: são planilhas que não batem e precisam de explicação (o calendário do Plano pode estar preenchido só em parte). Maiores diferenças, Plano da Rede × Programadas: ${top}. A lista completa está em Questões em aberto.</p>
+          <p style="font-size:12px;line-height:1.5;">São planilhas que não batem e precisam de explicação (o calendário do Plano pode estar preenchido só em parte). Maiores diferenças, Plano da Rede × Programadas: ${top}. A lista completa está em Questões em aberto.</p>
         </div>`;
       }
     }
@@ -1996,8 +1996,8 @@
         ${linha('Registradas (Relatório)', 'Pacto, aba Export do Relatório de Tempo', 'Visitas registradas (promotor + dia + rede + loja)')}
         ${linha('Comprovadas (Books)', 'Fotos dos Books', 'O que dá para provar com foto')}
       </tbody></table></div>
-      <p style="font-size:10px;color:var(--cor-texto-secundario);margin-top:6px;">No Dashboard, os cartões "Planejadas" e "Cobradas" mostram as Programadas e as Realizadas do Fechamento.</p></details></div>`;
-    container.insertAdjacentHTML('beforeend', quadro + leg);
+      <p style="font-size:10px;color:var(--cor-texto-secundario);margin-top:6px;">No Dashboard, "Visitas Realizadas" e "Visitas Cobradas" são o mesmo número do Fechamento: o que a Pacto declara ter feito é também a base do que ela cobra.</p></details></div>`;
+    container.insertAdjacentHTML('afterbegin', quadro + leg);
   }
   function montarPlanoLojas(container, aud) {
     const p = aud.planoLojas; if (!p) return;
@@ -2358,7 +2358,7 @@
   }
 
   // Aviso de cobertura: o fechamento é MENSAL; as fotos cobrem só os PDFs importados.
-  function htmlAvisoCobertura(aud) {
+  function htmlAvisoCobertura(aud, enxuto) {
     if (!aud) return '';
     const per = [...new Set((aud.periodos || []).map(p => `${formatarDataBR(p.inicio)} a ${formatarDataBR(p.fim)}`))].join(' | ') || 'não identificado';
     let extra = '';
@@ -2371,14 +2371,15 @@
     }
     if (aud.fotosReais && (aud.periodos || []).length) {
       const pi = aud.periodos.map(p => p.inicio).sort()[0], pf = aud.periodos.map(p => p.fim).sort().slice(-1)[0];
-      if (pi < aud.fotosReais.inicio || pf > aud.fotosReais.fim) extra += `<p style="font-size: 12px; margin-top: 6px; color: #C0392B;">⚠️ Os nomes dos Books indicam ${esc(formatarDataBR(pi))} a ${esc(formatarDataBR(pf))}, mas as fotos só existem de <strong>${esc(formatarDataBR(aud.fotosReais.inicio))} a ${esc(formatarDataBR(aud.fotosReais.fim))}</strong> (${aud.fotosReais.dias} dia(s)). A cobertura vale pelas datas reais das fotos.</p>`;
+      if (!enxuto && (pi < aud.fotosReais.inicio || pf > aud.fotosReais.fim)) extra += `<p style="font-size: 12px; margin-top: 6px; color: #C0392B;">⚠️ Os nomes dos Books indicam ${esc(formatarDataBR(pi))} a ${esc(formatarDataBR(pf))}, mas as fotos só existem de <strong>${esc(formatarDataBR(aud.fotosReais.inicio))} a ${esc(formatarDataBR(aud.fotosReais.fim))}</strong> (${aud.fotosReais.dias} dia(s)). A cobertura vale pelas datas reais das fotos.</p>`;
     }
-    const rotMes = `<strong>Mês ${esc(Estado.config.mesAtivo)}</strong> · `;
-    const texto = rotMes + (aud.periodoAuditado
+    const rotMes = enxuto ? '' : `<strong>Mês ${esc(Estado.config.mesAtivo)}</strong> · `;
+    const texto = (enxuto && !aud.periodoAuditado) ? '' : rotMes + (aud.periodoAuditado
       ? `<strong>Visualizando o período:</strong> ${esc(formatarDataBR(aud.periodoAuditado.inicio))} a ${esc(formatarDataBR(aud.periodoAuditado.fim))}. "Registradas" são as visitas do Relatório de Tempo nesses dias (no mês inteiro, vale o Cobrado do Fechamento). Cobrado, desconto e valor auditado referem-se apenas ao período.`
       : `<strong>Cobertura das fotos:</strong> ${esc(per)}. O Fechamento é mensal: enquanto faltarem PDFs (ou partes do book) do mês, as comprovadas ficam abaixo do real e o gap/desconto ficam superestimados.`);
+    if (!texto && !extra) return htmlAvisoMesDosDados();
     return `${htmlAvisoMesDosDados()}<div class="card" style="border-left-color: #F39C12; padding: 15px;">
-      <p style="font-size: 12px; line-height: 1.4;">${texto}</p>
+      ${texto ? `<p style="font-size: 12px; line-height: 1.4;">${texto}</p>` : ''}
       ${extra}
     </div>`;
   }
@@ -2539,23 +2540,25 @@
   function htmlPainelF1(total, pg, mesDados) {
     const p = mesDados.periodoAuditado; // aqui recebe a auditoria ativa
     const per = p ? `${formatarDataBR(p.inicio).slice(0, 5)} a ${formatarDataBR(p.fim).slice(0, 5)}` : 'mês inteiro';
+    const nomeMes = ROTULO_MES[(+String(Estado.config.mesAtivo).slice(5, 7) || 1) - 1];
+    const subMes = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
     const pl = total.totalPlanejadas != null ? total.totalPlanejadas : (total.totalProgramadas || 0), de = total.totalDeclaradas || 0, co = total.comprovadas || 0;
     const efet = de > 0 ? co / de * 100 : 0;
     return `<div class="painel-f1">
       <div class="faixa-xadrez"></div>
       <div style="padding:12px 14px 6px;">
-        <div style="font-family:var(--fonte-titulo);font-size:14px;letter-spacing:2px;color:#D4AF37;">PAINEL DA AUDITORIA <span style="color:#7F8A96;">· ${per}</span></div>
+        <div style="font-family:var(--fonte-titulo);font-size:14px;letter-spacing:2px;color:#D4AF37;">${p ? 'PAINEL DA AUDITORIA' : 'FECHAMENTO INFORMADO PELA PACTO'} <span style="color:#7F8A96;">· ${p ? per : nomeMes.toUpperCase()}</span></div>
         <div class="painel-corpo"><div class="painel-esq">
-        ${htmlElo({ rot: 'Planejadas', val: pl, cor: '#C9D1D9', sub: p ? 'no período' : 'contratado no mês' },
-                  { rot: p ? 'Registrado do plano' : 'Cobrado do plano', pct: pg.declDoPlano },
-                  { rot: p ? 'Registradas' : 'Cobradas', val: de, cor: '#D4AF37', sub: p ? 'Rel. de Tempo' : 'Fechamento' })}
-        ${htmlElo({ rot: p ? 'Registradas' : 'Cobradas', val: de, cor: '#D4AF37', sub: p ? 'Rel. de Tempo' : 'Fechamento' },
+        ${htmlElo({ rot: p ? 'Programadas' : 'Visitas Programadas', val: pl, cor: '#C9D1D9', sub: p ? 'no período' : subMes },
+                  { rot: p ? 'Registrado do programado' : 'Realizado do programado', pct: pg.declDoPlano },
+                  { rot: p ? 'Registradas' : 'Visitas Realizadas', val: de, cor: '#D4AF37', sub: p ? 'Rel. de Tempo' : subMes })}
+        ${htmlElo({ rot: p ? 'Registradas' : 'Visitas Cobradas', val: de, cor: '#D4AF37', sub: p ? 'Rel. de Tempo' : subMes },
                   { rot: p ? 'Comprovado do registrado' : 'Comprovado do cobrado', pct: efet },
-                  { rot: 'Comprovadas', val: co, cor: '#2ECC71', sub: 'com foto' })}
+                  { rot: p ? 'Comprovadas' : 'Visitas Comprovadas', val: co, cor: '#2ECC71', sub: 'com foto' })}
         </div><div class="painel-dir">
           ${svgVelocimetro(pg.real, { rotulo: 'Plano comprovado', max: 340 })}
           <div style="text-align:center;font-family:var(--fonte-titulo);font-size:14px;letter-spacing:1.5px;color:#C9D1D9;margin-top:-2px;">PLANO COMPROVADO</div>
-          <div style="text-align:center;font-size:14px;color:#9AA4AF;margin-top:3px;"><strong style="color:#2ECC71;">${co}</strong> comprovadas de <strong style="color:#C9D1D9;">${pl}</strong> planejadas — da promessa da agência, quanto temos prova</div>
+          <div style="text-align:center;font-size:14px;color:#9AA4AF;margin-top:3px;"><strong style="color:#2ECC71;">${co}</strong> comprovadas de <strong style="color:#C9D1D9;">${pl}</strong> programadas — da promessa da agência, quanto temos prova</div>
         </div></div>
       </div>
     </div>`;
@@ -2916,7 +2919,7 @@
       });
 
       container.innerHTML = `
-        ${htmlAvisoCobertura(aud)}
+        ${htmlAvisoCobertura(aud, true)}
         <div class="card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 8px;">
             <h2 style="margin: 0;">Auditoria por Rede</h2>
@@ -3782,7 +3785,7 @@
     if (!m || !m.auditoria) return;
     if (!(m.fotos || []).length || !(m.relatorioTempo || []).length || !(m.fechamento || []).length) return;
     const chave = p => (p && p.inicio && p.fim) ? p.inicio + '|' + p.fim : '';
-    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 15) executarAuditoriaSilencioso();
+    if (chave(m.auditoria.periodoAuditado) !== chave(m.periodoAuditado) || m.auditoria.versaoCalculo !== 16) executarAuditoriaSilencioso();
   }
 
 
