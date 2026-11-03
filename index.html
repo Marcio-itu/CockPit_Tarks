@@ -332,7 +332,7 @@
         ['Fechamento (xlsx)', 'Por rede: lojas cobradas, visitas por semana, visitas cobradas no mês, valor cobrado.', 'É a <strong>base oficial</strong> de planejadas, cobradas e custo da visita.'],
         ['Relatório de Tempo (xlsx)', 'Cada visita registrada pela Pacto: promotor, rede, loja, dia.', 'Dá o "par" de cada foto (promotor + dia + loja). Visitas repetidas (mesmo promotor, dia e loja) contam uma vez.'],
         ['Books (PDF)', 'As fotos, com legenda impressa no rodapé: data/hora, promotor, rede e loja.', 'São a <strong>prova</strong>. Cada página é uma foto; só capa e contracapa devem ser ignoradas.'],
-        ['Plano de Visitas (3 xlsx: Tubaína, Carrefour, Nagumo)', 'Por rede: lojas, promotor, e o calendário do mês, com uma marca em cada dia de visita. O <strong>total do mês</strong> está escrito na própria planilha (linha TOTAL).', 'O total do mês de cada loja é o <strong>Plano da Rede</strong> e alimenta o índice de fidelidade. O texto da frequência (ex.: "SEG, QUART E SEXT") não é lido.']
+        ['Plano de Visitas (3 xlsx: Tubaína, Carrefour, Nagumo)', 'Por rede: lojas, promotor, e o calendário do mês, com uma marca em cada dia de visita.', 'Os dias marcados no mês, loja a loja, formam o <strong>Plano da Rede</strong> e alimentam o índice de fidelidade. Dias de outro mês no começo do calendário são ignorados. O texto da frequência (ex.: "SEG, QUART E SEXT") não é lido.']
       ]) + '<p>Ao importar, o sistema compara o mês do arquivo com o mês ativo e pede confirmação se forem diferentes.</p>')}
 
       ${sec('4. Como uma visita é comprovada', `
@@ -363,7 +363,7 @@
         ['Sem comprovação', 'Cobradas − comprovadas. Inclui as sem registro e as visitas com foto ainda em revisão.'],
         ['Desconto', 'Sem comprovação × custo médio da visita da rede (valor cobrado ÷ visitas cobradas).'],
         ['Plano comprovado', 'Comprovadas ÷ planejadas.'],
-        ['Plano da loja', 'Total do mês da loja, lido da própria planilha do Plano da Rede (ajustável em Config › Lojas). Só conta a loja identificada entre Plano e Pacto.'],
+        ['Plano da loja', 'Dias marcados no calendário do mês da loja, na planilha do Plano da Rede (ajustável em Config › Lojas). Só conta a loja identificada entre Plano e Pacto.'],
         ['Índice de fidelidade', 'Visitas registradas no mês ÷ plano do mês. Vermelho abaixo do plano, verde em 100%, de volta ao vermelho acima de 120%. As comprovadas aparecem ao lado.'],
         ['Lojas com excesso', 'Lojas com mais de 120% do plano em visitas registradas no mês. Visita feita fora do dia combinado não é problema; passar da quantidade combinada é.'],
         ['Questões em aberto', 'Diferenças entre planilhas que o sistema não decide sozinho (linhas repetidas, Plano × Fechamento, Cobradas × Registradas, dias sem Relatório ou sem Book...). Cada uma pode ser anotada e exportada para levar à Pacto.'],
@@ -394,7 +394,7 @@
           <li><strong>Books recebidos parcialmente.</strong> O Dashboard mostra a "Cobertura das fotos" (de dd/mm a dd/mm), lida das legendas. Visitas fora dessa janela aparecem como "sem comprovação" só por falta de Book, não por falta de visita.</li>
           <li><strong>Planejadas por semana é aproximação.</strong> O Fechamento só informa o total do mês por rede, sem o dia de cada visita. Em semanas, planejadas = média semanal × dias ÷ 7.</li>
           <li><strong>Plano de Visitas × Fechamento.</strong> Alguns Planos têm linhas ocultas no Excel (a Admin informa quantas). O que vale como planejado é o Fechamento; o número de lojas do Plano e do Fechamento nem sempre bate, e isso é ponto a esclarecer com a agência.</li>
-          <li><strong>O Plano da Rede é o total de cada planilha.</strong> O sistema lê o número da linha TOTAL de cada aba e o de cada loja. Se uma aba vier com erro (#REF!, #VALUE!) ou sem total, aparece em Questões em aberto e a loja sem número fica sem plano até alguém informar.</li>
+          <li><strong>O Plano da Rede é contado no calendário.</strong> O sistema conta os dias marcados (x, giro, foto+giro) só no mês auditado; o total escrito nas planilhas não é usado, porque em várias abas a fórmula está errada ou inclui dias de agosto e setembro. As diferenças aparecem em Questões em aberto. Marcações como “ruptura” e “inventário” não contam como visita prevista.</li>
           <li><strong>Loja sem identificação fica fora do índice.</strong> O Plano e a Pacto escrevem os nomes de jeitos diferentes; enquanto a loja não for ligada em Config › Lojas, ela não entra no plano nem no excesso.</li>
           <li><strong>Linhas repetidas no Relatório de Tempo.</strong> Se a Pacto cobra por linha, repetições são cobranças que nenhuma foto prova; se cobra por loja e dia, não. Está em Questões em aberto até a Pacto responder.</li>
           <li><strong>Nomes diferentes entre arquivos.</strong> Redes e lojas aparecem com grafias diferentes no Fechamento, no Plano e no Relatório. O sistema normaliza o que consegue; o resto aparece como "rede não consta" ou "livre".</li>
@@ -734,24 +734,28 @@
         if (achada) { rede = achada; redeOriginal = achada; }
       }
   
-      // Plano da Rede = total do mês escrito na própria planilha: na linha "TOTAL" (de baixo para cima), o primeiro número à sua direita
-      // (ex.: =SUM(AP3:AP63)). Se não houver total legível, vale a coluna "MÊS" de maior soma.
-      const numCel = (i, c) => { const cel = wsPlano[XLSX.utils.encode_cell({ r: i + deslocLinha, c })]; return cel && cel.t === 'n' && typeof cel.v === 'number' ? cel : null; };
-      let colMes = -1, totalAba = null, celTotal = '';
-      for (let i = linhas.length - 1; i > melhor.linha && colMes === -1; i--) {
-        const linha = linhas[i] || [];
-        for (let c = 0; c < linha.length && colMes === -1; c++) {
-          if (!normalizarTexto(linha[c]).startsWith('TOTAL')) continue;
-          for (let c2 = c + 1; c2 < linha.length; c2++) { const cel = numCel(i, c2); if (cel) { colMes = c2; totalAba = cel.v; celTotal = XLSX.utils.encode_cell({ r: i + deslocLinha, c: c2 }); break; } }
-        }
+      // Colunas dos dias: a linha de cabeçalho (ou acima dela) com várias datas. O mês do Plano é o mês mais frequente entre elas;
+      // dias de outro mês (ex.: 28/09 no começo do calendário) NÃO entram na conta.
+      const colsDia = {};
+      for (let i = 0, melhorQtd = 0; i <= melhor.linha; i++) {
+        const cand = {};
+        (linhas[i] || []).forEach((cel, c) => {
+          const ehData = cel instanceof Date || (typeof cel === 'number' && cel > 40000 && cel < 60000);
+          if (ehData) { const iso = formatarDataISO(cel); if (iso) cand[c] = iso; }
+        });
+        const q = Object.keys(cand).length;
+        if (q >= 10 && q > melhorQtd) { melhorQtd = q; Object.keys(colsDia).forEach(k => delete colsDia[k]); Object.assign(colsDia, cand); }
       }
-      if (colMes === -1) {
-        let melhorSoma = -1;
-        for (let c = 0; c < 80; c++) {
-          let ehMes = false; for (let i = 0; i <= melhor.linha; i++) if (normalizarTexto((linhas[i] || [])[c]) === 'MES') ehMes = true;
-          if (!ehMes) continue;
-          let soma = 0; for (let i = melhor.linha + 1; i < linhas.length; i++) { const cel = numCel(i, c); if (cel) soma += cel.v; }
-          if (soma > melhorSoma) { melhorSoma = soma; colMes = c; }
+      const contaMes = {}; Object.values(colsDia).forEach(iso => { const m = iso.slice(0, 7); contaMes[m] = (contaMes[m] || 0) + 1; });
+      const mesPlano = Object.keys(contaMes).sort((a, b) => contaMes[b] - contaMes[a])[0] || '';
+      // Total escrito na própria planilha (linha "TOTAL", primeiro número à direita). Serve só para conferir: as fórmulas de algumas abas contam células erradas.
+      const numCel = (i, c) => { const cel = wsPlano[XLSX.utils.encode_cell({ r: i + deslocLinha, c })]; return cel && cel.t === 'n' && typeof cel.v === 'number' ? cel : null; };
+      let totalAba = null, celTotal = '';
+      for (let i = linhas.length - 1; i > melhor.linha && totalAba === null; i--) {
+        const linha = linhas[i] || [];
+        for (let c = 0; c < linha.length && totalAba === null; c++) {
+          if (!normalizarTexto(linha[c]).startsWith('TOTAL')) continue;
+          for (let c2 = c + 1; c2 < linha.length; c2++) { const cel = numCel(i, c2); if (cel) { totalAba = cel.v; celTotal = XLSX.utils.encode_cell({ r: i + deslocLinha, c: c2 }); break; } }
         }
       }
       for (let i = melhor.linha + 1; i < linhas.length; i++) {
@@ -760,15 +764,19 @@
         if (!nomeLoja || nomeLoja.length < 2) continue;
         const nn = normalizarTexto(nomeLoja);
         if (nn.includes('TOTAL') || nn.includes('NOME DA LOJA')) continue;
+        // Plano da Rede da loja = dias marcados (x, giro, foto+giro) no calendário do mês. Dias de outro mês são contados à parte e ignorados.
+        let marcasMes = 0, marcasFora = 0;
+        Object.entries(colsDia).forEach(([c, iso]) => {
+          const v = normalizarTexto(linha[c]).replace(/\s+/g, '').toLowerCase();
+          if (v === 'x' || v === 'giro' || v === 'foto+giro') { if (iso.startsWith(mesPlano)) marcasMes++; else marcasFora++; }
+        });
         const reg = {
           rede, redeOriginal, nomeLoja,
           promotor: String(linha[indices.promotor] || '').trim(),
           diaVisita: String(linha[indices.diaVisita] || '').trim(),
           oculta: !!(linhasXls[i + deslocLinha] && linhasXls[i + deslocLinha].hidden)
         };
-        const cm = colMes >= 0 ? numCel(i, colMes) : null;
-        reg.abaPlano = nomeAba; reg.totalAba = totalAba; reg.celTotal = celTotal;
-        if (cm) reg.planoMes = cm.v;
+        reg.abaPlano = nomeAba; reg.totalAba = totalAba; reg.celTotal = celTotal; reg.planoMes = marcasMes; reg.marcasFora = marcasFora;
         lojasExtraidas.push(reg);
       }
     });
@@ -1832,25 +1840,25 @@
       linhasPF.push([r.rede, planoRede[r.chave], r.programadas || 0, dif, semFreqRede[r.chave] || 0, div ? 'diferente' : 'igual']);
     });
     if (nPF) q.push({ id: 'plano_x_fech', titulo: 'Plano de Visitas × Fechamento (visitas programadas)', qtd: nPF, valor: null,
-      resumo: `Plano = o total do mês escrito na própria planilha de cada rede (soma dos dias marcados no calendário). Programadas = o que a Pacto lançou no Fechamento. Em <strong>${nPF}</strong> rede(s) os números não batem. Pode ser loja a mais ou a menos, ou calendário incompleto (coluna "Lojas sem plano").`,
+      resumo: `Plano = dias marcados no calendário de cada loja no mês (x, giro, foto+giro; dias de outro mês não entram). Programadas = o que a Pacto lançou no Fechamento. Em <strong>${nPF}</strong> rede(s) os números não batem. Pode ser loja a mais ou a menos, ou calendário incompleto (coluna "Lojas sem plano").`,
       cab: ['Rede', 'Plano', 'Programadas (Fechamento)', 'Diferença', 'Lojas sem plano', 'Situação'], rows: linhasPF.sort((a, b) => Math.abs(b[3]) - Math.abs(a[3])) });
 
     // 4) Total escrito na planilha do Plano × soma das lojas
     const abasPl = {};
     (mesDados.lojas || []).forEach(l => {
       const k = (l.abaPlano || '') + '|' + l.rede;
-      const A = abasPl[k] || (abasPl[k] = { rede: l.redeOriginal || l.rede, total: l.totalAba != null ? l.totalAba : null, cel: l.celTotal || '', soma: 0, semNum: 0 });
-      if (typeof l.planoMes === 'number') A.soma += l.planoMes; else A.semNum++;
+      const A = abasPl[k] || (abasPl[k] = { rede: l.redeOriginal || l.rede, total: l.totalAba != null ? l.totalAba : null, cel: l.celTotal || '', soma: 0, fora: 0 });
+      A.soma += l.planoMes || 0; A.fora += l.marcasFora || 0;
     });
-    const linhasT = Object.values(abasPl).filter(A => A.semNum > 0 || A.total == null || A.total !== A.soma)
-      .map(A => [A.rede, A.total != null ? nfBR(A.total) + ' (célula ' + A.cel + ')' : 'não encontrado ou com erro', A.soma, A.semNum, A.total == null ? 'sem total legível na planilha' : A.total !== A.soma ? 'total diferente da soma das lojas' : 'loja(s) sem número']);
+    const linhasT = Object.values(abasPl).filter(A => A.fora > 0 || (A.total != null && A.total !== A.soma))
+      .map(A => [A.rede, A.total != null ? nfBR(A.total) + ' (célula ' + A.cel + ')' : 'sem total', A.soma, A.fora, A.fora > 0 ? 'calendário tem dias de outro mês (ignorados)' : 'total escrito na planilha não confere com as marcas']);
     const planoAntigo = (mesDados.lojas || []).length > 0 && !(mesDados.lojas || []).some(l => l.abaPlano);
     if (planoAntigo) q.push({ id: 'plano_total', titulo: 'Plano da Rede: reimporte os arquivos do Plano', qtd: 1, valor: null,
       resumo: 'O Plano deste mês foi importado antes desta versão e não guardou o total de cada planilha. Em Admin, importe de novo os 3 arquivos de Plano (Tubaína, Carrefour e Nagumo) e processe a auditoria. Até lá, o Plano da Rede não aparece nos cálculos.',
       cab: ['Aviso'], rows: [['Reimportar os arquivos do Plano']] });
-    else if (linhasT.length) q.push({ id: 'plano_total', titulo: 'Plano da Rede: total da planilha não confere', qtd: linhasT.length, valor: null,
-      resumo: 'O Plano da Rede de cada rede é o total do mês escrito na própria planilha. Nestas abas o total não bate com a soma das lojas, não foi encontrado, ou há loja sem número no mês (por exemplo, célula com erro). Peça a planilha corrigida; enquanto isso, a loja sem número fica sem plano em Config › Lojas, onde dá para informar o valor.',
-      cab: ['Rede', 'Total na planilha', 'Soma das lojas', 'Lojas sem número', 'Situação'], rows: linhasT });
+    else if (linhasT.length) q.push({ id: 'plano_total', titulo: 'Plano da Rede: o total escrito na planilha não confere com o calendário', qtd: linhasT.length, valor: null,
+      resumo: 'O Plano da Rede é a contagem de dias marcados (x, giro, foto+giro) no calendário do mês de cada loja. O sistema não usa o total escrito na planilha porque, nestas abas, ele não confere (fórmula contando células erradas, ou calendário que começa em agosto/setembro). Dias de outro mês são ignorados. Vale avisar quem mantém a planilha.',
+      cab: ['Rede', 'Total escrito na planilha', 'Marcas de outubro (usadas)', 'Marcas de outros meses (ignoradas)', 'Situação'], rows: linhasT });
 
     // 5) Dias dentro do período dos Books (nome do arquivo) sem nenhuma foto, mas com visitas registradas
     const diasFoto = new Set(fotos.filter(f => f.dataHora).map(f => f.dataHora.split('T')[0]));
@@ -1963,7 +1971,7 @@
       <td style="padding:7px;text-align:center;">${nfBR(Math.round(R.plano))}</td><td style="padding:7px;text-align:center;">${nfBR(R.reg)}</td><td style="padding:7px;text-align:center;">${nfBR(R.comp)}</td><td style="padding:7px;text-align:center;">${chipIndice(R.idx)}</td></tr>`).join('');
     container.insertAdjacentHTML('beforeend', `<div class="card" id="card-plano">
       <h2>📐 Fidelidade ao plano de visitas</h2>
-      <p style="font-size:12px;margin-bottom:6px;">Índice = visitas <strong>registradas</strong> no mês ÷ Plano da Rede (o total do mês de cada planilha, por loja). A cor vai de vermelho (muito abaixo) a verde (100%) e volta a vermelho acima de 120%. As comprovadas aparecem ao lado.</p>
+      <p style="font-size:12px;margin-bottom:6px;">Índice = visitas <strong>registradas</strong> no mês ÷ Plano da Rede (dias marcados no calendário de cada loja no mês). A cor vai de vermelho (muito abaixo) a verde (100%) e volta a vermelho acima de 120%. As comprovadas aparecem ao lado.</p>
       <div style="display:flex;align-items:center;gap:12px;margin:8px 0;"><div style="font-size:11px;color:var(--cor-texto-secundario);">Índice geral</div>${chipIndice(p.total.idx)}
         <div style="font-size:11px;color:var(--cor-texto-secundario);">${nfBR(p.total.reg)} registradas de ${nfBR(Math.round(p.total.plano))} planejadas em ${nfBR(p.total.lojas)} lojas identificadas</div></div>
       <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:7px;text-align:left;">Rede</th><th style="padding:7px;">Lojas</th><th style="padding:7px;">Plano</th><th style="padding:7px;">Registr.</th><th style="padding:7px;">Comprov.</th><th style="padding:7px;">Índice</th></tr></thead><tbody>${linhasRede}</tbody></table></div>
@@ -2038,7 +2046,7 @@
         <td style="padding:6px;font-size:11px;font-weight:bold;color:${COR_SIT_LOJA[x.sit]};">${esc(ROTULO_SIT_LOJA[x.sit] || x.sit)}<br><label style="font-weight:normal;font-size:10px;color:var(--cor-texto-secundario);"><input type="checkbox" data-linat="${idx}" ${x.sit === 'inativa' ? 'checked' : ''}> sem visita no mês</label></td></tr>`;
     }).join('');
     card.innerHTML = `<h2>Lojas</h2>
-      <p style="font-size:12px;margin-bottom:8px;">O Plano e a Pacto escrevem o nome das lojas de jeitos diferentes. Aqui cada loja do Plano é ligada à loja da Pacto (a do Relatório de Tempo e dos Books), e cada loja traz o <strong>Plano da Rede</strong> (o total do mês escrito na planilha dela; se faltar, dá para informar aqui). Isso vale para todos os meses e entra no backup.</p>
+      <p style="font-size:12px;margin-bottom:8px;">O Plano e a Pacto escrevem o nome das lojas de jeitos diferentes. Aqui cada loja do Plano é ligada à loja da Pacto (a do Relatório de Tempo e dos Books), e cada loja traz o <strong>Plano da Rede</strong> (os dias marcados no calendário dela no mês; se faltar, dá para informar aqui). Isso vale para todos os meses e entra no backup.</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;">
         <span style="padding:4px 8px;background:#E8F6EE;border-radius:10px;">Total: <strong>${todas.length}</strong></span>
         <span style="padding:4px 8px;background:${pend.length ? '#FDEDEC' : '#E8F6EE'};border-radius:10px;">Pendentes: <strong>${pend.length}</strong></span>
@@ -2423,7 +2431,7 @@
 
       <div class="card">
         <h2>4. Plano de Visitas, planilhas por rede (Excel)</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Os arquivos TUBAÍNA, CARREFOUR e NAGUMO (pode selecionar vários). Trazem lojas, promotores e o calendário do mês. O <strong>total do mês</strong> escrito em cada planilha forma o Plano da Rede.</p>
+        <p style="font-size: 13px; margin-bottom: 15px;">Os arquivos TUBAÍNA, CARREFOUR e NAGUMO (pode selecionar vários). Trazem lojas, promotores e o calendário do mês. Os <strong>dias marcados no mês</strong> formam o Plano da Rede.</p>
         <input type="file" id="input-plano" ${travar} accept=".xlsx, .xls" multiple style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
         <div id="msg-plano" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
         ${resumoLojas}
