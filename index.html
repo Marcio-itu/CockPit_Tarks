@@ -1844,7 +1844,11 @@
     });
     const linhasT = Object.values(abasPl).filter(A => A.semNum > 0 || A.total == null || A.total !== A.soma)
       .map(A => [A.rede, A.total != null ? nfBR(A.total) + ' (célula ' + A.cel + ')' : 'não encontrado ou com erro', A.soma, A.semNum, A.total == null ? 'sem total legível na planilha' : A.total !== A.soma ? 'total diferente da soma das lojas' : 'loja(s) sem número']);
-    if (linhasT.length) q.push({ id: 'plano_total', titulo: 'Plano da Rede: total da planilha não confere', qtd: linhasT.length, valor: null,
+    const planoAntigo = (mesDados.lojas || []).length > 0 && !(mesDados.lojas || []).some(l => l.abaPlano);
+    if (planoAntigo) q.push({ id: 'plano_total', titulo: 'Plano da Rede: reimporte os arquivos do Plano', qtd: 1, valor: null,
+      resumo: 'O Plano deste mês foi importado antes desta versão e não guardou o total de cada planilha. Em Admin, importe de novo os 3 arquivos de Plano (Tubaína, Carrefour e Nagumo) e processe a auditoria. Até lá, o Plano da Rede não aparece nos cálculos.',
+      cab: ['Aviso'], rows: [['Reimportar os arquivos do Plano']] });
+    else if (linhasT.length) q.push({ id: 'plano_total', titulo: 'Plano da Rede: total da planilha não confere', qtd: linhasT.length, valor: null,
       resumo: 'O Plano da Rede de cada rede é o total do mês escrito na própria planilha. Nestas abas o total não bate com a soma das lojas, não foi encontrado, ou há loja sem número no mês (por exemplo, célula com erro). Peça a planilha corrigida; enquanto isso, a loja sem número fica sem plano em Config › Lojas, onde dá para informar o valor.',
       cab: ['Rede', 'Total na planilha', 'Soma das lojas', 'Lojas sem número', 'Situação'], rows: linhasT });
 
