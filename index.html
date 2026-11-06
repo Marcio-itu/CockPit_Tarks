@@ -2489,8 +2489,8 @@
       ${htmlAvisoMesDosDados()}
       ${htmlCardMesAdmin()}
       <div class="card">
-        <h2>1. Fechamento da Pacto (Excel)</h2>
-        <p style="font-size: 13px; margin-bottom: 15px;">Planilha de fechamento do mês (aba <em>sistematica</em>): o que a Pacto cobra, por rede.</p>
+        <h2>Fechamento da Pacto (Excel)</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Planilha de fechamento do mês (aba <em>sistematica</em>): o que a Pacto cobra, por rede. Chega no fim do mês.</p>
         <input type="file" id="input-excel" ${travar} accept=".xlsx, .xls" style="width: 100%; padding: 10px; border: 1px dashed #CCC; border-radius: 6px;">
         <div id="msg-excel" style="margin-top: 10px; font-weight: bold; font-size: 13px;"></div>
         ${resumoFechamento}
@@ -2539,7 +2539,7 @@
     `;
 
     // Modelo atual: só o mês e os Books. Fechamento, Relatório, Planos e processamento ficam fora por enquanto.
-    ['input-excel', 'input-tempo', 'input-plano', 'btn-auditar'].forEach(id => { const el = document.getElementById(id); const c = el && el.closest('.card'); if (c) c.remove(); });
+    ['input-tempo', 'input-plano', 'btn-auditar'].forEach(id => { const el = document.getElementById(id); const c = el && el.closest('.card'); if (c) c.remove(); });
     container.querySelectorAll('.card').forEach(c => { if (/Lojas com nomes parecidos/.test(c.textContent)) c.remove(); });
     configurarUploadExcel();
     configurarUploadPlano();
