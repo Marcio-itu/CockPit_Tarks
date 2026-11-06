@@ -3600,6 +3600,17 @@
     return [r, l].filter(Boolean).join(' > ');
   }
 
+  // Duas fotos são da mesma execução quando têm o mesmo promotor, o mesmo dia, a mesma rede e a mesma loja (loja com erro de digitação junta, menos I/II).
+  function mesmaExecucaoFoto(a, b) {
+    const pk = f => f.promotorKey || chaveCompacta(f.promotorNome || f.promotor || '');
+    const rk = f => chaveRede(f.redeTexto || '') || chaveCompacta(f.redeTexto || '');
+    const dia = f => (f.dataHora || '').slice(0, 10);
+    if (pk(a) !== pk(b) || dia(a) !== dia(b) || rk(a) !== rk(b)) return false;
+    const ca = chaveCompacta(a.lojaTexto || ''), cb = chaveCompacta(b.lojaTexto || '');
+    const suf = c => { const m = /(?:[0-9]+|[IVX]+)$/.exec(c); return m ? m[0] : ''; };
+    return ca === cb || (semelhancaTexto(ca, cb) >= 0.88 && suf(ca) === suf(cb));
+  }
+
   // Lista as ocorrências do mês, agrupadas por promotor (mais ocorrências primeiro); dentro de cada promotor, da mais recente para a mais antiga.
   function ocorrenciasContestacao(mes) {
     const m = Estado.meses[mes];
@@ -3622,7 +3633,8 @@
       if (l.length < 2) return;
       l.sort(porData);
       const orig = l[0];
-      l.slice(1).forEach(f => {
+      // Mesma foto dentro da mesma execução (mesmo promotor, dia, rede e loja) não é problema: só vale quando comprova execução diferente.
+      l.slice(1).filter(f => !mesmaExecucaoFoto(orig, f)).forEach(f => {
         lista.push({ tipo: 'repetida', chave: 'rep|' + f.id, foto: f, original: orig, quando: f.dataHora || '', promotor: nomePromotorFoto(f) || 'Promotor não identificado' });
       });
     });
@@ -3665,7 +3677,7 @@
         <h2>Book de contestação</h2>
         <p style="font-size:13px;line-height:1.5;">PDF único para devolver à agência, organizado por promotor (quem tem mais ocorrências vem primeiro). Dentro de cada promotor, da foto mais recente para a mais antiga. A foto que já saiu numa versão anterior leva a marca "presente no book desde…".</p>
         ${secoes.reimportadas ? `<p style="font-size:12px;color:#B9770E;margin-top:6px;">⚠️ ${secoes.reimportadas} foto(s) vieram de um Book importado mais de uma vez (mesma página, mesma legenda em outro arquivo). Foram ignoradas na contestação, porque não são ocorrência.</p>` : ''}
-        <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:6px;">Uma foto vale para a primeira visita em que apareceu (pela data e hora da legenda). As cópias idênticas posteriores são contestadas.</p>
+        <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:6px;">Uma foto vale para a primeira visita em que apareceu (pela data e hora da legenda). As cópias idênticas usadas para comprovar outra execução (outro dia, loja ou promotor) são contestadas; repetição dentro da mesma execução é aceita.</p>
         <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:13px;margin:12px 0;">
           <span>Ocorrências: <strong>${todas.length}</strong></span><span>Fotos repetidas: <strong>${nRep}</strong></span><span>Fotos sem legenda: <strong>${nSl}</strong></span><span>Novas (ainda fora de qualquer versão): <strong>${novas}</strong></span>
         </div>
@@ -3722,7 +3734,7 @@
     ];
     resumo.forEach((t, i) => doc.text(t, M, 47 + i * 6));
     doc.setFontSize(9.5); doc.setTextColor(80, 80, 80);
-    const regra = doc.splitTextToSize('Critério: uma foto vale para a primeira visita em que apareceu (pela data e hora da legenda). Cópias idênticas da mesma imagem, em outra visita, loja ou dia, são contestadas e apontam a foto original. Fotos sem legenda não permitem identificar a visita. Dentro de cada promotor, as ocorrências estão da mais recente para a mais antiga.', W - 2 * M);
+    const regra = doc.splitTextToSize('Critério: uma foto vale para a primeira visita em que apareceu (pela data e hora da legenda). Cópias idênticas da mesma imagem, usadas para comprovar outra execução (outro dia, loja ou promotor), são contestadas e apontam a foto original; a mesma foto repetida dentro da mesma execução é aceita. Fotos sem legenda não permitem identificar a visita. Dentro de cada promotor, as ocorrências estão da mais recente para a mais antiga.', W - 2 * M);
     doc.text(regra, M, 69);
     y = 69 + regra.length * 4.6 + 4;
 
@@ -3870,7 +3882,7 @@
     execs.forEach(x => { const a = porDia[x.d] || (porDia[x.d] = { exec: 0, fotos: 0 }); a.exec++; a.fotos += x.n; });
     const diasComFoto = Object.keys(porDia).sort();
     const ultimo = diasComFoto.length ? diasComFoto[diasComFoto.length - 1] : null, primeiro = diasComFoto.length ? diasComFoto[0] : null;
-    const ini = vis ? vis.inicio : mes + '-01', fim = vis ? vis.fim : ultimo;
+    const ini = vis ? vis.inicio : mes + '-01', fim = vis ? vis.fim : mes + '-' + String(new Date(Date.UTC(+mes.slice(0, 4), +mes.slice(5, 7), 0)).getUTCDate()).padStart(2, '0');
     const todosDias = [];
     if (ini && fim) for (let t = Date.UTC(+ini.slice(0, 4), +ini.slice(5, 7) - 1, +ini.slice(8, 10)); t <= Date.UTC(+fim.slice(0, 4), +fim.slice(5, 7) - 1, +fim.slice(8, 10)); t += 86400000) todosDias.push(new Date(t).toISOString().slice(0, 10));
     const diasSemFoto = todosDias.filter(d => !porDia[d]);
@@ -3931,9 +3943,9 @@
       <div class="painel-f1">
         <div style="padding:14px 16px 4px;"><div style="font-size:11px;letter-spacing:2px;color:#9AA4AF;text-transform:uppercase;">PAINEL DOS BOOKS · ${esc(rotuloMes(mes)).toUpperCase()}</div></div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:2px;padding:6px 10px 14px;">
-          ${vel(pA, formatarPorcentagem(pA), 'Dias cobertos', `${nfD(M.nDias)} de ${nfD(M.nPeriodo)} dias com foto${M.ini ? ` (${brDia(M.ini)} a ${brDia(M.fim)})` : ''}`)}
+          ${vel(pA, formatarPorcentagem(pA), 'Dias cobertos', `${nfD(M.nDias)} de ${nfD(M.nPeriodo)} dias do período com foto${M.ini ? ` (${brDia(M.ini)} a ${brDia(M.fim)})` : ''}`)}
           ${vel(pB, formatarPorcentagem(pB), 'Legendas lidas', `${nfD(M.nComLeg)} de ${nfD(M.nFotos)} fotos com legenda`)}
-          ${vel(pC, formatarPorcentagem(pC), 'Fotos únicas', `${nfD(M.nFotos - M.nRep)} de ${nfD(M.nFotos)} fotos não são cópia`)}
+          ${vel(pC, formatarPorcentagem(pC), 'Fotos únicas', `${nfD(M.nFotos - M.nRep)} de ${nfD(M.nFotos)} fotos não repetem outra execução`)}
           ${vel(pD, nfD1(M.mediaDia), 'Execuções por dia', `média de ${nfD1(M.mediaDia)} por dia com foto; a escala vai até o dia mais forte (${nfD(M.maiorDia)})`, '#D4AF37')}
         </div>
       </div>
@@ -3943,7 +3955,7 @@
         ${periodo}
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           ${card('Execuções', nfD(M.nExec), 'loja + dia + promotor')}${card('Fotos', nfD(M.nFotos), `${nfD(M.nComLeg)} com legenda`)}${card('Fotos por execução', nfD1(M.fotosPorExec), 'média')}
-          ${card('Promotores', nfD(M.nProm))}${card('Redes', nfD(M.nRede))}${card('Lojas atendidas', nfD(M.nLoja), 'com ao menos 1 execução')}${card('Dias com foto', nfD(M.nDias), `de ${nfD(M.nPeriodo)} no período`)}
+          ${card('Promotores', nfD(M.nProm))}${card('Redes', nfD(M.nRede))}${card('Lojas atendidas', nfD(M.nLoja), 'com ao menos 1 execução')}${card('Dias com foto', nfD(M.nDias), `de ${nfD(M.nPeriodo)} dias do período`)}
         </div>
       </div>
       <div class="card"><h2>Execuções por dia</h2>${htmlLinhaDoTempo(M)}</div>
@@ -3953,7 +3965,7 @@
       <div class="card">
         <h2>Qualidade das fotos</h2>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          ${card('Fotos repetidas', nfD(M.nRep), 'cópia idêntica de outra foto')}${card('Fotos sem legenda', nfD(M.nSemLeg), 'sem data, rede, loja ou promotor')}${card('Ocorrências', nfD(M.nOcorr), 'no Book de contestação')}${card('Fotos de Book repetido', nfD(M.reimportadas), 'mesmo Book importado 2x')}
+          ${card('Fotos repetidas', nfD(M.nRep), 'mesma foto em outra execução')}${card('Fotos sem legenda', nfD(M.nSemLeg), 'sem data, rede, loja ou promotor')}${card('Ocorrências', nfD(M.nOcorr), 'no Book de contestação')}${card('Fotos de Book repetido', nfD(M.reimportadas), 'mesmo Book importado 2x')}
         </div>
         <p style="font-size:12px;margin-top:8px;">As ocorrências saem no PDF da aba <strong>Contestação</strong>.</p>
       </div>
