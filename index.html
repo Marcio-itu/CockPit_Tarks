@@ -146,6 +146,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
   // Configura o worker do PDF.js
@@ -434,7 +435,7 @@
         ['Dashboard', 'Painel geral do mês: velocímetros por rede e total, valores cobrado, auditado e desconto.'],
         ['Auditoria', 'Detalhe por rede, loja e visita, com a evidência de cada uma (arquivo, página, hora). Questões em aberto, fidelidade ao plano, lojas com excesso, lista das visitas sem comprovação e alertas de volume por promotor/dia.'],
         ['Promotores', 'Ranking de execuções por promotor, lido das legendas das fotos. Toque numa linha para ver dia a dia.'],
-        ['Livres', 'Execuções que aparecem nas fotos mas não têm par nas planilhas, com o motivo.'],
+        ['Livres', 'Execuções vistas nos Books. Como nenhuma planilha amarra as execuções durante o mês, todas são livres até chegar o Fechamento da Pacto.'],
         ['Revisão', 'Fila de fotos que precisam de decisão humana. Cada decisão fica registrada.'],
         ['Relatório', 'Visão consolidada para impressão e exportação.'],
         ['Admin', 'Importação dos arquivos, processamento e publicação (somente operador).'],
@@ -2760,7 +2761,7 @@
     });
   }
   let filtroSoltas = 'todas';
-  function renderizarSoltas() {
+  function renderizarSoltasAntigo() {
     const container = document.getElementById('tela-soltas');
     const aud = dadosPromotores();
     if (!aud) { container.innerHTML = htmlSemDadosPromotores('Execuções Livres'); return; }
@@ -3833,10 +3834,10 @@
   function sufixoNumeral(c) { const m = /(?:[0-9]+|[IVX]+)$/.exec(c); return m ? m[0] : ''; }
 
   // Calcula tudo do mês a partir das fotos. Foto ≠ execução: toda contagem leva o nome do que é.
-  function metricasBooks(mes) {
+  function metricasBooks(mes, inteiro) {
     const m = Estado.meses[mes];
     const bruto = (m && m.fotos) || [];
-    const vis = (typeof Visao !== 'undefined' && Visao.mes === mes && Visao.inicio && Visao.fim) ? Visao : null;
+    const vis = (!inteiro && typeof Visao !== 'undefined' && Visao.mes === mes && Visao.inicio && Visao.fim) ? Visao : null;
     // O mesmo Book importado duas vezes conta uma vez só
     const vistos = new Map(), todas = []; let reimportadas = 0;
     bruto.forEach(f => {
@@ -3867,7 +3868,7 @@
     const nomeProm = {};
     comLeg.forEach(f => { const pk = f.promotorKey || chaveCompacta(f.promotorNome || f.promotor); const n = f.promotorNome || f.promotor || pk; (nomeProm[pk] = nomeProm[pk] || {})[n] = ((nomeProm[pk] || {})[n] || 0) + (f.promotorNome ? 10 : 1); });
     const nomeDe = pk => { const o = nomeProm[pk] || {}; const k = Object.keys(o).sort((a, b) => o[b] - o[a])[0]; return k || pk || 'Promotor não identificado'; };
-    grupos.forEach(l => l.forEach(e => execs.push({ pk: e.pk, prom: nomeDe(e.pk), d: e.d, rk: e.rk, rede: e.redeNome, lojaKey: e.rk + '|' + e.c, loja: e.lojaNome, n: e.fotos.length })));
+    grupos.forEach(l => l.forEach(e => execs.push({ pk: e.pk, prom: nomeDe(e.pk), d: e.d, rk: e.rk, rede: e.redeNome, lojaKey: e.rk + '|' + e.c, loja: e.lojaNome, n: e.fotos.length, hora: e.fotos.map(f => (f.dataHora || '').slice(11, 16)).filter(Boolean).sort()[0] || '', ar: e.fotos[0].arquivoOrigem, pg: e.fotos[0].pagina })));
 
     const agr = (chaveFn, init) => { const o = new Map(); execs.forEach(x => { const k = chaveFn(x); const a = o.get(k) || o.set(k, init(x)).get(k); a.exec++; a.fotos += x.n; a.dias.add(x.d); a.proms.add(x.pk); a.lojas.add(x.lojaKey); }); return Array.from(o.values()).map(a => Object.assign(a, { nDias: a.dias.size, nProms: a.proms.size, nLojas: a.lojas.size })); };
     const novo = nome => ({ nome, exec: 0, fotos: 0, dias: new Set(), proms: new Set(), lojas: new Set() });
@@ -3897,7 +3898,7 @@
     return {
       vis, reimportadas, nFotos: fotos.length, nComLeg: comLeg.length, nSemLeg: semLeg.length, nRep, nOcorr: oc.length,
       nExec: execs.length, nProm: promSet.size, nRede: redesSet.size, nLoja: lojasSet.size, nDias: diasComFoto.length, nPeriodo: todosDias.length,
-      porRede, porProm, porLoja, porDia, todosDias, primeiro, diasSemFoto, maiorDia, ini, fim, ultimo,
+      execs, porRede, porProm, porLoja, porDia, todosDias, primeiro, diasSemFoto, maiorDia, ini, fim, ultimo,
       mediaDia: diasComFoto.length ? execs.length / diasComFoto.length : 0,
       fotosPorExec: execs.length ? comLeg.length / execs.length : 0,
       arquivos: Array.from(arqs.entries()).map(([nome, a]) => Object.assign({ nome }, a)).sort((a, b) => (a.ini || '').localeCompare(b.ini || ''))
@@ -3921,11 +3922,11 @@
   function renderizarDashboardBooks() {
     const container = document.getElementById('tela-dashboard');
     const mes = Estado.config.mesAtivo, m = Estado.meses[mes];
-    if (!m || !(m.fotos || []).length) {
+    if (!m || (!(m.fotos || []).length && !m.livros)) {
       container.innerHTML = `<div class="card"><h2>Dashboard</h2><p>Nenhum Book importado para ${esc(rotuloMes(mes))}.</p><p style="margin-top:12px;font-size:13px;">Vá em <strong>Admin</strong> e importe os Books (PDF).</p></div>`;
       return;
     }
-    const M = metricasBooks(mes);
+    const M = (Modo === 'publicado' && m.livros) ? m.livros : metricasBooks(mes);
     const rev = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
     const pct = (a, b) => b ? a / b * 100 : null;
     const pA = pct(M.nDias, M.nPeriodo), pB = pct(M.nComLeg, M.nFotos), pC = pct(M.nFotos - M.nRep, M.nFotos), pD = M.maiorDia ? M.mediaDia / M.maiorDia * 100 : null;
@@ -3940,6 +3941,7 @@
     const lArq = M.arquivos.map(a => `<tr>${td(esc(nomeArquivoCurto(a.nome)), 1)}${td(nfD(a.fotos))}${td(a.ini ? brDia(a.ini) + ' a ' + brDia(a.fim) : '-')}</tr>`);
     const periodo = M.vis ? `<p style="font-size:12px;color:#B9770E;margin-bottom:8px;">📅 Período: <strong>${brDia(M.vis.inicio)} a ${brDia(M.vis.fim)}</strong>. Fotos sem legenda não têm data e ficam de fora do período.</p>` : '';
     container.innerHTML = `
+      <div class="no-pdf" style="text-align:right;margin-bottom:10px;"><button type="button" id="btn-dash-pdf" style="padding:8px 14px;background:var(--cor-primaria);color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:13px;">⬇ Baixar dashboard (PDF)</button></div>
       <div class="painel-f1">
         <div style="padding:14px 16px 4px;"><div style="font-size:11px;letter-spacing:2px;color:#9AA4AF;text-transform:uppercase;">PAINEL DOS BOOKS · ${esc(rotuloMes(mes)).toUpperCase()}</div></div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:2px;padding:6px 10px 14px;">
@@ -3974,9 +3976,114 @@
         <p style="font-size:13px;margin-bottom:8px;">Fotos de <strong>${M.primeiro ? brDia(M.primeiro) : '-'}</strong> a <strong>${M.ultimo ? brDia(M.ultimo) : '-'}</strong>. Dias sem foto: <strong>${nfD(M.diasSemFoto.length)}</strong>${M.diasSemFoto.length ? ' (' + M.diasSemFoto.map(brDia).join(', ') + ')' : ''}.</p>
         ${tabela(['Book (arquivo)', 'Fotos', 'Datas das fotos'], lArq, 'Sem arquivos.')}
       </div>`;
+    const bp = document.getElementById('btn-dash-pdf'); if (bp) bp.addEventListener('click', baixarDashboardPDF);
   }
+
+  // Baixa a tela do Dashboard em PDF (A4): cada quadro vira uma imagem; quadro que não cabe na página vai para a próxima, e os muito altos são fatiados.
+  async function baixarDashboardPDF() {
+    const btn = document.getElementById('btn-dash-pdf');
+    if (!window.html2canvas || !(window.jspdf && window.jspdf.jsPDF)) { alert('A biblioteca de PDF não carregou. Verifique a conexão e tente de novo.'); return; }
+    const cont = document.getElementById('tela-dashboard'), mes = Estado.config.mesAtivo;
+    const dets = Array.from(cont.querySelectorAll('details')), abertos = dets.map(x => x.open);
+    const txt = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF...'; }
+    try {
+      dets.forEach(x => { x.open = true; });
+      const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+      const PW = 210, PH = 297, MG = 10, W = PW - 2 * MG, TOPO = 18, FUNDO = PH - 14, GAP = 4;
+      let y = TOPO;
+      const novaPagina = () => { doc.addPage(); y = TOPO; };
+      const blocos = Array.from(cont.children).filter(el => !el.classList.contains('no-pdf'));
+      for (const el of blocos) {
+        const cv = await window.html2canvas(el, { scale: 2, backgroundColor: null, useCORS: true, logging: false });
+        const hMm = cv.height * W / cv.width;
+        if (hMm <= FUNDO - y) { doc.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', MG, y, W, hMm); y += hMm + GAP; continue; }
+        if (hMm <= FUNDO - TOPO) { novaPagina(); doc.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', MG, y, W, hMm); y += hMm + GAP; continue; }
+        // quadro mais alto que uma página: fatia
+        if (FUNDO - y < 40) novaPagina();
+        let pos = 0;
+        while (pos < cv.height) {
+          const dispMm = FUNDO - y, fatiaPx = Math.min(cv.height - pos, Math.floor(dispMm * cv.width / W));
+          const c2 = document.createElement('canvas'); c2.width = cv.width; c2.height = fatiaPx;
+          const cx = c2.getContext('2d'); cx.fillStyle = '#FFFFFF'; cx.fillRect(0, 0, c2.width, c2.height); cx.drawImage(cv, 0, pos, cv.width, fatiaPx, 0, 0, cv.width, fatiaPx);
+          const fMm = fatiaPx * W / cv.width;
+          doc.addImage(c2.toDataURL('image/jpeg', 0.92), 'JPEG', MG, y, W, fMm);
+          pos += fatiaPx; y += fMm + GAP;
+          if (pos < cv.height) novaPagina();
+        }
+      }
+      const n = doc.getNumberOfPages(), agora = new Date(), p2 = v => String(v).padStart(2, '0');
+      const quando = p2(agora.getDate()) + '/' + p2(agora.getMonth() + 1) + '/' + agora.getFullYear() + ' ' + p2(agora.getHours()) + ':' + p2(agora.getMinutes());
+      for (let i = 1; i <= n; i++) {
+        doc.setPage(i);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(10, 61, 46);
+        doc.text('CockPit Tarks · Dashboard dos Books · ' + rotuloMes(mes), MG, 11);
+        doc.setDrawColor(212, 175, 55); doc.setLineWidth(0.5); doc.line(MG, 14, PW - MG, 14);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(120, 120, 120);
+        doc.text('Gerado em ' + quando, MG, PH - 6); doc.text('Página ' + i + ' de ' + n, PW - MG, PH - 6, { align: 'right' });
+      }
+      doc.save('Dashboard_' + mes + '_' + agora.getFullYear() + p2(agora.getMonth() + 1) + p2(agora.getDate()) + '.pdf');
+    } catch (e) {
+      alert('Não foi possível gerar o PDF: ' + (e && e.message ? e.message : e));
+    } finally {
+      dets.forEach((x, i) => { x.open = abertos[i]; });
+      if (btn) { btn.disabled = false; btn.textContent = txt; }
+    }
+  }
+
+  // Aba Livres: enquanto não há planilha que amarre as execuções (só o Fechamento, no fim do mês), TODAS as execuções dos Books são livres.
+  let filtroLivresProm = '', filtroLivresRede = '';
+  function renderizarSoltasBooks() {
+    const container = document.getElementById('tela-soltas');
+    const mes = Estado.config.mesAtivo, m = Estado.meses[mes];
+    if (!m || !(m.fotos || []).length) { container.innerHTML = `<div class="card"><h2>Execuções Livres</h2><p>Nenhum Book importado para ${esc(rotuloMes(mes))}.</p><p style="margin-top:12px;font-size:13px;">Vá em <strong>Admin</strong> e importe os Books (PDF).</p></div>`; return; }
+    const M = metricasBooks(mes);
+    const todas = M.execs.slice();
+    const proms = Array.from(new Set(todas.map(x => x.prom))).sort((a, b) => a.localeCompare(b)), redes = Array.from(new Set(todas.map(x => x.rede))).sort((a, b) => a.localeCompare(b));
+    if (filtroLivresProm && !proms.includes(filtroLivresProm)) filtroLivresProm = '';
+    if (filtroLivresRede && !redes.includes(filtroLivresRede)) filtroLivresRede = '';
+    const lista = todas.filter(x => (!filtroLivresProm || x.prom === filtroLivresProm) && (!filtroLivresRede || x.rede === filtroLivresRede))
+      .sort((a, b) => b.d.localeCompare(a.d) || (b.hora || '').localeCompare(a.hora || '') || a.prom.localeCompare(b.prom));
+    const LIM = 500;
+    const caixa = (rot, val, cor, sub) => `<div style="flex:1;min-width:100px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:${cor};">${val}</div><div style="font-size:10px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
+    const linhas = lista.slice(0, LIM).map(x => `<tr style="border-top:1px solid #EEE;vertical-align:top;">
+        <td style="padding:7px 5px;white-space:nowrap;">${esc(brDia(x.d).slice(0, 5))}<div style="font-size:10px;color:var(--cor-texto-secundario);">${esc(x.hora)}</div></td>
+        <td style="padding:7px 5px;font-weight:bold;">${esc(x.prom)}</td>
+        <td style="padding:7px 5px;">${esc(x.rede)} › ${esc(x.loja)}</td>
+        <td style="padding:7px 5px;text-align:center;">${nfD(x.n)}</td></tr>`).join('');
+    const opt = (arr, sel) => arr.map(v => `<option value="${esc(v)}" ${v === sel ? 'selected' : ''}>${esc(v)}</option>`).join('');
+    container.innerHTML = `
+      <div class="card" style="border-left-color:#E67E22;">
+        <h2>Execuções Livres</h2>
+        <p style="font-size:12px;margin-bottom:10px;line-height:1.5;">Os Books chegam durante o mês <strong>sem amarração</strong>: nenhuma planilha diz onde cada execução aconteceu. Por isso <strong>todas as execuções são livres</strong> até chegar o Fechamento da Pacto, que vai "prender" cada uma. Uma execução = uma loja, num dia, por um promotor (1 ou várias fotos).</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+          ${caixa('Execuções Livres', nfD(M.nExec), '#E67E22', 'todas as dos Books')}${caixa('Presas', '0', '#27AE60', 'aguardando o Fechamento')}${caixa('Fotos', nfD(M.nFotos), '#7F8C8D', 'nelas')}
+        </div>
+        ${M.vis ? `<p style="font-size:12px;color:#B9770E;margin-bottom:8px;">📅 Período: <strong>${brDia(M.vis.inicio)} a ${brDia(M.vis.fim)}</strong></p>` : ''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <select id="filtro-livres-prom" style="flex:1;min-width:180px;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;"><option value="">Todos os promotores (${nfD(proms.length)})</option>${opt(proms, filtroLivresProm)}</select>
+          <select id="filtro-livres-rede" style="flex:1;min-width:180px;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;"><option value="">Todas as redes (${nfD(redes.length)})</option>${opt(redes, filtroLivresRede)}</select>
+        </div>
+        <p style="font-size:12px;margin-bottom:6px;">Mostrando <strong>${nfD(lista.length)}</strong> execuções${lista.length > LIM ? ` (as ${LIM} mais recentes; o CSV traz todas)` : ''}.</p>
+        ${lista.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:6px 5px;text-align:left;">Dia</th><th style="padding:6px 5px;text-align:left;">Promotor</th><th style="padding:6px 5px;text-align:left;">Rede › loja</th><th style="padding:6px 5px;">Fotos</th></tr></thead><tbody>${linhas}</tbody></table></div>` : '<p style="font-size:13px;">Nenhuma execução com esse filtro.</p>'}
+        <button id="btn-csv-soltas" style="width:100%;margin-top:14px;padding:12px;background:var(--cor-primaria);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Baixar CSV das Execuções Livres</button>
+      </div>`;
+    document.getElementById('filtro-livres-prom').addEventListener('change', e => { filtroLivresProm = e.target.value; renderizarSoltasBooks(); });
+    document.getElementById('filtro-livres-rede').addEventListener('change', e => { filtroLivresRede = e.target.value; renderizarSoltasBooks(); });
+    document.getElementById('btn-csv-soltas').addEventListener('click', () => {
+      let csv = 'Data;Hora;Promotor;Rede;Loja;Fotos;Arquivo;Página\n';
+      lista.slice().sort((a, b) => a.d.localeCompare(b.d) || a.prom.localeCompare(b.prom)).forEach(x => { csv += [x.d.split('-').reverse().join('/'), x.hora, x.prom, x.rede, x.loja, x.n, nomeArquivoCurto(x.ar), x.pg].join(';') + '\n'; });
+      baixarCSV('execucoes_livres_' + mes + '.csv', csv);
+    });
+  }
+  function renderizarSoltas() {
+    if (Modo === 'publicado') return renderizarSoltasAntigo();
+    renderizarSoltasBooks();
+  }
+
   function renderizarDashboard() {
-    if (Modo === 'publicado') return renderizarDashboardAntigo();
+    const mm = Estado.meses[Estado.config.mesAtivo];
+    if (Modo === 'publicado' && !(mm && mm.livros)) return renderizarDashboardAntigo();
     renderizarDashboardBooks();
   }
 </script>
@@ -4018,13 +4125,13 @@
     if (!idx || !idx.meses || idx.meses.length === 0) return false;
     const alvo = mes || idx.meses[0].mes;
     const dados = await buscarJSONPublicado(CAMINHO_PUBLICADO + alvo + '.json');
-    if (!dados || !dados.auditoria) { alert('Não foi possível carregar os resultados publicados de ' + alvo + '.'); return false; }
+    if (!dados || (!dados.auditoria && !dados.books)) { alert('Não foi possível carregar os resultados publicados de ' + alvo + '.'); return false; }
     if (Modo === 'local') Publicado.guardaLocal = { config: Estado.config, meses: Estado.meses };
     Modo = 'publicado'; // a partir daqui salvarEstado() não grava nada: os dados locais ficam intactos
     Estado.config = { ...Publicado.guardaLocal.config, mesAtivo: alvo };
     Estado.meses = { [alvo]: {
       fechamento: [], lojas: [], relatorioTempo: [], periodosPDF: [],
-      fotos: dados.fotos || [], periodoAuditado: dados.periodoAuditado || null, auditoria: dados.auditoria
+      fotos: dados.fotos || [], periodoAuditado: dados.periodoAuditado || null, auditoria: dados.auditoria || null, livros: dados.books || null
     } };
     aplicarModoNaInterface();
     return true;
@@ -4157,8 +4264,10 @@
   function montarSnapshotMes(mes) {
     const m = Estado.meses[mes];
     const a = m.auditoria;
+    const livros = (m.fotos || []).length ? Object.assign({}, metricasBooks(mes, true), { vis: null, execs: undefined }) : null;
+    if (!a) return { versao: 2, mes, geradoEm: new Date().toISOString(), periodoAuditado: null, books: livros };
     return {
-      versao: 1, mes, geradoEm: new Date().toISOString(),
+      versao: 1, mes, geradoEm: new Date().toISOString(), books: livros,
       periodoAuditado: m.periodoAuditado || null,
       auditoria: Object.assign({}, a, {
         visitasAgrupadas: (a.visitasAgrupadas || []).map(v => ({
@@ -4185,9 +4294,9 @@
 
     const mes = Estado.config.mesAtivo;
     const m = Estado.meses[mes];
-    if (!m || !m.auditoria) { mostrar('Processe a auditoria deste mês antes de publicar.', '#E74C3C'); return; }
+    if (!m || (!m.auditoria && !(m.fotos || []).length)) { mostrar('Importe os Books deste mês (Admin) antes de publicar.', '#E74C3C'); return; }
 
-    const pend = m.auditoria.total.fotosPendentes || 0;
+    const pend = m.auditoria ? (m.auditoria.total.fotosPendentes || 0) : 0;
     if (pend > 0 && !confirm(`Ainda há ${pend} foto(s) aguardando revisão. Os números podem mudar depois. Publicar assim mesmo?`)) return;
     if (!confirm(`Publicar os resultados de ${mes} em ${acesso.owner}/${acesso.repo}?\n\nQualquer pessoa com o link do site poderá ver redes, lojas, nomes de promotores e valores. As fotos NÃO são publicadas.`)) return;
 
@@ -4204,9 +4313,9 @@
       const arqIdx = await ghLerArquivo(acesso, caminhoIdx);
       let indice = { versao: 1, meses: [] };
       if (arqIdx && arqIdx.texto) { try { indice = JSON.parse(arqIdx.texto); } catch (e) { /* recria o índice */ } }
-      const t = m.auditoria.total;
+      const t = m.auditoria ? m.auditoria.total : { totalDeclaradas: null, comprovadas: null };
       indice.meses = (indice.meses || []).filter(x => x.mes !== mes)
-        .concat([{ mes, geradoEm: snap.geradoEm, periodoAuditado: snap.periodoAuditado, totalDeclaradas: t.totalDeclaradas, comprovadas: t.comprovadas }])
+        .concat([{ mes, geradoEm: snap.geradoEm, periodoAuditado: snap.periodoAuditado, totalDeclaradas: t.totalDeclaradas, comprovadas: t.comprovadas, execucoes: snap.books ? snap.books.nExec : null }])
         .sort((a, b) => b.mes.localeCompare(a.mes));
       indice.atualizadoEm = snap.geradoEm;
       await ghGravarArquivo(acesso, caminhoIdx, JSON.stringify(indice), arqIdx && arqIdx.sha, `Índice dos resultados (${mes})`);
@@ -4625,7 +4734,7 @@
     return `<div style="margin-top:14px;padding-top:12px;border-top:1px dashed #CCC;">
       <p style="font-size:12px;font-weight:bold;margin-bottom:6px;color:var(--cor-texto);">Meses publicados</p>
       ${ms.map(x => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;padding:5px 0;">
-        <span><strong>${esc(rotuloMes(x.mes))}</strong> · ${x.totalDeclaradas != null ? esc(x.totalDeclaradas) + ' cobradas, ' + esc(x.comprovadas) + ' comprovadas' : ''}</span>
+        <span><strong>${esc(rotuloMes(x.mes))}</strong> · ${x.totalDeclaradas != null ? esc(x.totalDeclaradas) + ' cobradas, ' + esc(x.comprovadas) + ' comprovadas' : (x.execucoes != null ? esc(x.execucoes) + ' execuções' : '')}</span>
         <button type="button" class="btn-despublicar" data-mes="${esc(x.mes)}" style="padding:6px 10px;border:1px solid var(--cor-perigo);background:transparent;color:var(--cor-perigo);border-radius:6px;font-weight:bold;cursor:pointer;white-space:nowrap;">Remover</button></div>`).join('')}
       <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:4px;">Use “Remover” quando um mês foi publicado errado (por exemplo, dados de outubro publicados como novembro). Depois, publique de novo no mês certo.</p>
     </div>`;
