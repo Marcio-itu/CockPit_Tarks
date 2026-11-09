@@ -2757,7 +2757,7 @@
       L.forEach((p, i) => { csv += [i + 1, p.nome, p.exec, p.fotos, p.dias, p.maxDia, p.soltas].join(';') + '\n'; });
       csv += '\nPromotor;Data;Hora;Rede;Loja (etiqueta);Fotos;Arquivo;Página;Situação\n';
       L.forEach(p => p.lista.forEach(x => { csv += [p.nome, formatarDataBR(x.d), x.hora, x.rede, x.loja, x.n, nomeArquivoCurto((aud.arquivosBook || [])[x.ar]), x.pg, x.motivo || 'Execução Planejada (com par no Relatório)'].join(';') + '\n'; }));
-      baixarCSV('promotores_' + Estado.config.mesAtivo + '.csv', csv);
+      baixarCSV(nomeArquivoTrade(Estado.config.mesAtivo, 'Promotores', 'csv'), csv);
     });
   }
   let filtroSoltas = 'todas';
@@ -2797,7 +2797,7 @@
     document.getElementById('btn-csv-soltas').addEventListener('click', () => {
       let csv = 'Data;Hora;Promotor;Rede;Loja (etiqueta);Fotos;Arquivo;Página;Por quê\n';
       todas.sort((a, b) => a.d.localeCompare(b.d) || a.prom.localeCompare(b.prom)).forEach(x => { csv += [formatarDataBR(x.d), x.hora, x.prom, x.rede, x.loja, x.n, nomeArquivoCurto((aud.arquivosBook || [])[x.ar]), x.pg, x.motivo].join(';') + '\n'; });
-      baixarCSV('execucoes_livres_' + Estado.config.mesAtivo + '.csv', csv);
+      baixarCSV(nomeArquivoTrade(Estado.config.mesAtivo, 'Execucoes Livres', 'csv'), csv);
     });
   }
 
@@ -3807,8 +3807,7 @@
       doc.text('Página ' + p + ' de ' + n, W - M, H - 6, { align: 'right' });
       doc.text('CockPit Tarks | Grupo Tarks', M, H - 6);
     }
-    const dd = agora.toISOString().slice(0, 10).replace(/-/g, '');
-    doc.save('Book_de_contestacao_' + mes + '_v' + versao + '_' + dd + '.pdf');
+    doc.save(nomeArquivoTrade(mes, 'Book de Contestacao_v' + versao, 'pdf'));
 
     // Só registra depois de gerar com sucesso
     const iso = agora.toISOString();
@@ -3903,6 +3902,16 @@
       fotosPorExec: execs.length ? comLeg.length / execs.length : 0,
       arquivos: Array.from(arqs.entries()).map(([nome, a]) => Object.assign({ nome }, a)).sort((a, b) => (a.ini || '').localeCompare(b.ini || ''))
     };
+  }
+
+  // Nome padrão dos arquivos baixados: AAAA_Trade_<Descrição>_até DD de <mês>.<ext>  (data = foto mais recente dos Books)
+  function nomeArquivoTrade(mes, descricao, ext) {
+    const MM = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    const m = Estado.meses[mes];
+    let ult = null;
+    try { ult = ((Modo === 'publicado' && m && m.livros) ? m.livros : metricasBooks(mes, true)).ultimo; } catch (e) { ult = null; }
+    if (!ult) ult = mes + '-01';
+    return ult.slice(0, 4) + '_Trade_' + descricao + '_até ' + ult.slice(8, 10) + ' de ' + MM[+ult.slice(5, 7) - 1] + '.' + ext;
   }
 
   function htmlLinhaDoTempo(M) {
@@ -4022,7 +4031,7 @@
         doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(120, 120, 120);
         doc.text('Gerado em ' + quando, MG, PH - 6); doc.text('Página ' + i + ' de ' + n, PW - MG, PH - 6, { align: 'right' });
       }
-      doc.save('Dashboard_' + mes + '_' + agora.getFullYear() + p2(agora.getMonth() + 1) + p2(agora.getDate()) + '.pdf');
+      doc.save(nomeArquivoTrade(mes, 'Espelho Dashboard_Execucoes', 'pdf'));
     } catch (e) {
       alert('Não foi possível gerar o PDF: ' + (e && e.message ? e.message : e));
     } finally {
@@ -4073,7 +4082,7 @@
     document.getElementById('btn-csv-soltas').addEventListener('click', () => {
       let csv = 'Data;Hora;Promotor;Rede;Loja;Fotos;Arquivo;Página\n';
       lista.slice().sort((a, b) => a.d.localeCompare(b.d) || a.prom.localeCompare(b.prom)).forEach(x => { csv += [x.d.split('-').reverse().join('/'), x.hora, x.prom, x.rede, x.loja, x.n, nomeArquivoCurto(x.ar), x.pg].join(';') + '\n'; });
-      baixarCSV('execucoes_livres_' + mes + '.csv', csv);
+      baixarCSV(nomeArquivoTrade(mes, 'Execucoes Livres', 'csv'), csv);
     });
   }
   function renderizarSoltas() {
