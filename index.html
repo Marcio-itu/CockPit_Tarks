@@ -438,7 +438,7 @@
         ['Dashboard', 'Painel geral do mês: velocímetros por rede e total, valores cobrado, auditado e desconto.'],
         ['Auditoria', 'Detalhe por rede, loja e visita, com a evidência de cada uma (arquivo, página, hora). Questões em aberto, fidelidade ao plano, lojas com excesso, lista das visitas sem comprovação e alertas de volume por promotor/dia.'],
         ['Promotores', 'Ranking de execuções por promotor, lido das legendas das fotos. Toque numa linha para ver dia a dia.'],
-        ['Livres', 'Execuções vistas nos Books. Como nenhuma planilha amarra as execuções durante o mês, todas são livres até chegar o Fechamento da Pacto.'],
+        ['Livres', 'Visitas vistas nos Books. Como nenhuma planilha amarra as visitas durante o mês, todas são livres até chegar o Fechamento da Pacto.'],
         ['Revisão', 'Fila de fotos que precisam de decisão humana. Cada decisão fica registrada.'],
         ['Relatório', 'Visão consolidada para impressão e exportação.'],
         ['Admin', 'Importação dos arquivos, processamento e publicação (somente operador).'],
@@ -3574,7 +3574,8 @@
   // ══════════════════════════════════════════════════════════════════════
   const TIPOS_OCORRENCIA = {
     repetida: { rot: 'FOTO REPETIDA', cor: [192, 57, 43] },
-    sem_legenda: { rot: 'FOTO SEM LEGENDA', cor: [211, 120, 0] }
+    sem_legenda: { rot: 'FOTO SEM LEGENDA', cor: [211, 120, 0] },
+    dupla: { rot: 'DOIS PROMOTORES NA LOJA', cor: [125, 60, 152] }
   };
 
   function limpaLegenda(t) {
@@ -3606,16 +3607,20 @@
     return [r, l].filter(Boolean).join(' > ');
   }
 
-  // Duas fotos são da mesma execução quando têm o mesmo promotor, o mesmo dia, a mesma rede e a mesma loja (loja com erro de digitação junta, menos I/II).
-  function mesmaExecucaoFoto(a, b) {
-    const pk = f => f.promotorKey || chaveCompacta(f.promotorNome || f.promotor || '');
+  // Duas fotos são da mesma visita quando têm o mesmo promotor, o mesmo dia, a mesma rede e a mesma loja (loja com erro de digitação junta, menos I/II).
+  function pkFoto(f) { return f.promotorKey || chaveCompacta(f.promotorNome || f.promotor || ''); }
+  // Mesma loja, mesma rede e mesmo dia (loja com erro de digitação junta, menos I/II); não olha o promotor.
+  function mesmaLojaDiaFoto(a, b) {
     const rk = f => chaveRede(f.redeTexto || '') || chaveCompacta(f.redeTexto || '');
     const dia = f => (f.dataHora || '').slice(0, 10);
-    if (pk(a) !== pk(b) || dia(a) !== dia(b) || rk(a) !== rk(b)) return false;
+    if (dia(a) !== dia(b) || rk(a) !== rk(b)) return false;
     const ca = chaveCompacta(a.lojaTexto || ''), cb = chaveCompacta(b.lojaTexto || '');
-    const suf = c => { const m = /(?:[0-9]+|[IVX]+)$/.exec(c); return m ? m[0] : ''; };
+    const suf = x => { const m = /(?:[0-9]+|[IVX]+)$/.exec(x); return m ? m[0] : ''; };
     return ca === cb || (semelhancaTexto(ca, cb) >= 0.88 && suf(ca) === suf(cb));
   }
+  // Mesma visita = mesmo promotor + mesma loja + mesmo dia.
+  function mesmaVisitaFoto(a, b) { return pkFoto(a) === pkFoto(b) && mesmaLojaDiaFoto(a, b); }
+
 
   // Lista as ocorrências do mês, agrupadas por promotor (mais ocorrências primeiro); dentro de cada promotor, da mais recente para a mais antiga.
   function ocorrenciasContestacao(mes) {
@@ -3639,9 +3644,29 @@
       if (l.length < 2) return;
       l.sort(porData);
       const orig = l[0];
-      // Mesma foto dentro da mesma execução (mesmo promotor, dia, rede e loja) não é problema: só vale quando comprova execução diferente.
-      l.slice(1).filter(f => !mesmaExecucaoFoto(orig, f)).forEach(f => {
+      // Mesma foto dentro da mesma visita (mesmo promotor, dia, rede e loja) não é problema: só vale quando comprova visita diferente.
+      l.slice(1).filter(f => !mesmaVisitaFoto(orig, f)).forEach(f => {
         lista.push({ tipo: 'repetida', chave: 'rep|' + f.id, foto: f, original: orig, quando: f.dataHora || '', promotor: nomePromotorFoto(f) || 'Promotor não identificado' });
+      });
+    });
+    // Dois ou mais promotores na mesma loja, no mesmo dia: vale o primeiro (pela hora da legenda); os demais vão para a agência justificar.
+    const baldes = new Map();
+    fotos.forEach(f => {
+      if (f.semLegenda || !f.dataHora || !f.redeTexto || !f.lojaTexto || !pkFoto(f)) return;
+      const bk = f.dataHora.slice(0, 10) + '|' + (chaveRede(f.redeTexto) || chaveCompacta(f.redeTexto));
+      if (!baldes.has(bk)) baldes.set(bk, []);
+      baldes.get(bk).push(f);
+    });
+    baldes.forEach(fs => {
+      const clusters = [];
+      fs.forEach(f => { let cl = clusters.find(x => mesmaLojaDiaFoto(x.rep, f)); if (!cl) clusters.push(cl = { rep: f, fotos: [] }); cl.fotos.push(f); });
+      clusters.forEach(cl => {
+        const por = new Map();
+        cl.fotos.forEach(f => { const k = pkFoto(f); if (!por.has(k)) por.set(k, []); por.get(k).push(f); });
+        if (por.size < 2) return;
+        const grupos = Array.from(por.values()).map(l => l.sort(porData)).sort((a, b) => porData(a[0], b[0]));
+        const primeiro = grupos[0][0];
+        grupos.slice(1).forEach(l => lista.push({ tipo: 'dupla', chave: 'dp|' + l[0].id, foto: l[0], original: primeiro, quando: l[0].dataHora || '', promotor: nomePromotorFoto(l[0]) || 'Promotor não identificado', nFotos: l.length }));
       });
     });
     fotos.forEach(f => { if (f.semLegenda) lista.push({ tipo: 'sem_legenda', chave: 'sl|' + f.id, foto: f, quando: '', promotor: '' }); });
@@ -3669,13 +3694,13 @@
     const secoes = ocorrenciasContestacao(mes);
     const reg = regContestacao(mes);
     const todas = secoes.reduce((a, s) => a.concat(s.itens), []);
-    const nRep = todas.filter(o => o.tipo === 'repetida').length, nSl = todas.filter(o => o.tipo === 'sem_legenda').length;
+    const nRep = todas.filter(o => o.tipo === 'repetida').length, nSl = todas.filter(o => o.tipo === 'sem_legenda').length, nDp = todas.filter(o => o.tipo === 'dupla').length;
     const novas = todas.filter(o => !reg.primeira[o.chave]).length;
     const linhas = secoes.map(s => {
-      const rep = s.itens.filter(o => o.tipo === 'repetida').length, sl = s.itens.length - rep;
+      const rep = s.itens.filter(o => o.tipo === 'repetida').length, dp = s.itens.filter(o => o.tipo === 'dupla').length, sl = s.itens.length - rep - dp;
       const ult = s.itens.map(o => o.quando).filter(Boolean).sort().pop();
       const nv = s.itens.filter(o => !reg.primeira[o.chave]).length;
-      return `<tr><td style="padding:6px;">${esc(s.nome)}</td><td style="padding:6px;text-align:center;font-weight:bold;">${s.itens.length}</td><td style="padding:6px;text-align:center;">${rep}</td><td style="padding:6px;text-align:center;">${sl}</td><td style="padding:6px;text-align:center;">${ult ? esc(dataHoraBR(ult)) : '-'}</td><td style="padding:6px;text-align:center;">${nv}</td></tr>`;
+      return `<tr><td style="padding:6px;">${esc(s.nome)}</td><td style="padding:6px;text-align:center;font-weight:bold;">${s.itens.length}</td><td style="padding:6px;text-align:center;">${rep}</td><td style="padding:6px;text-align:center;">${dp}</td><td style="padding:6px;text-align:center;">${sl}</td><td style="padding:6px;text-align:center;">${ult ? esc(dataHoraBR(ult)) : '-'}</td><td style="padding:6px;text-align:center;">${nv}</td></tr>`;
     }).join('');
     const hist = reg.geracoes.slice().reverse().map(g => `<li>Versão ${g.versao}: ${esc(dataHoraIsoBR(g.em))}, ${g.total} ocorrência(s), ${g.novas} nova(s)</li>`).join('');
     container.innerHTML = `
@@ -3683,15 +3708,15 @@
         <h2>Book de contestação</h2>
         <p style="font-size:13px;line-height:1.5;">PDF único para devolver à agência, organizado por promotor (quem tem mais ocorrências vem primeiro). Dentro de cada promotor, da foto mais recente para a mais antiga. A foto que já saiu numa versão anterior leva a marca "presente no book desde…".</p>
         ${secoes.reimportadas ? `<p style="font-size:12px;color:#B9770E;margin-top:6px;">⚠️ ${secoes.reimportadas} foto(s) vieram de um Book importado mais de uma vez (mesma página, mesma legenda em outro arquivo). Foram ignoradas na contestação, porque não são ocorrência.</p>` : ''}
-        <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:6px;">Uma foto vale para a primeira visita em que apareceu (pela data e hora da legenda). As cópias idênticas usadas para comprovar outra execução (outro dia, loja ou promotor) são contestadas; repetição dentro da mesma execução é aceita.</p>
+        <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:6px;">Uma foto vale para a primeira visita em que apareceu (pela data e hora da legenda). As cópias idênticas usadas para comprovar outra visita (outro dia, loja ou promotor) são contestadas; repetição dentro da mesma visita é aceita.</p>
         <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:13px;margin:12px 0;">
-          <span>Ocorrências: <strong>${todas.length}</strong></span><span>Fotos repetidas: <strong>${nRep}</strong></span><span>Fotos sem legenda: <strong>${nSl}</strong></span><span>Novas (ainda fora de qualquer versão): <strong>${novas}</strong></span>
+          <span>Ocorrências: <strong>${todas.length}</strong></span><span>Fotos repetidas: <strong>${nRep}</strong></span><span>2 promotores na mesma loja/dia: <strong>${nDp}</strong></span><span>Fotos sem legenda: <strong>${nSl}</strong></span><span>Novas (ainda fora de qualquer versão): <strong>${novas}</strong></span>
         </div>
         <button type="button" id="btn-gerar-contestacao" style="padding:11px 16px;border-radius:6px;border:none;background:var(--cor-primaria);color:var(--cor-destaque);font-weight:bold;cursor:pointer;" ${todas.length ? '' : 'disabled'}>📄 Gerar Book de contestação (PDF)</button>
         <div id="msg-contestacao" style="margin-top:8px;font-size:13px;font-weight:bold;"></div>
         <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">Ao gerar, todas as ocorrências do PDF passam a constar como "presentes no book" a partir da data de hoje.</p>
       </div>
-      ${todas.length ? `<div class="card"><h2>Por promotor</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;"><th style="padding:6px;text-align:left;">Promotor</th><th style="padding:6px;">Ocorrências</th><th style="padding:6px;">Repetidas</th><th style="padding:6px;">Sem legenda</th><th style="padding:6px;">Mais recente</th><th style="padding:6px;">Novas</th></tr></thead><tbody>${linhas}</tbody></table></div></div>` : `<div class="card"><p>Nenhuma ocorrência encontrada nas fotos importadas.</p></div>`}
+      ${todas.length ? `<div class="card"><h2>Por promotor</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;"><th style="padding:6px;text-align:left;">Promotor</th><th style="padding:6px;">Ocorrências</th><th style="padding:6px;">Repetidas</th><th style="padding:6px;">2 promotores na loja</th><th style="padding:6px;">Sem legenda</th><th style="padding:6px;">Mais recente</th><th style="padding:6px;">Novas</th></tr></thead><tbody>${linhas}</tbody></table></div></div>` : `<div class="card"><p>Nenhuma ocorrência encontrada nas fotos importadas.</p></div>`}
       ${hist ? `<div class="card"><h2>Versões geradas</h2><ul style="font-size:13px;line-height:1.7;padding-left:18px;">${hist}</ul></div>` : ''}`;
     const b = document.getElementById('btn-gerar-contestacao');
     if (b) b.addEventListener('click', gerarBookContestacao);
@@ -3732,15 +3757,15 @@
     doc.setFontSize(12); doc.setFont('helvetica', 'bold');
     doc.text('Gerado em ' + dataHoraIsoBR(agora.toISOString()) + '  |  versão ' + versao, M, 33);
     doc.setTextColor(30, 30, 30); doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5);
-    const nRep = todas.filter(o => o.tipo === 'repetida').length, nSl = todas.filter(o => o.tipo === 'sem_legenda').length;
+    const nRep = todas.filter(o => o.tipo === 'repetida').length, nSl = todas.filter(o => o.tipo === 'sem_legenda').length, nDp = todas.filter(o => o.tipo === 'dupla').length;
     const resumo = [
-      'Ocorrências neste book: ' + todas.length + '   (fotos repetidas: ' + nRep + '  |  fotos sem legenda: ' + nSl + ')',
+      'Ocorrências neste book: ' + todas.length + '   (fotos repetidas: ' + nRep + '  |  dois promotores na loja: ' + nDp + '  |  fotos sem legenda: ' + nSl + ')',
       'Promotores com ocorrência: ' + secoes.filter(s => !s.semPromotor).length,
       'Novas nesta versão: ' + novas + '   |   já presentes em versões anteriores: ' + (todas.length - novas)
     ];
     resumo.forEach((t, i) => doc.text(t, M, 47 + i * 6));
     doc.setFontSize(9.5); doc.setTextColor(80, 80, 80);
-    const regra = doc.splitTextToSize('Critério: uma foto vale para a primeira visita em que apareceu (pela data e hora da legenda). Cópias idênticas da mesma imagem, usadas para comprovar outra execução (outro dia, loja ou promotor), são contestadas e apontam a foto original; a mesma foto repetida dentro da mesma execução é aceita. Fotos sem legenda não permitem identificar a visita. Dentro de cada promotor, as ocorrências estão da mais recente para a mais antiga.', W - 2 * M);
+    const regra = doc.splitTextToSize('Critério: uma foto vale para a primeira visita em que apareceu (pela data e hora da legenda). Dois promotores na mesma loja e no mesmo dia: vale a primeira visita pela hora da legenda e as demais seguem para a agência justificar. Cópias idênticas da mesma imagem, usadas para comprovar outra visita (outro dia, loja ou promotor), são contestadas e apontam a foto original; a mesma foto repetida dentro da mesma visita é aceita. Fotos sem legenda não permitem identificar a visita. Dentro de cada promotor, as ocorrências estão da mais recente para a mais antiga.', W - 2 * M);
     doc.text(regra, M, 69);
     y = 69 + regra.length * 4.6 + 4;
 
@@ -3772,8 +3797,9 @@
         const tx = M + 62;
         doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(20, 20, 20);
         doc.text(o.tipo === 'sem_legenda' ? 'Data não identificada' : dataHoraBR(f.dataHora), tx, y + 9);
-        doc.setFillColor(...tipo.cor); doc.roundedRect(tx, y + 12, 38, 6, 1, 1, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFontSize(8.5); doc.text(tipo.rot, tx + 2, y + 16.2);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+        doc.setFillColor(...tipo.cor); doc.roundedRect(tx, y + 12, Math.max(38, doc.getTextWidth(tipo.rot) + 5), 6, 1, 1, 'F');
+        doc.setTextColor(255, 255, 255); doc.text(tipo.rot, tx + 2, y + 16.2);
         doc.setTextColor(30, 30, 30); doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
         const larg = W - M - tx - 3;
         let yy = y + 24;
@@ -3790,6 +3816,12 @@
           doc.text(doc.splitTextToSize(t, larg - 30).slice(0, 5), tx, yy);
           addImg(imgOrig, W - M - 28, y + 22, 26, 28);
           doc.setFontSize(6.5); doc.setTextColor(110); doc.text('original', W - M - 15, y + 52, { align: 'center' });
+        } else if (o.tipo === 'dupla') {
+          const ro = o.original;
+          const t = 'Na mesma loja e no mesmo dia, outro promotor já havia registrado visita: ' + (nomePromotorFoto(ro) || '-') + ', ' + dataHoraBR(ro.dataHora) + ' (pág. ' + ro.pagina + ' do ' + nomeArquivoCurto(ro.arquivoOrigem) + '). Esta visita de ' + (nomePromotorFoto(f) || '-') + ' tem ' + (o.nFotos || 1) + ' foto(s). A agência deve esclarecer por que dois promotores estiveram na mesma loja no mesmo dia.';
+          doc.text(doc.splitTextToSize(t, larg - 30).slice(0, 6), tx, yy);
+          addImg(imgOrig, W - M - 28, y + 22, 26, 28);
+          doc.setFontSize(6.5); doc.setTextColor(110); doc.text('outra visita', W - M - 15, y + 52, { align: 'center' });
         } else {
           doc.text(doc.splitTextToSize('Foto sem legenda legível (rodapé com data, rede, loja e promotor ausente). Não é possível identificar a visita.', larg).slice(0, 4), tx, yy);
         }
@@ -3829,15 +3861,33 @@
 <script>
   // ══════════════════════════════════════════════════════════════════════
   // DASHBOARD DOS BOOKS — tudo calculado das fotos e das legendas, sem depender de planilha.
-  // FOTO = uma imagem do Book (uma página).  EXECUÇÃO = uma loja, num dia, por um promotor (pode ter 1 ou N fotos).
+  // FOTO = uma imagem do Book (uma página).  VISITA = uma loja, num dia, por um promotor (pode ter 1 ou N fotos).
   // ══════════════════════════════════════════════════════════════════════
   const nfD = n => Number(n || 0).toLocaleString('pt-BR');
   const nfD1 = n => Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+  // Preço por visita (R$): "custo da visita" de cada rede no Fechamento da Pacto. Vale o do mês mais recente que tiver a rede;
+  // quando a rede tem mais de uma linha, usa a média ponderada pelas visitas declaradas. Sem Fechamento da rede, sem preço.
+  function precosPorRede() {
+    const mapa = {};
+    Object.keys(Estado.meses || {}).sort().reverse().forEach(mes => {
+      const por = {};
+      ((Estado.meses[mes] || {}).fechamento || []).forEach(f => {
+        if (!(f.custoVisita > 0)) return;
+        const k = f.rede || chaveRede(f.redeOriginal), peso = f.declaradasMes || f.programadasMes || 1;
+        const a = por[k] || (por[k] = { soma: 0, peso: 0, min: Infinity, max: 0 });
+        a.soma += f.custoVisita * peso; a.peso += peso; a.min = Math.min(a.min, f.custoVisita); a.max = Math.max(a.max, f.custoVisita);
+      });
+      Object.keys(por).forEach(k => { if (!mapa[k]) mapa[k] = { preco: por[k].soma / por[k].peso, mes, varia: por[k].min !== por[k].max }; });
+    });
+    return mapa;
+  }
+  const moedaBR = v => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const brDia = d => d.slice(8) + '/' + d.slice(5, 7);
 
   function sufixoNumeral(c) { const m = /(?:[0-9]+|[IVX]+)$/.exec(c); return m ? m[0] : ''; }
 
-  // Calcula tudo do mês a partir das fotos. Foto ≠ execução: toda contagem leva o nome do que é.
+  // Calcula tudo do mês a partir das fotos. Foto ≠ visita: toda contagem leva o nome do que é.
   function metricasBooks(mes, inteiro) {
     const m = Estado.meses[mes];
     const bruto = (m && m.fotos) || [];
@@ -3856,7 +3906,7 @@
     const comLeg = fotos.filter(f => !f.semLegenda && f.dataHora);
     const semLeg = fotos.filter(f => f.semLegenda || !f.dataHora);
 
-    // Execuções: promotor + dia + rede + loja (loja com erro de digitação junta, menos I/II)
+    // Visitas: promotor + dia + rede + loja (loja com erro de digitação junta, menos I/II)
     const grupos = new Map();
     comLeg.forEach(f => {
       const pk = f.promotorKey || chaveCompacta(f.promotorNome || f.promotor), rk = chaveRede(f.redeTexto || '') || chaveCompacta(f.redeTexto || '');
@@ -3876,7 +3926,11 @@
 
     const agr = (chaveFn, init) => { const o = new Map(); execs.forEach(x => { const k = chaveFn(x); const a = o.get(k) || o.set(k, init(x)).get(k); a.exec++; a.fotos += x.n; a.dias.add(x.d); a.proms.add(x.pk); a.lojas.add(x.lojaKey); }); return Array.from(o.values()).map(a => Object.assign(a, { nDias: a.dias.size, nProms: a.proms.size, nLojas: a.lojas.size })); };
     const novo = nome => ({ nome, exec: 0, fotos: 0, dias: new Set(), proms: new Set(), lojas: new Set() });
-    const porRede = agr(x => x.rk, x => novo(x.rede)).sort((a, b) => b.exec - a.exec || a.nome.localeCompare(b.nome));
+    const porRede = agr(x => x.rk, x => Object.assign(novo(x.rede), { chave: x.rk })).sort((a, b) => b.exec - a.exec || a.nome.localeCompare(b.nome));
+    // Valor das visitas comprovadas por foto = visitas × preço da rede no Fechamento
+    const precos = precosPorRede();
+    let valorTotal = 0, visSemPreco = 0; const mesesPreco = new Set();
+    porRede.forEach(a => { const p = precos[a.chave]; if (p) { a.preco = p.preco; a.valor = a.exec * p.preco; a.precoVaria = p.varia; valorTotal += a.valor; mesesPreco.add(p.mes); } else { a.preco = null; a.valor = null; visSemPreco += a.exec; } });
     const porProm = agr(x => x.pk, x => novo(x.prom)).map(a => {
       const pd = {}; execs.forEach(x => { if (x.pk === Array.from(a.proms)[0]) pd[x.d] = (pd[x.d] || 0) + 1; });
       a.maxDia = Math.max(0, ...Object.values(pd)); a.media = a.nDias ? a.exec / a.nDias : 0; return a;
@@ -3894,15 +3948,15 @@
     const maiorDia = Math.max(0, ...Object.values(porDia).map(a => a.exec));
 
     const oc = ocorrenciasContestacao(mes).reduce((a, s) => a.concat(s.itens), []);
-    const nRep = oc.filter(o => o.tipo === 'repetida').length;
+    const nRep = oc.filter(o => o.tipo === 'repetida').length, nDup = oc.filter(o => o.tipo === 'dupla').length;
     const arqs = new Map();
     todas.forEach(f => { const a = arqs.get(f.arquivoOrigem) || arqs.set(f.arquivoOrigem, { fotos: 0, ini: null, fim: null }).get(f.arquivoOrigem); a.fotos++; const d = dia(f); if (d) { if (!a.ini || d < a.ini) a.ini = d; if (!a.fim || d > a.fim) a.fim = d; } });
 
     const lojasSet = new Set(execs.map(x => x.lojaKey)), redesSet = new Set(execs.map(x => x.rk)), promSet = new Set(execs.map(x => x.pk));
     return {
-      vis, reimportadas, nFotos: fotos.length, nComLeg: comLeg.length, nSemLeg: semLeg.length, nRep, nOcorr: oc.length,
+      vis, reimportadas, nFotos: fotos.length, nComLeg: comLeg.length, nSemLeg: semLeg.length, nRep, nDup, nOcorr: oc.length,
       nExec: execs.length, nProm: promSet.size, nRede: redesSet.size, nLoja: lojasSet.size, nDias: diasComFoto.length, nPeriodo: todosDias.length,
-      execs, porRede, porProm, porLoja, porDia, todosDias, primeiro, diasSemFoto, maiorDia, ini, fim, ultimo,
+      execs, valorTotal, visSemPreco, mesesPreco: Array.from(mesesPreco).sort(), porRede, porProm, porLoja, porDia, todosDias, primeiro, diasSemFoto, maiorDia, ini, fim, ultimo,
       mediaDia: diasComFoto.length ? execs.length / diasComFoto.length : 0,
       fotosPorExec: execs.length ? comLeg.length / execs.length : 0,
       arquivos: Array.from(arqs.entries()).map(([nome, a]) => Object.assign({ nome }, a)).sort((a, b) => (a.ini || '').localeCompare(b.ini || ''))
@@ -3925,12 +3979,12 @@
     let barras = '', rot = '';
     dias.forEach((d, i) => {
       const a = M.porDia[d], x = 10 + i * passo + (passo - bw) / 2;
-      if (a) { const h = Math.max(2, (a.exec / mx) * (base - topo)); barras += `<rect x="${x.toFixed(1)}" y="${(base - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="#0A3D2E" rx="1.5"><title>${brDia(d)}: ${a.exec} execuções (${a.fotos} fotos)</title></rect><text x="${(x + bw / 2).toFixed(1)}" y="${(base - h - 3).toFixed(1)}" font-size="8" text-anchor="middle" fill="#0A3D2E">${a.exec}</text>`; }
+      if (a) { const h = Math.max(2, (a.exec / mx) * (base - topo)); barras += `<rect x="${x.toFixed(1)}" y="${(base - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="#0A3D2E" rx="1.5"><title>${brDia(d)}: ${a.exec} visitas (${a.fotos} fotos)</title></rect><text x="${(x + bw / 2).toFixed(1)}" y="${(base - h - 3).toFixed(1)}" font-size="8" text-anchor="middle" fill="#0A3D2E">${a.exec}</text>`; }
       else barras += `<rect x="${x.toFixed(1)}" y="${base - 3}" width="${bw.toFixed(1)}" height="3" fill="#E74C3C" rx="1"><title>${brDia(d)}: sem foto</title></rect>`;
       if (i % Math.ceil(dias.length / 16) === 0) rot += `<text x="${(x + bw / 2).toFixed(1)}" y="${base + 14}" font-size="8.5" text-anchor="middle" fill="#6B7580">${brDia(d)}</text>`;
     });
-    return `<div style="overflow-x:auto;"><svg viewBox="0 0 ${W} ${Hh}" style="width:100%;min-width:520px;" role="img" aria-label="Execuções por dia">${barras}<line x1="10" y1="${base}" x2="${W - 10}" y2="${base}" stroke="#C9D1D9"/>${rot}</svg></div>
-      <p style="font-size:11px;color:var(--cor-texto-secundario);">Barras: execuções por dia. Marca vermelha: dia sem nenhuma foto. Passe o mouse (ou toque) na barra para ver as fotos do dia.</p>`;
+    return `<div style="overflow-x:auto;"><svg viewBox="0 0 ${W} ${Hh}" style="width:100%;min-width:520px;" role="img" aria-label="Visitas por dia">${barras}<line x1="10" y1="${base}" x2="${W - 10}" y2="${base}" stroke="#C9D1D9"/>${rot}</svg></div>
+      <p style="font-size:11px;color:var(--cor-texto-secundario);">Barras: visitas por dia. Marca vermelha: dia sem nenhuma foto. Passe o mouse (ou toque) na barra para ver as fotos do dia.</p>`;
   }
 
   function renderizarDashboardBooks() {
@@ -3949,7 +4003,7 @@
     const th = (t, l) => `<th style="padding:6px;${l ? 'text-align:left;' : ''}">${t}</th>`;
     const td = (t, l, b) => `<td style="padding:6px;${l ? '' : 'text-align:center;'}${b ? 'font-weight:bold;' : ''}">${t}</td>`;
     const tabela = (cab, linhas, vazio) => linhas.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;">${cab.map((c, i) => th(c, i === 0)).join('')}</tr></thead><tbody>${linhas.join('')}</tbody></table></div>` : `<p style="font-size:13px;">${vazio}</p>`;
-    const lRede = M.porRede.map(a => `<tr>${td(esc(a.nome), 1)}${td(nfD(a.exec), 0, 1)}${td(nfD(a.nLojas))}${td(nfD(a.nProms))}${td(nfD(a.nDias))}${td(nfD(a.fotos))}${td(nfD1(a.exec ? a.fotos / a.exec : 0))}</tr>`);
+    const lRede = M.porRede.map(a => `<tr>${td(esc(a.nome), 1)}${td(nfD(a.exec), 0, 1)}${td(pct(a.exec, M.nExec).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%')}${td(a.preco != null ? moedaBR(a.preco) + (a.precoVaria ? '*' : '') : '<span style="color:#B9770E;">sem preço</span>')}${td(a.valor != null ? '<strong>' + moedaBR(a.valor) + '</strong>' : '-')}${td(nfD(a.nLojas))}${td(nfD(a.nProms))}${td(nfD(a.nDias))}${td(nfD(a.fotos))}${td(nfD1(a.exec ? a.fotos / a.exec : 0))}</tr>`);
     const lProm = M.porProm.map(a => `<tr>${td(esc(a.nome), 1)}${td(nfD(a.exec), 0, 1)}${td(nfD(a.nDias))}${td(nfD1(a.media))}${td(nfD(a.maxDia))}${td(nfD(a.nLojas))}${td(nfD(a.fotos))}</tr>`);
     const lLoja = M.porLoja.slice(0, 600).map(a => `<tr>${td(esc(a.rede), 1)}${td(esc(a.nome), 1)}${td(nfD(a.exec), 0, 1)}${td(nfD(a.nDias))}${td(nfD(a.nProms))}${td(nfD(a.fotos))}</tr>`);
     const lArq = M.arquivos.map(a => `<tr>${td(esc(nomeArquivoCurto(a.nome)), 1)}${td(nfD(a.fotos))}${td(a.ini ? brDia(a.ini) + ' a ' + brDia(a.fim) : '-')}</tr>`);
@@ -3961,27 +4015,27 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:2px;padding:6px 10px 14px;">
           ${vel(pA, formatarPorcentagem(pA), 'Dias cobertos', `${nfD(M.nDias)} de ${nfD(M.nPeriodo)} dias do período com foto${M.ini ? ` (${brDia(M.ini)} a ${brDia(M.fim)})` : ''}`)}
           ${vel(pB, formatarPorcentagem(pB), 'Legendas lidas', `${nfD(M.nComLeg)} de ${nfD(M.nFotos)} fotos com legenda`)}
-          ${vel(pC, formatarPorcentagem(pC), 'Fotos únicas', `${nfD(M.nFotos - M.nRep)} de ${nfD(M.nFotos)} fotos não repetem outra execução`)}
-          ${vel(pD, nfD1(M.mediaDia), 'Execuções por dia', `média de ${nfD1(M.mediaDia)} por dia com foto; a escala vai até o dia mais forte (${nfD(M.maiorDia)})`, '#D4AF37')}
+          ${vel(pC, formatarPorcentagem(pC), 'Fotos únicas', `${nfD(M.nFotos - M.nRep)} de ${nfD(M.nFotos)} fotos não repetem outra visita`)}
+          ${vel(pD, nfD1(M.mediaDia), 'Visitas por dia', `média de ${nfD1(M.mediaDia)} por dia com foto; a escala vai até o dia mais forte (${nfD(M.maiorDia)})`, '#D4AF37')}
         </div>
       </div>
       <div class="card">
-        <h2>Fotos e execuções</h2>
-        <p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;margin-bottom:10px;"><strong>Foto</strong> = uma imagem do Book. <strong>Execução</strong> = uma loja, num dia, por um promotor, e pode ter 1 ou várias fotos. Todos os números abaixo dizem se são fotos ou execuções.</p>
+        <h2>Fotos e visitas</h2>
+        <p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;margin-bottom:10px;"><strong>Foto</strong> = uma imagem do Book. <strong>Visita</strong> = uma loja, num dia, por um promotor, e pode ter 1 ou várias fotos. Todos os números abaixo dizem se são fotos ou visitas.</p>
         ${periodo}
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          ${card('Execuções', nfD(M.nExec), 'loja + dia + promotor')}${card('Fotos', nfD(M.nFotos), `${nfD(M.nComLeg)} com legenda`)}${card('Fotos por execução', nfD1(M.fotosPorExec), 'média')}
-          ${card('Promotores', nfD(M.nProm))}${card('Redes', nfD(M.nRede))}${card('Lojas atendidas', nfD(M.nLoja), 'com ao menos 1 execução')}${card('Dias com foto', nfD(M.nDias), `de ${nfD(M.nPeriodo)} dias do período`)}
+          ${card('Visitas', nfD(M.nExec), 'loja + dia + promotor')}${card('Valor das visitas', moedaBR(M.valorTotal), M.visSemPreco ? nfD(M.visSemPreco) + ' visitas sem preço' : 'preço do Fechamento')}${card('Fotos', nfD(M.nFotos), `${nfD(M.nComLeg)} com legenda`)}${card('Fotos por visita', nfD1(M.fotosPorExec), 'média')}
+          ${card('Promotores', nfD(M.nProm))}${card('Redes', nfD(M.nRede))}${card('Lojas atendidas', nfD(M.nLoja), 'com ao menos 1 visita')}${card('Dias com foto', nfD(M.nDias), `de ${nfD(M.nPeriodo)} dias do período`)}
         </div>
       </div>
-      <div class="card"><h2>Execuções por dia</h2>${htmlLinhaDoTempo(M)}</div>
-      <div class="card"><h2>Por rede</h2>${tabela(['Rede', 'Execuções', 'Lojas', 'Promotores', 'Dias', 'Fotos', 'Fotos por execução'], lRede, 'Sem execuções.')}</div>
-      <div class="card"><h2>Por promotor</h2>${tabela(['Promotor', 'Execuções', 'Dias', 'Execuções por dia', 'Maior dia (execuções)', 'Lojas', 'Fotos'], lProm, 'Sem execuções.')}</div>
-      <div class="card"><details><summary style="cursor:pointer;font-weight:bold;">Por loja (${nfD(M.porLoja.length)} lojas)</summary><div style="margin-top:10px;">${tabela(['Rede', 'Loja', 'Execuções', 'Dias', 'Promotores', 'Fotos'], lLoja, 'Sem lojas.')}${M.porLoja.length > 600 ? '<p style="font-size:11px;">Mostrando as 600 lojas com mais execuções.</p>' : ''}</div></details></div>
+      <div class="card"><h2>Visitas por dia</h2>${htmlLinhaDoTempo(M)}</div>
+      <div class="card"><h2>Por rede</h2><p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;margin-bottom:8px;">Valor = visitas comprovadas por foto × preço da visita da rede no Fechamento${(M.mesesPreco || []).length ? ' (' + M.mesesPreco.map(rotuloMes).join(', ') + ')' : ''}. É o que as fotos sustentam, não o valor cobrado pela Pacto. * rede com mais de um preço no Fechamento (média pelas visitas declaradas).</p>${tabela(['Rede', 'Visitas', '% das visitas', 'Preço da visita', 'Valor (R$)', 'Lojas', 'Promotores', 'Dias', 'Fotos', 'Fotos por visita'], lRede, 'Sem visitas.')}</div>
+      <div class="card"><h2>Por promotor</h2>${tabela(['Promotor', 'Visitas', 'Dias', 'Visitas por dia', 'Maior dia (visitas)', 'Lojas', 'Fotos'], lProm, 'Sem visitas.')}</div>
+      <div class="card"><details><summary style="cursor:pointer;font-weight:bold;">Por loja (${nfD(M.porLoja.length)} lojas)</summary><div style="margin-top:10px;">${tabela(['Rede', 'Loja', 'Visitas', 'Dias', 'Promotores', 'Fotos'], lLoja, 'Sem lojas.')}${M.porLoja.length > 600 ? '<p style="font-size:11px;">Mostrando as 600 lojas com mais visitas.</p>' : ''}</div></details></div>
       <div class="card">
         <h2>Qualidade das fotos</h2>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          ${card('Fotos repetidas', nfD(M.nRep), 'mesma foto em outra execução')}${card('Fotos sem legenda', nfD(M.nSemLeg), 'sem data, rede, loja ou promotor')}${card('Ocorrências', nfD(M.nOcorr), 'no Book de contestação')}${card('Fotos de Book repetido', nfD(M.reimportadas), 'mesmo Book importado 2x')}
+          ${card('Fotos repetidas', nfD(M.nRep), 'mesma foto em outra visita')}${card('Dois promotores na loja', nfD(M.nDup), 'mesma loja, mesmo dia')}${card('Fotos sem legenda', nfD(M.nSemLeg), 'sem data, rede, loja ou promotor')}${card('Ocorrências', nfD(M.nOcorr), 'no Book de contestação')}${card('Fotos de Book repetido', nfD(M.reimportadas), 'mesmo Book importado 2x')}
         </div>
         <p style="font-size:12px;margin-top:8px;">As ocorrências saem no PDF da aba <strong>Contestação</strong>.</p>
       </div>
@@ -4036,7 +4090,7 @@
         doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(120, 120, 120);
         doc.text('Gerado em ' + quando, MG, PH - 6); doc.text('Página ' + i + ' de ' + n, PW - MG, PH - 6, { align: 'right' });
       }
-      doc.save(nomeArquivoTrade(mes, 'Espelho Dashboard_Execucoes', 'pdf'));
+      doc.save(nomeArquivoTrade(mes, 'Espelho Dashboard_Visitas', 'pdf'));
     } catch (e) {
       alert('Não foi possível gerar o PDF: ' + (e && e.message ? e.message : e));
     } finally {
@@ -4045,12 +4099,12 @@
     }
   }
 
-  // Aba Livres: enquanto não há planilha que amarre as execuções (só o Fechamento, no fim do mês), TODAS as execuções dos Books são livres.
+  // Aba Livres: enquanto não há planilha que amarre as visitas (só o Fechamento, no fim do mês), TODAS as visitas dos Books são livres.
   let filtroLivresProm = '', filtroLivresRede = '';
   function renderizarSoltasBooks() {
     const container = document.getElementById('tela-soltas');
     const mes = Estado.config.mesAtivo, m = Estado.meses[mes];
-    if (!m || !(m.fotos || []).length) { container.innerHTML = `<div class="card"><h2>Execuções Livres</h2><p>Nenhum Book importado para ${esc(rotuloMes(mes))}.</p><p style="margin-top:12px;font-size:13px;">Vá em <strong>Admin</strong> e importe os Books (PDF).</p></div>`; return; }
+    if (!m || !(m.fotos || []).length) { container.innerHTML = `<div class="card"><h2>Visitas Livres</h2><p>Nenhum Book importado para ${esc(rotuloMes(mes))}.</p><p style="margin-top:12px;font-size:13px;">Vá em <strong>Admin</strong> e importe os Books (PDF).</p></div>`; return; }
     const M = metricasBooks(mes);
     const todas = M.execs.slice();
     const proms = Array.from(new Set(todas.map(x => x.prom))).sort((a, b) => a.localeCompare(b)), redes = Array.from(new Set(todas.map(x => x.rede))).sort((a, b) => a.localeCompare(b));
@@ -4068,26 +4122,26 @@
     const opt = (arr, sel) => arr.map(v => `<option value="${esc(v)}" ${v === sel ? 'selected' : ''}>${esc(v)}</option>`).join('');
     container.innerHTML = `
       <div class="card" style="border-left-color:#E67E22;">
-        <h2>Execuções Livres</h2>
-        <p style="font-size:12px;margin-bottom:10px;line-height:1.5;">Os Books chegam durante o mês <strong>sem amarração</strong>: nenhuma planilha diz onde cada execução aconteceu. Por isso <strong>todas as execuções são livres</strong> até chegar o Fechamento da Pacto, que vai "prender" cada uma. Uma execução = uma loja, num dia, por um promotor (1 ou várias fotos).</p>
+        <h2>Visitas Livres</h2>
+        <p style="font-size:12px;margin-bottom:10px;line-height:1.5;">Os Books chegam durante o mês <strong>sem amarração</strong>: nenhuma planilha diz onde cada visita aconteceu. Por isso <strong>todas as visitas são livres</strong> até chegar o Fechamento da Pacto, que vai "prender" cada uma. Uma visita = uma loja, num dia, por um promotor (1 ou várias fotos).</p>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
-          ${caixa('Execuções Livres', nfD(M.nExec), '#E67E22', 'todas as dos Books')}${caixa('Presas', '0', '#27AE60', 'aguardando o Fechamento')}${caixa('Fotos', nfD(M.nFotos), '#7F8C8D', 'nelas')}
+          ${caixa('Visitas Livres', nfD(M.nExec), '#E67E22', 'todas as dos Books')}${caixa('Presas', '0', '#27AE60', 'aguardando o Fechamento')}${caixa('Fotos', nfD(M.nFotos), '#7F8C8D', 'nelas')}
         </div>
         ${M.vis ? `<p style="font-size:12px;color:#B9770E;margin-bottom:8px;">📅 Período: <strong>${brDia(M.vis.inicio)} a ${brDia(M.vis.fim)}</strong></p>` : ''}
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
           <select id="filtro-livres-prom" style="flex:1;min-width:180px;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;"><option value="">Todos os promotores (${nfD(proms.length)})</option>${opt(proms, filtroLivresProm)}</select>
           <select id="filtro-livres-rede" style="flex:1;min-width:180px;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;"><option value="">Todas as redes (${nfD(redes.length)})</option>${opt(redes, filtroLivresRede)}</select>
         </div>
-        <p style="font-size:12px;margin-bottom:6px;">Mostrando <strong>${nfD(lista.length)}</strong> execuções${lista.length > LIM ? ` (as ${LIM} mais recentes; o CSV traz todas)` : ''}.</p>
-        ${lista.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:6px 5px;text-align:left;">Dia</th><th style="padding:6px 5px;text-align:left;">Promotor</th><th style="padding:6px 5px;text-align:left;">Rede › loja</th><th style="padding:6px 5px;">Fotos</th></tr></thead><tbody>${linhas}</tbody></table></div>` : '<p style="font-size:13px;">Nenhuma execução com esse filtro.</p>'}
-        <button id="btn-csv-soltas" style="width:100%;margin-top:14px;padding:12px;background:var(--cor-primaria);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Baixar CSV das Execuções Livres</button>
+        <p style="font-size:12px;margin-bottom:6px;">Mostrando <strong>${nfD(lista.length)}</strong> visitas${lista.length > LIM ? ` (as ${LIM} mais recentes; o CSV traz todas)` : ''}.</p>
+        ${lista.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;"><th style="padding:6px 5px;text-align:left;">Dia</th><th style="padding:6px 5px;text-align:left;">Promotor</th><th style="padding:6px 5px;text-align:left;">Rede › loja</th><th style="padding:6px 5px;">Fotos</th></tr></thead><tbody>${linhas}</tbody></table></div>` : '<p style="font-size:13px;">Nenhuma visita com esse filtro.</p>'}
+        <button id="btn-csv-soltas" style="width:100%;margin-top:14px;padding:12px;background:var(--cor-primaria);color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Baixar CSV das Visitas Livres</button>
       </div>`;
     document.getElementById('filtro-livres-prom').addEventListener('change', e => { filtroLivresProm = e.target.value; renderizarSoltasBooks(); });
     document.getElementById('filtro-livres-rede').addEventListener('change', e => { filtroLivresRede = e.target.value; renderizarSoltasBooks(); });
     document.getElementById('btn-csv-soltas').addEventListener('click', () => {
       let csv = 'Data;Hora;Promotor;Rede;Loja;Fotos;Arquivo;Página\n';
       lista.slice().sort((a, b) => a.d.localeCompare(b.d) || a.prom.localeCompare(b.prom)).forEach(x => { csv += [x.d.split('-').reverse().join('/'), x.hora, x.prom, x.rede, x.loja, x.n, nomeArquivoCurto(x.ar), x.pg].join(';') + '\n'; });
-      baixarCSV(nomeArquivoTrade(mes, 'Execucoes Livres', 'csv'), csv);
+      baixarCSV(nomeArquivoTrade(mes, 'Visitas Livres', 'csv'), csv);
     });
   }
   function renderizarSoltas() {
@@ -4127,7 +4181,7 @@
     return f;
   }
 
-  // Reúne todas as execuções de todos os meses importados, por rede e loja.
+  // Reúne todas as visitas de todos os meses importados, por rede e loja.
   function sistDados() {
     const redes = new Map(), obs = new Set();
     Object.keys(Estado.meses || {}).forEach(mes => {
@@ -4145,23 +4199,34 @@
     return { redes, obs, obsDow };
   }
 
+  // Dados do mês: dias, feriados e, por rede, as lojas com pelo menos uma visita comprovada.
+  function sistMontarMes(mes) {
+    const D = sistDados();
+    const [ano, mesN] = mes.split('-').map(Number), nDias = new Date(Date.UTC(ano, mesN, 0)).getUTCDate();
+    const dias = Array.from({ length: nDias }, (_, i) => sistIso(ano, mesN, i + 1)), fer = sistFeriados(ano);
+    // só entram a rede e a loja com pelo menos uma visita comprovada no mês escolhido
+    const redes = Array.from(D.redes.values()).map(r => {
+      const lojas = Array.from(r.lojas.values()).map(l => {
+        const vis = dias.filter(d => l.dias.has(d));
+        return { l, vis, fotos: vis.reduce((t, d) => t + l.dias.get(d).n, 0), exec: vis.reduce((t, d) => t + l.dias.get(d).proms.size, 0) };
+      }).filter(x => x.vis.length);
+      return { r, lojas };
+    }).filter(x => x.lojas.length).sort((a, b) => a.r.nome.localeCompare(b.r.nome));
+    return { dias, fer, redes };
+  }
+
   function renderizarSistematica() {
     const container = document.getElementById('tela-sistematica');
     if (!container) return;
     const meses = Object.keys(Estado.meses || {}).filter(k => (Estado.meses[k].fotos || []).length).sort();
     if (!meses.length) { container.innerHTML = `<div class="card"><h2>Sistemática de visitas</h2><p>Nenhum Book importado ainda.</p><p style="margin-top:12px;font-size:13px;">Vá em <strong>Admin</strong> e importe os Books (PDF): o calendário é montado a partir das fotos.</p></div>`; return; }
     if (!sistMes || !meses.includes(sistMes)) sistMes = meses.includes(Estado.config.mesAtivo) ? Estado.config.mesAtivo : meses[meses.length - 1];
-    const D = sistDados();
-    const [ano, mesN] = sistMes.split('-').map(Number), nDias = new Date(Date.UTC(ano, mesN, 0)).getUTCDate();
-    const dias = Array.from({ length: nDias }, (_, i) => sistIso(ano, mesN, i + 1)), fer = sistFeriados(ano);
-    // só entram a rede e a loja com pelo menos uma visita comprovada no mês escolhido
-    const redes = Array.from(D.redes.values()).map(r => {
-      const lojas = Array.from(r.lojas.values()).map(l => {
-        const vis = dias.filter(d => l.dias.has(d));
-        return { l, vis, fotos: vis.reduce((t, d) => t + l.dias.get(d).n, 0) };
-      }).filter(x => x.vis.length);
-      return { r, lojas };
-    }).filter(x => x.lojas.length).sort((a, b) => a.r.nome.localeCompare(b.r.nome));
+    const { dias, fer, redes } = sistMontarMes(sistMes);
+    const execRede = x => x.lojas.reduce((t, l) => t + l.exec, 0), execMes = redes.reduce((t, x) => t + execRede(x), 0);
+    const precos = precosPorRede(), valorRede = x => { const p = precos[x.r.rk]; return p ? execRede(x) * p.preco : null; };
+    const valorMes = redes.reduce((t, x) => t + (valorRede(x) || 0), 0);
+    const pctValor = v => valorMes && v != null ? (v / valorMes * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : '-';
+    const pct = v => execMes ? (v / execMes * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : '0%';
     if (!redes.length) {
       container.innerHTML = `<div class="card"><h2>Sistemática de visitas</h2><select id="sv-mes" style="padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;margin-bottom:10px;">${meses.map(m => `<option value="${m}" ${m === sistMes ? 'selected' : ''}>${esc(rotuloMes(m))}</option>`).join('')}</select><p>Nenhuma visita com foto em ${esc(rotuloMes(sistMes))}.</p></div>`;
       document.getElementById('sv-mes').addEventListener('change', e => { sistMes = e.target.value; renderizarSistematica(); });
@@ -4170,12 +4235,12 @@
     if (sistRede && !redes.some(x => x.r.rk === sistRede)) sistRede = '';
     if (!sistRede) sistRede = redes[0].r.rk;
     const optM = meses.map(m => `<option value="${m}" ${m === sistMes ? 'selected' : ''}>${esc(rotuloMes(m))}</option>`).join('');
-    const optR = redes.map(x => `<option value="${esc(x.r.rk)}" ${x.r.rk === sistRede ? 'selected' : ''}>${esc(x.r.nome)} (${x.lojas.length})</option>`).join('');
+    const optR = redes.map(x => `<option value="${esc(x.r.rk)}" ${x.r.rk === sistRede ? 'selected' : ''}>${esc(x.r.nome)} (${x.lojas.length} lojas · ${pct(execRede(x))}${valorRede(x) != null ? ' · ' + moedaBR(valorRede(x)) : ''})</option>`).join('');
     const sel = redes.find(x => x.r.rk === sistRede);
     const lojas = sel ? sel.lojas.slice().sort((a, b) => b.vis.length - a.vis.length || a.l.nome.localeCompare(b.l.nome)) : [];
-    let totVis = 0, totFotos = 0; const proms = new Set();
-    const linhas = lojas.map(({ l, vis, fotos }) => {
-      totVis += vis.length; totFotos += fotos;
+    let totExec = 0, totFotos = 0; const proms = new Set();
+    const linhas = lojas.map(({ l, vis, fotos, exec }) => {
+      totExec += exec; totFotos += fotos;
       const cel = dias.map(d => {
         const real = l.dias.get(d), feriado = fer.get(d), dom = sistDow(d) === 6;
         let cls = '', txt = '', tit = [];
@@ -4204,17 +4269,91 @@
           <select id="sv-rede" style="flex:2;min-width:220px;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;font-weight:bold;">${optR}</select>
           <select id="sv-mes" style="flex:1;min-width:150px;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;">${optM}</select>
         </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <button type="button" id="sv-pdf-rede" style="padding:9px 14px;background:var(--cor-primaria);color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:12px;">⬇ PDF desta rede</button>
+          <button type="button" id="sv-pdf-todas" style="padding:9px 14px;background:#fff;color:var(--cor-primaria);border:1px solid var(--cor-primaria);border-radius:6px;font-weight:bold;cursor:pointer;font-size:12px;">⬇ PDF de todas as redes</button>
+        </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
-          ${caixa('Lojas visitadas', nfD(lojas.length), '#0A3D2E', 'na rede, no mês')}${caixa('Dias de visita', nfD(totVis), '#27AE60', 'soma de loja × dia')}${caixa('Promotores', nfD(proms.size), '#7F8C8D', 'nessa rede')}${caixa('Fotos', nfD(totFotos), '#1E8449', 'nesses dias')}
+          ${caixa('Lojas visitadas', nfD(lojas.length), '#0A3D2E', 'na rede, no mês')}${caixa('Visitas', nfD(totExec), '#27AE60', 'promotor × loja × dia')}${caixa('% do total', pct(totExec), '#E67E22', nfD(totExec) + ' de ' + nfD(execMes) + ' visitas do mês')}${caixa('Valor (R$)', valorRede(sel) != null ? moedaBR(valorRede(sel)) : 'sem preço', '#8E44AD', valorRede(sel) != null ? pctValor(valorRede(sel)) + ' do valor do mês · ' + moedaBR(precos[sel.r.rk].preco) + '/visita' : 'rede fora do Fechamento')}${caixa('Promotores', nfD(proms.size), '#7F8C8D', 'nessa rede')}${caixa('Fotos', nfD(totFotos), '#1E8449', 'nas visitas')}
         </div>
         <div class="sv-leg"><span><i class="sv-q" style="background:#27AE60"></i>✓ dia com foto da loja</span><span><i class="sv-q" style="box-shadow:inset 0 0 0 2px #E67E22;background:#fff"></i>✓ com foto em feriado nacional</span><span><i class="sv-q" style="background:#D9DEE2"></i>F feriado nacional</span><span><i class="sv-q" style="background:#EDEDED"></i>domingo</span></div>
         <div style="overflow-x:auto;"><table><thead><tr><th style="text-align:left;padding-left:8px;position:sticky;left:0;background:#F0F2F1;">Loja</th>${cab}<th>Dias</th></tr></thead><tbody>${linhas}</tbody></table></div>
-        <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:10px;">Passe o mouse sobre um dia verde para ver quantas fotos e qual promotor. Dia sem verde significa que não há foto nos Books importados, o que também pode ser um Book que ainda não chegou.</p>
+        <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:10px;">Valor = visitas comprovadas por foto × preço da visita da rede no Fechamento da Pacto; é o que as fotos sustentam, não o valor cobrado. Passe o mouse sobre um dia verde para ver quantas fotos e qual promotor. Dia sem verde significa que não há foto nos Books importados, o que também pode ser um Book que ainda não chegou.</p>
       </div>`;
     document.getElementById('sv-rede').addEventListener('change', e => { sistRede = e.target.value; renderizarSistematica(); });
     document.getElementById('sv-mes').addEventListener('change', e => { sistMes = e.target.value; renderizarSistematica(); });
+    document.getElementById('sv-pdf-rede').addEventListener('click', () => baixarSistematicaPDF(false));
+    document.getElementById('sv-pdf-todas').addEventListener('click', () => baixarSistematicaPDF(true));
   }
   function rotuloData(iso) { return iso.slice(8) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4); }
+
+  // PDF da sistemática realizada (A4 paisagem, desenhado direto, sem imagem): uma seção por rede, cabeçalho repetido a cada página.
+  function baixarSistematicaPDF(todas) {
+    if (!(window.jspdf && window.jspdf.jsPDF)) { alert('A biblioteca de PDF não carregou. Verifique a conexão e tente de novo.'); return; }
+    const mes = sistMes, { dias, fer, redes } = sistMontarMes(mes), execMes = redes.reduce((t, r) => t + r.lojas.reduce((a, l) => a + l.exec, 0), 0);
+    const lista = todas ? redes : redes.filter(x => x.r.rk === sistRede);
+    if (!lista.length) { alert('Não há visitas com foto neste mês.'); return; }
+    const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+    const PW = 297, PH = 210, MG = 10, TOPO = 20, FUNDO = PH - 12, WL = 52, WT = 10, RH = 5, WD = (PW - 2 * MG - WL - WT) / dias.length;
+    const cortar = (t, w) => { let x = String(t); while (x.length > 3 && doc.getTextWidth(x) > w) x = x.slice(0, -1); return x === String(t) ? x : x.slice(0, -1) + '…'; };
+    let y = TOPO;
+    const cabecalhoTabela = () => {
+      doc.setFillColor(240, 242, 241); doc.rect(MG, y, PW - 2 * MG, 8, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(60, 60, 60);
+      doc.text('Loja', MG + 1.5, y + 5);
+      dias.forEach((d, i) => {
+        const x = MG + WL + i * WD, w = sistDow(d);
+        if (w === 6) { doc.setFillColor(225, 225, 225); doc.rect(x, y, WD, 8, 'F'); }
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.text(String(Number(d.slice(8))), x + WD / 2, y + 3.3, { align: 'center' });
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(5); doc.text(SIST_DOW[w], x + WD / 2, y + 6.5, { align: 'center' });
+      });
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.text('Dias', MG + WL + dias.length * WD + WT / 2, y + 5, { align: 'center' });
+      y += 8;
+    };
+    lista.forEach((x, idx) => {
+      if (idx > 0) doc.addPage();
+      y = TOPO;
+      const ex = x.lojas.reduce((t, l) => t + l.exec, 0), fotos = x.lojas.reduce((t, l) => t + l.fotos, 0);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(10, 61, 46); doc.text(x.r.nome, MG, y + 4);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(90, 90, 90);
+      doc.text(x.lojas.length + ' lojas visitadas · ' + ex + ' visitas (' + (execMes ? (ex / execMes * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '0') + '% das ' + execMes + ' do mês) · ' + fotos + ' fotos' + (precos[x.r.rk] ? ' · ' + moedaBR(ex * precos[x.r.rk].preco) + ' (' + pctValor(ex * precos[x.r.rk].preco) + ' do valor)' : ''), MG, y + 9);
+      y += 12; cabecalhoTabela();
+      x.lojas.slice().sort((a, b) => b.vis.length - a.vis.length || a.l.nome.localeCompare(b.l.nome)).forEach(({ l, vis: vs }) => {
+        if (y + RH > FUNDO) { doc.addPage(); y = TOPO; cabecalhoTabela(); }
+        doc.setDrawColor(228, 230, 229); doc.setLineWidth(0.1);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(30, 30, 30); doc.text(cortar(l.nome, WL - 3), MG + 1.5, y + 3.6);
+        dias.forEach((d, i) => {
+          const cx = MG + WL + i * WD, real = l.dias.has(d), feriado = fer.get(d), dom = sistDow(d) === 6;
+          if (real) {
+            if (feriado) { doc.setFillColor(255, 255, 255); doc.rect(cx, y, WD, RH, 'F'); doc.setDrawColor(230, 126, 34); doc.setLineWidth(0.5); doc.rect(cx + 0.3, y + 0.3, WD - 0.6, RH - 0.6, 'S'); doc.setDrawColor(228, 230, 229); doc.setLineWidth(0.1); }
+            else { doc.setFillColor(39, 174, 96); doc.rect(cx, y, WD, RH, 'F'); }
+          } else if (feriado) { doc.setFillColor(217, 222, 226); doc.rect(cx, y, WD, RH, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(90, 90, 90); doc.text('F', cx + WD / 2, y + 3.4, { align: 'center' }); }
+          else if (dom) { doc.setFillColor(237, 237, 237); doc.rect(cx, y, WD, RH, 'F'); }
+          doc.rect(cx, y, WD, RH, 'S');
+        });
+        doc.setFillColor(248, 249, 250); doc.rect(MG + WL + dias.length * WD, y, WT, RH, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(10, 61, 46); doc.text(String(vs.length), MG + WL + dias.length * WD + WT / 2, y + 3.6, { align: 'center' });
+        doc.rect(MG, y, WL, RH, 'S'); doc.rect(MG + WL + dias.length * WD, y, WT, RH, 'S');
+        y += RH;
+      });
+      // legenda ao final da seção
+      if (y + 8 > FUNDO) { doc.addPage(); y = TOPO; }
+      y += 3; let lx = MG;
+      const leg = (cor, borda, txt) => { if (borda) { doc.setDrawColor(230, 126, 34); doc.setLineWidth(0.5); doc.setFillColor(255, 255, 255); doc.rect(lx, y, 4, 3, 'FD'); } else { doc.setFillColor(cor[0], cor[1], cor[2]); doc.rect(lx, y, 4, 3, 'F'); } doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(80, 80, 80); doc.text(txt, lx + 5.5, y + 2.4); lx += 6 + doc.getTextWidth(txt) + 6; };
+      leg([39, 174, 96], false, 'dia com foto da loja'); leg(null, true, 'com foto em feriado nacional'); leg([217, 222, 226], false, 'F feriado nacional'); leg([237, 237, 237], false, 'domingo');
+    });
+    const n = doc.getNumberOfPages(), agora = new Date(), p2 = v => String(v).padStart(2, '0');
+    const quando = p2(agora.getDate()) + '/' + p2(agora.getMonth() + 1) + '/' + agora.getFullYear() + ' ' + p2(agora.getHours()) + ':' + p2(agora.getMinutes());
+    for (let i = 1; i <= n; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(10, 61, 46); doc.text('CockPit Tarks · Sistemática de visitas (realizado) · ' + rotuloMes(mes), MG, 11);
+      doc.setDrawColor(212, 175, 55); doc.setLineWidth(0.5); doc.line(MG, 14, PW - MG, 14);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(120, 120, 120);
+      doc.text('Fonte: fotos dos Books de comprovação. Mostra as visitas comprovadas por foto; não há regra nem previsão. Dia sem verde = sem foto nos Books recebidos.', MG, PH - 7);
+      doc.text('Gerado em ' + quando, MG, PH - 4); doc.text('Página ' + i + ' de ' + n, PW - MG, PH - 4, { align: 'right' });
+    }
+    doc.save(nomeArquivoTrade(mes, 'Sistematica de Visitas' + (todas ? '' : '_' + lista[0].r.nome), 'pdf'));
+  }
 </script>
 <!-- ═══ FIM SUBBLOCO 12 ═══ -->
 <!-- ═══ SUBBLOCO 09 — PUBLICAÇÃO DOS RESULTADOS + MODO LEITURA ═══ -->
