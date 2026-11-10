@@ -117,6 +117,7 @@
   <button data-tela="promotores">Promotores</button>
   <button data-tela="soltas">Livres</button>
   <button data-tela="contestacao">Contestação</button>
+  <button data-tela="sistematica">Sistemática</button>
   <button data-tela="revisao">Revisão</button>
   <button data-tela="relatorio">Relatório</button>
   <button data-tela="admin" class="nav-op">Admin</button>
@@ -135,6 +136,7 @@
   <div id="tela-promotores" class="tela"></div>
   <div id="tela-soltas" class="tela"></div>
   <div id="tela-contestacao" class="tela"></div>
+  <div id="tela-sistematica" class="tela"></div>
   <div id="tela-revisao" class="tela"><div class="card"><h2>Revisão</h2><p>Fila de fotos com suspeita para revisão manual. (Em construção)</p></div></div>
   <div id="tela-relatorio" class="tela"><div class="card"><h2>Relatório</h2><p>Visão consolidada, impressão e exportação. (Em construção)</p></div></div>
   <div id="tela-config" class="tela"></div>
@@ -327,6 +329,7 @@
       if (dados.lojasReg) Estado.lojasReg = dados.lojasReg;
       if (dados.carimbos) Estado.carimbos = dados.carimbos;
       if (dados.contestacao) Estado.contestacao = dados.contestacao;
+      if (dados.sistematica) Estado.sistematica = dados.sistematica;
       migrarImagensLegadas(Estado.meses).then(mudou => { if (mudou) salvarEstado(); }).catch(() => {});
     } catch (e) {
       console.error("Erro ao carregar estado:", e);
@@ -555,7 +558,7 @@
 
     document.getElementById('btn-exportar').addEventListener('click', async () => {
       const comImagens = confirm('Incluir as imagens das fotos no backup?\n\nOK = backup completo (arquivo grande)\nCancelar = só os dados, sem imagens');
-      const pacote = { config: Estado.config, meses: Estado.meses, lojasReg: Estado.lojasReg || {}, carimbos: Estado.carimbos || {}, contestacao: Estado.contestacao || {}, imagens: comImagens ? await BancoImagens.todas() : {} };
+      const pacote = { config: Estado.config, meses: Estado.meses, lojasReg: Estado.lojasReg || {}, carimbos: Estado.carimbos || {}, contestacao: Estado.contestacao || {}, sistematica: Estado.sistematica || { lojas: {} }, imagens: comImagens ? await BancoImagens.todas() : {} };
       const blob = new Blob([JSON.stringify(pacote)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -581,6 +584,7 @@
             Estado.lojasReg = dados.lojasReg || {};
             Estado.carimbos = dados.carimbos || {};
             Estado.contestacao = dados.contestacao || {};
+            Estado.sistematica = dados.sistematica || { lojas: {} };
             if (dados.imagens) {
               for (const [id, url] of Object.entries(dados.imagens)) await BancoImagens.salvar(id, url);
             }
@@ -3533,7 +3537,7 @@
         
         document.querySelectorAll('nav button[data-tela]').forEach(b => b.classList.remove('ativo'));
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
-        if (nomeTela !== 'admin' && nomeTela !== 'config' && nomeTela !== 'revisao' && nomeTela !== 'contestacao') atualizarBarraPeriodo(); else { const bp = document.getElementById('barra-periodo'); bp.dataset.disp = ''; document.getElementById('zona-mes').classList.remove('tem-per', 'aberta'); }
+        if (nomeTela !== 'admin' && nomeTela !== 'config' && nomeTela !== 'revisao' && nomeTela !== 'contestacao' && nomeTela !== 'sistematica') atualizarBarraPeriodo(); else { const bp = document.getElementById('barra-periodo'); bp.dataset.disp = ''; document.getElementById('zona-mes').classList.remove('tem-per', 'aberta'); }
         
         botao.classList.add('ativo');
         const telaAlvo = document.getElementById(`tela-${nomeTela}`);
@@ -3549,6 +3553,7 @@
         if (nomeTela === 'promotores') renderizarPromotores();
         if (nomeTela === 'soltas') renderizarSoltas();
         if (nomeTela === 'contestacao') renderizarContestacao();
+        if (nomeTela === 'sistematica') renderizarSistematica();
       });
     });
 
@@ -4097,13 +4102,216 @@
   }
 </script>
 <!-- ═══ FIM SUBBLOCO 11 ═══ -->
+<!-- ═══ SUBBLOCO 12 — SISTEMÁTICA DE VISITAS ═══ -->
+<script>
+  // ═══════════════════════════════════════════════════════════════
+  // SISTEMÁTICA DE VISITAS — o que as fotos dos Books mostram que aconteceu, loja a loja.
+  // Regra semanal por loja (ex.: ter e qui) sugerida pelas fotos; o operador (ou o gerente) confirma ou muda.
+  // Estado.sistematica = { lojas: { [lojaKey]: { regra:[7 booleanos]|ausente, fora:bool, exc:{'AAAA-MM-DD':1|-1}, manual:bool, nome, rk } } }
+  // ═══════════════════════════════════════════════════════════════
+  const SIST_DOW = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
+  let sistRede = '', sistMes = '', sistLoja = '';
+
+  function sistDow(iso) { const p = iso.split('-').map(Number); return (new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay() + 6) % 7; }
+  function sistIso(y, m, d) { return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
+
+  // Feriados nacionais (fixos + Sexta-feira Santa). Nesses dias a regra semanal não gera visita prevista.
+  function sistFeriados(ano) {
+    const f = new Map(), add = (m, d, n) => f.set(sistIso(ano, m, d), n);
+    add(1, 1, 'Confraternização Universal'); add(4, 21, 'Tiradentes'); add(5, 1, 'Dia do Trabalho'); add(9, 7, 'Independência');
+    add(10, 12, 'N. Sra. Aparecida'); add(11, 2, 'Finados'); add(11, 15, 'Proclamação da República'); add(11, 20, 'Consciência Negra'); add(12, 25, 'Natal');
+    const a = ano % 19, b = Math.floor(ano / 100), c = ano % 100, d = Math.floor(b / 4), e = b % 4, ff = Math.floor((b + 8) / 25), g = Math.floor((b - ff + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const mes = Math.floor((h + l - 7 * m + 114) / 31), dia = ((h + l - 7 * m + 114) % 31) + 1;
+    const sexta = new Date(Date.UTC(ano, mes - 1, dia) - 2 * 86400000);
+    f.set(sistIso(sexta.getUTCFullYear(), sexta.getUTCMonth() + 1, sexta.getUTCDate()), 'Sexta-feira Santa');
+    return f;
+  }
+
+  function sistOv(key, criar) {
+    if (!Estado.sistematica) Estado.sistematica = { lojas: {} };
+    if (!Estado.sistematica.lojas) Estado.sistematica.lojas = {};
+    return Estado.sistematica.lojas[key] || (criar ? (Estado.sistematica.lojas[key] = {}) : {});
+  }
+
+  // Reúne todas as execuções de todos os meses importados, por rede e loja.
+  function sistDados() {
+    const redes = new Map(), obs = new Set();
+    Object.keys(Estado.meses || {}).forEach(mes => {
+      const m = Estado.meses[mes];
+      if (!m || !(m.fotos || []).length) return;
+      metricasBooks(mes, true).execs.forEach(x => {
+        obs.add(x.d);
+        let r = redes.get(x.rk); if (!r) redes.set(x.rk, r = { rk: x.rk, nome: x.rede, lojas: new Map() });
+        let l = r.lojas.get(x.lojaKey); if (!l) r.lojas.set(x.lojaKey, l = { key: x.lojaKey, nome: x.loja, rk: x.rk, dias: new Map(), manual: false });
+        const v = l.dias.get(x.d) || l.dias.set(x.d, { n: 0, proms: new Set() }).get(x.d);
+        v.n += x.n; v.proms.add(x.prom);
+      });
+    });
+    const S = (Estado.sistematica && Estado.sistematica.lojas) || {};
+    Object.keys(S).forEach(k => {
+      const o = S[k]; if (!o.manual || !redes.has(o.rk)) return;
+      const r = redes.get(o.rk); if (!r.lojas.has(k)) r.lojas.set(k, { key: k, nome: o.nome || k, rk: o.rk, dias: new Map(), manual: true });
+    });
+    const obsDow = [0, 0, 0, 0, 0, 0, 0]; obs.forEach(d => { obsDow[sistDow(d)]++; });
+    return { redes, obs, obsDow };
+  }
+
+  // Sugestão: o dia da semana entra na regra quando a loja foi visitada nele em ≥2 datas e em ≥60% das datas observadas com aquele dia da semana.
+  function sistSugestao(l, D) {
+    const cont = [0, 0, 0, 0, 0, 0, 0]; l.dias.forEach((v, d) => { cont[sistDow(d)]++; });
+    const regra = cont.map((n, w) => n >= 2 && n / Math.max(1, D.obsDow[w]) >= 0.6);
+    return regra.some(Boolean) ? regra : null;
+  }
+  function sistEfetiva(l, D) {
+    const o = sistOv(l.key), sug = sistSugestao(l, D);
+    return { regra: o.regra || sug, origem: o.regra ? 'definida' : (sug ? 'fotos' : 'definir'), fora: !!o.fora, exc: o.exc || {} };
+  }
+  function sistPrevista(ef, iso, fer) {
+    let p = !ef.fora && !fer.has(iso) && !!(ef.regra && ef.regra[sistDow(iso)]);
+    if (ef.exc[iso] === 1) p = true; else if (ef.exc[iso] === -1) p = false;
+    return p;
+  }
+  function sistTextoRegra(ef) {
+    if (!ef.regra) return '';
+    const t = ef.regra.map((v, i) => v ? SIST_DOW[i] : null).filter(Boolean);
+    return t.length ? t.join(' · ') : 'nenhum dia';
+  }
+
+  function renderizarSistematica() {
+    const container = document.getElementById('tela-sistematica');
+    if (!container) return;
+    const meses = Object.keys(Estado.meses || {}).filter(k => (Estado.meses[k].fotos || []).length).sort();
+    if (!meses.length) { container.innerHTML = `<div class="card"><h2>Sistemática de visitas</h2><p>Nenhum Book importado ainda.</p><p style="margin-top:12px;font-size:13px;">Vá em <strong>Admin</strong> e importe os Books (PDF): a sistemática é montada a partir das fotos.</p></div>`; return; }
+    const D = sistDados();
+    const redes = Array.from(D.redes.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+    if (!sistMes || !meses.includes(sistMes)) sistMes = meses.includes(Estado.config.mesAtivo) ? Estado.config.mesAtivo : meses[meses.length - 1];
+    if (!sistRede || !D.redes.has(sistRede)) sistRede = redes[0].rk;
+    const R = D.redes.get(sistRede);
+    const [ano, mesN] = sistMes.split('-').map(Number), nDias = new Date(Date.UTC(ano, mesN, 0)).getUTCDate();
+    const fer = sistFeriados(ano), dias = Array.from({ length: nDias }, (_, i) => sistIso(ano, mesN, i + 1));
+    const lojas = Array.from(R.lojas.values()).map(l => ({ l, ef: sistEfetiva(l, D) }));
+    const ordem = x => (x.ef.fora ? 2 : (x.ef.regra ? 0 : 1));
+    lojas.sort((a, b) => ordem(a) - ordem(b) || a.l.nome.localeCompare(b.l.nome));
+    let totPrev = 0, totReal = 0;
+    const nDef = lojas.filter(x => !x.ef.regra && !x.ef.fora).length, nFora = lojas.filter(x => x.ef.fora).length;
+
+    const linhas = lojas.map(({ l, ef }) => {
+      let prevL = 0, realL = 0;
+      const cel = dias.map(d => {
+        const prev = sistPrevista(ef, d, fer), real = l.dias.has(d), feriado = fer.get(d), exc = ef.exc[d];
+        if (prev) prevL++; if (real) realL++;
+        const dom = sistDow(d) === 6;
+        let cls = '', txt = '', tit = [];
+        if (prev && real) { cls = 'sv-ok'; txt = '✓'; tit.push('Visita prevista e comprovada por foto'); }
+        else if (prev) { cls = 'sv-prev'; tit.push('Visita prevista'); }
+        else if (real && feriado) { cls = 'sv-fora'; txt = '✓'; tit.push('Visita comprovada em feriado: ' + feriado); }
+        else if (real && ef.regra && !ef.fora) { cls = 'sv-fora'; txt = '✓'; tit.push('Visita comprovada fora da regra'); }
+        else if (real) { cls = 'sv-real'; txt = '✓'; tit.push(ef.fora ? 'Visita comprovada (loja fora da sistemática)' : 'Visita comprovada por foto (regra a definir)'); }
+        else if (feriado) { cls = 'sv-fer'; txt = 'F'; tit.push(feriado); }
+        else if (dom) cls = 'sv-dom';
+        if (real) { const v = l.dias.get(d); tit.push(v.n + ' foto(s) · ' + Array.from(v.proms).join(', ')); }
+        if (exc) tit.push(exc === 1 ? 'Exceção: dia acrescentado' : 'Exceção: dia retirado');
+        return `<td class="sv ${cls}${exc ? ' sv-exc' : ''}" data-d="${d}" title="${esc(tit.join(' | '))}">${txt}</td>`;
+      }).join('');
+      totPrev += prevL; totReal += realL;
+      const badge = ef.fora ? '<span class="sv-b sv-b-fora">fora da sistemática</span>' : (ef.regra ? '' : '<span class="sv-b sv-b-def">⚠ a definir</span>');
+      const origem = ef.regra ? (ef.origem === 'definida' ? 'definida' : 'sugerida pelas fotos') : '';
+      return `<tr class="${sistLoja === l.key ? 'sv-sel' : ''}"><td class="sv-n" data-l="${esc(l.key)}"><b>${esc(l.nome)}</b>${l.manual ? ' <small>(adicionada)</small>' : ''}<br><small>${ef.regra ? esc(sistTextoRegra(ef)) + (origem ? ' · ' + origem : '') : ''}</small> ${badge}</td>${cel}<td class="sv-t">${prevL}<small>/${realL}</small></td></tr>`;
+    }).join('');
+
+    const cab = dias.map(d => { const w = sistDow(d); return `<th class="${w === 6 ? 'sv-dom' : ''}">${Number(d.slice(8))}<br><small>${SIST_DOW[w]}</small></th>`; }).join('');
+    const caixa = (rot, val, cor, sub) => `<div style="flex:1;min-width:110px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:${cor};">${val}</div><div style="font-size:10px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
+    const optR = redes.map(r => `<option value="${esc(r.rk)}" ${r.rk === sistRede ? 'selected' : ''}>${esc(r.nome)} (${r.lojas.size})</option>`).join('');
+    const optM = meses.map(m => `<option value="${m}" ${m === sistMes ? 'selected' : ''}>${esc(rotuloMes(m))}</option>`).join('');
+
+    // editor da loja selecionada
+    let editor = '';
+    const sel = lojas.find(x => x.l.key === sistLoja);
+    if (sel) {
+      const rg = sel.ef.regra || [false, false, false, false, false, false, false];
+      editor = `<div class="sv-ed"><div style="font-weight:bold;margin-bottom:6px;">${esc(sel.l.nome)}</div>
+        <div style="font-size:12px;margin-bottom:6px;">Dias da semana em que a loja deve receber visita:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${SIST_DOW.map((n, i) => `<label class="sv-chip"><input type="checkbox" data-dw="${i}" ${rg[i] ? 'checked' : ''}> ${n}</label>`).join('')}</div>
+        <label style="font-size:12px;display:block;margin-bottom:10px;"><input type="checkbox" id="sv-fora" ${sel.ef.fora ? 'checked' : ''}> Fora da sistemática (não deve mais ser visitada; o histórico fica guardado)</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" id="sv-salvar" class="sv-btn">Salvar regra</button><button type="button" id="sv-voltar" class="sv-btn sv-btn-s">Voltar à sugestão das fotos</button><button type="button" id="sv-fechar" class="sv-btn sv-btn-s">Fechar</button></div>
+        <div style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">Dica: clique num dia do calendário para abrir ou retirar uma visita só naquele dia (exceção).</div></div>`;
+    }
+
+    container.innerHTML = `<style>
+        .sv{border:1px solid #E4E6E5;height:28px;min-width:26px;text-align:center;font-size:11px;cursor:pointer;padding:0}
+        .sv-dom{background:#EDEDED}.sv-prev{background:#27AE60}.sv-ok{background:#27AE60;color:#fff;font-weight:bold}
+        .sv-real{background:#D5F0DE;color:#1E8449;font-weight:bold}.sv-fora{background:#fff;color:#D35400;font-weight:bold;box-shadow:inset 0 0 0 2px #E67E22}
+        .sv-fer{background:#D9DEE2;color:#555;font-weight:bold}.sv-exc{outline:2px dashed #2C3E50;outline-offset:-3px}
+        #tela-sistematica table{border-collapse:collapse;font-size:11px}#tela-sistematica th{background:#F0F2F1;padding:3px 0;font-weight:normal;color:#555;min-width:26px;text-align:center}
+        #tela-sistematica small{font-size:9px;color:#777}.sv-n{padding:3px 8px;text-align:left;white-space:nowrap;min-width:200px;font-size:12px;cursor:pointer;border:1px solid #E4E6E5;background:#fff;position:sticky;left:0}
+        .sv-t{font-weight:bold;background:#F8F9FA;border:1px solid #E4E6E5;text-align:center;padding:0 6px;min-width:44px}
+        .sv-sel .sv-n{background:#FFF6E5;box-shadow:inset 4px 0 0 #E67E22}
+        .sv-b{display:inline-block;font-size:9px;font-weight:bold;border-radius:3px;padding:1px 5px;margin-left:4px}.sv-b-def{background:#FDEBD0;color:#B9770E}.sv-b-fora{background:#E5E7E9;color:#616A6B}
+        .sv-ed{margin-top:14px;padding:14px;background:#FFF6E5;border-left:5px solid #E67E22;border-radius:6px}
+        .sv-chip{border:1px solid #BBB;border-radius:6px;padding:6px 10px;font-size:12px;background:#fff;cursor:pointer}
+        .sv-btn{padding:9px 14px;background:var(--cor-primaria);color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:12px}.sv-btn-s{background:#fff;color:var(--cor-primaria);border:1px solid var(--cor-primaria)}
+        .sv-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin:8px 0 12px;align-items:center}.sv-q{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:4px;border:1px solid #ccc}
+      </style>
+      <div class="card" style="border-left-color:#27AE60;">
+        <h2>Sistemática de visitas</h2>
+        <p style="font-size:12px;margin-bottom:10px;line-height:1.5;">Dias em que cada loja deve receber visita. A regra semanal é <strong>sugerida pelas fotos dos Books</strong> (visitada em pelo menos 2 datas no mesmo dia da semana e em 60% ou mais delas); sem base suficiente a loja fica <strong>"a definir"</strong>. Você pode corrigir a regra, retirar a loja da sistemática ou acrescentar lojas.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <select id="sv-rede" style="flex:2;min-width:220px;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;font-weight:bold;">${optR}</select>
+          <select id="sv-mes" style="flex:1;min-width:150px;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;">${optM}</select>
+          <button type="button" id="sv-add" class="sv-btn sv-btn-s">+ Adicionar loja</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+          ${caixa('Lojas da rede', nfD(lojas.length), '#0A3D2E', nfD(nFora) + ' fora da sistemática')}${caixa('A definir', nfD(nDef), '#E67E22', 'sem base nas fotos')}${caixa('Visitas previstas', nfD(totPrev), '#27AE60', 'no mês, pela regra')}${caixa('Comprovadas por foto', nfD(totReal), '#1E8449', 'dias com foto no mês')}
+        </div>
+        <div class="sv-leg"><span><i class="sv-q" style="background:#27AE60"></i>Dia de visita (regra)</span><span><i class="sv-q" style="background:#27AE60;color:#fff"></i>✓ = com foto</span><span><i class="sv-q" style="background:#D5F0DE"></i>✓ visita com foto (loja "a definir")</span><span><i class="sv-q" style="box-shadow:inset 0 0 0 2px #E67E22;background:#fff"></i>visita fora da regra / em feriado</span><span><i class="sv-q" style="background:#D9DEE2"></i>F feriado nacional</span><span><i class="sv-q" style="background:#EDEDED"></i>domingo</span></div>
+        <div style="overflow-x:auto;"><table><thead><tr><th style="text-align:left;padding-left:8px;position:sticky;left:0;background:#F0F2F1;">Loja · regra</th>${cab}<th>Prev./Foto</th></tr></thead><tbody>${linhas}</tbody></table></div>
+        ${editor}
+        <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:10px;">"Prev./Foto" = visitas previstas pela regra / dias com foto no mês. Os Books cobrem só parte dos dias; um dia previsto sem ✓ pode ser só um Book que ainda não chegou.</p>
+      </div>`;
+
+    document.getElementById('sv-rede').addEventListener('change', e => { sistRede = e.target.value; sistLoja = ''; renderizarSistematica(); });
+    document.getElementById('sv-mes').addEventListener('change', e => { sistMes = e.target.value; renderizarSistematica(); });
+    document.getElementById('sv-add').addEventListener('click', () => {
+      const nome = (prompt('Nome da loja a acrescentar na rede ' + R.nome + ':') || '').trim();
+      if (!nome) return;
+      const key = R.rk + '|M:' + chaveCompacta(nome);
+      if (R.lojas.has(key)) { alert('Essa loja já está na lista.'); return; }
+      const o = sistOv(key, true); o.manual = true; o.nome = nome; o.rk = R.rk;
+      salvarEstado(); sistLoja = key; renderizarSistematica();
+    });
+    container.querySelectorAll('td.sv-n').forEach(td => td.addEventListener('click', () => { sistLoja = (sistLoja === td.dataset.l) ? '' : td.dataset.l; renderizarSistematica(); }));
+    container.querySelectorAll('td.sv[data-d]').forEach(td => td.addEventListener('click', () => {
+      const key = td.closest('tr').querySelector('td.sv-n').dataset.l, x = lojas.find(y => y.l.key === key); if (!x) return;
+      const d = td.dataset.d, o = sistOv(key, true); o.exc = o.exc || {};
+      const prev = sistPrevista({ ...x.ef, exc: {} }, d, fer);
+      const quer = !sistPrevista(x.ef, d, fer);
+      if (quer === prev) delete o.exc[d]; else o.exc[d] = quer ? 1 : -1;
+      salvarEstado(); renderizarSistematica();
+    }));
+    if (sel) {
+      document.getElementById('sv-salvar').addEventListener('click', () => {
+        const o = sistOv(sel.l.key, true);
+        o.regra = Array.from(container.querySelectorAll('input[data-dw]')).map(c => c.checked);
+        o.fora = document.getElementById('sv-fora').checked;
+        salvarEstado(); renderizarSistematica();
+      });
+      document.getElementById('sv-voltar').addEventListener('click', () => {
+        const o = sistOv(sel.l.key, true); delete o.regra; delete o.exc; delete o.fora;
+        salvarEstado(); renderizarSistematica();
+      });
+      document.getElementById('sv-fechar').addEventListener('click', () => { sistLoja = ''; renderizarSistematica(); });
+    }
+  }
+</script>
+<!-- ═══ FIM SUBBLOCO 12 ═══ -->
 <!-- ═══ SUBBLOCO 09 — PUBLICAÇÃO DOS RESULTADOS + MODO LEITURA ═══ -->
 <script>
   // Os resultados publicados ficam em resultados/indice.json e resultados/AAAA-MM.json, na raiz do repositório
   // (ao lado do index.html). Só os RESULTADOS vão para lá: nada de fotos, hashes ou planilhas originais.
   const Publicado = { indice: null, guardaLocal: null };
   const CAMINHO_PUBLICADO = 'resultados/';
-  const TELAS_DO_OPERADOR = ['admin', 'revisao', 'config', 'contestacao'];
+  const TELAS_DO_OPERADOR = ['admin', 'revisao', 'config', 'contestacao', 'sistematica'];
 
   async function buscarJSONPublicado(caminho) {
     try {
@@ -4639,7 +4847,7 @@
       ativoBtn.click();
     }));
     const bAt = document.querySelector('nav button[data-tela].ativo');
-    if (!bAt || !['admin', 'config', 'revisao'].includes(bAt.dataset.tela)) atualizarBarraPeriodo();
+    if (!bAt || !['admin', 'config', 'revisao', 'contestacao', 'sistematica'].includes(bAt.dataset.tela)) atualizarBarraPeriodo();
   }
 
 
@@ -4647,7 +4855,7 @@
     const z = document.getElementById('zona-mes'), d = document.getElementById('dica-per');
     d.addEventListener('click', (e) => { e.stopPropagation(); z.classList.toggle('aberta'); });
     document.addEventListener('click', (e) => { if (!z.contains(e.target)) z.classList.remove('aberta'); });
-    z.addEventListener('mouseenter', () => { const b = document.querySelector('nav button[data-tela].ativo'); if (b && !['admin', 'config', 'revisao'].includes(b.dataset.tela)) atualizarBarraPeriodo(); });
+    z.addEventListener('mouseenter', () => { const b = document.querySelector('nav button[data-tela].ativo'); if (b && !['admin', 'config', 'revisao', 'contestacao', 'sistematica'].includes(b.dataset.tela)) atualizarBarraPeriodo(); });
   })();
 
   // ── CONFERÊNCIA DA IMPORTAÇÃO: garante que todas as fotos do Book tiveram a legenda lida ──
