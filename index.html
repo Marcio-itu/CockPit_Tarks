@@ -4025,7 +4025,7 @@
         <p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;margin-bottom:10px;"><strong>Foto</strong> = uma imagem do Book. <strong>Visita</strong> = uma loja, num dia, por um promotor, e pode ter 1 ou várias fotos. Todos os números abaixo dizem se são fotos ou visitas.</p>
         ${periodo}
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          ${card('Visitas', nfD(M.nExec), 'loja + dia + promotor')}${card('Valor das visitas', moedaK(M.valorTotal), moedaBR(M.valorTotal) + (M.visSemPreco ? ' · ' + nfD(M.visSemPreco) + ' sem preço' : ''))}${card('Fotos', nfD(M.nFotos), `${nfD(M.nComLeg)} com legenda`)}${card('Fotos por visita', nfD1(M.fotosPorExec), 'média')}          ${card('Promotores', nfD(M.nProm))}${card('Redes', nfD(M.nRede))}${card('Lojas atendidas', nfD(M.nLoja), 'com ao menos 1 visita')}${card('Dias com foto', nfD(M.nDias), `de ${nfD(M.nPeriodo)} dias do período`)}
+          ${card('Visitas', nfD(M.nExec), 'loja + dia + promotor')}${card('Valor das visitas', moedaK(M.valorTotal), moedaBR(M.valorTotal) + (M.visSemPreco ? ' · ' + nfD(M.visSemPreco) + ' sem preço' : ''))}${card('Fotos', nfD(M.nFotos), `${nfD(M.nComLeg)} com legenda`)}${card('Fotos por visita', nfD1(M.fotosPorExec), 'média')}          ${card('Promotores', nfD(M.nProm))}${card('Redes', nfD(M.nRede))}${card('Lojas atendidas', nfD(M.nLoja), 'com ao menos 1 visita')}
         </div>
       </div>
       <div class="card"><h2>Visitas por dia</h2>${htmlLinhaDoTempo(M)}</div>
