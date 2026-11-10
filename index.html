@@ -4163,7 +4163,7 @@
   // Fase 1: só a realidade (nenhuma regra, nenhuma previsão). A sistemática das planilhas entra depois, como camada de referência.
   // ═══════════════════════════════════════════════════════════════
   const SIST_DOW = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
-  let sistRede = '', sistMes = '';
+  let sistRede = '', sistMes = '', sistAtivoVisto = '';
 
   function sistDow(iso) { const p = iso.split('-').map(Number); return (new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay() + 6) % 7; }
   function sistIso(y, m, d) { return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
@@ -4220,6 +4220,7 @@
     if (!container) return;
     const meses = Object.keys(Estado.meses || {}).filter(k => (Estado.meses[k].fotos || []).length).sort();
     if (!meses.length) { container.innerHTML = `<div class="card"><h2>Sistemática de visitas</h2><p>Nenhum Book importado ainda.</p><p style="margin-top:12px;font-size:13px;">Vá em <strong>Admin</strong> e importe os Books (PDF): o calendário é montado a partir das fotos.</p></div>`; return; }
+    if (sistAtivoVisto !== Estado.config.mesAtivo) { sistAtivoVisto = Estado.config.mesAtivo; if (meses.includes(sistAtivoVisto)) sistMes = sistAtivoVisto; }
     if (!sistMes || !meses.includes(sistMes)) sistMes = meses.includes(Estado.config.mesAtivo) ? Estado.config.mesAtivo : meses[meses.length - 1];
     const { dias, fer, redes } = sistMontarMes(sistMes);
     const execRede = x => x.lojas.reduce((t, l) => t + l.exec, 0), execMes = redes.reduce((t, x) => t + execRede(x), 0);
@@ -4291,6 +4292,8 @@
   function baixarSistematicaPDF(todas) {
     if (!(window.jspdf && window.jspdf.jsPDF)) { alert('A biblioteca de PDF não carregou. Verifique a conexão e tente de novo.'); return; }
     const mes = sistMes, { dias, fer, redes } = sistMontarMes(mes), execMes = redes.reduce((t, r) => t + r.lojas.reduce((a, l) => a + l.exec, 0), 0);
+    const precos = precosPorRede(), valorMes = redes.reduce((t, x) => t + (precos[x.r.rk] ? x.lojas.reduce((a, l) => a + l.exec, 0) * precos[x.r.rk].preco : 0), 0);
+    const pctValor = v => valorMes ? (v / valorMes * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : '-';
     const lista = todas ? redes : redes.filter(x => x.r.rk === sistRede);
     if (!lista.length) { alert('Não há visitas com foto neste mês.'); return; }
     const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
