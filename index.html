@@ -3575,7 +3575,8 @@
   const TIPOS_OCORRENCIA = {
     repetida: { rot: 'FOTO REPETIDA', cor: [192, 57, 43] },
     sem_legenda: { rot: 'FOTO SEM LEGENDA', cor: [211, 120, 0] },
-    dupla: { rot: 'DOIS PROMOTORES NA LOJA', cor: [125, 60, 152] }
+    dupla: { rot: 'DOIS PROMOTORES NA LOJA', cor: [125, 60, 152] },
+    rede_suspeita: { rot: 'REDE DESCONHECIDA, A CONFERIR', cor: [41, 128, 185] }
   };
 
   function limpaLegenda(t) {
@@ -3669,6 +3670,17 @@
         grupos.slice(1).forEach(l => lista.push({ tipo: 'dupla', chave: 'dp|' + l[0].id, foto: l[0], original: primeiro, quando: l[0].dataHora || '', promotor: nomePromotorFoto(l[0]) || 'Promotor não identificado', nFotos: l.length }));
       });
     });
+    // Nome de rede curto e sem correspondência com as redes conhecidas (ex.: "G"): a conferir. Uma ocorrência por visita.
+    const suspeitas = new Map();
+    fotos.forEach(f => {
+      if (f.semLegenda || !f.redeTexto) return;
+      const c = chaveCompacta(f.redeTexto);
+      if (!c || c.length > 3 || chaveRede(f.redeTexto) !== c || c === 'X') return;
+      const k = [pkFoto(f), (f.dataHora || '').slice(0, 10), c, chaveCompacta(f.lojaTexto || '')].join('|');
+      if (!suspeitas.has(k)) suspeitas.set(k, []);
+      suspeitas.get(k).push(f);
+    });
+    suspeitas.forEach(l => { l.sort(porData); lista.push({ tipo: 'rede_suspeita', chave: 'rs|' + l[0].id, foto: l[0], quando: l[0].dataHora || '', promotor: nomePromotorFoto(l[0]) || 'Promotor não identificado', nFotos: l.length }); });
     fotos.forEach(f => { if (f.semLegenda) lista.push({ tipo: 'sem_legenda', chave: 'sl|' + f.id, foto: f, quando: '', promotor: '' }); });
 
     const porProm = new Map();
@@ -3694,13 +3706,13 @@
     const secoes = ocorrenciasContestacao(mes);
     const reg = regContestacao(mes);
     const todas = secoes.reduce((a, s) => a.concat(s.itens), []);
-    const nRep = todas.filter(o => o.tipo === 'repetida').length, nSl = todas.filter(o => o.tipo === 'sem_legenda').length, nDp = todas.filter(o => o.tipo === 'dupla').length;
+    const nRep = todas.filter(o => o.tipo === 'repetida').length, nSl = todas.filter(o => o.tipo === 'sem_legenda').length, nDp = todas.filter(o => o.tipo === 'dupla').length, nRs = todas.filter(o => o.tipo === 'rede_suspeita').length;
     const novas = todas.filter(o => !reg.primeira[o.chave]).length;
     const linhas = secoes.map(s => {
-      const rep = s.itens.filter(o => o.tipo === 'repetida').length, dp = s.itens.filter(o => o.tipo === 'dupla').length, sl = s.itens.length - rep - dp;
+      const rep = s.itens.filter(o => o.tipo === 'repetida').length, dp = s.itens.filter(o => o.tipo === 'dupla').length, rs = s.itens.filter(o => o.tipo === 'rede_suspeita').length, sl = s.itens.length - rep - dp - rs;
       const ult = s.itens.map(o => o.quando).filter(Boolean).sort().pop();
       const nv = s.itens.filter(o => !reg.primeira[o.chave]).length;
-      return `<tr><td style="padding:6px;">${esc(s.nome)}</td><td style="padding:6px;text-align:center;font-weight:bold;">${s.itens.length}</td><td style="padding:6px;text-align:center;">${rep}</td><td style="padding:6px;text-align:center;">${dp}</td><td style="padding:6px;text-align:center;">${sl}</td><td style="padding:6px;text-align:center;">${ult ? esc(dataHoraBR(ult)) : '-'}</td><td style="padding:6px;text-align:center;">${nv}</td></tr>`;
+      return `<tr><td style="padding:6px;">${esc(s.nome)}</td><td style="padding:6px;text-align:center;font-weight:bold;">${s.itens.length}</td><td style="padding:6px;text-align:center;">${rep}</td><td style="padding:6px;text-align:center;">${dp}</td><td style="padding:6px;text-align:center;">${rs}</td><td style="padding:6px;text-align:center;">${sl}</td><td style="padding:6px;text-align:center;">${ult ? esc(dataHoraBR(ult)) : '-'}</td><td style="padding:6px;text-align:center;">${nv}</td></tr>`;
     }).join('');
     const hist = reg.geracoes.slice().reverse().map(g => `<li>Versão ${g.versao}: ${esc(dataHoraIsoBR(g.em))}, ${g.total} ocorrência(s), ${g.novas} nova(s)</li>`).join('');
     container.innerHTML = `
@@ -3710,13 +3722,13 @@
         ${secoes.reimportadas ? `<p style="font-size:12px;color:#B9770E;margin-top:6px;">⚠️ ${secoes.reimportadas} foto(s) vieram de um Book importado mais de uma vez (mesma página, mesma legenda em outro arquivo). Foram ignoradas na contestação, porque não são ocorrência.</p>` : ''}
         <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:6px;">Uma foto vale para a primeira visita em que apareceu (pela data e hora da legenda). As cópias idênticas usadas para comprovar outra visita (outro dia, loja ou promotor) são contestadas; repetição dentro da mesma visita é aceita.</p>
         <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:13px;margin:12px 0;">
-          <span>Ocorrências: <strong>${todas.length}</strong></span><span>Fotos repetidas: <strong>${nRep}</strong></span><span>2 promotores na mesma loja/dia: <strong>${nDp}</strong></span><span>Fotos sem legenda: <strong>${nSl}</strong></span><span>Novas (ainda fora de qualquer versão): <strong>${novas}</strong></span>
+          <span>Ocorrências: <strong>${todas.length}</strong></span><span>Fotos repetidas: <strong>${nRep}</strong></span><span>2 promotores na mesma loja/dia: <strong>${nDp}</strong></span><span>Rede desconhecida (a conferir): <strong>${nRs}</strong></span><span>Fotos sem legenda: <strong>${nSl}</strong></span><span>Novas (ainda fora de qualquer versão): <strong>${novas}</strong></span>
         </div>
         <button type="button" id="btn-gerar-contestacao" style="padding:11px 16px;border-radius:6px;border:none;background:var(--cor-primaria);color:var(--cor-destaque);font-weight:bold;cursor:pointer;" ${todas.length ? '' : 'disabled'}>📄 Gerar Book de contestação (PDF)</button>
         <div id="msg-contestacao" style="margin-top:8px;font-size:13px;font-weight:bold;"></div>
         <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">Ao gerar, todas as ocorrências do PDF passam a constar como "presentes no book" a partir da data de hoje.</p>
       </div>
-      ${todas.length ? `<div class="card"><h2>Por promotor</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;"><th style="padding:6px;text-align:left;">Promotor</th><th style="padding:6px;">Ocorrências</th><th style="padding:6px;">Repetidas</th><th style="padding:6px;">2 promotores na loja</th><th style="padding:6px;">Sem legenda</th><th style="padding:6px;">Mais recente</th><th style="padding:6px;">Novas</th></tr></thead><tbody>${linhas}</tbody></table></div></div>` : `<div class="card"><p>Nenhuma ocorrência encontrada nas fotos importadas.</p></div>`}
+      ${todas.length ? `<div class="card"><h2>Por promotor</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;"><th style="padding:6px;text-align:left;">Promotor</th><th style="padding:6px;">Ocorrências</th><th style="padding:6px;">Repetidas</th><th style="padding:6px;">2 promotores na loja</th><th style="padding:6px;">Rede a conferir</th><th style="padding:6px;">Sem legenda</th><th style="padding:6px;">Mais recente</th><th style="padding:6px;">Novas</th></tr></thead><tbody>${linhas}</tbody></table></div></div>` : `<div class="card"><p>Nenhuma ocorrência encontrada nas fotos importadas.</p></div>`}
       ${hist ? `<div class="card"><h2>Versões geradas</h2><ul style="font-size:13px;line-height:1.7;padding-left:18px;">${hist}</ul></div>` : ''}`;
     const b = document.getElementById('btn-gerar-contestacao');
     if (b) b.addEventListener('click', gerarBookContestacao);
@@ -3757,9 +3769,9 @@
     doc.setFontSize(12); doc.setFont('helvetica', 'bold');
     doc.text('Gerado em ' + dataHoraIsoBR(agora.toISOString()) + '  |  versão ' + versao, M, 33);
     doc.setTextColor(30, 30, 30); doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5);
-    const nRep = todas.filter(o => o.tipo === 'repetida').length, nSl = todas.filter(o => o.tipo === 'sem_legenda').length, nDp = todas.filter(o => o.tipo === 'dupla').length;
+    const nRep = todas.filter(o => o.tipo === 'repetida').length, nSl = todas.filter(o => o.tipo === 'sem_legenda').length, nDp = todas.filter(o => o.tipo === 'dupla').length, nRs = todas.filter(o => o.tipo === 'rede_suspeita').length;
     const resumo = [
-      'Ocorrências neste book: ' + todas.length + '   (fotos repetidas: ' + nRep + '  |  dois promotores na loja: ' + nDp + '  |  fotos sem legenda: ' + nSl + ')',
+      'Ocorrências neste book: ' + todas.length + '   (fotos repetidas: ' + nRep + '  |  dois promotores na loja: ' + nDp + '  |  rede desconhecida, a conferir: ' + nRs + '  |  fotos sem legenda: ' + nSl + ')',
       'Promotores com ocorrência: ' + secoes.filter(s => !s.semPromotor).length,
       'Novas nesta versão: ' + novas + '   |   já presentes em versões anteriores: ' + (todas.length - novas)
     ];
@@ -3822,6 +3834,8 @@
           doc.text(doc.splitTextToSize(t, larg - 30).slice(0, 6), tx, yy);
           addImg(imgOrig, W - M - 28, y + 22, 26, 28);
           doc.setFontSize(6.5); doc.setTextColor(110); doc.text('outra visita', W - M - 15, y + 52, { align: 'center' });
+        } else if (o.tipo === 'rede_suspeita') {
+          doc.text(doc.splitTextToSize('O nome da rede na legenda ("' + (f.redeTexto || '') + '") não corresponde a nenhuma rede conhecida (pode estar incompleto); a visita tem ' + o.nFotos + ' foto(s). A rede e o valor ainda precisam ser conferidos. Pedimos à agência que informe a rede correta.', larg).slice(0, 5), tx, yy);
         } else {
           doc.text(doc.splitTextToSize('Foto sem legenda legível (rodapé com data, rede, loja e promotor ausente). Não é possível identificar a visita.', larg).slice(0, 4), tx, yy);
         }
