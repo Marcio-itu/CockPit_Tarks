@@ -3770,16 +3770,14 @@
     doc.text('Gerado em ' + dataHoraIsoBR(agora.toISOString()) + '  |  versão ' + versao, M, 33);
     doc.setTextColor(30, 30, 30); doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5);
     const nRep = todas.filter(o => o.tipo === 'repetida').length, nSl = todas.filter(o => o.tipo === 'sem_legenda').length, nDp = todas.filter(o => o.tipo === 'dupla').length, nRs = todas.filter(o => o.tipo === 'rede_suspeita').length;
+    const partes = [['dois promotores na loja', nDp], ['fotos repetidas', nRep], ['fotos sem legenda', nSl], ['rede desconhecida, a conferir', nRs]].filter(p => p[1] > 0).map(p => p[0] + ': ' + p[1]);
     const resumo = [
-      'Ocorrências neste book: ' + todas.length + '   (fotos repetidas: ' + nRep + '  |  dois promotores na loja: ' + nDp + '  |  rede desconhecida, a conferir: ' + nRs + '  |  fotos sem legenda: ' + nSl + ')',
-      'Promotores com ocorrência: ' + secoes.filter(s => !s.semPromotor).length,
-      'Novas nesta versão: ' + novas + '   |   já presentes em versões anteriores: ' + (todas.length - novas)
+      'Ocorrências neste book: ' + todas.length + (partes.length > 1 ? '   (' + partes.join('  |  ') + ')' : ''),
+      'Promotores com ocorrência: ' + secoes.filter(s => !s.semPromotor).length
     ];
-    resumo.forEach((t, i) => doc.text(t, M, 47 + i * 6));
-    doc.setFontSize(9.5); doc.setTextColor(80, 80, 80);
-    const regra = doc.splitTextToSize('Critério: uma foto vale para a primeira visita em que apareceu (pela data e hora da legenda). Dois promotores na mesma loja e no mesmo dia: vale a primeira visita pela hora da legenda e as demais seguem para a agência justificar. Cópias idênticas da mesma imagem, usadas para comprovar outra visita (outro dia, loja ou promotor), são contestadas e apontam a foto original; a mesma foto repetida dentro da mesma visita é aceita. Fotos sem legenda não permitem identificar a visita. Dentro de cada promotor, as ocorrências estão da mais recente para a mais antiga.', W - 2 * M);
-    doc.text(regra, M, 69);
-    y = 69 + regra.length * 4.6 + 4;
+    if (todas.length - novas > 0) resumo.push('Já presentes em versões anteriores: ' + (todas.length - novas));
+    resumo.forEach((t, i) => doc.text(doc.splitTextToSize(t, W - 2 * M), M, 47 + i * 6));
+    y = 47 + resumo.length * 6 + 4;
 
     const novaPagina = () => { doc.addPage(); y = CAB + 4; };
     const clip = (t, mm, tam) => { doc.setFontSize(tam); let s = String(t || ''); while (s.length > 3 && doc.getTextWidth(s) > mm) s = s.slice(0, -2); return s === String(t || '') ? s : s + '...'; };
@@ -3807,14 +3805,14 @@
         doc.setDrawColor(200, 205, 210); doc.setLineWidth(0.3); doc.rect(M, y, W - 2 * M, ALT - 2);
         addImg(img, M + 2, y + 2, 56, ALT - 6);
         const tx = M + 62;
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(20, 20, 20);
-        doc.text(o.tipo === 'sem_legenda' ? 'Data não identificada' : dataHoraBR(f.dataHora), tx, y + 9);
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-        doc.setFillColor(...tipo.cor); doc.roundedRect(tx, y + 12, Math.max(38, doc.getTextWidth(tipo.rot) + 5), 6, 1, 1, 'F');
-        doc.setTextColor(255, 255, 255); doc.text(tipo.rot, tx + 2, y + 16.2);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+        doc.setFillColor(...tipo.cor); doc.roundedRect(tx, y + 3, doc.getTextWidth(tipo.rot) + 6, 8, 1.2, 1.2, 'F');
+        doc.setTextColor(255, 255, 255); doc.text(tipo.rot, tx + 3, y + 8.6);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(12); doc.setTextColor(60, 60, 60);
+        doc.text(o.tipo === 'sem_legenda' ? 'Data não identificada' : dataHoraBR(f.dataHora), tx, y + 18);
         doc.setTextColor(30, 30, 30); doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
         const larg = W - M - tx - 3;
-        let yy = y + 24;
+        let yy = y + 25;
         if (o.tipo !== 'sem_legenda') {
           doc.setFont('helvetica', 'bold'); doc.text(clip(legendaFoto(f) || 'sem rede/loja', larg, 10), tx, yy); doc.setFont('helvetica', 'normal'); yy += 5.2;
           doc.text(clip('Promotor: ' + (nomePromotorFoto(f) || '-'), larg, 10), tx, yy); yy += 5.2;
@@ -3840,14 +3838,32 @@
           doc.text(doc.splitTextToSize('Foto sem legenda legível (rodapé com data, rede, loja e promotor ausente). Não é possível identificar a visita.', larg).slice(0, 4), tx, yy);
         }
         const desde = reg.primeira[o.chave];
-        if (desde) { doc.setFillColor(235, 238, 241); doc.setTextColor(70, 70, 70); } else { doc.setFillColor(222, 245, 230); doc.setTextColor(20, 110, 55); }
-        doc.roundedRect(tx, y + ALT - 11, larg, 6, 1, 1, 'F');
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-        doc.text(desde ? 'Presente no book desde ' + dataIsoBR(desde) : 'NOVA nesta versão (' + dataIsoBR(agora.toISOString()) + ')', tx + 2, y + ALT - 6.8);
+        if (desde) {
+          doc.setFillColor(235, 238, 241); doc.setTextColor(70, 70, 70);
+          doc.roundedRect(tx, y + ALT - 11, larg, 6, 1, 1, 'F');
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+          doc.text('Presente no book desde ' + dataIsoBR(desde), tx + 2, y + ALT - 6.8);
+        }
         y += ALT;
       }
       y += 3;
     }
+
+    // Legenda das ocorrências (rodapé do documento), em ordem alfabética
+    const legenda = [
+      ['Dois promotores na loja', 'dois ou mais promotores na mesma loja e no mesmo dia; vale a primeira visita pela hora da legenda e as demais seguem para a agência justificar.'],
+      ['Foto repetida', 'mesma imagem usada para comprovar outra visita (outro dia, loja ou promotor); vale a primeira pela data e hora da legenda e a ocorrência aponta a original. Repetição dentro da mesma visita é aceita.'],
+      ['Foto sem legenda', 'rodapé da foto sem data, rede, loja e promotor legíveis; não permite identificar a visita.'],
+      ['Rede desconhecida, a conferir', 'nome de rede na legenda sem correspondência com as redes conhecidas (pode estar incompleto); rede e valor ainda precisam ser conferidos.']
+    ];
+    const linhasLeg = legenda.map(l => doc.splitTextToSize('•  ' + l[0] + ': ' + l[1], W - 2 * M - 4));
+    const altLeg = 10 + linhasLeg.reduce((t, l) => t + l.length * 4.4 + 1.5, 0);
+    if (y + altLeg > H - RODAPE) novaPagina();
+    doc.setDrawColor(200, 205, 210); doc.setLineWidth(0.3); doc.line(M, y + 2, W - M, y + 2);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(60, 60, 60); doc.text('Legenda das ocorrências', M, y + 8);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(80, 80, 80);
+    let yl = y + 13;
+    linhasLeg.forEach(l => { doc.text(l, M + 2, yl); yl += l.length * 4.4 + 1.5; });
 
     // Cabeçalho e rodapé em todas as páginas
     const n = doc.getNumberOfPages();
