@@ -3775,7 +3775,6 @@
       'Ocorrências neste book: ' + todas.length + (partes.length > 1 ? '   (' + partes.join('  |  ') + ')' : ''),
       'Promotores com ocorrência: ' + secoes.filter(s => !s.semPromotor).length
     ];
-    if (todas.length - novas > 0) resumo.push('Já presentes em versões anteriores: ' + (todas.length - novas));
     resumo.forEach((t, i) => doc.text(doc.splitTextToSize(t, W - 2 * M), M, 47 + i * 6));
     y = 47 + resumo.length * 6 + 4;
 
