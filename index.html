@@ -118,6 +118,7 @@
   <button data-tela="soltas">Livres</button>
   <button data-tela="contestacao">Contestação</button>
   <button data-tela="sistematica">Sistemática</button>
+  <button data-tela="degustacoes">Degustações</button>
   <button data-tela="revisao">Revisão</button>
   <button data-tela="relatorio">Relatório</button>
   <button data-tela="admin" class="nav-op">Admin</button>
@@ -137,6 +138,7 @@
   <div id="tela-soltas" class="tela"></div>
   <div id="tela-contestacao" class="tela"></div>
   <div id="tela-sistematica" class="tela"></div>
+  <div id="tela-degustacoes" class="tela"></div>
   <div id="tela-revisao" class="tela"><div class="card"><h2>Revisão</h2><p>Fila de fotos com suspeita para revisão manual. (Em construção)</p></div></div>
   <div id="tela-relatorio" class="tela"><div class="card"><h2>Relatório</h2><p>Visão consolidada, impressão e exportação. (Em construção)</p></div></div>
   <div id="tela-config" class="tela"></div>
@@ -146,6 +148,7 @@
 
 <!-- DEPENDÊNCIAS EXTERNAS -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -330,6 +333,7 @@
       if (dados.carimbos) Estado.carimbos = dados.carimbos;
       if (dados.contestacao) Estado.contestacao = dados.contestacao;
       if (dados.sistematica) Estado.sistematica = dados.sistematica;
+      if (dados.degustacoes) Estado.degustacoes = dados.degustacoes;
       migrarImagensLegadas(Estado.meses).then(mudou => { if (mudou) salvarEstado(); }).catch(() => {});
     } catch (e) {
       console.error("Erro ao carregar estado:", e);
@@ -558,7 +562,7 @@
 
     document.getElementById('btn-exportar').addEventListener('click', async () => {
       const comImagens = confirm('Incluir as imagens das fotos no backup?\n\nOK = backup completo (arquivo grande)\nCancelar = só os dados, sem imagens');
-      const pacote = { config: Estado.config, meses: Estado.meses, lojasReg: Estado.lojasReg || {}, carimbos: Estado.carimbos || {}, contestacao: Estado.contestacao || {}, sistematica: Estado.sistematica || { lojas: {} }, imagens: comImagens ? await BancoImagens.todas() : {} };
+      const pacote = { config: Estado.config, meses: Estado.meses, lojasReg: Estado.lojasReg || {}, carimbos: Estado.carimbos || {}, contestacao: Estado.contestacao || {}, sistematica: Estado.sistematica || { lojas: {} }, degustacoes: Estado.degustacoes || [], imagens: comImagens ? await BancoImagens.todas() : {} };
       const blob = new Blob([JSON.stringify(pacote)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -585,6 +589,7 @@
             Estado.carimbos = dados.carimbos || {};
             Estado.contestacao = dados.contestacao || {};
             Estado.sistematica = dados.sistematica || { lojas: {} };
+            Estado.degustacoes = dados.degustacoes || [];
             if (dados.imagens) {
               for (const [id, url] of Object.entries(dados.imagens)) await BancoImagens.salvar(id, url);
             }
@@ -2445,7 +2450,7 @@
   }
 
   // ── RENDERIZAR TELA ADMIN (V2 COMPLETA) ──
-  function renderizarAdmin() {
+  function renderizarAdminBase() {
     const container = document.getElementById('tela-admin');
     const mesDados = Estado.meses[Estado.config.mesAtivo] || {};
     
@@ -2711,7 +2716,7 @@
   function htmlSemDadosPromotores(titulo) {
     return `<div class="card"><h2>${titulo}</h2><p>Nenhuma auditoria com execuções por promotor. ${Modo === 'publicado' ? 'O operador precisa publicar o mês novamente.' : 'Processe a auditoria (Admin).'}</p></div>`;
   }
-  function renderizarPromotores() {
+  function renderizarPromotoresAntigo() {
     const container = document.getElementById('tela-promotores');
     const aud = dadosPromotores();
     if (!aud) { container.innerHTML = htmlSemDadosPromotores('Promotores'); return; }
@@ -3537,7 +3542,7 @@
         
         document.querySelectorAll('nav button[data-tela]').forEach(b => b.classList.remove('ativo'));
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
-        if (nomeTela !== 'admin' && nomeTela !== 'config' && nomeTela !== 'revisao' && nomeTela !== 'contestacao' && nomeTela !== 'sistematica') atualizarBarraPeriodo(); else { const bp = document.getElementById('barra-periodo'); bp.dataset.disp = ''; document.getElementById('zona-mes').classList.remove('tem-per', 'aberta'); }
+        if (nomeTela !== 'admin' && nomeTela !== 'config' && nomeTela !== 'revisao' && nomeTela !== 'contestacao' && nomeTela !== 'sistematica' && nomeTela !== 'degustacoes') atualizarBarraPeriodo(); else { const bp = document.getElementById('barra-periodo'); bp.dataset.disp = ''; document.getElementById('zona-mes').classList.remove('tem-per', 'aberta'); }
         
         botao.classList.add('ativo');
         const telaAlvo = document.getElementById(`tela-${nomeTela}`);
@@ -3554,6 +3559,7 @@
         if (nomeTela === 'soltas') renderizarSoltas();
         if (nomeTela === 'contestacao') renderizarContestacao();
         if (nomeTela === 'sistematica') renderizarSistematica();
+        if (nomeTela === 'degustacoes') renderizarDegustacoes();
       });
     });
 
@@ -3965,6 +3971,15 @@
       const pd = {}; execs.forEach(x => { if (x.pk === Array.from(a.proms)[0]) pd[x.d] = (pd[x.d] || 0) + 1; });
       a.maxDia = Math.max(0, ...Object.values(pd)); a.media = a.nDias ? a.exec / a.nDias : 0; return a;
     }).sort((a, b) => b.exec - a.exec || a.nome.localeCompare(b.nome));
+    // Por promotor: redes, valor estimado e ocorrências de contestação
+    {
+      const extra = {};
+      execs.forEach(x => { const e = extra[x.pk] || (extra[x.pk] = { redes: new Set(), valor: 0, semPreco: 0 }); e.redes.add(x.rk); const p = precos[x.rk]; if (p) e.valor += p.preco; else e.semPreco++; });
+      const ocs = ocorrenciasContestacao(mes).reduce((a, sec) => a.concat(sec.itens), []), ocPor = {};
+      ocs.forEach(o => { const k = chaveCompacta(o.promotor || ''); const e = ocPor[k] || (ocPor[k] = { rep: 0, dup: 0, outras: 0 }); if (o.tipo === 'repetida') e.rep++; else if (o.tipo === 'dupla') e.dup++; else e.outras++; });
+      porProm.forEach(a => { const pk = Array.from(a.proms)[0], e = extra[pk] || { redes: new Set(), valor: 0, semPreco: 0 }, c = ocPor[chaveCompacta(a.nome)] || { rep: 0, dup: 0, outras: 0 };
+        a.pk = pk; a.nRedes = e.redes.size; a.valor = e.valor; a.visSemPreco = e.semPreco; a.ocRep = c.rep; a.ocDup = c.dup; a.ocOutras = c.outras; });
+    }
     const porLoja = agr(x => x.lojaKey, x => Object.assign(novo(x.loja), { rede: x.rede })).sort((a, b) => b.exec - a.exec || a.nome.localeCompare(b.nome));
 
     const porDia = {};
@@ -4388,13 +4403,386 @@
   }
 </script>
 <!-- ═══ FIM SUBBLOCO 12 ═══ -->
+<!-- ═══ SUBBLOCO 13 — DEGUSTAÇÕES ═══ -->
+<script>
+  // ═══════════════════════════════════════════════════
+  // DEGUSTAÇÕES — relatórios de ação da agência (PDF/Word) entram pelo Admin, viram linhas ligadas às redes/lojas dos Books,
+  // acumulam mês a mês e aparecem num dashboard na aba Degustações, com exportação em Excel.
+  // ═══════════════════════════════════════════════════
+  let degPend = [], degMsg = '', degModo = 'mes';
+  const DEG_MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  const DEG_DOW = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+
+  function degLista() { if (!Array.isArray(Estado.degustacoes)) Estado.degustacoes = []; return Estado.degustacoes; }
+  function degNorm(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+  function degChave(r) { return [r.data, degNorm(r.rede || r.lojaRel || r.loja), degNorm(r.loja), degNorm(r.produto), degNorm(r.promotora)].join('|'); }
+  function degDow(iso) { if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return -1; const p = iso.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay(); }
+  function degDiaSemana(iso) { const d = degDow(iso); return d < 0 ? '' : DEG_DOW[d]; }
+  function degDataBR(iso) { return /^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4) : (iso || '-'); }
+  function degN(v) { return v == null || v === '' ? '-' : Number(v).toLocaleString('pt-BR'); }
+  function degPct(a, b) { return b > 0 && a != null ? (a / b * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : '-'; }
+  function degLojaRot(r) { return r.loja ? (r.redeNome || '') + ' › ' + r.loja : (r.rede ? (r.redeNome || '') + ' (rede toda)' : (r.lojaRel || r.loja || '(sem loja)') + ' (sem vínculo)'); }
+  function degRedeRot(r) { return r.redeNome || r.lojaRel || '(sem rede)'; }
+
+  // ── Redes e lojas que já têm foto nos Books ──
+  function degPoolBooks() {
+    const pool = new Map();
+    Object.keys(Estado.meses || {}).forEach(m => ((Estado.meses[m] || {}).fotos || []).forEach(f => {
+      if (f.semLegenda || !f.redeTexto) return;
+      const k = chaveRede(f.redeTexto); if (!k) return;
+      if (!pool.has(k)) pool.set(k, { k, nomes: new Map(), lojas: new Map() });
+      const p = pool.get(k); p.nomes.set(f.redeTexto, (p.nomes.get(f.redeTexto) || 0) + 1);
+      if (f.lojaTexto) p.lojas.set(f.lojaTexto, (p.lojas.get(f.lojaTexto) || 0) + 1);
+    }));
+    // Mesmo nome pode vir com letras separadas pela leitura do PDF ("T E N D A"): junta por texto compacto e mostra a grafia mais limpa.
+    const melhor = mapa => { const g = new Map(); mapa.forEach((n, t) => { const k = degNorm(t); if (!g.has(k)) g.set(k, []); g.get(k).push([t, n]); }); return [...g.values()].map(v => v.sort((a, b) => ((a[0].match(/ /g) || []).length / a[0].length) - ((b[0].match(/ /g) || []).length / b[0].length) || b[1] - a[1])[0][0]); };
+    pool.forEach(p => { p.nome = melhor(p.nomes).sort((a, b) => (p.nomes.get(b) || 0) - (p.nomes.get(a) || 0))[0]; p.listaLojas = melhor(p.lojas).sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true })); });
+    return pool;
+  }
+  function degAcharRede(nomeRel, pool) {
+    const c = degNorm(nomeRel); if (!c || /NAOINFORMAD/.test(c)) return null;
+    let k = chaveRede(nomeRel); if (pool.has(k)) return pool.get(k);
+    for (const [kk, p] of pool) if (kk.length >= 4 && c.length >= 4 && (c.includes(kk) || kk.includes(c))) return p;
+    return null;
+  }
+  function degVincular(r, pool) {
+    const p = degAcharRede(r.lojaRel, pool);
+    if (p) { r.rede = p.k; r.redeNome = p.nome; r.loja = p.listaLojas.length === 1 ? p.listaLojas[0] : ''; r.lojaAuto = p.listaLojas.length === 1; } else { r.rede = ''; r.redeNome = ''; r.loja = ''; }
+    return r;
+  }
+
+  // ── Dia da ação: compara a data com o dia da semana escrito no relatório ──
+  function degResolverData(dt, anoBase) {
+    const dm = String(dt || '').match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
+    if (!dm) return { data: '', duvida: 'Não encontrei a data no relatório.' };
+    const d = +dm[1], m = +dm[2], wm = String(dt).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').match(/(domingo|segunda|terca|quarta|quinta|sexta|sabado)/);
+    const wd = wm ? ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'].indexOf(wm[1]) : -1;
+    const iso = y => y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    const valida = y => { const t = new Date(Date.UTC(y, m - 1, d)); return t.getUTCMonth() === m - 1 && t.getUTCDate() === d; };
+    let y0 = dm[3] ? +dm[3] : anoBase; if (y0 < 100) y0 += 2000;
+    if (!valida(y0)) return { data: iso(y0), duvida: 'A data ' + dm[0] + ' não existe no calendário.' };
+    if (wd < 0) return { data: iso(y0), duvida: 'O relatório não traz o dia da semana, então não consigo conferir ' + degDataBR(iso(y0)) + '.' };
+    if (degDow(iso(y0)) === wd) return { data: iso(y0), duvida: '' };
+    if (!dm[3]) for (const y of [anoBase - 1, anoBase + 1]) if (valida(y) && degDow(iso(y)) === wd) return { data: iso(y0), duvida: 'O relatório diz "' + DEG_DOW[wd] + '", mas ' + degDataBR(iso(y0)) + ' é ' + DEG_DOW[degDow(iso(y0))] + ' (em ' + y + ' esse dia cairia numa ' + DEG_DOW[wd] + '). Confira o dia.' };
+    return { data: iso(y0), duvida: 'O relatório diz "' + DEG_DOW[wd] + '", mas ' + degDataBR(iso(y0)) + ' é ' + DEG_DOW[degDow(iso(y0))] + '.' };
+  }
+
+  // ── Leitura do texto dos relatórios ──
+  function degParseTexto(txt, anoBase) {
+    const blocos = String(txt || '').replace(/\s+/g, ' ').split(/(?=RELAT[ÓO]RIO DA A[ÇC][ÃA]O)/i).filter(b => /RELAT[ÓO]RIO DA A[ÇC][ÃA]O/i.test(b)), saida = [];
+    blocos.forEach(t => {
+      const pega = (a, b) => { const m = t.match(new RegExp(a + '\\s*(.*?)\\s*(?:' + b + ')', 'i')); return m ? m[1].trim() : ''; };
+      const dt = pega('DATA DA A[ÇC][ÃA]O', 'LOJA\\b'), dd = degResolverData(dt, anoBase);
+      const res = pega('Vendas avulsas', 'FEEDBACK DOS CLIENTES'), nums = [], aprox = [];
+      res.replace(/(m[ée]dia de\s*)?(\d+)/gi, (_, m, n) => { nums.push(+n); aprox.push(!!m); return _; });
+      saida.push({
+        data: dd.data, diaRel: ((dt.match(/(domingo|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado)/i) || [''])[0]).toLowerCase(), duvidaData: dd.duvida, dataOk: !dd.duvida,
+        lojaRel: pega('LOJA', 'PRODUTO DE DEGUSTA[ÇC][ÃA]O'), produto: pega('PRODUTO DE DEGUSTA[ÇC][ÃA]O', 'PROMOTORA'), promotora: pega('PROMOTORA', 'QUANTIDADE UTILIZADA'),
+        qtd: pega('QUANTIDADE UTILIZADA', 'RESULTADOS DO DIA'),
+        abord: nums.length >= 4 ? nums[0] : null, aceit: nums.length >= 4 ? nums[1] : null, packs: nums.length >= 4 ? nums[2] : null, avul: nums.length >= 4 ? nums[3] : null,
+        aprox: { abord: !!aprox[0], aceit: !!aprox[1] }, feedback: pega('FEEDBACK DOS CLIENTES', 'JS CONECTA|$')
+      });
+    });
+    return saida;
+  }
+
+  async function degLerArquivo(file) {
+    const ano = +(String((Estado.config && Estado.config.mesAtivo) || '').slice(0, 4)) || new Date().getFullYear();
+    let txt = '';
+    if (/\.docx$/i.test(file.name)) {
+      if (typeof mammoth === 'undefined') throw new Error('Leitor de Word não carregou.');
+      txt = (await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })).value;
+    } else {
+      const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+      for (let p = 1; p <= pdf.numPages; p++) txt += ' ' + (await (await pdf.getPage(p)).getTextContent()).items.map(i => i.str).join(' ');
+    }
+    const pool = degPoolBooks();
+    return degParseTexto(txt, ano).map((r, i) => { r.id = 'dg' + Date.now().toString(36) + i + Math.random().toString(36).slice(2, 5); r.arquivo = file.name; return degVincular(r, pool); });
+  }
+
+  // ── Agregações ──
+  function degAgrega(lista, fn) {
+    const m = new Map();
+    lista.forEach(r => {
+      const k = fn(r) || '(não informado)';
+      if (!m.has(k)) m.set(k, { k, acoes: 0, abord: 0, aceit: 0, packs: 0, avul: 0 });
+      const a = m.get(k); a.acoes++; a.abord += r.abord || 0; a.aceit += r.aceit || 0; a.packs += r.packs || 0; a.avul += r.avul || 0;
+    });
+    return [...m.values()].sort((a, b) => (b.packs + b.avul) - (a.packs + a.avul) || a.k.localeCompare(b.k));
+  }
+  function degTot(lista) { return degAgrega(lista, () => 'Total')[0] || { acoes: 0, abord: 0, aceit: 0, packs: 0, avul: 0 }; }
+  function degFiltrada() {
+    const l = degLista().slice().sort((a, b) => (a.data || '').localeCompare(b.data || '') || degRedeRot(a).localeCompare(degRedeRot(b)));
+    return degModo === 'mes' ? l.filter(r => (r.data || '').slice(0, 7) === Estado.config.mesAtivo) : l;
+  }
+  function degNomeArquivo(lista, ext) {
+    const ult = lista.map(r => r.data).filter(Boolean).sort().pop() || new Date().toISOString().slice(0, 10);
+    return ult.slice(0, 4) + '_Trade_Degustacoes_até ' + ult.slice(8, 10) + ' de ' + DEG_MESES[+ult.slice(5, 7) - 1] + '.' + ext;
+  }
+
+  // ── Admin: anexar relatórios e conferir ──
+  function renderizarAdmin() {
+    renderizarAdminBase();
+    const c = document.getElementById('tela-admin'); if (!c) return;
+    let el = document.getElementById('deg-admin'); if (!el) { el = document.createElement('div'); el.id = 'deg-admin'; c.appendChild(el); }
+    degAdminCard(el);
+  }
+  function degAdminCard(el) {
+    const todas = degLista(), pool = degPoolBooks(), redes = [...pool.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    const inp = (i, campo, v, w, tipo) => `<input data-dg="${i}" data-campo="${campo}" type="${tipo || 'text'}" value="${esc(v == null ? '' : v)}" style="width:${w}px;padding:4px;border:1px solid #CFD4D9;border-radius:4px;font-size:12px;">`;
+    const pend = degPend.length ? `<h3 style="margin:14px 0 6px;font-size:14px;">Conferir antes de salvar (${degPend.length})</h3>
+      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-bottom:8px;">Leitura automática. A rede e a loja vêm da lista dos Books; escolha a loja quando a rede tiver mais de uma. Campos em amarelo precisam da sua atenção. "~" marca número que o relatório trouxe como "média de".</p>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th>Dia da ação</th><th>Rede (Books)</th><th>Loja (Books)</th><th>Produto</th><th>Promotora</th><th>Qtd. utilizada</th><th>Abord.</th><th>Aceitaram</th><th>Packs</th><th>Avulsas</th><th></th></tr></thead><tbody>
+      ${degPend.map((r, i) => {
+        const p = r.rede ? pool.get(r.rede) : null, lojas = p ? p.listaLojas : [];
+        const dup = todas.some(x => degChave(x) === degChave(r));
+        const selRede = `<select data-dg="${i}" data-campo="rede" style="width:150px;padding:4px;font-size:12px;${r.rede ? '' : 'background:#FFF6D6;'}"><option value="">${r.rede ? '(sem rede)' : '(não encontrada: ' + esc(r.lojaRel || '-') + ')'}</option>${redes.map(x => `<option value="${esc(x.k)}" ${x.k === r.rede ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}</select>`;
+        const selLoja = `<select data-dg="${i}" data-campo="loja" style="width:210px;padding:4px;font-size:12px;${r.rede && !r.loja ? 'background:#FFF6D6;' : ''}" ${r.rede ? '' : 'disabled'}><option value="">${r.rede ? (lojas.length ? '— escolher loja —' : '(sem loja nos Books)') : '-'}</option>${lojas.map(x => `<option value="${esc(x)}" ${x === r.loja ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>`;
+        const dia = `<div>${inp(i, 'data', r.data, 128, 'date')} <span style="font-size:11px;color:var(--cor-texto-secundario);">${esc(degDiaSemana(r.data))}</span></div>${r.duvidaData ? `<div style="margin-top:3px;padding:4px 6px;background:#FFF6D6;border-radius:4px;font-size:11px;max-width:230px;">${esc(r.duvidaData)}<label style="display:block;margin-top:3px;font-weight:bold;"><input type="checkbox" data-dg="${i}" data-campo="dataOk" ${r.dataOk ? 'checked' : ''}> Confirmo este dia</label></div>` : ''}`;
+        return `<tr style="border-top:1px solid #ECEFF1;vertical-align:top;"><td style="padding:4px;">${dia}</td><td style="padding:4px;">${selRede}</td><td style="padding:4px;">${selLoja}</td><td style="padding:4px;">${inp(i, 'produto', r.produto, 100)}</td><td style="padding:4px;">${inp(i, 'promotora', r.promotora, 90)}</td><td style="padding:4px;">${inp(i, 'qtd', r.qtd, 150)}</td>
+          <td style="padding:4px;white-space:nowrap;">${r.aprox && r.aprox.abord ? '~' : ''}${inp(i, 'abord', r.abord, 54, 'number')}</td><td style="padding:4px;white-space:nowrap;">${r.aprox && r.aprox.aceit ? '~' : ''}${inp(i, 'aceit', r.aceit, 54, 'number')}</td><td style="padding:4px;">${inp(i, 'packs', r.packs, 48, 'number')}</td><td style="padding:4px;">${inp(i, 'avul', r.avul, 48, 'number')}</td>
+          <td style="padding:4px;white-space:nowrap;font-size:11px;">${dup ? '<span style="color:#B9770E;">já salva (será atualizada)</span> ' : ''}<button type="button" data-dg-rem="${i}" style="border:none;background:none;color:#C0392B;cursor:pointer;">remover</button></td></tr>`;
+      }).join('')}</tbody></table></div>
+      ${pool.size ? '' : '<p style="font-size:12px;color:#B9770E;margin-top:6px;">Ainda não há fotos de Books importadas, então não há lojas para vincular.</p>'}
+      <div style="margin-top:10px;display:flex;gap:8px;"><button type="button" id="dg-salvar" style="padding:10px 14px;border-radius:6px;border:none;background:var(--cor-primaria);color:var(--cor-destaque);font-weight:bold;cursor:pointer;">Salvar ${degPend.length} na base</button><button type="button" id="dg-descartar" style="padding:10px 14px;border-radius:6px;border:1px solid #CFD4D9;background:#fff;cursor:pointer;">Descartar</button></div>` : '';
+    el.innerHTML = `<div class="card" style="border-left:4px solid var(--cor-destaque);"><h2>Degustações: relatórios da agência</h2>
+      <p style="font-size:13px;line-height:1.5;">Anexe os relatórios de ação (PDF ou Word). O sistema lê cada relatório, liga à rede e à loja dos Books, pede confirmação quando tiver dúvida no dia, e acumula mês a mês. O dashboard fica na aba Degustações.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;">
+        <label style="padding:10px 14px;border-radius:6px;background:var(--cor-primaria);color:var(--cor-destaque);font-weight:bold;cursor:pointer;">📎 Anexar relatórios (PDF ou Word)<input id="dg-arq" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple style="display:none;"></label>
+        <button type="button" id="dg-novo" style="padding:10px 14px;border-radius:6px;border:1px solid #CFD4D9;background:#fff;cursor:pointer;">+ Lançar manualmente</button>
+        <span style="font-size:12px;color:var(--cor-texto-secundario);">${todas.length} degustação(ões) salva(s)</span>
+        <button type="button" id="dg-ver" style="border:none;background:none;color:#2980B9;cursor:pointer;font-size:13px;">Ver dashboard →</button>
+      </div><div id="dg-msg" style="margin-top:8px;font-size:13px;font-weight:bold;">${esc(degMsg)}</div>${pend}</div>`;
+    const msg = t => { degMsg = t; const m = document.getElementById('dg-msg'); if (m) m.textContent = t; };
+    const refaz = () => degAdminCard(el);
+    el.querySelector('#dg-arq').onchange = async ev => {
+      const arqs = [...ev.target.files]; if (!arqs.length) return;
+      let lidos = 0, sem = [];
+      for (const f of arqs) {
+        msg('Lendo ' + f.name + '…');
+        try { const r = await degLerArquivo(f); if (!r.length) sem.push(f.name); r.forEach(x => degPend.push(x)); lidos += r.length; } catch (e) { sem.push(f.name + ' (' + (e.message || 'erro') + ')'); }
+      }
+      degMsg = lidos + ' relatório(s) lido(s)' + (sem.length ? '. Sem relatório reconhecido em: ' + sem.join(', ') : '') + '. Confira abaixo e salve.';
+      refaz();
+    };
+    el.querySelector('#dg-novo').onclick = () => { degPend.push({ id: 'dg' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), data: '', duvidaData: '', dataOk: true, lojaRel: '', rede: '', redeNome: '', loja: '', produto: '', promotora: '', qtd: '', abord: null, aceit: null, packs: null, avul: null, aprox: {}, feedback: '', arquivo: 'manual' }); refaz(); };
+    el.querySelector('#dg-ver').onclick = () => { const b = document.querySelector('nav button[data-tela="degustacoes"]'); if (b) b.click(); };
+    el.querySelectorAll('[data-dg]').forEach(x => x.onchange = () => {
+      const r = degPend[+x.dataset.dg], k = x.dataset.campo; if (!r) return;
+      if (k === 'dataOk') { r.dataOk = x.checked; refaz(); return; }
+      if (k === 'rede') { const p = pool.get(x.value); r.rede = p ? p.k : ''; r.redeNome = p ? p.nome : ''; r.loja = p && p.listaLojas.length === 1 ? p.listaLojas[0] : ''; refaz(); return; }
+      if (k === 'loja') { r.loja = x.value; refaz(); return; }
+      if (k === 'data') {
+        r.data = x.value; const sem = degDiaSemana(x.value), rel = degNorm(r.diaRel).toLowerCase();
+        r.duvidaData = r.diaRel && sem && !degNorm(sem).toLowerCase().startsWith(rel.slice(0, 3)) ? 'O relatório diz "' + r.diaRel + '", mas ' + degDataBR(x.value) + ' é ' + sem + '.' : '';
+        r.dataOk = !r.duvidaData; refaz(); return;
+      }
+      r[k] = x.type === 'number' ? (x.value === '' ? null : +x.value) : x.value.trim();
+      if (x.type === 'number' && r.aprox) r.aprox[k] = false;
+    });
+    el.querySelectorAll('[data-dg-rem]').forEach(b => b.onclick = () => { degPend.splice(+b.dataset.dgRem, 1); refaz(); });
+    const sv = el.querySelector('#dg-salvar');
+    if (sv) sv.onclick = () => {
+      if (degPend.some(r => !r.data || !r.produto)) { msg('Preencha o dia e o produto de todas as linhas antes de salvar.'); return; }
+      const dv = degPend.filter(r => r.duvidaData && !r.dataOk).length;
+      if (dv) { msg('Confirme o dia de ' + dv + ' ação(ões) marcada(s) em amarelo (ou corrija a data) antes de salvar.'); return; }
+      let novas = 0, atual = 0;
+      degPend.forEach(r => { r.dataSalva = new Date().toISOString(); const l = degLista(), i = l.findIndex(x => degChave(x) === degChave(r)); if (i >= 0) { l[i] = r; atual++; } else { l.push(r); novas++; } });
+      const ult = degPend.map(r => r.data).sort().pop(); degPend = [];
+      degMsg = novas + ' nova(s) salva(s)' + (atual ? ', ' + atual + ' atualizada(s)' : '') + '. Veja na aba Degustações' + (ult && ult.slice(0, 7) !== Estado.config.mesAtivo ? ' (mês ' + DEG_MESES[+ult.slice(5, 7) - 1] + '/' + ult.slice(0, 4) + ', ou em "Acumulado")' : '') + '.';
+      salvarEstado(); refaz();
+    };
+    const ds = el.querySelector('#dg-descartar'); if (ds) ds.onclick = () => { degPend = []; degMsg = ''; refaz(); };
+  }
+
+  // ── Aba Degustações: dashboard ──
+  function degTabela(titulo, rot, linhas, t) {
+    const th = 'padding:6px;text-align:right;', td = 'padding:6px;text-align:right;border-top:1px solid #ECEFF1;';
+    const lin = linhas.concat([Object.assign({ k: 'Total' }, t)]).map((a, i, arr) => {
+      const b = i === arr.length - 1 ? 'font-weight:bold;background:#F8F9FA;' : '';
+      return `<tr style="${b}"><td style="${td}text-align:left;">${esc(a.k)}</td><td style="${td}">${a.acoes}</td><td style="${td}">${degN(a.abord)}</td><td style="${td}">${degN(a.aceit)}</td><td style="${td}">${degPct(a.aceit, a.abord)}</td><td style="${td}">${degN(a.packs)}</td><td style="${td}">${degN(a.avul)}</td><td style="${td}font-weight:bold;">${degN(a.packs + a.avul)}</td><td style="${td}">${degPct(a.packs + a.avul, a.aceit)}</td></tr>`;
+    }).join('');
+    return `<div class="card"><h2>${titulo}</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="${th}text-align:left;">${rot}</th><th style="${th}">Ações</th><th style="${th}">Abordagens</th><th style="${th}">Aceitaram</th><th style="${th}">% aceitação</th><th style="${th}">Packs</th><th style="${th}">Avulsas</th><th style="${th}">Vendas</th><th style="${th}">Vendas / aceitaram</th></tr></thead><tbody>${lin}</tbody></table></div></div>`;
+  }
+  function degBarras(titulo, linhas, legenda) {
+    const mx = Math.max(1, ...linhas.map(a => a.packs + a.avul));
+    return `<div class="card"><h2>${titulo}</h2><div style="font-size:11px;color:var(--cor-texto-secundario);margin-bottom:8px;"><span style="display:inline-block;width:10px;height:10px;background:var(--cor-primaria);border-radius:2px;"></span> packs &nbsp; <span style="display:inline-block;width:10px;height:10px;background:var(--cor-destaque);border-radius:2px;"></span> avulsas</div>
+      ${linhas.map(a => `<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12.5px;"><div style="width:190px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(a.k)}">${esc(a.k)}</div><div style="flex:1;display:flex;height:18px;"><div style="width:${a.packs / mx * 100}%;background:var(--cor-primaria);border-radius:3px 0 0 3px;" title="${a.packs} packs"></div><div style="width:${a.avul / mx * 100}%;background:var(--cor-destaque);border-radius:0 3px 3px 0;" title="${a.avul} avulsas"></div></div><div style="width:70px;flex:none;text-align:right;font-weight:bold;">${degN(a.packs + a.avul)}</div></div>`).join('')}</div>`;
+  }
+  function renderizarDegustacoes() {
+    const c = document.getElementById('tela-degustacoes'); if (!c) return;
+    const lista = degFiltrada(), t = degTot(lista), mesRot = rotuloMes(Estado.config.mesAtivo), total = degLista().length;
+    const cx = (rot, val, sub) => `<div style="flex:1;min-width:110px;padding:12px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid var(--cor-destaque);"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:clamp(18px,2vw,26px);font-weight:900;color:var(--cor-primaria);white-space:nowrap;">${val}</div><div style="font-size:11px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
+    const bt = (id, txt, on) => `<button type="button" id="${id}" style="padding:8px 14px;border-radius:6px;border:1px solid ${on ? 'var(--cor-primaria)' : '#CFD4D9'};background:${on ? 'var(--cor-primaria)' : '#fff'};color:${on ? 'var(--cor-destaque)' : '#333'};font-weight:bold;cursor:pointer;">${txt}</button>`;
+    const topo = `<div class="card"><h2>Degustações</h2><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${bt('dg-m-mes', 'Mês: ' + esc(mesRot), degModo === 'mes')}${bt('dg-m-acum', 'Acumulado', degModo === 'acum')}
+      <button type="button" id="dg-xlsx" style="padding:9px 14px;border-radius:6px;border:none;background:#1E7B4A;color:#fff;font-weight:bold;cursor:pointer;" ${lista.length ? '' : 'disabled'}>⬇ Baixar Excel</button></div>
+      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;">${degModo === 'mes' ? 'O mês acompanha o seletor lá em cima.' : 'Todas as degustações salvas, de todos os meses.'} Os relatórios são anexados em Admin.</p></div>`;
+    if (!lista.length) { c.innerHTML = topo + `<div class="card"><p>${total ? 'Sem degustações em ' + esc(mesRot) + '. Troque o mês ou veja o acumulado.' : 'Nenhuma degustação salva ainda. Anexe os relatórios da agência em Admin.'}</p></div>`; degLigar(c); return; }
+    const porProd = degAgrega(lista, r => r.produto), porRede = degAgrega(lista, degRedeRot), porLoja = degAgrega(lista, degLojaRot);
+    const dias = degAgrega(lista, r => r.data).sort((a, b) => a.k.localeCompare(b.k)).map(a => Object.assign(a, { k: degDataBR(a.k).slice(0, 5) + ' ' + degDiaSemana(a.k.length === 10 ? a.k : '').slice(0, 3) }));
+    const semVinc = lista.filter(r => !r.loja).length;
+    const funil = [['Abordagens', t.abord, 'var(--cor-primaria)', ''], ['Aceitaram a degustação', t.aceit, '#2E7D5B', degPct(t.aceit, t.abord) + ' das abordagens'], ['Compraram (packs + avulsas)', t.packs + t.avul, 'var(--cor-destaque)', degPct(t.packs + t.avul, t.aceit) + ' dos que aceitaram']];
+    const th = 'padding:6px;text-align:right;', td = 'padding:6px;text-align:right;border-top:1px solid #ECEFF1;', ap = (r, k) => r.aprox && r.aprox[k] ? '~' : '';
+    c.innerHTML = topo + `
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">${cx('Ações', t.acoes, porLoja.length + ' loja(s)')}${cx('Abordagens', degN(t.abord))}${cx('Aceitaram', degN(t.aceit), degPct(t.aceit, t.abord))}${cx('Packs', degN(t.packs))}${cx('Avulsas', degN(t.avul))}${cx('Vendas', degN(t.packs + t.avul), degPct(t.packs + t.avul, t.aceit) + ' dos que aceitaram')}</div>
+      ${semVinc ? `<p style="font-size:12px;color:#B9770E;margin:-4px 0 10px;">${semVinc} ação(ões) sem loja dos Books vinculada. Complete em Admin (editar).</p>` : ''}
+      <div class="card"><h2>Funil da degustação</h2>${funil.map(f => `<div style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px;"><div style="width:190px;flex:none;">${f[0]}</div><div style="flex:1;"><div style="width:${t.abord ? Math.max(2, f[1] / t.abord * 100) : 0}%;height:20px;background:${f[2]};border-radius:3px;"></div></div><div style="width:150px;flex:none;text-align:right;"><strong>${degN(f[1])}</strong> <span style="font-size:11px;color:var(--cor-texto-secundario);">${f[3]}</span></div></div>`).join('')}</div>
+      ${degBarras('Vendas por produto', porProd)}${degBarras('Vendas por rede', porRede)}${dias.length > 1 ? degBarras('Vendas por dia', dias) : ''}
+      ${degTabela('Por produto', 'Produto', porProd, t)}${degTabela('Por rede', 'Rede', porRede, t)}${degTabela('Por loja', 'Loja (Books)', porLoja, t)}
+      <div class="card"><h2>Detalhe por ação</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="${th}text-align:left;">Dia</th><th style="${th}text-align:left;">Rede › loja</th><th style="${th}text-align:left;">Produto</th><th style="${th}text-align:left;">Promotora</th><th style="${th}text-align:left;">Qtd. utilizada</th><th style="${th}">Abord.</th><th style="${th}">Aceitaram</th><th style="${th}">% aceit.</th><th style="${th}">Packs</th><th style="${th}">Avulsas</th><th style="${th}">Vendas</th><th style="${th}text-align:left;">Feedback</th><th style="${th}"></th></tr></thead><tbody>
+      ${lista.map(r => `<tr><td style="${td}text-align:left;white-space:nowrap;">${degDataBR(r.data).slice(0, 5)} ${esc(degDiaSemana(r.data).slice(0, 3))}</td><td style="${td}text-align:left;${r.loja ? '' : 'background:#FFF6D6;'}">${esc(degLojaRot(r))}</td><td style="${td}text-align:left;">${esc(r.produto)}</td><td style="${td}text-align:left;">${esc(r.promotora)}</td><td style="${td}text-align:left;">${esc(r.qtd)}</td><td style="${td}">${ap(r, 'abord')}${degN(r.abord)}</td><td style="${td}">${ap(r, 'aceit')}${degN(r.aceit)}</td><td style="${td}">${degPct(r.aceit, r.abord)}</td><td style="${td}">${degN(r.packs)}</td><td style="${td}">${degN(r.avul)}</td><td style="${td}font-weight:bold;">${degN((r.packs || 0) + (r.avul || 0))}</td><td style="${td}text-align:left;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.feedback)}">${esc(r.feedback)}</td><td style="${td}white-space:nowrap;font-size:11px;"><button type="button" data-dg-edit="${esc(r.id)}" style="border:none;background:none;color:#2980B9;cursor:pointer;">editar</button> <button type="button" data-dg-del="${esc(r.id)}" style="border:none;background:none;color:#C0392B;cursor:pointer;">excluir</button></td></tr>`).join('')}</tbody></table></div>
+      <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">~ = o relatório informa "média de". Vendas = packs + avulsas, cada pack contado como uma venda (o relatório não traz as unidades do pack). Editar leva a ação de volta para a conferência em Admin.</p></div>`;
+    degLigar(c);
+  }
+  function degLigar(c) {
+    const on = (id, fn) => { const e = c.querySelector('#' + id); if (e) e.onclick = fn; };
+    on('dg-m-mes', () => { degModo = 'mes'; renderizarDegustacoes(); });
+    on('dg-m-acum', () => { degModo = 'acum'; renderizarDegustacoes(); });
+    on('dg-xlsx', () => baixarDegustacoesXLSX());
+    c.querySelectorAll('[data-dg-del]').forEach(b => b.onclick = () => { if (!confirm('Excluir esta degustação da base?')) return; Estado.degustacoes = degLista().filter(r => r.id !== b.dataset.dgDel); salvarEstado(); renderizarDegustacoes(); });
+    c.querySelectorAll('[data-dg-edit]').forEach(b => b.onclick = () => {
+      const r = degLista().find(x => x.id === b.dataset.dgEdit); if (!r) return;
+      Estado.degustacoes = degLista().filter(x => x.id !== r.id); r.dataOk = true; degPend.push(r); degMsg = 'Ação enviada para conferência. Ajuste e salve de novo.'; salvarEstado();
+      const a = document.querySelector('nav button[data-tela="admin"]'); if (a) a.click();
+    });
+  }
+
+  function baixarDegustacoesXLSX() {
+    const lista = degFiltrada(); if (!lista.length) return;
+    if (typeof XLSX === 'undefined') { alert('Biblioteca de Excel não carregou. Confira a internet.'); return; }
+    const t = degTot(lista), cab = ['Ações', 'Abordagens', 'Aceitaram', '% aceitação', 'Packs', 'Avulsas', 'Vendas', 'Vendas / aceitaram'];
+    const lin = a => [a.acoes, a.abord, a.aceit, a.abord ? a.aceit / a.abord : null, a.packs, a.avul, a.packs + a.avul, a.aceit ? (a.packs + a.avul) / a.aceit : null];
+    const grupo = (rot, fn) => [[rot].concat(cab)].concat(degAgrega(lista, fn).map(a => [a.k].concat(lin(a)))).concat([['Total'].concat(lin(t))]);
+    const wb = XLSX.utils.book_new();
+    const add = (nome, aoa, larg) => {
+      const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = larg.map(w => ({ wch: w }));
+      const ehPct = x => /%|\/ aceitaram/.test(String(x || ''));
+      Object.keys(ws).forEach(k => {
+        if (k[0] === '!' || typeof ws[k].v !== 'number') return;
+        const pos = XLSX.utils.decode_cell(k);
+        if (ehPct(nome === 'Resumo' ? (aoa[pos.r] || [])[0] : aoa[0][pos.c])) ws[k].z = '0.0%';
+      });
+      XLSX.utils.book_append_sheet(wb, ws, nome);
+    };
+    const per = degModo === 'mes' ? rotuloMes(Estado.config.mesAtivo) : 'Acumulado';
+    add('Resumo', [['Degustações Tarks | ' + per], [], ['Indicador', 'Valor']].concat([['Ações', t.acoes], ['Lojas (Books)', degAgrega(lista, degLojaRot).length], ['Abordagens', t.abord], ['Aceitaram a degustação', t.aceit], ['% de aceitação', t.abord ? t.aceit / t.abord : null], ['Vendas em packs', t.packs], ['Vendas avulsas', t.avul], ['Vendas (packs + avulsas)', t.packs + t.avul], ['Vendas / aceitaram', t.aceit ? (t.packs + t.avul) / t.aceit : null], [], ['Obs.', 'Cada pack conta como uma venda. Números marcados como "média de" no relatório da agência entram como informados.']]), [30, 22]);
+    add('Por produto', grupo('Produto', r => r.produto), [26, 8, 13, 11, 12, 8, 9, 8, 18]);
+    add('Por rede', grupo('Rede', degRedeRot), [28, 8, 13, 11, 12, 8, 9, 8, 18]);
+    add('Por loja', grupo('Loja (Books)', degLojaRot), [44, 8, 13, 11, 12, 8, 9, 8, 18]);
+    add('Por dia', grupo('Dia', r => degDataBR(r.data).slice(0, 5) + ' ' + degDiaSemana(r.data)), [18, 8, 13, 11, 12, 8, 9, 8, 18]);
+    const det = [['Data', 'Dia', 'Rede (Books)', 'Loja (Books)', 'Loja no relatório', 'Produto', 'Promotora', 'Quantidade utilizada', 'Abordagens', 'Aceitaram', '% aceitação', 'Packs', 'Avulsas', 'Vendas', 'Valor aproximado ("média de")', 'Feedback dos clientes']];
+    lista.forEach(r => det.push([degDataBR(r.data), degDiaSemana(r.data), r.redeNome || '', r.loja || '', r.lojaRel || '', r.produto, r.promotora, r.qtd, r.abord, r.aceit, r.abord ? r.aceit / r.abord : null, r.packs, r.avul, (r.packs || 0) + (r.avul || 0), (r.aprox && (r.aprox.abord || r.aprox.aceit)) ? 'Sim' : 'Não', r.feedback]));
+    add('Detalhe', det, [12, 10, 18, 34, 22, 16, 14, 28, 12, 11, 12, 8, 9, 8, 14, 90]);
+    XLSX.writeFile(wb, degNomeArquivo(lista, 'xlsx'));
+  }
+</script>
+<!-- ═══ FIM SUBBLOCO 13 ═══ -->
+<!-- ═══ SUBBLOCO 14 — RANKING DE PROMOTORES ═══ -->
+<script>
+  // ═══════════════════════════════════════════════════
+  // RANKING DE PROMOTORES — baseado nos Books: visitas (promotor + loja + dia) como critério principal.
+  // ═══════════════════════════════════════════════════
+  const promPN = v => v == null ? '-' : Number(v).toLocaleString('pt-BR');
+  const promP1 = v => v == null || !isFinite(v) ? '-' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  let promAberto = '';
+
+  function promDados() {
+    const mes = Estado.config.mesAtivo, m = Estado.meses[mes];
+    const M = (Modo === 'publicado' && m && m.livros) ? m.livros : metricasBooks(mes);
+    const L = (M.porProm || []).slice().sort((a, b) => b.exec - a.exec || b.fotos - a.fotos || a.nome.localeCompare(b.nome, 'pt-BR'));
+    let pos = 0, ant = null;
+    L.forEach((p, i) => { if (p.exec !== ant) { pos = i + 1; ant = p.exec; } p.pos = pos; p.ocTotal = (p.ocRep || 0) + (p.ocDup || 0) + (p.ocOutras || 0); p.fv = p.exec ? p.fotos / p.exec : 0; });
+    return { M, L, mes };
+  }
+
+  function renderizarPromotores() {
+    const mm = Estado.meses[Estado.config.mesAtivo];
+    if (Modo === 'publicado' && !(mm && mm.livros)) return renderizarPromotoresAntigo();
+    const container = document.getElementById('tela-promotores');
+    if (!mm || (!(mm.fotos || []).length && !mm.livros)) {
+      container.innerHTML = `<div class="card"><h2>Promotores</h2><p>Nenhum Book importado para ${esc(rotuloMes(Estado.config.mesAtivo))}.</p><p style="margin-top:12px;font-size:13px;">Vá em <strong>Admin</strong> e importe os Books (PDF).</p></div>`;
+      return;
+    }
+    const { M, L } = promDados(), maxDia = Estado.config.maxVisitasDia || 7;
+    const totV = L.reduce((a, p) => a + p.exec, 0), top10 = L.slice(0, 10), top10V = top10.reduce((a, p) => a + p.exec, 0), maior = Math.max(1, ...L.map(p => p.exec));
+    const cx = (rot, val, sub) => `<div style="flex:1;min-width:120px;padding:12px 8px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid var(--cor-destaque);"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:clamp(18px,2vw,26px);font-weight:900;color:var(--cor-primaria);white-space:nowrap;">${val}</div><div style="font-size:11px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
+    const th = 'padding:6px 5px;text-align:right;', td = 'padding:8px 5px;text-align:right;';
+    const temDet = !!M.execs;
+    const detalhe = p => {
+      if (!temDet) return '';
+      const dias = {}; M.execs.filter(x => x.pk === p.pk).forEach(x => (dias[x.d] = dias[x.d] || []).push(x));
+      return Object.keys(dias).sort().map(d => `<div style="margin-top:8px;"><div style="font-weight:bold;font-size:12px;">${esc(formatarDataBR(d))} <span style="color:var(--cor-texto-secundario);font-weight:normal;">· ${dias[d].length} ${dias[d].length === 1 ? 'visita' : 'visitas'}</span></div>${dias[d].sort((a, b) => String(a.hora).localeCompare(String(b.hora))).map(x => `<div style="font-size:12px;padding:3px 0 3px 8px;border-left:3px solid #27AE60;margin-top:3px;">${esc(x.hora || '')} · <strong>${esc(x.rede)}</strong> › ${esc(x.loja)} · ${x.n} ${x.n === 1 ? 'foto' : 'fotos'}</div>`).join('')}</div>`).join('');
+    };
+    const linhas = L.map(p => {
+      const aberto = promAberto === p.pk, medalha = p.pos <= 3 ? `<span style="display:inline-block;min-width:20px;padding:1px 5px;border-radius:10px;background:${['#D4AF37', '#B8BEC4', '#C98B5A'][p.pos - 1]};color:#fff;font-weight:bold;text-align:center;">${p.pos}</span>` : p.pos;
+      const oc = p.ocTotal ? `<span style="color:#C0392B;font-weight:bold;" title="${p.ocRep || 0} foto(s) repetida(s), ${p.ocDup || 0} dois promotores na loja, ${p.ocOutras || 0} outras">${p.ocTotal}</span>` : '<span style="color:#AAA;">–</span>';
+      return `<tr data-pk="${esc(p.pk)}" class="prom-linha" style="border-top:1px solid #EEE;${temDet ? 'cursor:pointer;' : ''}"><td style="${td}text-align:left;color:var(--cor-texto-secundario);">${medalha}</td>
+        <td style="${td}text-align:left;font-weight:bold;min-width:140px;">${esc(p.nome)}${temDet ? ' <span style="color:#AAA;font-weight:normal;">▾</span>' : ''}<div style="height:5px;margin-top:4px;background:#E3E6EA;border-radius:3px;overflow:hidden;"><div style="width:${p.exec / maior * 100}%;height:100%;background:var(--cor-primaria);"></div></div></td>
+        <td style="${td}font-family:var(--fonte-titulo);font-weight:900;font-size:16px;color:var(--cor-primaria);">${p.exec}</td><td style="${td}">${promP1(totV ? p.exec / totV * 100 : null)}%</td><td style="${td}">${promPN(p.nLojas)}</td><td style="${td}">${promPN(p.nRedes)}</td><td style="${td}">${promPN(p.nDias)}</td><td style="${td}">${promP1(p.fv)}</td>
+        <td style="${td}${p.maxDia > maxDia ? 'color:#C0392B;font-weight:bold;' : ''}" ${p.maxDia > maxDia ? `title="acima de ${maxDia} visitas no dia"` : ''}>${p.maxDia}${p.maxDia > maxDia ? ' ⚠' : ''}</td>
+        <td style="${td}">${p.valor != null ? moedaBR(p.valor) : '-'}${p.visSemPreco ? '*' : ''}</td><td style="${td}">${oc}</td></tr>
+        <tr class="prom-det" data-det="${esc(p.pk)}" style="display:${aberto ? 'table-row' : 'none'};"><td colspan="11" style="padding:4px 10px 12px;background:#F8F9FA;text-align:left;">${aberto ? detalhe(p) : ''}</td></tr>`;
+    }).join('');
+    const barras = top10.map(p => `<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12.5px;"><div style="width:22px;flex:none;color:var(--cor-texto-secundario);text-align:right;">${p.pos}</div><div style="width:180px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(p.nome)}">${esc(p.nome)}</div><div style="flex:1;"><div style="width:${p.exec / maior * 100}%;height:18px;background:${p.pos === 1 ? 'var(--cor-destaque)' : 'var(--cor-primaria)'};border-radius:3px;"></div></div><div style="width:40px;flex:none;text-align:right;font-weight:bold;">${p.exec}</div></div>`).join('');
+    const cobertura = M.primeiro && M.ultimo ? `Books recebidos de ${esc(formatarDataBR(M.primeiro))} a ${esc(formatarDataBR(M.ultimo))}.` : '';
+    container.innerHTML = `
+      <div class="card"><h2>Ranking de promotores</h2>
+        <p style="font-size:12px;line-height:1.5;margin-bottom:10px;">Critério principal: <strong>visitas</strong> (uma visita = um promotor, numa loja, num dia, com 1 ou várias fotos). Desempate pelo número de fotos. ${cobertura} O ranking só enxerga o que chegou nos Books.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">${cx('Promotores', promPN(L.length))}${cx('Visitas', promPN(totV))}${cx('Média por promotor', promP1(L.length ? totV / L.length : null), 'visitas')}${cx('Top 10', promP1(totV ? top10V / totV * 100 : null) + '%', 'das visitas')}${L[0] ? cx('1º colocado', promPN(L[0].exec), esc(L[0].nome)) : ''}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" id="prom-pdf" style="padding:10px 14px;border-radius:6px;border:none;background:var(--cor-primaria);color:var(--cor-destaque);font-weight:bold;cursor:pointer;">📄 Baixar PDF</button><button type="button" id="prom-xlsx" style="padding:10px 14px;border-radius:6px;border:none;background:#1E7B4A;color:#fff;font-weight:bold;cursor:pointer;">⬇ Baixar Excel</button></div></div>
+      <div class="card"><h2>Top 10 por visitas</h2>${barras || '<p>Sem visitas.</p>'}</div>
+      <div class="card"><h2>Todos os promotores</h2>${L.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="${th}text-align:left;">#</th><th style="${th}text-align:left;">Promotor</th><th style="${th}">Visitas</th><th style="${th}">% do total</th><th style="${th}">Lojas</th><th style="${th}">Redes</th><th style="${th}">Dias</th><th style="${th}">Fotos / visita</th><th style="${th}">Máx. / dia</th><th style="${th}">Valor (R$)</th><th style="${th}">Ocorrências</th></tr></thead><tbody>${linhas}
+        <tr style="border-top:2px solid #CCC;font-weight:bold;"><td></td><td style="${td}text-align:left;">TOTAL</td><td style="${td}">${totV}</td><td style="${td}">100%</td><td style="${td}">${promPN(M.nLoja)}</td><td style="${td}">${promPN(M.nRede)}</td><td style="${td}">${promPN(M.nDias)}</td><td style="${td}">${promP1(M.fotosPorExec)}</td><td style="${td}"></td><td style="${td}">${M.valorTotal != null ? moedaBR(M.valorTotal) : '-'}</td><td style="${td}">${promPN(M.nOcorr)}</td></tr></tbody></table></div>
+        <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">Valor = visitas × preço da visita da rede no Fechamento da Pacto (estimativa do que as fotos sustentam; * inclui visitas de rede sem preço, que não entram na soma). Ocorrências = fotos repetidas, dois promotores na mesma loja/dia e demais itens do Book de contestação. ⚠ = mais de ${maxDia} visitas num dia.${temDet ? ' Toque numa linha para ver as visitas dia a dia.' : ''}</p>` : '<p>Sem visitas nos Books deste período.</p>'}</div>`;
+    if (temDet) container.querySelectorAll('tr.prom-linha').forEach(tr => tr.onclick = () => { promAberto = promAberto === tr.dataset.pk ? '' : tr.dataset.pk; renderizarPromotores(); });
+    const b1 = container.querySelector('#prom-pdf'), b2 = container.querySelector('#prom-xlsx');
+    if (b1) b1.onclick = baixarRankingPDF; if (b2) b2.onclick = baixarRankingXLSX;
+  }
+
+  function promLinhaExport(p, totV) { return [p.pos, p.nome, p.exec, totV ? p.exec / totV : null, p.nLojas, p.nRedes, p.nDias, p.fv, p.maxDia, p.valor, p.ocTotal]; }
+  const PROM_CAB = ['#', 'Promotor', 'Visitas', '% do total', 'Lojas', 'Redes', 'Dias', 'Fotos / visita', 'Máx. / dia', 'Valor (R$)', 'Ocorrências'];
+
+  function baixarRankingXLSX() {
+    if (typeof XLSX === 'undefined') { alert('Biblioteca de Excel não carregou. Confira a internet.'); return; }
+    const { M, L, mes } = promDados(); if (!L.length) return;
+    const totV = L.reduce((a, p) => a + p.exec, 0), aoa = [PROM_CAB].concat(L.map(p => promLinhaExport(p, totV)));
+    aoa.push(['', 'TOTAL', totV, 1, M.nLoja, M.nRede, M.nDias, M.fotosPorExec, null, M.valorTotal, M.nOcorr]);
+    const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [5, 34, 9, 11, 7, 7, 7, 13, 11, 14, 12].map(w => ({ wch: w }));
+    for (let r = 1; r < aoa.length; r++) { const c = ws[XLSX.utils.encode_cell({ r, c: 3 })]; if (c && typeof c.v === 'number') c.z = '0.0%'; const v = ws[XLSX.utils.encode_cell({ r, c: 9 })]; if (v && typeof v.v === 'number') v.z = '"R$" #,##0.00'; const f = ws[XLSX.utils.encode_cell({ r, c: 7 })]; if (f && typeof f.v === 'number') f.z = '0.0'; }
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Ranking');
+    XLSX.writeFile(wb, nomeArquivoTrade(mes, 'Ranking de Promotores', 'xlsx'));
+  }
+
+  function baixarRankingPDF() {
+    if (!(window.jspdf && window.jspdf.jsPDF)) { alert('A biblioteca de PDF não carregou. Verifique a conexão e tente de novo.'); return; }
+    const { M, L, mes } = promDados(); if (!L.length) return;
+    const totV = L.reduce((a, p) => a + p.exec, 0), doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const PW = 210, PH = 297, MG = 10, RH = 6.2, cols = [[7, 'l'], [52, 'l'], [14, 'r'], [13, 'r'], [11, 'r'], [11, 'r'], [11, 'r'], [18, 'r'], [24, 'r'], [19, 'r']];
+    const cab = ['#', 'Promotor', 'Visitas', '%', 'Lojas', 'Redes', 'Dias', 'Fotos/vis.', 'Valor (R$)', 'Ocorr.'];
+    const cortar = (t, w) => { let x = String(t); while (x.length > 3 && doc.getTextWidth(x) > w) x = x.slice(0, -1); return x === String(t) ? x : x.slice(0, -1) + '…'; };
+    doc.setFillColor(10, 61, 46); doc.rect(0, 0, PW, 26, 'F'); doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.text('RANKING DE PROMOTORES', MG, 12);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.text('CockPit Tarks | Tubaína x Pacto | ' + rotuloMes(mes), MG, 19);
+    doc.setTextColor(60, 60, 60); doc.setFontSize(9);
+    const nota = doc.splitTextToSize('Critério principal: visitas (promotor + loja + dia). Desempate: fotos. ' + (M.primeiro && M.ultimo ? 'Books recebidos de ' + formatarDataBR(M.primeiro) + ' a ' + formatarDataBR(M.ultimo) + '. ' : '') + 'Valor = visitas × preço da visita no Fechamento (estimativa).', PW - 2 * MG);
+    doc.text(nota, MG, 33); let y = 33 + nota.length * 4.2 + 3;
+    const cabecalho = () => { doc.setFillColor(240, 242, 241); doc.rect(MG, y, PW - 2 * MG, 7, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(60, 60, 60); let x = MG; cols.forEach((c, i) => { doc.text(cab[i], c[1] === 'r' ? x + c[0] - 1.5 : x + 1.5, y + 4.7, { align: c[1] === 'r' ? 'right' : 'left' }); x += c[0]; }); y += 7; };
+    cabecalho();
+    const linha = (v, forte) => { doc.setFont('helvetica', forte ? 'bold' : 'normal'); doc.setFontSize(8.5); doc.setTextColor(30, 30, 30); let x = MG; cols.forEach((c, i) => { const t = i === 1 ? cortar(v[i], c[0] - 3) : String(v[i]); doc.text(t, c[1] === 'r' ? x + c[0] - 1.5 : x + 1.5, y + 4.4, { align: c[1] === 'r' ? 'right' : 'left' }); x += c[0]; }); doc.setDrawColor(230, 230, 230); doc.line(MG, y + RH, PW - MG, y + RH); y += RH; };
+    L.forEach(p => { if (y + RH > PH - 14) { doc.addPage(); y = 14; cabecalho(); } linha([p.pos, p.nome, p.exec, promP1(totV ? p.exec / totV * 100 : null) + '%', promPN(p.nLojas), promPN(p.nRedes), promPN(p.nDias), promP1(p.fv), p.valor != null ? moedaBR(p.valor) + (p.visSemPreco ? '*' : '') : '-', p.ocTotal || '-']); });
+    if (y + RH > PH - 14) { doc.addPage(); y = 14; }
+    linha(['', 'TOTAL', totV, '100%', promPN(M.nLoja), promPN(M.nRede), promPN(M.nDias), promP1(M.fotosPorExec), M.valorTotal != null ? moedaBR(M.valorTotal) : '-', promPN(M.nOcorr)], true);
+    const n = doc.getNumberOfPages(); for (let p = 1; p <= n; p++) { doc.setPage(p); doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(110); doc.text('CockPit Tarks | Grupo Tarks', MG, PH - 6); doc.text('Página ' + p + ' de ' + n, PW - MG, PH - 6, { align: 'right' }); }
+    doc.save(nomeArquivoTrade(mes, 'Ranking de Promotores', 'pdf'));
+  }
+</script>
+<!-- ═══ FIM SUBBLOCO 14 ═══ -->
 <!-- ═══ SUBBLOCO 09 — PUBLICAÇÃO DOS RESULTADOS + MODO LEITURA ═══ -->
 <script>
   // Os resultados publicados ficam em resultados/indice.json e resultados/AAAA-MM.json, na raiz do repositório
   // (ao lado do index.html). Só os RESULTADOS vão para lá: nada de fotos, hashes ou planilhas originais.
   const Publicado = { indice: null, guardaLocal: null };
   const CAMINHO_PUBLICADO = 'resultados/';
-  const TELAS_DO_OPERADOR = ['admin', 'revisao', 'config', 'contestacao', 'sistematica'];
+  const TELAS_DO_OPERADOR = ['admin', 'revisao', 'config', 'contestacao', 'sistematica', 'degustacoes'];
 
   async function buscarJSONPublicado(caminho) {
     try {
@@ -4930,7 +5318,7 @@
       ativoBtn.click();
     }));
     const bAt = document.querySelector('nav button[data-tela].ativo');
-    if (!bAt || !['admin', 'config', 'revisao', 'contestacao', 'sistematica'].includes(bAt.dataset.tela)) atualizarBarraPeriodo();
+    if (!bAt || !['admin', 'config', 'revisao', 'contestacao', 'sistematica', 'degustacoes'].includes(bAt.dataset.tela)) atualizarBarraPeriodo();
   }
 
 
@@ -4938,7 +5326,7 @@
     const z = document.getElementById('zona-mes'), d = document.getElementById('dica-per');
     d.addEventListener('click', (e) => { e.stopPropagation(); z.classList.toggle('aberta'); });
     document.addEventListener('click', (e) => { if (!z.contains(e.target)) z.classList.remove('aberta'); });
-    z.addEventListener('mouseenter', () => { const b = document.querySelector('nav button[data-tela].ativo'); if (b && !['admin', 'config', 'revisao', 'contestacao', 'sistematica'].includes(b.dataset.tela)) atualizarBarraPeriodo(); });
+    z.addEventListener('mouseenter', () => { const b = document.querySelector('nav button[data-tela].ativo'); if (b && !['admin', 'config', 'revisao', 'contestacao', 'sistematica', 'degustacoes'].includes(b.dataset.tela)) atualizarBarraPeriodo(); });
   })();
 
   // ── CONFERÊNCIA DA IMPORTAÇÃO: garante que todas as fotos do Book tiveram a legenda lida ──
