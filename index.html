@@ -4249,29 +4249,24 @@
     const [ano, mesN] = mes.split('-').map(Number), nDias = new Date(Date.UTC(ano, mesN, 0)).getUTCDate();
     const dias = Array.from({ length: nDias }, (_, i) => sistIso(ano, mesN, i + 1)), fer = sistFeriados(ano);
     if (typeof degReconciliar === 'function') degReconciliar();
-    // degustações do mês (Estado.degustacoes): rede → loja → dia
-    const dg = new Map(), semLoja = new Map(), nn = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    // degustações do mês (Estado.degustacoes), por rede e dia
+    const dg = new Map();
     (Array.isArray(Estado.degustacoes) ? Estado.degustacoes : []).forEach(r => {
       if (!r.rede || !r.data || r.data.slice(0, 7) !== mes) return;
-      if (!r.loja) { semLoja.set(r.rede, (semLoja.get(r.rede) || 0) + 1); return; }
-      let g = dg.get(r.rede); if (!g) dg.set(r.rede, g = { nome: r.redeNome || r.rede, lojas: new Map() });
-      const k = nn(r.loja); let l = g.lojas.get(k); if (!l) g.lojas.set(k, l = { nome: r.loja, dias: new Map() });
-      l.dias.set(r.data, (l.dias.get(r.data) || 0) + 1);
+      let g = dg.get(r.rede); if (!g) dg.set(r.rede, g = { nome: r.redeNome || r.rede, dias: new Map() });
+      g.dias.set(r.data, (g.dias.get(r.data) || 0) + 1);
     });
-    // entram a rede e a loja com pelo menos uma visita comprovada ou uma degustação no mês escolhido
     const mapa = new Map();
     D.redes.forEach(r => {
-      const g = dg.get(r.rk), usados = new Set();
       const lojas = Array.from(r.lojas.values()).map(l => {
-        const vis = dias.filter(d => l.dias.has(d)), gl = g && g.lojas.get(nn(l.nome)); if (gl) usados.add(nn(l.nome));
-        return { l, vis, deg: gl ? gl.dias : new Map(), fotos: vis.reduce((t, d) => t + l.dias.get(d).n, 0), exec: vis.reduce((t, d) => t + l.dias.get(d).proms.size, 0) };
-      });
-      if (g) g.lojas.forEach((gl, k) => { if (!usados.has(k)) lojas.push({ l: { key: 'deg|' + k, nome: gl.nome, rk: r.rk, dias: new Map() }, vis: [], deg: gl.dias, fotos: 0, exec: 0 }); });
-      mapa.set(r.rk, { r, lojas: lojas.filter(x => x.vis.length || x.deg.size) });
+        const vis = dias.filter(d => l.dias.has(d));
+        return { l, vis, fotos: vis.reduce((t, d) => t + l.dias.get(d).n, 0), exec: vis.reduce((t, d) => t + l.dias.get(d).proms.size, 0) };
+      }).filter(x => x.vis.length), g = dg.get(r.rk);
+      mapa.set(r.rk, { r, lojas, degDias: g ? g.dias : new Map() });
     });
-    dg.forEach((g, rk) => { if (!mapa.has(rk)) mapa.set(rk, { r: { rk, nome: g.nome, lojas: new Map() }, lojas: Array.from(g.lojas.entries()).map(([k, gl]) => ({ l: { key: 'deg|' + k, nome: gl.nome, rk, dias: new Map() }, vis: [], deg: gl.dias, fotos: 0, exec: 0 })) }); });
-    const redes = Array.from(mapa.values()).filter(x => x.lojas.length).map(x => Object.assign(x, { semLoja: semLoja.get(x.r.rk) || 0, nVis: x.lojas.filter(y => y.vis.length).length })).sort((a, b) => a.r.nome.localeCompare(b.r.nome));
-    return { dias, fer, redes, semLojaTotal: Array.from(semLoja.values()).reduce((t, v) => t + v, 0) };
+    dg.forEach((g, rk) => { if (!mapa.has(rk)) mapa.set(rk, { r: { rk, nome: g.nome, lojas: new Map() }, lojas: [], degDias: g.dias }); });
+    const redes = Array.from(mapa.values()).filter(x => x.lojas.length || x.degDias.size).map(x => Object.assign(x, { nVis: x.lojas.length })).sort((a, b) => a.r.nome.localeCompare(b.r.nome));
+    return { dias, fer, redes };
   }
 
   function renderizarSistematica() {
@@ -4299,26 +4294,24 @@
     const sel = redes.find(x => x.r.rk === sistRede);
     const lojas = sel ? sel.lojas.slice().sort((a, b) => b.vis.length - a.vis.length || a.l.nome.localeCompare(b.l.nome)) : [];
     let totExec = 0, totFotos = 0; const proms = new Set();
-    const linhas = lojas.map(({ l, vis, deg: dg, fotos, exec }) => {
+    const linhas = lojas.map(({ l, vis, fotos, exec }) => {
       totExec += exec; totFotos += fotos;
       const cel = dias.map(d => {
-        const real = l.dias.get(d), feriado = fer.get(d), dom = sistDow(d) === 6, deg = dg.has(d);
+        const real = l.dias.get(d), feriado = fer.get(d), dom = sistDow(d) === 6;
         let cls = '', txt = '', tit = [];
-        if (deg) { tit.push('Degustação neste dia (' + dg.get(d) + ' ação/ões)'); }
-        if (real && deg) { real.proms.forEach(p => proms.add(p)); cls = 'sv-ambos'; txt = '✓D'; tit.push(esc(rotuloData(d)) + ' · ' + real.n + ' foto(s) · ' + Array.from(real.proms).join(', ')); }
-        else if (deg) { cls = 'sv-deg'; txt = 'D'; }
-        else if (real) { real.proms.forEach(p => proms.add(p)); cls = feriado ? 'sv-fora' : 'sv-ok'; txt = '✓'; tit.push(esc(rotuloData(d)) + (feriado ? ' · feriado: ' + feriado : '')); tit.push(real.n + ' foto(s) · ' + Array.from(real.proms).join(', ')); }
+        if (real) { real.proms.forEach(p => proms.add(p)); cls = feriado ? 'sv-fora' : 'sv-ok'; txt = '✓'; tit.push(esc(rotuloData(d)) + (feriado ? ' · feriado: ' + feriado : '')); tit.push(real.n + ' foto(s) · ' + Array.from(real.proms).join(', ')); }
         else if (feriado) { cls = 'sv-fer'; txt = 'F'; tit.push(feriado); }
         else if (dom) cls = 'sv-dom';
         return `<td class="sv ${cls}" title="${esc(tit.join(' | '))}">${txt}</td>`;
       }).join('');
-      return `<tr><td class="sv-n"><b>${esc(l.nome)}</b></td>${cel}<td class="sv-t">${vis.length}</td><td class="sv-t" style="color:#2471A3;">${dg.size || ''}</td></tr>`;
+      return `<tr><td class="sv-n"><b>${esc(l.nome)}</b></td>${cel}<td class="sv-t">${vis.length}</td></tr>`;
     }).join('');
+    const degLinha = sel && sel.degDias.size ? `<tr><td class="sv-n" style="color:#1F618D;"><b>Degustação (rede toda)</b></td>${dias.map(d => `<td class="sv ${sel.degDias.has(d) ? 'sv-deg' : (sistDow(d) === 6 ? 'sv-dom' : '')}" title="${sel.degDias.has(d) ? esc('Degustação em ' + rotuloData(d) + ' (' + sel.degDias.get(d) + ' ação/ões)') : ''}">${sel.degDias.has(d) ? 'D' : ''}</td>`).join('')}<td class="sv-t" style="color:#2471A3;">${sel.degDias.size}</td></tr>` : '';
     const cab = dias.map(d => { const w = sistDow(d); return `<th class="${w === 6 ? 'sv-dom' : ''}">${Number(d.slice(8))}<br><small>${SIST_DOW[w]}</small></th>`; }).join('');
     const caixa = (rot, val, cor, sub) => `<div style="flex:1;min-width:110px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:${cor};">${val}</div><div style="font-size:10px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
     container.innerHTML = `<style>
         .sv{border:1px solid #E4E6E5;height:28px;min-width:26px;text-align:center;font-size:11px;padding:0}
-        .sv-deg{background:#2980B9;color:#fff;font-weight:bold}.sv-ambos{background:linear-gradient(135deg,#27AE60 50%,#2980B9 50%);color:#fff;font-weight:bold;font-size:10px}.sv-dom{background:#EDEDED}.sv-ok{background:#27AE60;color:#fff;font-weight:bold}
+        .sv-deg{background:#2980B9;color:#fff;font-weight:bold}.sv-dom{background:#EDEDED}.sv-ok{background:#27AE60;color:#fff;font-weight:bold}
         .sv-fora{background:#fff;color:#D35400;font-weight:bold;box-shadow:inset 0 0 0 2px #E67E22}.sv-fer{background:#D9DEE2;color:#555;font-weight:bold}
         #tela-sistematica table{border-collapse:collapse;font-size:11px}#tela-sistematica th{background:#F0F2F1;padding:3px 0;font-weight:normal;color:#555;min-width:26px;text-align:center}
         #tela-sistematica small{font-size:9px;color:#777}.sv-n{padding:3px 8px;text-align:left;white-space:nowrap;min-width:200px;font-size:12px;border:1px solid #E4E6E5;background:#fff;position:sticky;left:0}
@@ -4339,9 +4332,8 @@
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
           ${caixa('Lojas visitadas', nfD(lojas.filter(z => z.vis.length).length), '#0A3D2E', 'na rede, no mês')}${caixa('Visitas', nfD(totExec), '#27AE60', 'promotor × loja × dia')}${caixa('% do total', pct(totExec), '#E67E22', nfD(totExec) + ' de ' + nfD(execMes) + ' do mês')}${caixa('Valor (R$)', valorRede(sel) != null ? moedaK(valorRede(sel)) : 'sem preço', '#8E44AD', valorRede(sel) != null ? pctValor(valorRede(sel)) + ' do valor · ' + moedaBR(precos[sel.r.rk].preco) + '/visita' : 'rede fora do Fechamento')}${caixa('Promotores', nfD(proms.size), '#7F8C8D', 'nessa rede')}${caixa('Fotos', nfD(totFotos), '#1E8449', 'nas visitas')}
         </div>
-        <div class="sv-leg"><span><i class="sv-q" style="background:#27AE60"></i>✓ dia com foto da loja</span><span><i class="sv-q" style="background:#2980B9"></i>D degustação</span><span><i class="sv-q" style="background:linear-gradient(135deg,#27AE60 50%,#2980B9 50%)"></i>✓D visita e degustação</span><span><i class="sv-q" style="box-shadow:inset 0 0 0 2px #E67E22;background:#fff"></i>✓ com foto em feriado nacional</span><span><i class="sv-q" style="background:#D9DEE2"></i>F feriado nacional</span><span><i class="sv-q" style="background:#EDEDED"></i>domingo</span></div>
-        <div style="overflow-x:auto;"><table><thead><tr><th style="text-align:left;padding-left:8px;position:sticky;left:0;background:#F0F2F1;">Loja</th>${cab}<th>Dias</th><th style="color:#2471A3;">Deg.</th></tr></thead><tbody>${linhas}</tbody></table></div>
-        ${sel && sel.semLoja ? `<p style="font-size:12px;color:#B9770E;margin:8px 0 0;">${sel.semLoja} degustação(ões) desta rede sem loja vinculada: não aparecem no calendário. Complete em Degustações.</p>` : ''}
+        <div class="sv-leg"><span><i class="sv-q" style="background:#27AE60"></i>✓ dia com foto da loja</span><span><i class="sv-q" style="background:#2980B9"></i>D dia de degustação na rede</span><span><i class="sv-q" style="box-shadow:inset 0 0 0 2px #E67E22;background:#fff"></i>✓ com foto em feriado nacional</span><span><i class="sv-q" style="background:#D9DEE2"></i>F feriado nacional</span><span><i class="sv-q" style="background:#EDEDED"></i>domingo</span></div>
+        <div style="overflow-x:auto;"><table><thead><tr><th style="text-align:left;padding-left:8px;position:sticky;left:0;background:#F0F2F1;">Loja</th>${cab}<th>Dias</th></tr></thead><tbody>${degLinha}${linhas}</tbody></table></div>
         <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:10px;">Valor = visitas comprovadas por foto × preço da visita da rede no Fechamento da Pacto; é o que as fotos sustentam, não o valor cobrado. Passe o mouse sobre um dia verde para ver quantas fotos e qual promotor. Dia sem verde significa que não há foto nos Books importados, o que também pode ser um Book que ainda não chegou.</p>
       </div>`;
     document.getElementById('sv-rede').addEventListener('change', e => { sistRede = e.target.value; renderizarSistematica(); });
@@ -4384,15 +4376,28 @@
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(90, 90, 90);
       doc.text(x.nVis + ' lojas visitadas · ' + ex + ' visitas (' + (execMes ? (ex / execMes * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '0') + '% das ' + execMes + ' do mês) · ' + fotos + ' fotos' + (precos[x.r.rk] ? ' · ' + moedaBR(ex * precos[x.r.rk].preco) + ' (' + pctValor(ex * precos[x.r.rk].preco) + ' do valor)' : ''), MG, y + 9);
       y += 12; cabecalhoTabela();
-      x.lojas.slice().sort((a, b) => b.vis.length - a.vis.length || a.l.nome.localeCompare(b.l.nome)).forEach(({ l, vis: vs, deg: dgm }) => {
+      if (x.degDias.size) {
+        if (y + RH > FUNDO) { doc.addPage(); y = TOPO; cabecalhoTabela(); }
+        doc.setDrawColor(228, 230, 229); doc.setLineWidth(0.1);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(31, 97, 141); doc.text('Degustação (rede toda)', MG + 1.5, y + 3.6);
+        dias.forEach((d, i) => {
+          const cx = MG + WL + i * WD;
+          if (x.degDias.has(d)) { doc.setFillColor(41, 128, 185); doc.rect(cx, y, WD, RH, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(255, 255, 255); doc.text('D', cx + WD / 2, y + 3.4, { align: 'center' }); }
+          else if (sistDow(d) === 6) { doc.setFillColor(237, 237, 237); doc.rect(cx, y, WD, RH, 'F'); }
+          doc.rect(cx, y, WD, RH, 'S');
+        });
+        doc.setFillColor(248, 249, 250); doc.rect(MG + WL + dias.length * WD, y, WT, RH, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(31, 97, 141); doc.text(String(x.degDias.size), MG + WL + dias.length * WD + WT / 2, y + 3.6, { align: 'center' });
+        doc.rect(MG, y, WL, RH, 'S'); doc.rect(MG + WL + dias.length * WD, y, WT, RH, 'S');
+        y += RH;
+      }
+      x.lojas.slice().sort((a, b) => b.vis.length - a.vis.length || a.l.nome.localeCompare(b.l.nome)).forEach(({ l, vis: vs }) => {
         if (y + RH > FUNDO) { doc.addPage(); y = TOPO; cabecalhoTabela(); }
         doc.setDrawColor(228, 230, 229); doc.setLineWidth(0.1);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(30, 30, 30); doc.text(cortar(l.nome, WL - 3), MG + 1.5, y + 3.6);
         dias.forEach((d, i) => {
-          const cx = MG + WL + i * WD, real = l.dias.has(d), feriado = fer.get(d), dom = sistDow(d) === 6, deg = dgm.has(d);
-          if (deg && !real) { doc.setFillColor(41, 128, 185); doc.rect(cx, y, WD, RH, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(255, 255, 255); doc.text('D', cx + WD / 2, y + 3.4, { align: 'center' }); }
-          else if (real && deg) { doc.setFillColor(39, 174, 96); doc.rect(cx, y, WD, RH, 'F'); doc.setFillColor(41, 128, 185); doc.triangle(cx + WD, y, cx + WD, y + RH, cx, y + RH, 'F'); }
-          else if (real) {
+          const cx = MG + WL + i * WD, real = l.dias.has(d), feriado = fer.get(d), dom = sistDow(d) === 6;
+          if (real) {
             if (feriado) { doc.setFillColor(255, 255, 255); doc.rect(cx, y, WD, RH, 'F'); doc.setDrawColor(230, 126, 34); doc.setLineWidth(0.5); doc.rect(cx + 0.3, y + 0.3, WD - 0.6, RH - 0.6, 'S'); doc.setDrawColor(228, 230, 229); doc.setLineWidth(0.1); }
             else { doc.setFillColor(39, 174, 96); doc.rect(cx, y, WD, RH, 'F'); }
           } else if (feriado) { doc.setFillColor(217, 222, 226); doc.rect(cx, y, WD, RH, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(90, 90, 90); doc.text('F', cx + WD / 2, y + 3.4, { align: 'center' }); }
@@ -4408,7 +4413,7 @@
       if (y + 8 > FUNDO) { doc.addPage(); y = TOPO; }
       y += 3; let lx = MG;
       const leg = (cor, borda, txt) => { if (borda) { doc.setDrawColor(230, 126, 34); doc.setLineWidth(0.5); doc.setFillColor(255, 255, 255); doc.rect(lx, y, 4, 3, 'FD'); } else { doc.setFillColor(cor[0], cor[1], cor[2]); doc.rect(lx, y, 4, 3, 'F'); } doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(80, 80, 80); doc.text(txt, lx + 5.5, y + 2.4); lx += 6 + doc.getTextWidth(txt) + 6; };
-      leg([39, 174, 96], false, 'dia com foto da loja'); leg(null, true, 'com foto em feriado nacional'); leg([217, 222, 226], false, 'F feriado nacional'); leg([41, 128, 185], false, 'D degustação na loja'); leg([39, 174, 96], false, 'visita com degustação (canto azul)'); leg([237, 237, 237], false, 'domingo');
+      leg([39, 174, 96], false, 'dia com foto da loja'); leg(null, true, 'com foto em feriado nacional'); leg([217, 222, 226], false, 'F feriado nacional'); leg([41, 128, 185], false, 'D dia de degustação na rede'); leg([237, 237, 237], false, 'domingo');
     });
     const n = doc.getNumberOfPages(), agora = new Date(), p2 = v => String(v).padStart(2, '0');
     const quando = p2(agora.getDate()) + '/' + p2(agora.getMonth() + 1) + '/' + agora.getFullYear() + ' ' + p2(agora.getHours()) + ':' + p2(agora.getMinutes());
@@ -4437,11 +4442,11 @@
   function degLista() {
     if (!Array.isArray(Estado.degustacoes)) Estado.degustacoes = [];
     // registros antigos ("todas as embalagens" ou um SKU só) viram lista de SKUs
-    Estado.degustacoes.forEach(r => { if (!Array.isArray(r.prodCods)) { const ls = r.prodCod ? [r.prodCod] : (r.linha ? DEG_SKUS.filter(k => k.linha === r.linha).map(k => k.cod) : []); degAplicaProduto(r, ls); } });
+    Estado.degustacoes.forEach(r => { r.loja = ''; r.lojaManual = false; if (!Array.isArray(r.prodCods)) { const ls = r.prodCod ? [r.prodCod] : (r.linha ? DEG_SKUS.filter(k => k.linha === r.linha).map(k => k.cod) : []); degAplicaProduto(r, ls); } });
     return Estado.degustacoes;
   }
   function degNorm(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
-  function degChave(r) { return [r.data, degNorm(r.rede || r.lojaRel || r.loja), degNorm(r.loja), degNorm(r.produto || r.produtoRel), degNorm(r.promotora)].join('|'); }
+  function degChave(r) { return [r.data, degNorm(r.rede || r.lojaRel), degNorm(r.produto || r.produtoRel), degNorm(r.promotora)].join('|'); }
   function degDow(iso) { if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return -1; const p = iso.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay(); }
   function degDiaSemana(iso) { const d = degDow(iso); return d < 0 ? '' : DEG_DOW[d]; }
   function degDataBR(iso) { return /^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4) : (iso || '-'); }
@@ -4449,21 +4454,13 @@
   function degF(v) { return v == null || v === '' || !isFinite(v) ? '' : Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 1 }); }
   function degVendas(r) { return r.packs == null ? null : r.packs; }
   function degPct(a, b) { return b > 0 && a != null ? (a / b * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : ''; }
-  function degLojaRot(r) { return r.loja ? (r.redeNome || '') + ' › ' + r.loja : (r.rede ? (r.redeNome || '') + ' (rede toda)' : (r.lojaRel || r.loja || '(sem loja)') + ' (sem vínculo)'); }
-  // Mesma loja escrita de jeitos diferentes ("11 - TENDA ITU" x "Tenda Itu")?
-  function degLojaIgual(a, b) {
-    const na = degNorm(a), nb = degNorm(b); if (!na || !nb) return false;
-    const sa = na.replace(/^\d+/, ''), sb = nb.replace(/^\d+/, '');
-    return na === nb || (!!sa && sa === sb) || (Math.min(sa.length, sb.length) >= 6 && (sa.includes(sb) || sb.includes(sa)));
-  }
-  // Loja digitada à mão: quando um Book trouxer a mesma loja, passa a usar o nome do Book (e a Sistemática pinta o dia).
+  // Rede digitada à mão: quando um Book trouxer a mesma rede, passa a usar o nome do Book.
   function degReconciliar() {
-    const man = degLista().filter(r => r.lojaManual || r.redeManual); if (!man.length) return;
+    const man = degLista().filter(r => r.redeManual); if (!man.length) return;
     const pool = degPoolBooks(); let mudou = false;
     man.forEach(r => {
       const p = pool.get(r.rede) || degAcharRede(r.redeNome || '', pool); if (!p) return;
       if (r.redeManual) { r.rede = p.k; r.redeNome = p.nome; r.redeManual = false; mudou = true; }
-      if (r.lojaManual) { const n = p.listaLojas.find(x => degLojaIgual(r.loja, x)); if (n) { r.loja = n; r.lojaManual = false; mudou = true; } }
     });
     if (mudou && typeof salvarEstado === 'function') salvarEstado();
   }
@@ -4532,7 +4529,7 @@
   }
   function degVincular(r, pool) {
     const p = degAcharRede(r.lojaRel, pool);
-    if (p) { r.rede = p.k; r.redeNome = p.nome; r.loja = p.listaLojas.length === 1 ? p.listaLojas[0] : ''; r.lojaAuto = p.listaLojas.length === 1; } else { r.rede = ''; r.redeNome = ''; r.loja = ''; }
+    if (p) { r.rede = p.k; r.redeNome = p.nome; r.loja = ''; } else { r.rede = ''; r.redeNome = ''; r.loja = ''; }
     return r;
   }
 
@@ -4654,24 +4651,23 @@
     const inp = (i, campo, v, w, tipo) => `<input data-dg="${i}" data-campo="${campo}" type="${tipo || 'text'}" value="${esc(v == null ? '' : v)}" style="width:${w}px;padding:4px;border:1px solid #CFD4D9;border-radius:4px;font-size:12px;">`;
     const prodBox = (r, i) => { const sel = degCods(r); return `<details data-dgp="${i}" ${degProdAberto === i ? 'open' : ''} style="width:200px;font-size:10px;"><summary style="cursor:pointer;padding:4px;border:1px solid #CFD4D9;border-radius:4px;background:${sel.length ? '#fff' : '#FFF6D6'};">${sel.length ? sel.length + ' produto(s) selecionado(s)' : '— escolher produtos —'}</summary><div style="max-height:220px;overflow:auto;border:1px solid #E3E6EA;padding:4px;background:#fff;">${DEG_LINHAS.map(l => `<div style="font-weight:bold;margin-top:4px;">${esc(l)}</div>` + DEG_SKUS.filter(k => k.linha === l).map(k => `<label style="display:flex;gap:4px;align-items:flex-start;margin:2px 0;cursor:pointer;"><input type="checkbox" data-dg="${i}" data-campo="prod" data-cod="${k.cod}" ${sel.includes(k.cod) ? 'checked' : ''}><span>${esc(k.desc)}</span></label>`).join('')).join('')}</div></details>`; };
     const pend = degPend.length ? `<h3 style="margin:14px 0 6px;font-size:14px;">Conferir antes de salvar (${degPend.length})</h3>
-      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-bottom:8px;">Leitura automática. Rede, loja e produto vêm de listas (Books e planilha de SKUs); campos em amarelo precisam da sua atenção. Tudo é medido em <strong>fardos</strong> (6 ou 12 unidades, conforme o SKU); as vendas avulsas (latas soltas) não entram.</p>
-      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th>Dia da ação</th><th>Rede (Books)</th><th>Loja (Books)</th><th>Produto (SKU)</th><th>Fardos utilizados</th><th>Abord.</th><th>Aceitaram</th><th>Vendas (fardos)</th><th></th></tr></thead><tbody>
+      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-bottom:8px;">Leitura automática. Rede e produto vêm de listas (Books e planilha de SKUs); campos em amarelo precisam da sua atenção. Tudo é medido em <strong>fardos</strong> (6 ou 12 unidades, conforme o SKU); as vendas avulsas (latas soltas) não entram.</p>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th>Dia da ação</th><th>Rede (Books)</th><th>Produto (SKU)</th><th>Fardos utilizados</th><th>Abord.</th><th>Aceitaram</th><th>Vendas (fardos)</th><th></th></tr></thead><tbody>
       ${degPend.map((r, i) => {
         const p = r.rede ? pool.get(r.rede) : null, lojas = p ? p.listaLojas : [];
         const dup = todas.some(x => degChave(x) === degChave(r));
         const selRede = `<select data-dg="${i}" data-campo="rede" style="width:140px;padding:4px;font-size:12px;${r.rede ? '' : 'background:#FFF6D6;'}"><option value="">${r.rede ? '(sem rede)' : '(não encontrada: ' + esc(r.lojaRel || '-') + ')'}</option>${redes.map(x => `<option value="${esc(x.k)}" ${x.k === r.rede ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}${r.rede && !redes.some(x => x.k === r.rede) ? `<option value="${esc(r.rede)}" selected>✏ ${esc(r.redeNome)}</option>` : ''}<option value="__novo__">✏ Outra rede (digitar)…</option></select>`;
-        const selLoja = `<select data-dg="${i}" data-campo="loja" style="width:200px;padding:4px;font-size:12px;${r.rede && !r.loja ? 'background:#FFF6D6;' : ''}" ${r.rede ? '' : 'disabled'}><option value="">${r.rede ? (lojas.length ? '— escolher loja —' : '(sem loja nos Books)') : ''}</option>${lojas.map(x => `<option value="${esc(x)}" ${x === r.loja ? 'selected' : ''}>${esc(x)}</option>`).join('')}${r.loja && !lojas.includes(r.loja) ? `<option value="${esc(r.loja)}" selected>✏ ${esc(r.loja)}</option>` : ''}${r.rede ? '<option value="__novo__">✏ Outra loja (digitar)…</option>' : ''}</select>`;
         const selProd = prodBox(r, i) + `${r.produtoRel ? `<div style="font-size:9px;color:var(--cor-texto-secundario);">relatório: ${esc(r.produtoRel)}</div>` : ''}`;
         const dia = `<div>${inp(i, 'data', r.data, 128, 'date')} <span style="font-size:11px;color:var(--cor-texto-secundario);">${esc(degDiaSemana(r.data))}</span></div>${r.duvidaData ? `<div style="margin-top:3px;padding:4px 6px;background:#FFF6D6;border-radius:4px;font-size:11px;max-width:230px;">${esc(r.duvidaData)}<label style="display:block;margin-top:3px;font-weight:bold;"><input type="checkbox" data-dg="${i}" data-campo="dataOk" ${r.dataOk ? 'checked' : ''}> Confirmo este dia</label></div>` : ''}`;
         const fard = `<div style="${r.fardos == null || r.fardosConv ? 'background:#FFF6D6;' : ''}padding:2px;border-radius:4px;"><input data-dg="${i}" data-campo="fardos" type="number" step="0.5" min="0" value="${r.fardos == null ? '' : r.fardos}" style="width:62px;padding:4px;border:1px solid #CFD4D9;border-radius:4px;font-size:12px;">${r.qtd ? `<div style="font-size:10px;color:var(--cor-texto-secundario);max-width:110px;">relatório: ${esc(r.qtd)}${r.fardosConv ? ' (convertido de unidades)' : ''}</div>` : ''}</div>`;
-        return `<tr style="border-top:1px solid #ECEFF1;vertical-align:top;"><td style="padding:4px;">${dia}</td><td style="padding:4px;">${selRede}</td><td style="padding:4px;">${selLoja}</td><td style="padding:4px;">${selProd}</td><td style="padding:4px;">${fard}</td>
+        return `<tr style="border-top:1px solid #ECEFF1;vertical-align:top;"><td style="padding:4px;">${dia}</td><td style="padding:4px;">${selRede}</td><td style="padding:4px;">${selProd}</td><td style="padding:4px;">${fard}</td>
           <td style="padding:4px;white-space:nowrap;">${inp(i, 'abord', r.abord, 54, 'number')}</td><td style="padding:4px;white-space:nowrap;">${inp(i, 'aceit', r.aceit, 54, 'number')}</td><td style="padding:4px;">${inp(i, 'packs', r.packs, 54, 'number')}</td>
           <td style="padding:4px;white-space:nowrap;font-size:11px;">${dup ? '<span style="color:#B9770E;">já salva (será atualizada)</span> ' : ''}<button type="button" data-dg-rem="${i}" style="border:none;background:none;color:#C0392B;cursor:pointer;">remover</button></td></tr>`;
       }).join('')}</tbody></table></div>
-      ${pool.size ? '' : '<p style="font-size:12px;color:#B9770E;margin-top:6px;">Ainda não há fotos de Books importadas, então não há lojas para vincular.</p>'}
+      ${pool.size ? '' : '<p style="font-size:12px;color:#B9770E;margin-top:6px;">Ainda não há fotos de Books importadas, então não há redes para vincular.</p>'}
       <div style="margin-top:10px;display:flex;gap:8px;"><button type="button" id="dg-salvar" style="padding:10px 14px;border-radius:6px;border:none;background:var(--cor-primaria);color:var(--cor-destaque);font-weight:bold;cursor:pointer;">Salvar ${degPend.length} na base</button><button type="button" id="dg-descartar" style="padding:10px 14px;border-radius:6px;border:1px solid #CFD4D9;background:#fff;cursor:pointer;">Descartar</button></div>` : '';
     el.innerHTML = `<div class="card" style="border-left:4px solid var(--cor-destaque);"><h2>Degustações: relatórios da agência</h2>
-      <p style="font-size:13px;line-height:1.5;">Anexe os relatórios de ação (PDF, Word ou Excel). O sistema lê cada relatório, liga à rede e à loja dos Books, pede confirmação quando tiver dúvida no dia, e acumula mês a mês. O dashboard fica na aba Degustações.</p>
+      <p style="font-size:13px;line-height:1.5;">Anexe os relatórios de ação (PDF, Word ou Excel). O sistema lê cada relatório, liga à rede dos Books, pede confirmação quando tiver dúvida no dia, e acumula mês a mês. O dashboard fica na aba Degustações.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;">
         <label style="padding:10px 14px;border-radius:6px;background:var(--cor-primaria);color:var(--cor-destaque);font-weight:bold;cursor:pointer;">📎 Anexar relatórios (PDF, Word ou Excel)<input id="dg-arq" type="file" accept=".pdf,.docx,.xlsx,.xls,.csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple style="display:none;"></label>
         <button type="button" id="dg-novo" style="padding:10px 14px;border-radius:6px;border:1px solid #CFD4D9;background:#fff;cursor:pointer;">+ Lançar manualmente</button>
@@ -4696,11 +4692,9 @@
     el.querySelectorAll('[data-dg]').forEach(x => x.onchange = () => {
       const r = degPend[+x.dataset.dg], k = x.dataset.campo; if (!r) return;
       if (k === 'dataOk') { r.dataOk = x.checked; refaz(); return; }
-      if (k === 'rede' && x.value === '__novo__') { const n = (prompt('Nome da rede (como aparece no relatório):', r.lojaRel || '') || '').trim(); if (n) { r.rede = chaveRede(n) || degNorm(n); r.redeNome = n; r.redeManual = true; r.loja = ''; r.lojaManual = false; } refaz(); return; }
-      if (k === 'loja' && x.value === '__novo__') { const n = (prompt('Nome da loja (ela será ligada ao Book quando ele trouxer essa loja):', r.lojaRel || '') || '').trim(); if (n) { r.loja = n; r.lojaManual = true; } refaz(); return; }
-      if (k === 'rede') { r.redeManual = false; r.lojaManual = false; }
-      if (k === 'rede') { const p = pool.get(x.value); r.rede = p ? p.k : ''; r.redeNome = p ? p.nome : ''; r.loja = p && p.listaLojas.length === 1 ? p.listaLojas[0] : ''; refaz(); return; }
-      if (k === 'loja') { r.loja = x.value; r.lojaManual = false; refaz(); return; }
+      if (k === 'rede' && x.value === '__novo__') { const n = (prompt('Nome da rede (como aparece no relatório):', r.lojaRel || '') || '').trim(); if (n) { r.rede = chaveRede(n) || degNorm(n); r.redeNome = n; r.redeManual = true; } refaz(); return; }
+      if (k === 'rede') { r.redeManual = false; }
+      if (k === 'rede') { const p = pool.get(x.value); r.rede = p ? p.k : ''; r.redeNome = p ? p.nome : ''; refaz(); return; }
       if (k === 'prod') { const cs = new Set(degCods(r)); if (x.checked) cs.add(x.dataset.cod); else cs.delete(x.dataset.cod); degProdAberto = +x.dataset.dg; degAplicaProduto(r, [...cs]); const f = degFardosDe(r.qtd, degUnSku(r)); if (r.fardosConv) { r.fardos = f.v; } refaz(); return; }
       if (k === 'fardos') { r.fardos = x.value === '' ? null : +x.value; r.fardosConv = false; refaz(); return; }
       if (k === 'packs' || k === 'avul') { r[k] = x.value === '' ? null : +x.value; refaz(); return; }
@@ -4751,18 +4745,18 @@
       <button type="button" id="dg-xlsx" style="padding:9px 14px;border-radius:6px;border:none;background:#1E7B4A;color:#fff;font-weight:bold;cursor:pointer;" ${lista.length ? '' : 'disabled'}>⬇ Baixar Excel</button></div>
       <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;">${degModo === 'mes' ? 'O mês acompanha o seletor lá em cima.' : 'Todas as degustações salvas, de todos os meses.'} Os relatórios são anexados em Admin. Tudo em fardos (6 ou 12 unidades, conforme o SKU).</p></div>`;
     if (!lista.length) { c.innerHTML = topo + `<div class="card"><p>${total ? 'Sem degustações em ' + esc(mesRot) + '. Troque o mês ou veja o acumulado.' : 'Nenhuma degustação salva ainda. Anexe os relatórios da agência em Admin.'}</p></div>`; degLigar(c); return; }
-    const porProd = degAgrega(lista, r => r.produto), porLinha = degAgrega(lista, r => r.linha), porRede = degAgrega(lista, degRedeRot), porLoja = degAgrega(lista, degLojaRot);
+    const porProd = degAgrega(lista, r => r.produto), porLinha = degAgrega(lista, r => r.linha), porRede = degAgrega(lista, degRedeRot);
     const dias = degAgrega(lista, r => r.data).sort((a, b) => a.k.localeCompare(b.k)).map(a => Object.assign(a, { k: degDataBR(a.k).slice(0, 5) + ' ' + degDiaSemana(a.k).slice(0, 3) }));
-    const semVinc = lista.filter(r => !r.loja).length;
+    const semVinc = lista.filter(r => !r.rede).length;
     const th = 'padding:6px;text-align:right;', td = 'padding:6px;text-align:right;border-top:1px solid #ECEFF1;';
     c.innerHTML = topo + `
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">${cx('Ações', t.acoes, porLoja.length + ' loja(s)')}${cx('Abordagens', degN(t.abord))}${cx('Aceitaram', degN(t.aceit), degPct(t.aceit, t.abord))}${cx('Fardos utilizados', degF(t.util))}${cx('Vendas', degF(t.vendas), 'fardos')}${cx('Vendas por ação', degF(t.acoes ? t.vendas / t.acoes : null), 'fardos')}</div>
-      ${semVinc ? `<p style="font-size:12px;color:#B9770E;margin:-4px 0 10px;">${semVinc} ação(ões) sem loja dos Books vinculada. Complete em Admin (editar).</p>` : ''}
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">${cx('Ações', t.acoes, porRede.length + ' rede(s)')}${cx('Abordagens', degN(t.abord))}${cx('Aceitaram', degN(t.aceit), degPct(t.aceit, t.abord))}${cx('Fardos utilizados', degF(t.util))}${cx('Vendas', degF(t.vendas), 'fardos')}${cx('Vendas por ação', degF(t.acoes ? t.vendas / t.acoes : null), 'fardos')}</div>
+      ${semVinc ? `<p style="font-size:12px;color:#B9770E;margin:-4px 0 10px;">${semVinc} ação(ões) sem rede dos Books vinculada. Complete em Admin (editar).</p>` : ''}
       <div class="card"><h2>Abordagem e aceitação</h2>${[['Abordagens', t.abord, 'var(--cor-primaria)', ''], ['Aceitaram a degustação', t.aceit, 'var(--cor-destaque)', degPct(t.aceit, t.abord) + ' das abordagens']].map(f => `<div style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px;"><div style="width:190px;flex:none;">${f[0]}</div><div style="flex:1;"><div style="width:${t.abord ? Math.max(2, f[1] / t.abord * 100) : 0}%;height:20px;background:${f[2]};border-radius:3px;"></div></div><div style="width:170px;flex:none;text-align:right;"><strong>${degN(f[1])}</strong> <span style="font-size:11px;color:var(--cor-texto-secundario);">${f[3]}</span></div></div>`).join('')}</div>
       ${degBarras('Vendas por produto', porProd)}${degBarras('Vendas por rede', porRede)}${dias.length > 1 ? degBarras('Vendas por dia', dias) : ''}
-      ${degTabela('Por linha', 'Linha', porLinha, t)}${degTabela('Por produto', 'Produto (SKU)', porProd, t)}${degTabela('Por rede', 'Rede', porRede, t)}${degTabela('Por loja', 'Loja (Books)', porLoja, t)}
-      <div class="card"><h2>Detalhe por ação</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:10.5px;"><thead><tr style="background:#F8F9FA;font-size:10px;text-transform:uppercase;"><th style="${th}text-align:left;">Dia</th><th style="${th}text-align:left;">Rede › loja</th><th style="${th}text-align:left;">Produto</th><th style="${th}">Fardos utilizados</th><th style="${th}">Abord.</th><th style="${th}">Aceitaram</th><th style="${th}">% aceit.</th><th style="${th}">Vendas (fardos)</th><th style="${th}text-align:left;">Feedback</th><th style="${th}"></th></tr></thead><tbody>
-      ${lista.map(r => `<tr><td style="${td}text-align:left;white-space:nowrap;">${degDataBR(r.data).slice(0, 5)} ${esc(degDiaSemana(r.data).slice(0, 3))}</td><td style="${td}text-align:left;${r.loja ? '' : 'background:#FFF6D6;'}">${esc(degLojaRot(r))}</td><td style="${td}text-align:left;">${esc(r.produto)}</td><td style="${td}">${degF(r.fardos)}</td><td style="${td}">${degN(r.abord)}</td><td style="${td}">${degN(r.aceit)}</td><td style="${td}">${degPct(r.aceit, r.abord)}</td><td style="${td}font-weight:bold;">${degF(degVendas(r))}</td><td style="${td}text-align:left;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.feedback)}">${esc(r.feedback)}</td><td style="${td}white-space:nowrap;font-size:11px;"><button type="button" data-dg-edit="${esc(r.id)}" style="border:none;background:none;color:#2980B9;cursor:pointer;">editar</button> <button type="button" data-dg-del="${esc(r.id)}" style="border:none;background:none;color:#C0392B;cursor:pointer;">excluir</button></td></tr>`).join('')}</tbody></table></div>
+      ${degTabela('Por linha', 'Linha', porLinha, t)}${degTabela('Por produto', 'Produto (SKU)', porProd, t)}${degTabela('Por rede', 'Rede', porRede, t)}
+      <div class="card"><h2>Detalhe por ação</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:10.5px;"><thead><tr style="background:#F8F9FA;font-size:10px;text-transform:uppercase;"><th style="${th}text-align:left;">Dia</th><th style="${th}text-align:left;">Rede</th><th style="${th}text-align:left;">Produto</th><th style="${th}">Fardos utilizados</th><th style="${th}">Abord.</th><th style="${th}">Aceitaram</th><th style="${th}">% aceit.</th><th style="${th}">Vendas (fardos)</th><th style="${th}text-align:left;">Feedback</th><th style="${th}"></th></tr></thead><tbody>
+      ${lista.map(r => `<tr><td style="${td}text-align:left;white-space:nowrap;">${degDataBR(r.data).slice(0, 5)} ${esc(degDiaSemana(r.data).slice(0, 3))}</td><td style="${td}text-align:left;${r.rede ? '' : 'background:#FFF6D6;'}">${esc(degRedeRot(r))}</td><td style="${td}text-align:left;">${esc(r.produto)}</td><td style="${td}">${degF(r.fardos)}</td><td style="${td}">${degN(r.abord)}</td><td style="${td}">${degN(r.aceit)}</td><td style="${td}">${degPct(r.aceit, r.abord)}</td><td style="${td}font-weight:bold;">${degF(degVendas(r))}</td><td style="${td}text-align:left;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.feedback)}">${esc(r.feedback)}</td><td style="${td}white-space:nowrap;font-size:11px;"><button type="button" data-dg-edit="${esc(r.id)}" style="border:none;background:none;color:#2980B9;cursor:pointer;">editar</button> <button type="button" data-dg-del="${esc(r.id)}" style="border:none;background:none;color:#C0392B;cursor:pointer;">excluir</button></td></tr>`).join('')}</tbody></table></div>
       <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">Vendas em fardos: fardos vendidos (as vendas avulsas do relatório não entram). Editar leva a ação de volta para a conferência em Admin.</p></div>`;
     degLigar(c);
   }
@@ -4796,15 +4790,14 @@
       XLSX.utils.book_append_sheet(wb, ws, nome);
     };
     const per = degModo === 'mes' ? rotuloMes(Estado.config.mesAtivo) : 'Acumulado';
-    add('Resumo', [['Degustações Tarks | ' + per], [], ['Indicador', 'Valor']].concat([['Ações', t.acoes], ['Lojas (Books)', degAgrega(lista, degLojaRot).length], ['Abordagens', t.abord], ['Aceitaram a degustação', t.aceit], ['% de aceitação', t.abord ? t.aceit / t.abord : null], ['Fardos utilizados', t.util], ['Vendas (fardos)', t.vendas], ['Vendas por ação (fardos)', t.acoes ? t.vendas / t.acoes : null], [], ['Obs.', 'Tudo em fardos (6 ou 12 unidades, conforme o SKU, pela planilha de cadastro). Vendas = fardos vendidos; vendas avulsas não entram. Números marcados como "média de" no relatório da agência entram como informados.']]), [30, 22]);
+    add('Resumo', [['Degustações Tarks | ' + per], [], ['Indicador', 'Valor']].concat([['Ações', t.acoes], ['Redes', degAgrega(lista, degRedeRot).length], ['Abordagens', t.abord], ['Aceitaram a degustação', t.aceit], ['% de aceitação', t.abord ? t.aceit / t.abord : null], ['Fardos utilizados', t.util], ['Vendas (fardos)', t.vendas], ['Vendas por ação (fardos)', t.acoes ? t.vendas / t.acoes : null], [], ['Obs.', 'Tudo em fardos (6 ou 12 unidades, conforme o SKU, pela planilha de cadastro). Vendas = fardos vendidos; vendas avulsas não entram. Números marcados como "média de" no relatório da agência entram como informados.']]), [30, 22]);
     add('Por linha', grupo('Linha', r => r.linha), [24, 8, 13, 11, 12, 16, 15, 15]);
     add('Por produto', grupo('Produto (SKU)', r => r.produto), [34, 8, 13, 11, 12, 16, 15, 15]);
     add('Por rede', grupo('Rede', degRedeRot), [28, 8, 13, 11, 12, 16, 15, 15]);
-    add('Por loja', grupo('Loja (Books)', degLojaRot), [44, 8, 13, 11, 12, 16, 15, 15]);
     add('Por dia', grupo('Dia', r => degDataBR(r.data).slice(0, 5) + ' ' + degDiaSemana(r.data)), [18, 8, 13, 11, 12, 16, 15, 15]);
-    const det = [['Data', 'Dia', 'Rede (Books)', 'Loja (Books)', 'Linha', 'Produto(s) (SKU)', 'Código(s) SKU', 'Fardos utilizados', 'Abordagens', 'Aceitaram', '% aceitação', 'Vendas (fardos)', 'Valor aproximado ("média de")', 'Feedback dos clientes']];
-    lista.forEach(r => det.push([degDataBR(r.data), degDiaSemana(r.data), r.redeNome || '', r.loja || '', r.linha || '', r.produto, degCods(r).join(', '), r.fardos, r.abord, r.aceit, r.abord ? r.aceit / r.abord : null, degVendas(r), (r.aprox && (r.aprox.abord || r.aprox.aceit)) ? 'Sim' : 'Não', r.feedback]));
-    add('Detalhe', det, [12, 10, 18, 34, 16, 32, 11, 12, 12, 11, 12, 14, 14, 90]);
+    const det = [['Data', 'Dia', 'Rede (Books)', 'Linha', 'Produto(s) (SKU)', 'Código(s) SKU', 'Fardos utilizados', 'Abordagens', 'Aceitaram', '% aceitação', 'Vendas (fardos)', 'Valor aproximado ("média de")', 'Feedback dos clientes']];
+    lista.forEach(r => det.push([degDataBR(r.data), degDiaSemana(r.data), r.redeNome || '', r.linha || '', r.produto, degCods(r).join(', '), r.fardos, r.abord, r.aceit, r.abord ? r.aceit / r.abord : null, degVendas(r), (r.aprox && (r.aprox.abord || r.aprox.aceit)) ? 'Sim' : 'Não', r.feedback]));
+    add('Detalhe', det, [12, 10, 22, 16, 32, 11, 12, 12, 11, 12, 14, 14, 90]);
     XLSX.writeFile(wb, degNomeArquivo(lista, 'xlsx'));
   }
 </script>
