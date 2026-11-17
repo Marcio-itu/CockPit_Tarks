@@ -4435,14 +4435,21 @@
   // DEGUSTAÇÕES — relatórios de ação da agência (PDF/Word) entram pelo Admin, viram linhas ligadas às redes/lojas dos Books,
   // acumulam mês a mês e aparecem num dashboard na aba Degustações, com exportação em Excel.
   // ═══════════════════════════════════════════════════
-  let degPend = [], degMsg = '', degModo = 'mes', degProdAberto = -1;
+  let degPend = [], degMsg = '', degModo = 'mes', degAvisos = [];
   const DEG_MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
   const DEG_DOW = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 
   function degLista() {
     if (!Array.isArray(Estado.degustacoes)) Estado.degustacoes = [];
-    // registros antigos ("todas as embalagens" ou um SKU só) viram lista de SKUs
-    Estado.degustacoes.forEach(r => { r.loja = ''; r.lojaManual = false; if (!Array.isArray(r.prodCods)) { const ls = r.prodCod ? [r.prodCod] : (r.linha ? DEG_SKUS.filter(k => k.linha === r.linha).map(k => k.cod) : []); degAplicaProduto(r, ls); } });
+    // registros antigos (SKU, "todas as embalagens") viram lista de linhas
+    Estado.degustacoes.forEach(r => {
+      r.loja = ''; r.lojaManual = false;
+      if (!Array.isArray(r.linhas)) {
+        const ls = new Set((r.prodCods || (r.prodCod ? [r.prodCod] : [])).map(c => DEG_COD_LINHA[c]).filter(Boolean));
+        String(r.linha || '').split(/\s*\+\s*/).forEach(l => { l = l === 'Sabores do RST' ? 'Sabores' : l; if (DEG_LINHAS.includes(l)) ls.add(l); });
+        degAplicaProduto(r, [...ls]);
+      }
+    });
     return Estado.degustacoes;
   }
   function degNorm(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
@@ -4466,43 +4473,37 @@
   }
   function degRedeRot(r) { return r.redeNome || r.lojaRel || '(sem rede)'; }
 
-  // ── Catálogo de produtos (planilha SKUs JR Tarchiani). Tudo é medido em fardo de 12 unidades. ──
+  // ── Produtos: só a linha (Tubaína, Tubaína Zero, Sabores, Tarks Beer, Frutarks). Tudo é medido em fardo. ──
   const DEG_UN_FARDO = 12;
-  // Unidades por fardo de cada SKU (coluna "QTDADE EMBAL." da planilha de cadastro): 2L, latas e Frutarks 1,5 L = 6; os demais = 12.
-  const DEG_UN = {"40058": 6, "40059": 12, "40060": 12, "50058": 6, "40057": 6, "40056": 12, "50057": 6, "40061": 6, "40064": 6, "40070": 6, "40071": 12, "40667": 6, "151001": 12, "150001": 12, "40073": 6, "40074": 12, "40075": 12};
-  const degCods = r => Array.isArray(r && r.prodCods) ? r.prodCods : (r && r.prodCod ? [r.prodCod] : []);
-  const degUnSku = r => { const u = new Set(degCods(r).map(c => (DEG_SKUS.find(x => x.cod === c) || {}).un).filter(Boolean)); return u.size === 1 ? [...u][0] : DEG_UN_FARDO; };
-  const DEG_SKUS = [['40058', 'TUBAINA RST PET 2 LITROS', 'Tubaína'], ['40059', 'TUBAINA RST PET 200 ML', 'Tubaína'], ['40060', 'TUBAINA RST PET 550 ML', 'Tubaína'], ['50058', 'TUBAINA RST LATA 350 ML', 'Tubaína'],
-    ['40057', 'TUBAINA 2 LITROS ZERO', 'Tubaína Zero'], ['40056', 'TUBAINA RST PET 200 ML ZERO', 'Tubaína Zero'], ['50057', 'TUBAINA RST ZERO LATA 350 ML', 'Tubaína Zero'],
-    ['40061', 'LIMÃO DO RST PET 2L', 'Sabores do RST'], ['40064', 'ABACAXI DO RST PET 2L', 'Sabores do RST'], ['40070', 'GUARANA DO RST 2L', 'Sabores do RST'], ['40071', 'GUARANA DO RST PET 200 ML', 'Sabores do RST'], ['40667', 'MAÇÃ DO RST 2L', 'Sabores do RST'],
-    ['151001', 'CERVEJA TARKS BEER 350 ML', 'Tarks Beer'], ['150001', 'CERVEJA TARKS BEER 269 ML', 'Tarks Beer'], ['40073', 'SUCO FRUTARKS 1,5 L', 'Frutarks'], ['40074', 'SUCO FRUTARKS 500 ML', 'Frutarks'], ['40075', 'SUCO FRUTARKS 250 ML', 'Frutarks']].map(a => ({ cod: a[0], desc: a[1], linha: a[2], un: DEG_UN[a[0]] || 12 }));
-  const DEG_LINHAS = ['Tubaína', 'Tubaína Zero', 'Sabores do RST', 'Tarks Beer', 'Frutarks'];
-  // Escolha vinda do relatório: devolve 'S:código' (um SKU), 'L:linha' (todas as embalagens da linha) ou '' quando não dá para decidir.
+  const DEG_LINHAS = ['Tubaína', 'Tubaína Zero', 'Sabores', 'Tarks Beer', 'Frutarks'];
+  // Só para converter registros antigos (que guardavam o código do SKU) para a linha.
+  const DEG_COD_LINHA = { '40058': 'Tubaína', '40059': 'Tubaína', '40060': 'Tubaína', '50058': 'Tubaína', '40057': 'Tubaína Zero', '40056': 'Tubaína Zero', '50057': 'Tubaína Zero', '40061': 'Sabores', '40064': 'Sabores', '40070': 'Sabores', '40071': 'Sabores', '40667': 'Sabores', '151001': 'Tarks Beer', '150001': 'Tarks Beer', '40073': 'Frutarks', '40074': 'Frutarks', '40075': 'Frutarks' };
+  const degLinhasDe = r => Array.isArray(r && r.linhas) ? r.linhas : [];
+  // Linhas citadas no texto do relatório ("Suco Frutarks", "Tubaína Zero Açúcar", "Tarks Beer e Tubaína"...).
   function degAcharProduto(txt) {
-    const bruto = String(txt || ''); if (!degNorm(bruto)) return [];
-    const parar = new Set(['DE', 'DA', 'DO', 'COM', 'UTILIZADO', 'UTILIZADOS']), out = new Set();
-    bruto.split(/\s+e\s+|\s*[+;|\/]\s*|,\s+(?=[A-Za-zÀ-ú])/i).forEach(parte => {
-      const toks = parte.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().split(/[^A-Z0-9]+/).filter(t => t.length > 1 && !parar.has(t));
-      if (!toks.length) return;
-      DEG_SKUS.filter(k => toks.every(t => degNorm(k.desc).includes(t))).forEach(k => out.add(k.cod));
-    });
-    if (out.size) return [...out];
-    const p = degNorm(bruto), l = DEG_LINHAS.filter(x => p.includes(degNorm(x))).sort((a, b) => b.length - a.length)[0];
-    return l ? DEG_SKUS.filter(k => k.linha === l).map(k => k.cod) : [];
+    let t = String(txt || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); if (!t.trim()) return [];
+    const out = [];
+    if (/zero/.test(t)) { out.push('Tubaína Zero'); t = t.replace(/tubaina\s*zero(\s*acucar)?|zero(\s*acucar)?/g, ' '); }
+    if (/tubaina/.test(t)) out.push('Tubaína');
+    if (/guarana|limao|abacaxi|maca\b|macas\b|sabores|\brst\b/.test(t)) out.push('Sabores');
+    if (/tarks\s*beer|cerveja|\bbeer\b/.test(t)) out.push('Tarks Beer');
+    if (/frutarks|suco/.test(t)) out.push('Frutarks');
+    return DEG_LINHAS.filter(l => out.includes(l));
   }
-  function degAplicaProduto(r, cods) {
-    const ks = DEG_SKUS.filter(k => cods.includes(k.cod));
-    r.prodCods = ks.map(k => k.cod); r.prodCod = ks.length === 1 ? ks[0].cod : '';
-    r.linha = [...new Set(ks.map(k => k.linha))].join(' + '); r.produto = ks.map(k => k.desc).join(' + ');
+  function degAplicaProduto(r, linhas) {
+    const ls = DEG_LINHAS.filter(l => (linhas || []).includes(l));
+    r.linhas = ls; r.linha = ls.join(' + '); r.produto = r.linha; delete r.prodCods; delete r.prodCod;
   }
   // "Quantidade utilizada" vem em texto livre: converte o que dá em fardos; o resto fica para conferência.
-  function degFardosDe(txt, un) {
+  function degFardosDe(txt) {
     const t = String(txt || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''), num = x => parseFloat(String(x).replace(',', '.'));
     let m = t.match(/(\d+(?:[.,]\d+)?)\s*(?:fardos?|caixas?|cx)\b(\s*e\s*meia)?/);
     if (m) return { v: num(m[1]) + (m[2] ? 0.5 : 0), conv: false };
     if (/\bmeia\s*(?:caixa|fardo)/.test(t)) return { v: 0.5, conv: false };
-    m = t.match(/(\d+(?:[.,]\d+)?)\s*(?:unidades?|unids?|un\b|garrafas?|latas?|pets?|litros?)/);
-    if (m) return { v: Math.round(num(m[1]) / (un || DEG_UN_FARDO) * 100) / 100, conv: true };
+    m = t.match(/(\d+(?:[.,]\d+)?)\s*(?:unidades?|unids?|un\b|garrafinhas?|garrafas?|latas?|pets?)/);
+    // 2 L e 1,5 L vêm em fardo de 6; as demais embalagens, em fardo de 12
+    const un = /\b2\s*(?:l|lt|litros?)\b|\b1[.,]5\s*(?:l|lt|litros?)\b/.test(t) ? 6 : DEG_UN_FARDO;
+    if (m) return { v: Math.round(num(m[1]) / un * 100) / 100, conv: true };
     return { v: null, conv: false };
   }
 
@@ -4571,10 +4572,30 @@
     return saida;
   }
 
+  // ── Relatório da JS Conecta (formato com "Vendas em packs", "Clientes que aceitaram a degustação") ──
+  function degParseBlocoNovo(t, anoBase) {
+    const pega = (a, b) => { const m = t.match(new RegExp(a + '\\s*(.*?)\\s*(?:' + b + ')', 'i')); return m ? m[1].trim() : ''; };
+    const nm = t.match(/\b\d{1,3}\s*\.\s+([A-ZÀ-Ú0-9][^:]*?)\s+Data\s*:/), nome = nm ? nm[1].trim() : '';
+    const dm = t.match(/Data\s*:\s*(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)\s*[–—-]?\s*([A-Za-zÀ-ú-]*)/i), dt = dm ? (dm[1] + ' ' + dm[2]) : '', dd = degResolverData(dt, anoBase);
+    if (/dados pendentes|informa[çc][õo]es pendentes/i.test(t)) return { pendente: true, lojaRel: nome, data: dd.data };
+    const primeiro = x => { const m = String(x || '').replace(/(\d)\.(\d{3})\b/g, '$1$2').match(/\d+/); return m ? +m[0] : null; };
+    const abTxt = pega('M[ée]dia de abordagens no dia\\s*:', 'Clientes que aceitaram'), acTxt = pega('Clientes que aceitaram a degusta[çc][ãa]o\\s*:', 'RESULTADO DE VENDAS'), pkTxt = pega('Vendas em packs\\s*:', 'Vendas avulsas');
+    const pk = /n[ãa]o houve|nenhum/i.test(pkTxt) ? 0 : (/n[ãa]o informad/i.test(pkTxt) ? null : primeiro(pkTxt));
+    const prod = pega('Produto de degusta[çc][ãa]o\\s*:', 'Promotora\\s*:');
+    return {
+      produtoRel: prod, data: dd.data, diaRel: ((dt.match(/(domingo|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado)/i) || [''])[0]).toLowerCase(), duvidaData: dd.duvida, dataOk: !dd.duvida,
+      lojaRel: nome, produto: prod, promotora: pega('Promotora\\s*:', 'Quantidade de produtos'), qtd: pega('Quantidade de produtos utilizados\\s*:', 'M[ée]dia de abordagens'),
+      // "7 abordagens que levaram o produto (total não informado)": o total do dia não veio, fica em branco para você preencher
+      abord: /n[ãa]o informad|que levaram/i.test(abTxt) ? null : primeiro(abTxt), aceit: primeiro(acTxt), packs: pk, avul: null,
+      aprox: { abord: false, aceit: false }, aviso: /n[ãa]o informad|que levaram/i.test(abTxt) ? 'O relatório não informa o total de abordagens do dia (' + abTxt + ').' : '', feedback: pega('FEEDBACK DA A[ÇC][ÃA]O', '$')
+    };
+  }
+
   // ── Leitura do texto dos relatórios ──
   function degParseTexto(txt, anoBase) {
     const blocos = String(txt || '').replace(/\s+/g, ' ').split(/(?=RELAT[ÓO]RIO DA A[ÇC][ÃA]O)/i).filter(b => /RELAT[ÓO]RIO DA A[ÇC][ÃA]O/i.test(b)), saida = [];
     blocos.forEach(t => {
+      if (!/DATA DA A[ÇC][ÃA]O/i.test(t) && (/Data\s*:\s*\d/.test(t) || /dados pendentes de envio/i.test(t))) { saida.push(degParseBlocoNovo(t, anoBase)); return; }
       const pega = (a, b) => { const m = t.match(new RegExp(a + '\\s*(.*?)\\s*(?:' + b + ')', 'i')); return m ? m[1].trim() : ''; };
       const dt = pega('DATA DA A[ÇC][ÃA]O', 'LOJA\\b'), dd = degResolverData(dt, anoBase);
       const res = pega('Vendas avulsas', 'FEEDBACK DOS CLIENTES'), nums = [], aprox = [];
@@ -4612,9 +4633,11 @@
       for (let p = 1; p <= pdf.numPages; p++) txt += ' ' + (await (await pdf.getPage(p)).getTextContent()).items.map(i => i.str).join(' ');
     }
     const pool = degPoolBooks();
-    return (pronto || degParseTexto(txt, ano)).map((r, i) => {
+    const lidos = (pronto || degParseTexto(txt, ano)), pend = lidos.filter(r => r.pendente);
+    pend.forEach(r => degAvisos.push(file.name + ': ' + (r.lojaRel || 'ação') + (r.data ? ' (' + degDataBR(r.data).slice(0, 5) + ')' : '') + ' está com dados pendentes de envio e não foi incluída'));
+    return lidos.filter(r => !r.pendente).map((r, i) => {
       r.id = 'dg' + Date.now().toString(36) + i + Math.random().toString(36).slice(2, 5); r.arquivo = file.name;
-      degAplicaProduto(r, degAcharProduto(r.produtoRel)); const f = degFardosDe(r.qtd, degUnSku(r)); r.fardos = f.v; r.fardosConv = f.conv;
+      degAplicaProduto(r, degAcharProduto(r.produtoRel)); const f = degFardosDe(r.qtd); r.fardos = f.v; r.fardosConv = f.conv;
       return degVincular(r, pool);
     });
   }
@@ -4624,15 +4647,28 @@
     const m = new Map();
     lista.forEach(r => {
       const k = fn(r) || '(não informado)';
-      if (!m.has(k)) m.set(k, { k, acoes: 0, abord: 0, aceit: 0, util: 0, vendas: 0 });
-      const a = m.get(k); a.acoes++; a.abord += r.abord || 0; a.aceit += r.aceit || 0; a.util += r.fardos || 0; a.vendas += degVendas(r) || 0;
+      if (!m.has(k)) m.set(k, { k, acoes: 0, abord: 0, aceit: 0, aceitC: 0, util: 0, vendas: 0, abordN: 0, vendasN: 0 });
+      const a = m.get(k); a.acoes++; a.abord += r.abord || 0; a.aceit += r.aceit || 0; if (r.abord != null) { a.aceitC += r.aceit || 0; a.abordN++; } if (degVendas(r) != null) a.vendasN++; a.util += r.fardos || 0; a.vendas += degVendas(r) || 0;
     });
     return [...m.values()].sort((a, b) => b.vendas - a.vendas || a.k.localeCompare(b.k));
   }
-  function degTot(lista) { return degAgrega(lista, () => 'Total')[0] || { acoes: 0, abord: 0, aceit: 0, util: 0, vendas: 0 }; }
+  function degTot(lista) { return degAgrega(lista, () => 'Total')[0] || { acoes: 0, abord: 0, aceit: 0, aceitC: 0, util: 0, vendas: 0, abordN: 0, vendasN: 0 }; }
+  // Janela da "última semana": os 7 dias que terminam na data da ação mais recente.
+  function degJanelaSemana() {
+    const ult = degLista().map(r => r.data).filter(Boolean).sort().pop(); if (!ult) return null;
+    const p = ult.split('-').map(Number), d = new Date(Date.UTC(p[0], p[1] - 1, p[2] - 6));
+    return { de: d.toISOString().slice(0, 10), ate: ult };
+  }
   function degFiltrada() {
     const l = degLista().slice().sort((a, b) => (a.data || '').localeCompare(b.data || '') || degRedeRot(a).localeCompare(degRedeRot(b)));
-    return degModo === 'mes' ? l.filter(r => (r.data || '').slice(0, 7) === Estado.config.mesAtivo) : l;
+    if (degModo === 'mes') return l.filter(r => (r.data || '').slice(0, 7) === Estado.config.mesAtivo);
+    if (degModo === 'sem') { const w = degJanelaSemana(); return w ? l.filter(r => r.data >= w.de && r.data <= w.ate) : []; }
+    return l;
+  }
+  function degPeriodoRot() {
+    if (degModo === 'mes') return rotuloMes(Estado.config.mesAtivo);
+    if (degModo === 'sem') { const w = degJanelaSemana(); return w ? 'última semana (' + degDataBR(w.de).slice(0, 5) + ' a ' + degDataBR(w.ate).slice(0, 5) + ')' : 'última semana'; }
+    return 'acumulado';
   }
   function degNomeArquivo(lista, ext) {
     const ult = lista.map(r => r.data).filter(Boolean).sort().pop() || new Date().toISOString().slice(0, 10);
@@ -4649,19 +4685,19 @@
   function degAdminCard(el) {
     const todas = degLista(), pool = degPoolBooks(), redes = [...pool.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
     const inp = (i, campo, v, w, tipo) => `<input data-dg="${i}" data-campo="${campo}" type="${tipo || 'text'}" value="${esc(v == null ? '' : v)}" style="width:${w}px;padding:4px;border:1px solid #CFD4D9;border-radius:4px;font-size:12px;">`;
-    const prodBox = (r, i) => { const sel = degCods(r); return `<details data-dgp="${i}" ${degProdAberto === i ? 'open' : ''} style="width:200px;font-size:10px;"><summary style="cursor:pointer;padding:4px;border:1px solid #CFD4D9;border-radius:4px;background:${sel.length ? '#fff' : '#FFF6D6'};">${sel.length ? sel.length + ' produto(s) selecionado(s)' : '— escolher produtos —'}</summary><div style="max-height:220px;overflow:auto;border:1px solid #E3E6EA;padding:4px;background:#fff;">${DEG_LINHAS.map(l => `<div style="font-weight:bold;margin-top:4px;">${esc(l)}</div>` + DEG_SKUS.filter(k => k.linha === l).map(k => `<label style="display:flex;gap:4px;align-items:flex-start;margin:2px 0;cursor:pointer;"><input type="checkbox" data-dg="${i}" data-campo="prod" data-cod="${k.cod}" ${sel.includes(k.cod) ? 'checked' : ''}><span>${esc(k.desc)}</span></label>`).join('')).join('')}</div></details>`; };
+    const prodBox = (r, i) => { const sel = degLinhasDe(r); return `<div style="font-size:11px;padding:3px;border-radius:4px;${sel.length ? '' : 'background:#FFF6D6;'}">${DEG_LINHAS.map(l => `<label style="display:flex;gap:5px;align-items:center;margin:1px 0;cursor:pointer;white-space:nowrap;"><input type="checkbox" data-dg="${i}" data-campo="prod" data-cod="${esc(l)}" ${sel.includes(l) ? 'checked' : ''}>${esc(l)}</label>`).join('')}</div>`; };
     const pend = degPend.length ? `<h3 style="margin:14px 0 6px;font-size:14px;">Conferir antes de salvar (${degPend.length})</h3>
-      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-bottom:8px;">Leitura automática. Rede e produto vêm de listas (Books e planilha de SKUs); campos em amarelo precisam da sua atenção. Tudo é medido em <strong>fardos</strong> (6 ou 12 unidades, conforme o SKU); as vendas avulsas (latas soltas) não entram.</p>
-      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th>Dia da ação</th><th>Rede (Books)</th><th>Produto (SKU)</th><th>Fardos utilizados</th><th>Abord.</th><th>Aceitaram</th><th>Vendas (fardos)</th><th></th></tr></thead><tbody>
+      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-bottom:8px;">Leitura automática. Rede vem da lista dos Books e produto é só a linha; campos em amarelo precisam da sua atenção. Tudo é medido em <strong>fardos</strong>; as vendas avulsas não entram.</p>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th>Dia da ação</th><th>Rede (Books)</th><th>Produto (linha)</th><th>Fardos utilizados</th><th>Abord.</th><th>Aceitaram</th><th>Vendas (fardos)</th><th></th></tr></thead><tbody>
       ${degPend.map((r, i) => {
         const p = r.rede ? pool.get(r.rede) : null, lojas = p ? p.listaLojas : [];
         const dup = todas.some(x => degChave(x) === degChave(r));
         const selRede = `<select data-dg="${i}" data-campo="rede" style="width:140px;padding:4px;font-size:12px;${r.rede ? '' : 'background:#FFF6D6;'}"><option value="">${r.rede ? '(sem rede)' : '(não encontrada: ' + esc(r.lojaRel || '-') + ')'}</option>${redes.map(x => `<option value="${esc(x.k)}" ${x.k === r.rede ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}${r.rede && !redes.some(x => x.k === r.rede) ? `<option value="${esc(r.rede)}" selected>✏ ${esc(r.redeNome)}</option>` : ''}<option value="__novo__">✏ Outra rede (digitar)…</option></select>`;
         const selProd = prodBox(r, i) + `${r.produtoRel ? `<div style="font-size:9px;color:var(--cor-texto-secundario);">relatório: ${esc(r.produtoRel)}</div>` : ''}`;
         const dia = `<div>${inp(i, 'data', r.data, 128, 'date')} <span style="font-size:11px;color:var(--cor-texto-secundario);">${esc(degDiaSemana(r.data))}</span></div>${r.duvidaData ? `<div style="margin-top:3px;padding:4px 6px;background:#FFF6D6;border-radius:4px;font-size:11px;max-width:230px;">${esc(r.duvidaData)}<label style="display:block;margin-top:3px;font-weight:bold;"><input type="checkbox" data-dg="${i}" data-campo="dataOk" ${r.dataOk ? 'checked' : ''}> Confirmo este dia</label></div>` : ''}`;
-        const fard = `<div style="${r.fardos == null || r.fardosConv ? 'background:#FFF6D6;' : ''}padding:2px;border-radius:4px;"><input data-dg="${i}" data-campo="fardos" type="number" step="0.5" min="0" value="${r.fardos == null ? '' : r.fardos}" style="width:62px;padding:4px;border:1px solid #CFD4D9;border-radius:4px;font-size:12px;">${r.qtd ? `<div style="font-size:10px;color:var(--cor-texto-secundario);max-width:110px;">relatório: ${esc(r.qtd)}${r.fardosConv ? ' (convertido de unidades)' : ''}</div>` : ''}</div>`;
+        const fard = `<div style="${r.fardos == null ? 'background:#FFF6D6;' : ''}padding:2px;border-radius:4px;"><input data-dg="${i}" data-campo="fardos" type="number" step="0.5" min="0" value="${r.fardos == null ? '' : r.fardos}" style="width:62px;padding:4px;border:1px solid #CFD4D9;border-radius:4px;font-size:12px;">${r.qtd ? `<div style="font-size:10px;color:var(--cor-texto-secundario);max-width:110px;">relatório: ${esc(r.qtd)}${r.fardosConv ? ' (convertido de unidades)' : ''}</div>` : ''}</div>`;
         return `<tr style="border-top:1px solid #ECEFF1;vertical-align:top;"><td style="padding:4px;">${dia}</td><td style="padding:4px;">${selRede}</td><td style="padding:4px;">${selProd}</td><td style="padding:4px;">${fard}</td>
-          <td style="padding:4px;white-space:nowrap;">${inp(i, 'abord', r.abord, 54, 'number')}</td><td style="padding:4px;white-space:nowrap;">${inp(i, 'aceit', r.aceit, 54, 'number')}</td><td style="padding:4px;">${inp(i, 'packs', r.packs, 54, 'number')}</td>
+          <td style="padding:4px;white-space:nowrap;${r.abord == null ? 'background:#FFF6D6;' : ''}">${inp(i, 'abord', r.abord, 54, 'number')}${r.aviso ? `<div style="font-size:9px;color:#B9770E;max-width:110px;white-space:normal;">${esc(r.aviso)}</div>` : ''}</td><td style="padding:4px;white-space:nowrap;">${inp(i, 'aceit', r.aceit, 54, 'number')}</td><td style="padding:4px;">${inp(i, 'packs', r.packs, 54, 'number')}</td>
           <td style="padding:4px;white-space:nowrap;font-size:11px;">${dup ? '<span style="color:#B9770E;">já salva (será atualizada)</span> ' : ''}<button type="button" data-dg-rem="${i}" style="border:none;background:none;color:#C0392B;cursor:pointer;">remover</button></td></tr>`;
       }).join('')}</tbody></table></div>
       ${pool.size ? '' : '<p style="font-size:12px;color:#B9770E;margin-top:6px;">Ainda não há fotos de Books importadas, então não há redes para vincular.</p>'}
@@ -4678,24 +4714,23 @@
     const refaz = () => degAdminCard(el);
     el.querySelector('#dg-arq').onchange = async ev => {
       const arqs = [...ev.target.files]; if (!arqs.length) return;
-      let lidos = 0, sem = [];
+      let lidos = 0, sem = []; degAvisos = [];
       for (const f of arqs) {
         msg('Lendo ' + f.name + '…');
-        try { const r = await degLerArquivo(f); if (!r.length) sem.push(f.name); r.forEach(x => degPend.push(x)); lidos += r.length; } catch (e) { sem.push(f.name + ' (' + (e.message || 'erro') + ')'); }
+        try { const r = await degLerArquivo(f); if (!r.length && !degAvisos.some(a => a.startsWith(f.name + ':'))) sem.push(f.name); r.forEach(x => degPend.push(x)); lidos += r.length; } catch (e) { sem.push(f.name + ' (' + (e.message || 'erro') + ')'); }
       }
-      degMsg = lidos + ' relatório(s) lido(s)' + (sem.length ? '. Sem relatório reconhecido em: ' + sem.join(', ') : '') + '. Confira abaixo e salve.';
+      degMsg = lidos + ' relatório(s) lido(s)' + (degAvisos.length ? '. Atenção: ' + degAvisos.join('; ') : '') + (sem.length ? '. Sem relatório reconhecido em: ' + sem.join(', ') : '') + '. Confira abaixo e salve.';
       refaz();
     };
-    el.querySelector('#dg-novo').onclick = () => { degPend.push({ id: 'dg' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), data: '', duvidaData: '', dataOk: true, lojaRel: '', rede: '', redeNome: '', loja: '', produto: '', produtoRel: '', prodCod: '', prodCods: [], linha: '', promotora: '', qtd: '', fardos: null, abord: null, aceit: null, packs: null, avul: null, aprox: {}, feedback: '', arquivo: 'manual' }); refaz(); };
+    el.querySelector('#dg-novo').onclick = () => { degPend.push({ id: 'dg' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), data: '', duvidaData: '', dataOk: true, lojaRel: '', rede: '', redeNome: '', loja: '', produto: '', produtoRel: '', prodCod: '', linhas: [], linha: '', promotora: '', qtd: '', fardos: null, abord: null, aceit: null, packs: null, avul: null, aprox: {}, feedback: '', arquivo: 'manual' }); refaz(); };
     el.querySelector('#dg-ver').onclick = () => { const b = document.querySelector('nav button[data-tela="degustacoes"]'); if (b) b.click(); };
-    el.querySelectorAll('details[data-dgp]').forEach(d => d.ontoggle = () => { if (d.open) degProdAberto = +d.dataset.dgp; else if (degProdAberto === +d.dataset.dgp) degProdAberto = -1; });
     el.querySelectorAll('[data-dg]').forEach(x => x.onchange = () => {
       const r = degPend[+x.dataset.dg], k = x.dataset.campo; if (!r) return;
       if (k === 'dataOk') { r.dataOk = x.checked; refaz(); return; }
       if (k === 'rede' && x.value === '__novo__') { const n = (prompt('Nome da rede (como aparece no relatório):', r.lojaRel || '') || '').trim(); if (n) { r.rede = chaveRede(n) || degNorm(n); r.redeNome = n; r.redeManual = true; } refaz(); return; }
       if (k === 'rede') { r.redeManual = false; }
       if (k === 'rede') { const p = pool.get(x.value); r.rede = p ? p.k : ''; r.redeNome = p ? p.nome : ''; refaz(); return; }
-      if (k === 'prod') { const cs = new Set(degCods(r)); if (x.checked) cs.add(x.dataset.cod); else cs.delete(x.dataset.cod); degProdAberto = +x.dataset.dg; degAplicaProduto(r, [...cs]); const f = degFardosDe(r.qtd, degUnSku(r)); if (r.fardosConv) { r.fardos = f.v; } refaz(); return; }
+      if (k === 'prod') { const cs = new Set(degLinhasDe(r)); if (x.checked) cs.add(x.dataset.cod); else cs.delete(x.dataset.cod); degAplicaProduto(r, [...cs]); refaz(); return; }
       if (k === 'fardos') { r.fardos = x.value === '' ? null : +x.value; r.fardosConv = false; refaz(); return; }
       if (k === 'packs' || k === 'avul') { r[k] = x.value === '' ? null : +x.value; refaz(); return; }
       if (k === 'data') {
@@ -4709,7 +4744,7 @@
     el.querySelectorAll('[data-dg-rem]').forEach(b => b.onclick = () => { degPend.splice(+b.dataset.dgRem, 1); refaz(); });
     const sv = el.querySelector('#dg-salvar');
     if (sv) sv.onclick = () => {
-      if (degPend.some(r => !r.data || !r.produto)) { msg('Escolha o dia e o produto (lista de SKUs) de todas as linhas antes de salvar.'); return; }
+      if (degPend.some(r => !r.data || !r.produto)) { msg('Escolha o dia e o produto (linha) de todas as linhas antes de salvar.'); return; }
       const dv = degPend.filter(r => r.duvidaData && !r.dataOk).length;
       if (dv) { msg('Confirme o dia de ' + dv + ' ação(ões) marcada(s) em amarelo (ou corrija a data) antes de salvar.'); return; }
       let novas = 0, atual = 0;
@@ -4722,47 +4757,49 @@
   }
 
   // ── Aba Degustações: dashboard ──
-  function degTabela(titulo, rot, linhas, t) {
-    const th = 'padding:6px;text-align:right;', td = 'padding:6px;text-align:right;border-top:1px solid #ECEFF1;';
-    const lin = linhas.concat([Object.assign({ k: 'Total' }, t)]).map((a, i, arr) => {
-      const b = i === arr.length - 1 ? 'font-weight:bold;background:#F8F9FA;' : '';
-      return `<tr style="${b}"><td style="${td}text-align:left;">${esc(a.k)}</td><td style="${td}">${a.acoes}</td><td style="${td}">${degN(a.abord)}</td><td style="${td}">${degN(a.aceit)}</td><td style="${td}">${degPct(a.aceit, a.abord)}</td><td style="${td}">${degF(a.util)}</td><td style="${td}font-weight:bold;">${degF(a.vendas)}</td><td style="${td}">${degF(a.acoes ? a.vendas / a.acoes : null)}</td></tr>`;
-    }).join('');
-    return `<div class="card"><h2>${titulo}</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#F8F9FA;font-size:10px;text-transform:uppercase;"><th style="${th}text-align:left;">${rot}</th><th style="${th}">Ações</th><th style="${th}">Abordagens</th><th style="${th}">Aceitaram</th><th style="${th}">% aceitação</th><th style="${th}">Fardos utilizados</th><th style="${th}">Vendas (fardos)</th><th style="${th}">Vendas por ação</th></tr></thead><tbody>${lin}</tbody></table></div></div>`;
+  const DEG_TH = 'padding:6px;text-align:right;', DEG_TD = 'padding:6px;text-align:right;border-top:1px solid #ECEFF1;';
+  function degLinhaTab(a, extra, total) {
+    const b = total ? 'font-weight:bold;background:#F8F9FA;' : '';
+    return `<tr style="${b}"><td style="${DEG_TD}text-align:left;">${esc(a.k)}</td><td style="${DEG_TD}">${a.acoes}</td><td style="${DEG_TD}">${a.abordN ? degN(a.abord) : ''}</td><td style="${DEG_TD}">${degN(a.aceit)}</td><td style="${DEG_TD}">${degPct(a.aceitC, a.abord)}</td><td style="${DEG_TD}">${degF(a.util)}</td><td style="${DEG_TD}font-weight:bold;">${a.vendasN ? degF(a.vendas) : ''}</td>${extra || ''}</tr>`;
   }
-  function degBarras(titulo, linhas) {
-    const mx = Math.max(1, ...linhas.map(a => a.vendas));
-    return `<div class="card"><h2>${titulo}</h2>
-      ${linhas.map(a => `<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12.5px;"><div style="width:230px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(a.k)}">${esc(a.k)}</div><div style="flex:1;"><div style="width:${a.vendas / mx * 100}%;min-width:${a.vendas ? 2 : 0}px;height:18px;background:var(--cor-primaria);border-radius:3px;"></div></div><div style="width:60px;flex:none;text-align:right;font-weight:bold;">${degF(a.vendas)}</div></div>`).join('')}<div style="font-size:11px;color:var(--cor-texto-secundario);margin-top:6px;">Vendas em fardos.</div></div>`;
-  }
+  const DEG_CAB = rot => `<th style="${DEG_TH}text-align:left;">${rot}</th><th style="${DEG_TH}">Ações</th><th style="${DEG_TH}">Abordagens</th><th style="${DEG_TH}">Aceitaram</th><th style="${DEG_TH}">% aceit.</th><th style="${DEG_TH}">Fardos utilizados</th><th style="${DEG_TH}">Vendas (fardos)</th>`;
   function renderizarDegustacoes() {
     const c = document.getElementById('tela-degustacoes'); if (!c) return;
     degReconciliar();
-    const lista = degFiltrada(), t = degTot(lista), mesRot = rotuloMes(Estado.config.mesAtivo), total = degLista().length;
+    const lista = degFiltrada(), t = degTot(lista), per = degPeriodoRot(), total = degLista().length;
     const cx = (rot, val, sub) => `<div style="flex:1;min-width:110px;padding:12px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid var(--cor-destaque);"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:clamp(18px,2vw,26px);font-weight:900;color:var(--cor-primaria);white-space:nowrap;">${val}</div><div style="font-size:11px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
     const bt = (id, txt, on) => `<button type="button" id="${id}" style="padding:8px 14px;border-radius:6px;border:1px solid ${on ? 'var(--cor-primaria)' : '#CFD4D9'};background:${on ? 'var(--cor-primaria)' : '#fff'};color:${on ? 'var(--cor-destaque)' : '#333'};font-weight:bold;cursor:pointer;">${txt}</button>`;
-    const topo = `<div class="card"><h2>Degustações</h2><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${bt('dg-m-mes', 'Mês: ' + esc(mesRot), degModo === 'mes')}${bt('dg-m-acum', 'Acumulado', degModo === 'acum')}
+    const topo = `<div class="card"><h2>Degustações</h2><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${bt('dg-m-mes', 'Mês: ' + esc(rotuloMes(Estado.config.mesAtivo)), degModo === 'mes')}${bt('dg-m-sem', 'Última semana', degModo === 'sem')}${bt('dg-m-acum', 'Acumulado', degModo === 'acum')}
       <button type="button" id="dg-xlsx" style="padding:9px 14px;border-radius:6px;border:none;background:#1E7B4A;color:#fff;font-weight:bold;cursor:pointer;" ${lista.length ? '' : 'disabled'}>⬇ Baixar Excel</button></div>
-      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;">${degModo === 'mes' ? 'O mês acompanha o seletor lá em cima.' : 'Todas as degustações salvas, de todos os meses.'} Os relatórios são anexados em Admin. Tudo em fardos (6 ou 12 unidades, conforme o SKU).</p></div>`;
-    if (!lista.length) { c.innerHTML = topo + `<div class="card"><p>${total ? 'Sem degustações em ' + esc(mesRot) + '. Troque o mês ou veja o acumulado.' : 'Nenhuma degustação salva ainda. Anexe os relatórios da agência em Admin.'}</p></div>`; degLigar(c); return; }
-    const porProd = degAgrega(lista, r => r.produto), porLinha = degAgrega(lista, r => r.linha), porRede = degAgrega(lista, degRedeRot);
+      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;">Período: <strong>${esc(per)}</strong>. Tudo em fardos. Os relatórios da agência são anexados em Admin.</p></div>`;
+    if (!lista.length) { c.innerHTML = topo + `<div class="card"><p>${total ? 'Sem degustações neste período. Troque o período acima.' : 'Nenhuma degustação salva ainda. Anexe os relatórios da agência em Admin.'}</p></div>`; degLigar(c); return; }
+    const porLinha = degAgrega(lista, r => r.linha), porRede = degAgrega(lista, degRedeRot).sort((a, b) => b.vendas - a.vendas || b.acoes - a.acoes || a.k.localeCompare(b.k));
     const dias = degAgrega(lista, r => r.data).sort((a, b) => a.k.localeCompare(b.k)).map(a => Object.assign(a, { k: degDataBR(a.k).slice(0, 5) + ' ' + degDiaSemana(a.k).slice(0, 3) }));
-    const semVinc = lista.filter(r => !r.rede).length;
-    const th = 'padding:6px;text-align:right;', td = 'padding:6px;text-align:right;border-top:1px solid #ECEFF1;';
+    // colunas de vendas por linha dentro da tabela de redes (só as que aparecem no período)
+    const cols = [...new Set(lista.map(r => r.linha || '(sem produto)'))].sort((a, b) => { const ia = DEG_LINHAS.indexOf(a), ib = DEG_LINHAS.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b); });
+    const vendaRL = (rede, linha) => lista.filter(r => degRedeRot(r) === rede && (r.linha || '(sem produto)') === linha).reduce((n, r) => n + (degVendas(r) || 0), 0);
+    const semVinc = lista.filter(r => !r.rede).length, semProd = lista.filter(r => !r.linha).length;
+    const thL = cols.map(l => `<th style="${DEG_TH}color:#2471A3;">${esc(l)}</th>`).join('');
+    const tdL = rede => cols.map(l => { const v = rede === null ? lista.filter(r => (r.linha || '(sem produto)') === l).reduce((n, r) => n + (degVendas(r) || 0), 0) : vendaRL(rede, l); return `<td style="${DEG_TD}color:#2471A3;">${v ? degF(v) : ''}</td>`; }).join('');
     c.innerHTML = topo + `
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">${cx('Ações', t.acoes, porRede.length + ' rede(s)')}${cx('Abordagens', degN(t.abord))}${cx('Aceitaram', degN(t.aceit), degPct(t.aceit, t.abord))}${cx('Fardos utilizados', degF(t.util))}${cx('Vendas', degF(t.vendas), 'fardos')}${cx('Vendas por ação', degF(t.acoes ? t.vendas / t.acoes : null), 'fardos')}</div>
-      ${semVinc ? `<p style="font-size:12px;color:#B9770E;margin:-4px 0 10px;">${semVinc} ação(ões) sem rede dos Books vinculada. Complete em Admin (editar).</p>` : ''}
-      <div class="card"><h2>Abordagem e aceitação</h2>${[['Abordagens', t.abord, 'var(--cor-primaria)', ''], ['Aceitaram a degustação', t.aceit, 'var(--cor-destaque)', degPct(t.aceit, t.abord) + ' das abordagens']].map(f => `<div style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px;"><div style="width:190px;flex:none;">${f[0]}</div><div style="flex:1;"><div style="width:${t.abord ? Math.max(2, f[1] / t.abord * 100) : 0}%;height:20px;background:${f[2]};border-radius:3px;"></div></div><div style="width:170px;flex:none;text-align:right;"><strong>${degN(f[1])}</strong> <span style="font-size:11px;color:var(--cor-texto-secundario);">${f[3]}</span></div></div>`).join('')}</div>
-      ${degBarras('Vendas por produto', porProd)}${degBarras('Vendas por rede', porRede)}${dias.length > 1 ? degBarras('Vendas por dia', dias) : ''}
-      ${degTabela('Por linha', 'Linha', porLinha, t)}${degTabela('Por produto', 'Produto (SKU)', porProd, t)}${degTabela('Por rede', 'Rede', porRede, t)}
-      <div class="card"><h2>Detalhe por ação</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:10.5px;"><thead><tr style="background:#F8F9FA;font-size:10px;text-transform:uppercase;"><th style="${th}text-align:left;">Dia</th><th style="${th}text-align:left;">Rede</th><th style="${th}text-align:left;">Produto</th><th style="${th}">Fardos utilizados</th><th style="${th}">Abord.</th><th style="${th}">Aceitaram</th><th style="${th}">% aceit.</th><th style="${th}">Vendas (fardos)</th><th style="${th}text-align:left;">Feedback</th><th style="${th}"></th></tr></thead><tbody>
-      ${lista.map(r => `<tr><td style="${td}text-align:left;white-space:nowrap;">${degDataBR(r.data).slice(0, 5)} ${esc(degDiaSemana(r.data).slice(0, 3))}</td><td style="${td}text-align:left;${r.rede ? '' : 'background:#FFF6D6;'}">${esc(degRedeRot(r))}</td><td style="${td}text-align:left;">${esc(r.produto)}</td><td style="${td}">${degF(r.fardos)}</td><td style="${td}">${degN(r.abord)}</td><td style="${td}">${degN(r.aceit)}</td><td style="${td}">${degPct(r.aceit, r.abord)}</td><td style="${td}font-weight:bold;">${degF(degVendas(r))}</td><td style="${td}text-align:left;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.feedback)}">${esc(r.feedback)}</td><td style="${td}white-space:nowrap;font-size:11px;"><button type="button" data-dg-edit="${esc(r.id)}" style="border:none;background:none;color:#2980B9;cursor:pointer;">editar</button> <button type="button" data-dg-del="${esc(r.id)}" style="border:none;background:none;color:#C0392B;cursor:pointer;">excluir</button></td></tr>`).join('')}</tbody></table></div>
-      <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">Vendas em fardos: fardos vendidos (as vendas avulsas do relatório não entram). Editar leva a ação de volta para a conferência em Admin.</p></div>`;
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">${cx('Ações', t.acoes, porRede.length + ' rede(s)')}${cx('Abordagens', degN(t.abord))}${cx('Aceitaram', degN(t.aceit), degPct(t.aceitC, t.abord))}${cx('Vendas', degF(t.vendas), 'fardos')}${cx('Fardos utilizados', degF(t.util))}${cx('Vendas por ação', degF(t.acoes ? t.vendas / t.acoes : null), 'fardos')}</div>
+      ${semVinc ? `<p style="font-size:12px;color:#B9770E;margin:-4px 0 10px;">${semVinc} ação(ões) sem rede dos Books vinculada. Complete em Admin (editar).</p>` : ''}${semProd ? `<p style="font-size:12px;color:#B9770E;margin:-4px 0 10px;">${semProd} ação(ões) sem linha de produto. Complete em Admin (editar).</p>` : ''}
+      <div class="card"><h2>Por rede</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:10px;text-transform:uppercase;">${DEG_CAB('Rede')}${thL}</tr></thead><tbody>${porRede.map(a => degLinhaTab(a, tdL(a.k))).join('')}${degLinhaTab(Object.assign({ k: 'Total' }, t), tdL(null), true)}</tbody></table></div>
+        <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:6px;">As colunas em azul mostram as vendas (fardos) de cada linha de produto em cada rede.</p></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;">
+        <div class="card" style="flex:1 1 420px;min-width:0;"><h2>Por linha de produto</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:10px;text-transform:uppercase;">${DEG_CAB('Linha')}</tr></thead><tbody>${porLinha.map(a => degLinhaTab(a)).join('')}${degLinhaTab(Object.assign({ k: 'Total' }, t), '', true)}</tbody></table></div></div>
+        ${dias.length > 1 ? `<div class="card" style="flex:1 1 360px;min-width:0;"><h2>Por dia</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:10px;text-transform:uppercase;">${DEG_CAB('Dia')}</tr></thead><tbody>${dias.map(a => degLinhaTab(a)).join('')}</tbody></table></div></div>` : ''}
+      </div>
+      <details class="card"><summary style="cursor:pointer;font-weight:bold;">Ver detalhe das ${lista.length} ação(ões)</summary><div style="overflow-x:auto;margin-top:8px;"><table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#F8F9FA;font-size:10px;text-transform:uppercase;"><th style="${DEG_TH}text-align:left;">Dia</th><th style="${DEG_TH}text-align:left;">Rede</th><th style="${DEG_TH}text-align:left;">Produto</th><th style="${DEG_TH}">Fardos utilizados</th><th style="${DEG_TH}">Abord.</th><th style="${DEG_TH}">Aceitaram</th><th style="${DEG_TH}">% aceit.</th><th style="${DEG_TH}">Vendas (fardos)</th><th style="${DEG_TH}text-align:left;">Feedback</th><th style="${DEG_TH}"></th></tr></thead><tbody>
+      ${lista.map(r => `<tr><td style="${DEG_TD}text-align:left;white-space:nowrap;">${degDataBR(r.data).slice(0, 5)} ${esc(degDiaSemana(r.data).slice(0, 3))}</td><td style="${DEG_TD}text-align:left;${r.rede ? '' : 'background:#FFF6D6;'}">${esc(degRedeRot(r))}</td><td style="${DEG_TD}text-align:left;">${esc(r.produto)}</td><td style="${DEG_TD}">${degF(r.fardos)}</td><td style="${DEG_TD}">${degN(r.abord)}</td><td style="${DEG_TD}">${degN(r.aceit)}</td><td style="${DEG_TD}">${r.abord != null ? degPct(r.aceit, r.abord) : ''}</td><td style="${DEG_TD}font-weight:bold;">${degF(degVendas(r))}</td><td style="${DEG_TD}text-align:left;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.feedback)}">${esc(r.feedback)}</td><td style="${DEG_TD}white-space:nowrap;font-size:11px;"><button type="button" data-dg-edit="${esc(r.id)}" style="border:none;background:none;color:#2980B9;cursor:pointer;">editar</button> <button type="button" data-dg-del="${esc(r.id)}" style="border:none;background:none;color:#C0392B;cursor:pointer;">excluir</button></td></tr>`).join('')}</tbody></table></div>
+      <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">Vendas = fardos vendidos (packs); vendas avulsas não entram. Editar leva a ação de volta para a conferência em Admin.</p></details>`;
     degLigar(c);
   }
+
   function degLigar(c) {
     const on = (id, fn) => { const e = c.querySelector('#' + id); if (e) e.onclick = fn; };
     on('dg-m-mes', () => { degModo = 'mes'; renderizarDegustacoes(); });
+    on('dg-m-sem', () => { degModo = 'sem'; renderizarDegustacoes(); });
     on('dg-m-acum', () => { degModo = 'acum'; renderizarDegustacoes(); });
     on('dg-xlsx', () => baixarDegustacoesXLSX());
     c.querySelectorAll('[data-dg-del]').forEach(b => b.onclick = () => { if (!confirm('Excluir esta degustação da base?')) return; Estado.degustacoes = degLista().filter(r => r.id !== b.dataset.dgDel); salvarEstado(); renderizarDegustacoes(); });
@@ -4777,7 +4814,7 @@
     const lista = degFiltrada(); if (!lista.length) return;
     if (typeof XLSX === 'undefined') { alert('Biblioteca de Excel não carregou. Confira a internet.'); return; }
     const t = degTot(lista), cab = ['Ações', 'Abordagens', 'Aceitaram', '% aceitação', 'Fardos utilizados', 'Vendas (fardos)', 'Vendas por ação'];
-    const lin = a => [a.acoes, a.abord, a.aceit, a.abord ? a.aceit / a.abord : null, a.util, a.vendas, a.acoes ? a.vendas / a.acoes : null];
+    const lin = a => [a.acoes, a.abord, a.aceit, a.abord ? a.aceitC / a.abord : null, a.util, a.vendas, a.acoes ? a.vendas / a.acoes : null];
     const grupo = (rot, fn) => [[rot].concat(cab)].concat(degAgrega(lista, fn).map(a => [a.k].concat(lin(a)))).concat([['Total'].concat(lin(t))]);
     const wb = XLSX.utils.book_new();
     const add = (nome, aoa, larg) => {
@@ -4789,15 +4826,17 @@
       });
       XLSX.utils.book_append_sheet(wb, ws, nome);
     };
-    const per = degModo === 'mes' ? rotuloMes(Estado.config.mesAtivo) : 'Acumulado';
-    add('Resumo', [['Degustações Tarks | ' + per], [], ['Indicador', 'Valor']].concat([['Ações', t.acoes], ['Redes', degAgrega(lista, degRedeRot).length], ['Abordagens', t.abord], ['Aceitaram a degustação', t.aceit], ['% de aceitação', t.abord ? t.aceit / t.abord : null], ['Fardos utilizados', t.util], ['Vendas (fardos)', t.vendas], ['Vendas por ação (fardos)', t.acoes ? t.vendas / t.acoes : null], [], ['Obs.', 'Tudo em fardos (6 ou 12 unidades, conforme o SKU, pela planilha de cadastro). Vendas = fardos vendidos; vendas avulsas não entram. Números marcados como "média de" no relatório da agência entram como informados.']]), [30, 22]);
+    const per = degPeriodoRot().replace(/^./, x => x.toUpperCase());
+    add('Resumo', [['Degustações Tarks | ' + per], [], ['Indicador', 'Valor']].concat([['Ações', t.acoes], ['Redes', degAgrega(lista, degRedeRot).length], ['Abordagens', t.abord], ['Aceitaram a degustação', t.aceit], ['% de aceitação', t.abord ? t.aceitC / t.abord : null], ['Fardos utilizados', t.util], ['Vendas (fardos)', t.vendas], ['Vendas por ação (fardos)', t.acoes ? t.vendas / t.acoes : null], [], ['Obs.', 'Vendas = fardos vendidos (packs); vendas avulsas não entram. Fardos utilizados: unidades do relatório ÷ 12 (÷ 6 para 2 L e 1,5 L). Números "média de" do relatório entram como informados. % de aceitação considera só as ações com total de abordagens informado.']]), [30, 22]);
     add('Por linha', grupo('Linha', r => r.linha), [24, 8, 13, 11, 12, 16, 15, 15]);
-    add('Por produto', grupo('Produto (SKU)', r => r.produto), [34, 8, 13, 11, 12, 16, 15, 15]);
-    add('Por rede', grupo('Rede', degRedeRot), [28, 8, 13, 11, 12, 16, 15, 15]);
+    // Por rede: mesmas colunas + vendas (fardos) de cada linha de produto
+    const linhasCol = [...new Set(lista.map(r => r.linha || '(sem produto)'))].sort((a, b) => { const ia = DEG_LINHAS.indexOf(a), ib = DEG_LINHAS.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b); });
+    const vRL = (rede, l) => lista.filter(r => (rede === null || degRedeRot(r) === rede) && (r.linha || '(sem produto)') === l).reduce((n, r) => n + (degVendas(r) || 0), 0);
+    add('Por rede', [['Rede'].concat(cab, linhasCol.map(l => 'Vendas (fardos): ' + l))].concat(degAgrega(lista, degRedeRot).map(a => [a.k].concat(lin(a), linhasCol.map(l => vRL(a.k, l))))).concat([['Total'].concat(lin(t), linhasCol.map(l => vRL(null, l)))]), [28, 8, 13, 11, 12, 16, 15, 15].concat(linhasCol.map(() => 20)));
     add('Por dia', grupo('Dia', r => degDataBR(r.data).slice(0, 5) + ' ' + degDiaSemana(r.data)), [18, 8, 13, 11, 12, 16, 15, 15]);
-    const det = [['Data', 'Dia', 'Rede (Books)', 'Linha', 'Produto(s) (SKU)', 'Código(s) SKU', 'Fardos utilizados', 'Abordagens', 'Aceitaram', '% aceitação', 'Vendas (fardos)', 'Valor aproximado ("média de")', 'Feedback dos clientes']];
-    lista.forEach(r => det.push([degDataBR(r.data), degDiaSemana(r.data), r.redeNome || '', r.linha || '', r.produto, degCods(r).join(', '), r.fardos, r.abord, r.aceit, r.abord ? r.aceit / r.abord : null, degVendas(r), (r.aprox && (r.aprox.abord || r.aprox.aceit)) ? 'Sim' : 'Não', r.feedback]));
-    add('Detalhe', det, [12, 10, 22, 16, 32, 11, 12, 12, 11, 12, 14, 14, 90]);
+    const det = [['Data', 'Dia', 'Rede (Books)', 'Produto (linha)', 'Fardos utilizados', 'Abordagens', 'Aceitaram', '% aceitação', 'Vendas (fardos)', 'Feedback dos clientes']];
+    lista.forEach(r => det.push([degDataBR(r.data), degDiaSemana(r.data), r.redeNome || r.lojaRel || '', r.produto, r.fardos, r.abord, r.aceit, r.abord ? r.aceit / r.abord : null, degVendas(r), r.feedback]));
+    add('Detalhe', det, [12, 10, 26, 22, 12, 12, 11, 12, 14, 90]);
     XLSX.writeFile(wb, degNomeArquivo(lista, 'xlsx'));
   }
 </script>
