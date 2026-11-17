@@ -4248,6 +4248,7 @@
     const D = sistDados();
     const [ano, mesN] = mes.split('-').map(Number), nDias = new Date(Date.UTC(ano, mesN, 0)).getUTCDate();
     const dias = Array.from({ length: nDias }, (_, i) => sistIso(ano, mesN, i + 1)), fer = sistFeriados(ano);
+    if (typeof degReconciliar === 'function') degReconciliar();
     // degustações do mês (Estado.degustacoes): rede → loja → dia
     const dg = new Map(), semLoja = new Map(), nn = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     (Array.isArray(Estado.degustacoes) ? Estado.degustacoes : []).forEach(r => {
@@ -4449,6 +4450,23 @@
   function degVendas(r) { return r.packs == null ? null : r.packs; }
   function degPct(a, b) { return b > 0 && a != null ? (a / b * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : ''; }
   function degLojaRot(r) { return r.loja ? (r.redeNome || '') + ' › ' + r.loja : (r.rede ? (r.redeNome || '') + ' (rede toda)' : (r.lojaRel || r.loja || '(sem loja)') + ' (sem vínculo)'); }
+  // Mesma loja escrita de jeitos diferentes ("11 - TENDA ITU" x "Tenda Itu")?
+  function degLojaIgual(a, b) {
+    const na = degNorm(a), nb = degNorm(b); if (!na || !nb) return false;
+    const sa = na.replace(/^\d+/, ''), sb = nb.replace(/^\d+/, '');
+    return na === nb || (!!sa && sa === sb) || (Math.min(sa.length, sb.length) >= 6 && (sa.includes(sb) || sb.includes(sa)));
+  }
+  // Loja digitada à mão: quando um Book trouxer a mesma loja, passa a usar o nome do Book (e a Sistemática pinta o dia).
+  function degReconciliar() {
+    const man = degLista().filter(r => r.lojaManual || r.redeManual); if (!man.length) return;
+    const pool = degPoolBooks(); let mudou = false;
+    man.forEach(r => {
+      const p = pool.get(r.rede) || degAcharRede(r.redeNome || '', pool); if (!p) return;
+      if (r.redeManual) { r.rede = p.k; r.redeNome = p.nome; r.redeManual = false; mudou = true; }
+      if (r.lojaManual) { const n = p.listaLojas.find(x => degLojaIgual(r.loja, x)); if (n) { r.loja = n; r.lojaManual = false; mudou = true; } }
+    });
+    if (mudou && typeof salvarEstado === 'function') salvarEstado();
+  }
   function degRedeRot(r) { return r.redeNome || r.lojaRel || '(sem rede)'; }
 
   // ── Catálogo de produtos (planilha SKUs JR Tarchiani). Tudo é medido em fardo de 12 unidades. ──
@@ -4641,8 +4659,8 @@
       ${degPend.map((r, i) => {
         const p = r.rede ? pool.get(r.rede) : null, lojas = p ? p.listaLojas : [];
         const dup = todas.some(x => degChave(x) === degChave(r));
-        const selRede = `<select data-dg="${i}" data-campo="rede" style="width:140px;padding:4px;font-size:12px;${r.rede ? '' : 'background:#FFF6D6;'}"><option value="">${r.rede ? '(sem rede)' : '(não encontrada: ' + esc(r.lojaRel || '-') + ')'}</option>${redes.map(x => `<option value="${esc(x.k)}" ${x.k === r.rede ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}</select>`;
-        const selLoja = `<select data-dg="${i}" data-campo="loja" style="width:200px;padding:4px;font-size:12px;${r.rede && !r.loja ? 'background:#FFF6D6;' : ''}" ${r.rede ? '' : 'disabled'}><option value="">${r.rede ? (lojas.length ? '— escolher loja —' : '(sem loja nos Books)') : ''}</option>${lojas.map(x => `<option value="${esc(x)}" ${x === r.loja ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>`;
+        const selRede = `<select data-dg="${i}" data-campo="rede" style="width:140px;padding:4px;font-size:12px;${r.rede ? '' : 'background:#FFF6D6;'}"><option value="">${r.rede ? '(sem rede)' : '(não encontrada: ' + esc(r.lojaRel || '-') + ')'}</option>${redes.map(x => `<option value="${esc(x.k)}" ${x.k === r.rede ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}${r.rede && !redes.some(x => x.k === r.rede) ? `<option value="${esc(r.rede)}" selected>✏ ${esc(r.redeNome)}</option>` : ''}<option value="__novo__">✏ Outra rede (digitar)…</option></select>`;
+        const selLoja = `<select data-dg="${i}" data-campo="loja" style="width:200px;padding:4px;font-size:12px;${r.rede && !r.loja ? 'background:#FFF6D6;' : ''}" ${r.rede ? '' : 'disabled'}><option value="">${r.rede ? (lojas.length ? '— escolher loja —' : '(sem loja nos Books)') : ''}</option>${lojas.map(x => `<option value="${esc(x)}" ${x === r.loja ? 'selected' : ''}>${esc(x)}</option>`).join('')}${r.loja && !lojas.includes(r.loja) ? `<option value="${esc(r.loja)}" selected>✏ ${esc(r.loja)}</option>` : ''}${r.rede ? '<option value="__novo__">✏ Outra loja (digitar)…</option>' : ''}</select>`;
         const selProd = prodBox(r, i) + `${r.produtoRel ? `<div style="font-size:9px;color:var(--cor-texto-secundario);">relatório: ${esc(r.produtoRel)}</div>` : ''}`;
         const dia = `<div>${inp(i, 'data', r.data, 128, 'date')} <span style="font-size:11px;color:var(--cor-texto-secundario);">${esc(degDiaSemana(r.data))}</span></div>${r.duvidaData ? `<div style="margin-top:3px;padding:4px 6px;background:#FFF6D6;border-radius:4px;font-size:11px;max-width:230px;">${esc(r.duvidaData)}<label style="display:block;margin-top:3px;font-weight:bold;"><input type="checkbox" data-dg="${i}" data-campo="dataOk" ${r.dataOk ? 'checked' : ''}> Confirmo este dia</label></div>` : ''}`;
         const fard = `<div style="${r.fardos == null || r.fardosConv ? 'background:#FFF6D6;' : ''}padding:2px;border-radius:4px;"><input data-dg="${i}" data-campo="fardos" type="number" step="0.5" min="0" value="${r.fardos == null ? '' : r.fardos}" style="width:62px;padding:4px;border:1px solid #CFD4D9;border-radius:4px;font-size:12px;">${r.qtd ? `<div style="font-size:10px;color:var(--cor-texto-secundario);max-width:110px;">relatório: ${esc(r.qtd)}${r.fardosConv ? ' (convertido de unidades)' : ''}</div>` : ''}</div>`;
@@ -4678,8 +4696,11 @@
     el.querySelectorAll('[data-dg]').forEach(x => x.onchange = () => {
       const r = degPend[+x.dataset.dg], k = x.dataset.campo; if (!r) return;
       if (k === 'dataOk') { r.dataOk = x.checked; refaz(); return; }
+      if (k === 'rede' && x.value === '__novo__') { const n = (prompt('Nome da rede (como aparece no relatório):', r.lojaRel || '') || '').trim(); if (n) { r.rede = chaveRede(n) || degNorm(n); r.redeNome = n; r.redeManual = true; r.loja = ''; r.lojaManual = false; } refaz(); return; }
+      if (k === 'loja' && x.value === '__novo__') { const n = (prompt('Nome da loja (ela será ligada ao Book quando ele trouxer essa loja):', r.lojaRel || '') || '').trim(); if (n) { r.loja = n; r.lojaManual = true; } refaz(); return; }
+      if (k === 'rede') { r.redeManual = false; r.lojaManual = false; }
       if (k === 'rede') { const p = pool.get(x.value); r.rede = p ? p.k : ''; r.redeNome = p ? p.nome : ''; r.loja = p && p.listaLojas.length === 1 ? p.listaLojas[0] : ''; refaz(); return; }
-      if (k === 'loja') { r.loja = x.value; refaz(); return; }
+      if (k === 'loja') { r.loja = x.value; r.lojaManual = false; refaz(); return; }
       if (k === 'prod') { const cs = new Set(degCods(r)); if (x.checked) cs.add(x.dataset.cod); else cs.delete(x.dataset.cod); degProdAberto = +x.dataset.dg; degAplicaProduto(r, [...cs]); const f = degFardosDe(r.qtd, degUnSku(r)); if (r.fardosConv) { r.fardos = f.v; } refaz(); return; }
       if (k === 'fardos') { r.fardos = x.value === '' ? null : +x.value; r.fardosConv = false; refaz(); return; }
       if (k === 'packs' || k === 'avul') { r[k] = x.value === '' ? null : +x.value; refaz(); return; }
@@ -4722,6 +4743,7 @@
   }
   function renderizarDegustacoes() {
     const c = document.getElementById('tela-degustacoes'); if (!c) return;
+    degReconciliar();
     const lista = degFiltrada(), t = degTot(lista), mesRot = rotuloMes(Estado.config.mesAtivo), total = degLista().length;
     const cx = (rot, val, sub) => `<div style="flex:1;min-width:110px;padding:12px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid var(--cor-destaque);"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:clamp(18px,2vw,26px);font-weight:900;color:var(--cor-primaria);white-space:nowrap;">${val}</div><div style="font-size:11px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
     const bt = (id, txt, on) => `<button type="button" id="${id}" style="padding:8px 14px;border-radius:6px;border:1px solid ${on ? 'var(--cor-primaria)' : '#CFD4D9'};background:${on ? 'var(--cor-primaria)' : '#fff'};color:${on ? 'var(--cor-destaque)' : '#333'};font-weight:bold;cursor:pointer;">${txt}</button>`;
