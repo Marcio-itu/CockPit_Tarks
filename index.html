@@ -5209,7 +5209,7 @@
     const G = grpDoMes(M, mes); if (!G || !G.temGrupo) return null;
     const v = grpModo === 'books' ? G.bTotal : grpModo === 'grupo' ? G.gTotal : G.bTotal + G.gTotal;
     const rot = grpModo === 'books' ? 'Visitas Books' : grpModo === 'grupo' ? 'Visitas Grupo' : 'Visitas somadas';
-    return { v, rot, p: G.meta ? v / G.meta * 100 : null, sub: `${G.bTotal.toLocaleString('pt-BR')} Books + ${G.gTotal.toLocaleString('pt-BR')} Grupo${G.dupTotal ? ' (' + G.dupTotal + ' em comum, contadas uma vez)' : ''}${G.meta ? '; meta da planilha: ' + G.meta.toLocaleString('pt-BR') : ''}` };
+    return { v, rot, p: G.meta ? v / G.meta * 100 : null, sub: `${G.bTotal.toLocaleString('pt-BR')} Books + ${G.gTotal.toLocaleString('pt-BR')} Grupo${G.dupTotal ? ' (' + G.dupTotal + ' em comum, contadas uma vez)' : ''}${G.meta ? '; meta da planilha: ' + G.meta.toLocaleString('pt-BR') : '; sem meta: anexe a planilha de novo em Admin para o ponteiro calcular o percentual'}` };
   }
 
   // Quadro do Dashboard: visitas por rede e por loja, Books + Grupo.
