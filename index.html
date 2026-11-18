@@ -334,6 +334,7 @@
       if (dados.contestacao) Estado.contestacao = dados.contestacao;
       if (dados.sistematica) Estado.sistematica = dados.sistematica;
       if (dados.degustacoes) Estado.degustacoes = dados.degustacoes;
+      if (dados.grupo) Estado.grupo = dados.grupo;
       migrarImagensLegadas(Estado.meses).then(mudou => { if (mudou) salvarEstado(); }).catch(() => {});
     } catch (e) {
       console.error("Erro ao carregar estado:", e);
@@ -4100,6 +4101,7 @@
         </div>
       </div>
       <div class="card"><h2>Visitas por dia</h2>${htmlLinhaDoTempo(M)}</div>
+      ${typeof grpCardDash === 'function' ? grpCardDash(M, mes) : ''}
       <div class="card"><h2>Por rede</h2><p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;margin-bottom:8px;">Valor = visitas comprovadas por foto × preço da visita da rede no Fechamento${(M.mesesPreco || []).length ? ' (' + M.mesesPreco.map(rotuloMes).join(', ') + ')' : ''}. É o que as fotos sustentam, não o valor cobrado pela Pacto. * rede com mais de um preço no Fechamento (média pelas visitas declaradas).</p>${tabela(['Rede', 'Visitas', '% das visitas', 'Preço da visita', 'Valor (R$)', 'Lojas', 'Promotores', 'Dias', 'Fotos', 'Fotos por visita'], lRede, 'Sem visitas.')}</div>
       <div class="card"><h2>Por promotor</h2>${tabela(['Promotor', 'Visitas', 'Dias', 'Visitas por dia', 'Maior dia (visitas)', 'Lojas', 'Fotos'], lProm, 'Sem visitas.')}</div>
       <div class="card"><details><summary style="cursor:pointer;font-weight:bold;">Por loja (${nfD(M.porLoja.length)} lojas)</summary><div style="margin-top:10px;">${tabela(['Rede', 'Loja', 'Visitas', 'Dias', 'Promotores', 'Fotos'], lLoja, 'Sem lojas.')}${M.porLoja.length > 600 ? '<p style="font-size:11px;">Mostrando as 600 lojas com mais visitas.</p>' : ''}</div></details></div>
@@ -4115,6 +4117,7 @@
         <p style="font-size:13px;margin-bottom:8px;">Fotos de <strong>${M.primeiro ? brDia(M.primeiro) : '-'}</strong> a <strong>${M.ultimo ? brDia(M.ultimo) : '-'}</strong>. Dias sem foto: <strong>${nfD(M.diasSemFoto.length)}</strong>${M.diasSemFoto.length ? ' (' + M.diasSemFoto.map(brDia).join(', ') + ')' : ''}.</p>
         ${tabela(['Book (arquivo)', 'Fotos', 'Datas das fotos'], lArq, 'Sem arquivos.')}
       </div>`;
+    if (typeof grpLigarDash === 'function') grpLigarDash(container);
     const bp = document.getElementById('btn-dash-pdf'); if (bp) bp.addEventListener('click', baixarDashboardPDF);
   }
 
@@ -4283,16 +4286,25 @@
       let g = dg.get(r.rede); if (!g) dg.set(r.rede, g = { nome: r.redeNome || r.rede, dias: new Map() });
       g.dias.set(r.data, (g.dias.get(r.data) || 0) + 1);
     });
+    // visitas via Grupo (planilha da Pacto), por rede e loja
+    const gr = new Map();
+    if (Estado.grupo && Array.isArray(Estado.grupo.visitas)) Estado.grupo.visitas.forEach(v => {
+      if (v.d.slice(0, 7) !== mes) return;
+      let a = gr.get(v.r); if (!a) gr.set(v.r, a = { nome: v.rn, lojas: new Map() });
+      let l = a.lojas.get(v.l); if (!l) a.lojas.set(v.l, l = new Set()); l.add(v.d);
+    });
+    const gLojasDe = rk => { const a = gr.get(rk); return a ? Array.from(a.lojas.entries()).map(([nome, dias]) => ({ nome, dias })).sort((x, y) => y.dias.size - x.dias.size || x.nome.localeCompare(y.nome, 'pt-BR', { numeric: true })) : []; };
     const mapa = new Map();
     D.redes.forEach(r => {
       const lojas = Array.from(r.lojas.values()).map(l => {
         const vis = dias.filter(d => l.dias.has(d));
         return { l, vis, fotos: vis.reduce((t, d) => t + l.dias.get(d).n, 0), exec: vis.reduce((t, d) => t + l.dias.get(d).proms.size, 0) };
       }).filter(x => x.vis.length), g = dg.get(r.rk);
-      mapa.set(r.rk, { r, lojas, degDias: g ? g.dias : new Map() });
+      mapa.set(r.rk, { r, lojas, degDias: g ? g.dias : new Map(), gLojas: gLojasDe(r.rk) });
     });
-    dg.forEach((g, rk) => { if (!mapa.has(rk)) mapa.set(rk, { r: { rk, nome: g.nome, lojas: new Map() }, lojas: [], degDias: g.dias }); });
-    const redes = Array.from(mapa.values()).filter(x => x.lojas.length || x.degDias.size).map(x => Object.assign(x, { nVis: x.lojas.length })).sort((a, b) => a.r.nome.localeCompare(b.r.nome));
+    dg.forEach((g, rk) => { if (!mapa.has(rk)) mapa.set(rk, { r: { rk, nome: g.nome, lojas: new Map() }, lojas: [], degDias: g.dias, gLojas: gLojasDe(rk) }); });
+    gr.forEach((a, rk) => { if (!mapa.has(rk)) mapa.set(rk, { r: { rk, nome: a.nome, lojas: new Map() }, lojas: [], degDias: new Map(), gLojas: gLojasDe(rk) }); });
+    const redes = Array.from(mapa.values()).filter(x => x.lojas.length || x.degDias.size || x.gLojas.length).map(x => Object.assign(x, { nVis: x.lojas.length })).sort((a, b) => a.r.nome.localeCompare(b.r.nome));
     return { dias, fer, redes };
   }
 
@@ -4334,11 +4346,12 @@
       return `<tr><td class="sv-n"><b>${esc(l.nome)}</b></td>${cel}<td class="sv-t">${vis.length}</td></tr>`;
     }).join('');
     const degLinha = sel && sel.degDias.size ? `<tr><td class="sv-n" style="color:#1F618D;"><b>Degustação (rede toda)</b></td>${dias.map(d => `<td class="sv ${sel.degDias.has(d) ? 'sv-deg' : (sistDow(d) === 6 ? 'sv-dom' : '')}" title="${sel.degDias.has(d) ? esc('Degustação em ' + rotuloData(d) + ' (' + sel.degDias.get(d) + ' ação/ões)') : ''}">${sel.degDias.has(d) ? 'D' : ''}</td>`).join('')}<td class="sv-t" style="color:#2471A3;">${sel.degDias.size}</td></tr>` : '';
+    const gLinhas = sel ? sel.gLojas.map(gl => `<tr><td class="sv-n" style="color:#B9770E;"><b>${esc(gl.nome)}</b> <small>(Grupo)</small></td>${dias.map(d => `<td class="sv ${gl.dias.has(d) ? 'sv-grp' : (sistDow(d) === 6 ? 'sv-dom' : '')}" title="${gl.dias.has(d) ? esc('Via Grupo (WhatsApp) em ' + rotuloData(d)) : ''}">${gl.dias.has(d) ? 'G' : ''}</td>`).join('')}<td class="sv-t" style="color:#B9770E;">${gl.dias.size}</td></tr>`).join('') : '';
     const cab = dias.map(d => { const w = sistDow(d); return `<th class="${w === 6 ? 'sv-dom' : ''}">${Number(d.slice(8))}<br><small>${SIST_DOW[w]}</small></th>`; }).join('');
     const caixa = (rot, val, cor, sub) => `<div style="flex:1;min-width:110px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:${cor};">${val}</div><div style="font-size:10px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
     container.innerHTML = `<style>
         .sv{border:1px solid #E4E6E5;height:28px;min-width:26px;text-align:center;font-size:11px;padding:0}
-        .sv-deg{background:#2980B9;color:#fff;font-weight:bold}.sv-dom{background:#EDEDED}.sv-ok{background:#27AE60;color:#fff;font-weight:bold}
+        .sv-deg{background:#2980B9;color:#fff;font-weight:bold}.sv-grp{background:#E67E22;color:#fff;font-weight:bold}.sv-dom{background:#EDEDED}.sv-ok{background:#27AE60;color:#fff;font-weight:bold}
         .sv-fora{background:#fff;color:#D35400;font-weight:bold;box-shadow:inset 0 0 0 2px #E67E22}.sv-fer{background:#D9DEE2;color:#555;font-weight:bold}
         #tela-sistematica table{border-collapse:collapse;font-size:11px}#tela-sistematica th{background:#F0F2F1;padding:3px 0;font-weight:normal;color:#555;min-width:26px;text-align:center}
         #tela-sistematica small{font-size:9px;color:#777}.sv-n{padding:3px 8px;text-align:left;white-space:nowrap;min-width:200px;font-size:12px;border:1px solid #E4E6E5;background:#fff;position:sticky;left:0}
@@ -4359,10 +4372,12 @@
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
           ${caixa('Lojas visitadas', nfD(lojas.filter(z => z.vis.length).length), '#0A3D2E', 'na rede, no mês')}${caixa('Visitas', nfD(totExec), '#27AE60', 'promotor × loja × dia')}${caixa('% do total', pct(totExec), '#E67E22', nfD(totExec) + ' de ' + nfD(execMes) + ' do mês')}${caixa('Valor (R$)', valorRede(sel) != null ? moedaK(valorRede(sel)) : 'sem preço', '#8E44AD', valorRede(sel) != null ? pctValor(valorRede(sel)) + ' do valor · ' + moedaBR(precos[sel.r.rk].preco) + '/visita' : 'rede fora do Fechamento')}${caixa('Promotores', nfD(proms.size), '#7F8C8D', 'nessa rede')}${caixa('Fotos', nfD(totFotos), '#1E8449', 'nas visitas')}
         </div>
-        <div class="sv-leg"><span><i class="sv-q" style="background:#27AE60"></i>✓ dia com foto da loja</span><span><i class="sv-q" style="background:#2980B9"></i>D dia de degustação na rede</span><span><i class="sv-q" style="box-shadow:inset 0 0 0 2px #E67E22;background:#fff"></i>✓ com foto em feriado nacional</span><span><i class="sv-q" style="background:#D9DEE2"></i>F feriado nacional</span><span><i class="sv-q" style="background:#EDEDED"></i>domingo</span></div>
-        <div style="overflow-x:auto;"><table><thead><tr><th style="text-align:left;padding-left:8px;position:sticky;left:0;background:#F0F2F1;">Loja</th>${cab}<th>Dias</th></tr></thead><tbody>${degLinha}${linhas}</tbody></table></div>
+        ${sel && sel.gLojas.length ? grpToggle('sist') : ''}
+        <div class="sv-leg"><span><i class="sv-q" style="background:#27AE60"></i>✓ dia com foto da loja</span><span><i class="sv-q" style="background:#2980B9"></i>D dia de degustação na rede</span><span><i class="sv-q" style="background:#E67E22"></i>G visita via Grupo (WhatsApp, a conferir)</span><span><i class="sv-q" style="box-shadow:inset 0 0 0 2px #E67E22;background:#fff"></i>✓ com foto em feriado nacional</span><span><i class="sv-q" style="background:#D9DEE2"></i>F feriado nacional</span><span><i class="sv-q" style="background:#EDEDED"></i>domingo</span></div>
+        <div style="overflow-x:auto;"><table><thead><tr><th style="text-align:left;padding-left:8px;position:sticky;left:0;background:#F0F2F1;">Loja</th>${cab}<th>Dias</th></tr></thead><tbody>${degLinha}${grpModo === 'grupo' ? '' : linhas}${grpModo === 'books' ? '' : gLinhas}</tbody></table></div>
         <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:10px;">Valor = visitas comprovadas por foto × preço da visita da rede no Fechamento da Pacto; é o que as fotos sustentam, não o valor cobrado. Passe o mouse sobre um dia verde para ver quantas fotos e qual promotor. Dia sem verde significa que não há foto nos Books importados, o que também pode ser um Book que ainda não chegou.</p>
       </div>`;
+    grpLigarToggle(container, renderizarSistematica);
     document.getElementById('sv-rede').addEventListener('change', e => { sistRede = e.target.value; renderizarSistematica(); });
     document.getElementById('sv-mes').addEventListener('change', e => { sistMes = e.target.value; renderizarSistematica(); });
     document.getElementById('sv-pdf-rede').addEventListener('click', () => baixarSistematicaPDF(false));
@@ -4418,7 +4433,22 @@
         doc.rect(MG, y, WL, RH, 'S'); doc.rect(MG + WL + dias.length * WD, y, WT, RH, 'S');
         y += RH;
       }
-      x.lojas.slice().sort((a, b) => b.vis.length - a.vis.length || a.l.nome.localeCompare(b.l.nome)).forEach(({ l, vis: vs }) => {
+      (grpModo === 'books' ? [] : x.gLojas).forEach(gl => {
+        if (y + RH > FUNDO) { doc.addPage(); y = TOPO; cabecalhoTabela(); }
+        doc.setDrawColor(228, 230, 229); doc.setLineWidth(0.1);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(185, 119, 14); doc.text(cortar(gl.nome + ' (Grupo)', WL - 3), MG + 1.5, y + 3.6);
+        dias.forEach((d, i) => {
+          const cx = MG + WL + i * WD;
+          if (gl.dias.has(d)) { doc.setFillColor(230, 126, 34); doc.rect(cx, y, WD, RH, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(255, 255, 255); doc.text('G', cx + WD / 2, y + 3.4, { align: 'center' }); }
+          else if (sistDow(d) === 6) { doc.setFillColor(237, 237, 237); doc.rect(cx, y, WD, RH, 'F'); }
+          doc.rect(cx, y, WD, RH, 'S');
+        });
+        doc.setFillColor(248, 249, 250); doc.rect(MG + WL + dias.length * WD, y, WT, RH, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(185, 119, 14); doc.text(String(gl.dias.size), MG + WL + dias.length * WD + WT / 2, y + 3.6, { align: 'center' });
+        doc.rect(MG, y, WL, RH, 'S'); doc.rect(MG + WL + dias.length * WD, y, WT, RH, 'S');
+        y += RH;
+      });
+      (grpModo === 'grupo' ? [] : x.lojas).slice().sort((a, b) => b.vis.length - a.vis.length || a.l.nome.localeCompare(b.l.nome)).forEach(({ l, vis: vs }) => {
         if (y + RH > FUNDO) { doc.addPage(); y = TOPO; cabecalhoTabela(); }
         doc.setDrawColor(228, 230, 229); doc.setLineWidth(0.1);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(30, 30, 30); doc.text(cortar(l.nome, WL - 3), MG + 1.5, y + 3.6);
@@ -4760,6 +4790,8 @@
   function renderizarAdmin() {
     renderizarAdminBase();
     const c = document.getElementById('tela-admin'); if (!c) return;
+    let eg = document.getElementById('grp-admin'); if (!eg) { eg = document.createElement('div'); eg.id = 'grp-admin'; c.appendChild(eg); }
+    if (typeof grpAdminCard === 'function') grpAdminCard(eg);
     let el = document.getElementById('deg-admin'); if (!el) { el = document.createElement('div'); el.id = 'deg-admin'; c.appendChild(el); }
     degAdminCard(el);
   }
@@ -4772,7 +4804,6 @@
       ${degPend.some(degFaltaDado) ? '<button type="button" id="dg-est" style="margin-bottom:8px;padding:8px 12px;border-radius:6px;border:1px solid #2F7F6F;background:#fff;color:#2F7F6F;font-weight:bold;cursor:pointer;">Completar dados faltantes (regra de 3)</button>' : ''}
       <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th>Dia da ação</th><th>Rede (Books)</th><th>Produto (linha)</th><th>Fardos utilizados</th><th>Abord.</th><th>Aceitaram</th><th>Vendas (unidades → fardos)</th><th></th></tr></thead><tbody>
       ${degPend.map((r, i) => {
-        const p = r.rede ? pool.get(r.rede) : null, lojas = p ? p.listaLojas : [];
         const dup = todas.some(x => degChave(x) === degChave(r));
         const selRede = `<select data-dg="${i}" data-campo="rede" style="width:140px;padding:4px;font-size:12px;${r.rede ? '' : 'background:#FFF6D6;'}"><option value="">${r.rede ? '(sem rede)' : '(não encontrada: ' + esc(r.lojaRel || '-') + ')'}</option>${redes.map(x => `<option value="${esc(x.k)}" ${x.k === r.rede ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}${r.rede && !redes.some(x => x.k === r.rede) ? `<option value="${esc(r.rede)}" selected>✏ ${esc(r.redeNome)}</option>` : ''}<option value="__novo__">✏ Outra rede (digitar)…</option></select>`;
         const selProd = prodBox(r, i) + `${r.produtoRel ? `<div style="font-size:9px;color:var(--cor-texto-secundario);">relatório: ${esc(r.produtoRel)}</div>` : ''}`;
@@ -5051,6 +5082,139 @@
   }
 </script>
 <!-- ═══ FIM SUBBLOCO 14 ═══ -->
+<!-- ═══ SUBBLOCO 15 — VISITAS VIA GRUPO (WHATSAPP) ═══ -->
+<script>
+  // ═══════════════════════════════════════════════════════════════
+  // VISITAS VIA GRUPO (WhatsApp) — planilha mensal da Pacto (uma aba por rede, uma linha por loja, um dia por coluna).
+  // "Sistema" = a visita está no Book de comprovação (já tratada pelos Books). "Grupo" = a foto está no WhatsApp: entra aqui.
+  // Qualquer outra marca (Giro, Ruptura, Zerado...) fica "a conferir" e não conta como visita.
+  // ═══════════════════════════════════════════════════════════════
+  let grpModo = 'tudo'; // 'tudo' | 'books' | 'grupo'
+  const grpNorm = v => String(v == null ? '' : v).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  function grpBase() {
+    if (!Estado.grupo || typeof Estado.grupo !== 'object' || Array.isArray(Estado.grupo)) Estado.grupo = {};
+    const g = Estado.grupo;
+    if (!Array.isArray(g.arquivos)) g.arquivos = [];
+    if (!Array.isArray(g.visitas)) g.visitas = [];
+    if (!Array.isArray(g.conferir)) g.conferir = [];
+    return g;
+  }
+  function grpClasse(v) { const t = grpNorm(v); return t === 'grupo' ? 'grupo' : t === 'sistema' ? 'sistema' : 'conferir'; }
+  function grpChaveAba(nome) { const k = chaveRede(nome); return k === 'REDEX' ? 'X' : k; }
+  const grpIso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const grpBR = iso => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4) : '';
+
+  // Lê o Excel: devolve visitas de grupo, marcas a conferir e a contagem de "Sistema".
+  async function grpLerArquivo(file) {
+    const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
+    const out = { visitas: [], conferir: [], sistema: 0, abas: [], ignoradas: [] }, vistos = new Set();
+    wb.SheetNames.forEach(n => {
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, cellDates: true, defval: '' });
+      let hi = -1; for (let i = 0; i < Math.min(rows.length, 6); i++) if ((rows[i] || []).filter(v => v instanceof Date).length >= 7) { hi = i; break; }
+      if (hi < 0) { out.ignoradas.push(n.trim()); return; }
+      const cab = rows[hi + 1] || [], cl0 = cab.findIndex(v => /nome\s*da\s*loja/i.test(String(v))), cl = cl0 < 0 ? 0 : cl0;
+      const dcols = []; (rows[hi] || []).forEach((v, j) => { if (v instanceof Date) dcols.push([j, grpIso(v)]); });
+      const rn = n.replace(/\s+/g, ' ').trim(), rk = grpChaveAba(rn); let g = 0, s = 0, c = 0;
+      rows.slice(hi + 2).forEach(l => {
+        const loja = String(l[cl] == null ? '' : l[cl]).replace(/\s+/g, ' ').trim(); if (!loja) return;
+        dcols.forEach(([j, d]) => {
+          const v = l[j]; if (v === '' || v == null) return;
+          const cls = grpClasse(v), k = rk + '|' + loja + '|' + d;
+          if (cls === 'sistema') { out.sistema++; s++; return; }
+          if (vistos.has(k + cls)) return; vistos.add(k + cls);
+          if (cls === 'grupo') { out.visitas.push({ r: rk, rn, l: loja, d }); g++; }
+          else { out.conferir.push({ r: rk, rn, l: loja, d, t: String(v).replace(/\s+/g, ' ').trim() }); c++; }
+        });
+      });
+      out.abas.push({ rn, g, s, c });
+    });
+    return out;
+  }
+
+  // Grava no Estado: o mês que vier de novo no arquivo substitui o que havia daquele mês.
+  function grpImportar(nome, res) {
+    const g = grpBase(), meses = new Set(res.visitas.concat(res.conferir).map(x => x.d.slice(0, 7)));
+    const dts = res.visitas.concat(res.conferir).map(x => x.d).sort();
+    g.visitas = g.visitas.filter(x => !meses.has(x.d.slice(0, 7))).concat(res.visitas);
+    g.conferir = g.conferir.filter(x => !meses.has(x.d.slice(0, 7))).concat(res.conferir);
+    g.arquivos = g.arquivos.filter(a => !(a.meses || []).every(m => meses.has(m)));
+    g.arquivos.push({ nome, importadoEm: new Date().toISOString(), meses: Array.from(meses).sort(), nGrupo: res.visitas.length, nSistema: res.sistema, nConferir: res.conferir.length, ini: dts[0] || '', fim: dts[dts.length - 1] || '' });
+    if (typeof salvarEstado === 'function') salvarEstado();
+  }
+
+  // Resumo do mês por rede (vis = período escolhido no calendário, se houver).
+  function grpResumo(mes, vis) {
+    const g = grpBase(), okD = d => d.slice(0, 7) === mes && (!vis || (d >= vis.inicio && d <= vis.fim));
+    const vs = g.visitas.filter(x => okD(x.d)), cf = g.conferir.filter(x => okD(x.d)), por = new Map();
+    vs.forEach(x => { let a = por.get(x.r); if (!a) por.set(x.r, a = { k: x.r, nome: x.rn, n: 0, lojas: new Set(), dias: new Set() }); a.n++; a.lojas.add(x.l); a.dias.add(x.d); });
+    const arq = g.arquivos.filter(a => (a.meses || []).includes(mes)).sort((a, b) => (b.importadoEm || '').localeCompare(a.importadoEm || ''))[0] || null;
+    const tipos = {}; cf.forEach(x => { const t = grpNorm(x.t); tipos[t] = (tipos[t] || 0) + 1; });
+    return { total: vs.length, nConferir: cf.length, tipos, arquivo: arq ? arq.nome : '', importadoEm: arq ? arq.importadoEm : '',
+      porRede: Array.from(por.values()).map(a => ({ k: a.k, nome: a.nome, n: a.n, lojas: a.lojas.size, dias: a.dias.size })).sort((a, b) => b.n - a.n || a.nome.localeCompare(b.nome)) };
+  }
+
+  const grpToggle = (pref) => { const b = (id, t, on) => `<button type="button" data-grp="${id}" style="padding:7px 12px;border-radius:6px;border:1px solid ${on ? 'var(--cor-primaria)' : '#CFD4D9'};background:${on ? 'var(--cor-primaria)' : '#fff'};color:${on ? 'var(--cor-destaque)' : '#333'};font-weight:bold;cursor:pointer;font-size:12px;">${t}</button>`; return `<div class="no-pdf" data-grp-pref="${pref}" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px;">${b('tudo', 'Consolidado', grpModo === 'tudo')}${b('books', 'Só Books (comprovadas por foto)', grpModo === 'books')}${b('grupo', 'Só Grupo (WhatsApp)', grpModo === 'grupo')}</div>`; };
+  function grpLigarToggle(raiz, refaz) { raiz.querySelectorAll('[data-grp]').forEach(b => b.onclick = () => { grpModo = b.dataset.grp; refaz(); }); }
+
+  // Quadro do Dashboard: visitas por rede, Books + Grupo.
+  function grpCardDash(M, mes) {
+    const pub = typeof Modo !== 'undefined' && Modo === 'publicado', G = pub ? (M && M.grupo) : grpResumo(mes, M && M.vis);
+    if (!G || (!G.total && !G.nConferir && pub)) return '';
+    const nf = n => (n || 0).toLocaleString('pt-BR');
+    const mapa = new Map();
+    (M.porRede || []).forEach(a => mapa.set(a.chave, { k: a.chave, nome: a.nome, b: a.exec, g: 0, lj: 0 }));
+    G.porRede.forEach(a => { const e = mapa.get(a.k) || mapa.set(a.k, { k: a.k, nome: a.nome, b: 0, g: 0, lj: 0 }).get(a.k); e.g = a.n; e.lj = a.lojas; });
+    const lista = Array.from(mapa.values()).filter(e => grpModo === 'books' ? e.b : grpModo === 'grupo' ? e.g : (e.b || e.g)).sort((a, b) => (grpModo === 'books' ? b.b - a.b : grpModo === 'grupo' ? b.g - a.g : (b.b + b.g) - (a.b + a.g)) || a.nome.localeCompare(b.nome));
+    const tB = lista.reduce((t, e) => t + e.b, 0), tG = lista.reduce((t, e) => t + e.g, 0);
+    const caixa = (rot, val, sub, cor) => `<div style="flex:1;min-width:130px;padding:12px 8px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:clamp(20px,2.4vw,28px);font-weight:900;color:var(--cor-primaria);">${val}</div><div style="font-size:11px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
+    const th = (t, l) => `<th style="padding:6px;${l ? 'text-align:left;' : ''}">${t}</th>`, td = (t, l, b) => `<td style="padding:6px;${l ? '' : 'text-align:center;'}${b ? 'font-weight:bold;' : ''}">${t}</td>`;
+    const pc = (a, b) => b ? (a / b * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : '';
+    const cab = grpModo === 'tudo' ? ['Rede', 'Books (foto)', 'Grupo (WhatsApp)', 'Total', '% via Grupo'] : grpModo === 'books' ? ['Rede', 'Visitas com foto nos Books'] : ['Rede', 'Visitas via Grupo', 'Lojas'];
+    const lin = lista.map(e => '<tr>' + (grpModo === 'tudo' ? td(esc(e.nome), 1) + td(nf(e.b)) + td(nf(e.g)) + td(nf(e.b + e.g), 0, 1) + td(pc(e.g, e.b + e.g)) : grpModo === 'books' ? td(esc(e.nome), 1) + td(nf(e.b), 0, 1) : td(esc(e.nome), 1) + td(nf(e.g), 0, 1) + td(nf(e.lj))) + '</tr>');
+    const tot = '<tr style="border-top:2px solid #DDD;font-weight:bold;">' + (grpModo === 'tudo' ? td('Total', 1) + td(nf(tB)) + td(nf(tG)) + td(nf(tB + tG)) + td(pc(tG, tB + tG)) : grpModo === 'books' ? td('Total', 1) + td(nf(tB)) : td('Total', 1) + td(nf(tG)) + td(nf(lista.reduce((t, e) => t + e.lj, 0)))) + '</tr>';
+    const tipos = Object.keys(G.tipos || {}).sort((a, b) => G.tipos[b] - G.tipos[a]).map(t => esc(t) + ' (' + G.tipos[t] + ')').join(', ');
+    const semDados = !pub && !G.total && !G.nConferir;
+    return `<div class="card" id="grp-card"><h2>Visitas por rede: Books + Grupo</h2>
+      <p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;">Books = visitas comprovadas por foto. Grupo = visitas que a Pacto marcou na planilha como feitas e cuja foto está no WhatsApp; entram como <strong>informadas</strong> e não são comprovação.${G.arquivo ? ' Planilha: <strong>' + esc(G.arquivo) + '</strong>.' : ''}</p>
+      ${semDados ? '<p style="font-size:13px;margin-top:8px;">Nenhuma planilha de visitas via Grupo importada para este mês. Anexe em <strong>Admin</strong>, em <em>Visitas via Grupo</em>.</p>' : `${grpToggle('dash')}
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">${grpModo === 'grupo' ? '' : caixa('Books', nf(tB), 'comprovadas por foto', '#0A3D2E')}${grpModo === 'books' ? '' : caixa('Grupo', nf(tG), 'foto no WhatsApp', '#E67E22')}${grpModo === 'tudo' ? caixa('Consolidado', nf(tB + tG), pc(tG, tB + tG) + ' via Grupo', 'var(--cor-destaque)') : ''}</div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;">${cab.map((c, i) => th(c, i === 0)).join('')}</tr></thead><tbody>${lin.join('')}${lin.length ? tot : ''}</tbody></table></div>
+      ${G.nConferir ? `<p style="font-size:12px;color:#B9770E;margin-top:8px;">${nf(G.nConferir)} marca(s) da planilha ficaram <strong>a conferir</strong> e não entram na conta: ${tipos}. Veja a lista em Admin.</p>` : ''}`}
+    </div>`;
+  }
+  function grpLigarDash(container) { if (container.querySelector('#grp-card')) grpLigarToggle(container.querySelector('#grp-card'), () => { if (typeof renderizarDashboard === 'function') renderizarDashboard(); }); }
+
+  // Admin: anexar a planilha, ver o que já foi lido e as marcas a conferir.
+  let grpMsg = '';
+  function grpAdminCard(el) {
+    const g = grpBase(), fmt = iso => iso ? new Date(iso).toLocaleDateString('pt-BR') : '';
+    const arqs = g.arquivos.slice().sort((a, b) => (b.importadoEm || '').localeCompare(a.importadoEm || ''));
+    const cf = g.conferir.slice().sort((a, b) => a.d.localeCompare(b.d) || a.rn.localeCompare(b.rn));
+    el.innerHTML = `<div class="card"><h2>Visitas via Grupo (WhatsApp)</h2>
+      <p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;margin-bottom:10px;">Anexe a planilha mensal de visitas da Pacto (Excel, uma aba por rede). Célula <strong>Sistema</strong> = visita já nos Books; célula <strong>Grupo</strong> = visita com foto no WhatsApp, que passa a entrar no Dashboard e na Sistemática. Outras marcas (Giro, Ruptura, Zerado...) ficam a conferir. Anexar de novo o mesmo mês substitui a versão anterior.</p>
+      <label style="display:inline-block;padding:10px 16px;border-radius:6px;background:var(--cor-primaria);color:var(--cor-destaque);font-weight:bold;cursor:pointer;">📎 Anexar planilha de visitas (Excel)<input id="grp-arq" type="file" accept=".xlsx,.xls" style="display:none;"></label>
+      <div id="grp-msg" style="margin-top:8px;font-size:13px;font-weight:bold;">${esc(grpMsg)}</div>
+      ${arqs.length ? `<div style="overflow-x:auto;margin-top:10px;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="text-align:left;padding:5px;">Arquivo</th><th>Meses</th><th>Datas</th><th>Grupo</th><th>Sistema</th><th>A conferir</th><th>Anexado em</th><th></th></tr></thead><tbody>${arqs.map((a, i) => `<tr style="border-top:1px solid #ECEFF1;text-align:center;"><td style="text-align:left;padding:5px;">${esc(a.nome)}</td><td>${esc((a.meses || []).map(m => rotuloMes(m)).join(', '))}</td><td>${grpBR(a.ini).slice(0, 5)} a ${grpBR(a.fim).slice(0, 5)}</td><td><b>${a.nGrupo}</b></td><td>${a.nSistema}</td><td>${a.nConferir}</td><td>${fmt(a.importadoEm)}</td><td><button type="button" data-grp-rem="${i}" style="border:none;background:none;color:#C0392B;cursor:pointer;">remover</button></td></tr>`).join('')}</tbody></table></div>` : ''}
+      ${cf.length ? `<details style="margin-top:10px;"><summary style="cursor:pointer;font-weight:bold;font-size:13px;">${cf.length} marca(s) a conferir</summary><div style="overflow-x:auto;margin-top:6px;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="text-align:left;padding:4px;">Rede</th><th style="text-align:left;">Loja</th><th>Dia</th><th style="text-align:left;">Marca na planilha</th></tr></thead><tbody>${cf.slice(0, 400).map(x => `<tr style="border-top:1px solid #ECEFF1;"><td style="padding:4px;">${esc(x.rn)}</td><td>${esc(x.l)}</td><td style="text-align:center;">${grpBR(x.d).slice(0, 5)}</td><td>${esc(x.t)}</td></tr>`).join('')}</tbody></table></div></details>` : ''}
+    </div>`;
+    const inp = el.querySelector('#grp-arq');
+    inp.onchange = async () => {
+      const f = inp.files[0]; if (!f) return; const m = el.querySelector('#grp-msg'); m.textContent = 'Lendo ' + f.name + '...';
+      try {
+        const r = await grpLerArquivo(f);
+        if (!r.visitas.length && !r.conferir.length && !r.sistema) { grpMsg = 'Não encontrei visitas nesta planilha (esperava abas com as datas na primeira linha e as marcas Sistema/Grupo).'; }
+        else { grpImportar(f.name, r); grpMsg = r.visitas.length + ' visita(s) via Grupo; ' + r.sistema + ' marcada(s) Sistema (já nos Books); ' + r.conferir.length + ' a conferir. ' + r.abas.length + ' rede(s) lidas' + (r.ignoradas.length ? ' (abas ignoradas: ' + r.ignoradas.join(', ') + ')' : '') + '.'; }
+      } catch (e) { grpMsg = 'Não consegui ler o arquivo: ' + (e.message || e); }
+      grpAdminCard(el);
+    };
+    el.querySelectorAll('[data-grp-rem]').forEach(b => b.onclick = () => {
+      const a = arqs[+b.dataset.grpRem]; if (!a) return; const ms = new Set(a.meses || []), gg = grpBase();
+      gg.visitas = gg.visitas.filter(x => !ms.has(x.d.slice(0, 7))); gg.conferir = gg.conferir.filter(x => !ms.has(x.d.slice(0, 7))); gg.arquivos = gg.arquivos.filter(x => x !== a);
+      grpMsg = 'Planilha removida.'; if (typeof salvarEstado === 'function') salvarEstado(); grpAdminCard(el);
+    });
+  }
+</script>
+<!-- ═══ FIM SUBBLOCO 15 ═══ -->
 <!-- ═══ SUBBLOCO 09 — PUBLICAÇÃO DOS RESULTADOS + MODO LEITURA ═══ -->
 <script>
   // Os resultados publicados ficam em resultados/indice.json e resultados/AAAA-MM.json, na raiz do repositório
@@ -5227,7 +5391,7 @@
   function montarSnapshotMes(mes) {
     const m = Estado.meses[mes];
     const a = m.auditoria;
-    const livros = (m.fotos || []).length ? Object.assign({}, metricasBooks(mes, true), { vis: null, execs: undefined }) : null;
+    const livros = (m.fotos || []).length ? Object.assign({}, metricasBooks(mes, true), { vis: null, execs: undefined, grupo: (typeof grpResumo === 'function' ? grpResumo(mes, null) : null) }) : null;
     if (!a) return { versao: 2, mes, geradoEm: new Date().toISOString(), periodoAuditado: null, books: livros };
     return {
       versao: 1, mes, geradoEm: new Date().toISOString(), books: livros,
