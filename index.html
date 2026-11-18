@@ -4607,10 +4607,10 @@
   // ── Excel: planilha em tabela (cabeçalho com Abordagens e Aceitaram) ──
   function degParseTabela(rows, anoBase) {
     const nm = v => degNorm(v), num = v => { const m = String(v == null ? '' : v).replace(/\./g, '').replace(',', '.').match(/\d+(?:\.\d+)?/); return m ? +m[0] : null; };
-    let h = -1; for (let i = 0; i < Math.min(rows.length, 40); i++) { const c = (rows[i] || []).map(nm); if (c.filter(x => x).length >= 4 && c.some(x => /ABORD|VENDA/.test(x)) && c.some(x => /ACEIT/.test(x))) { h = i; break; } }
+    let h = -1; for (let i = 0; i < Math.min(rows.length, 40); i++) { const c = (rows[i] || []).map(nm); if (c.filter(x => x).length >= 4 && c.some(x => /ABORD|ACEIT|VENDA/.test(x)) && c.some(x => /^DATA/.test(x)) && c.some(x => /LOJA|REDE/.test(x))) { h = i; break; } }
     if (h < 0) return null;
     const cab = rows[h].map(nm), col = (re, ex) => cab.findIndex(x => x && re.test(x) && !(ex && ex.test(x)));
-    const ix = { data: col(/^DATA|DIADAACAO|DATADA/), dia: col(/^DIA(DASEMANA)?$|SEMANA/), loja: col(/LOJA|REDE|LOCAL|ESTABELECIMENTO/), prod: col(/PRODUTO|SKU/, /QUANT/), qtd: col(/QUANT|QTD|FARDO|UTILIZ/, /VEND/), abord: col(/ABORD/), aceit: col(/ACEIT/), packs: col(/VENDA|PACK|FARDOSVEND/, /AVULS|UNID/), vUn: col(/VENDA.*UNID|UNIDADESVEND/, /SEMANAANTERIOR|SEMDEGUSTACAO/), base: col(/SEMANAANTERIOR|SEMDEGUSTACAO/), embal: col(/EMBALAGEM/), fb: col(/FEEDBACK|OBS|COMENT/), prom: col(/PROMOTOR/) };
+    const ix = { data: col(/^DATA|DIADAACAO|DATADA/), dia: col(/^DIA(DASEMANA)?$|SEMANA/), loja: col(/LOJA|REDE|LOCAL|ESTABELECIMENTO/), prod: col(/PRODUTO|SKU/, /QUANT/), qtd: col(/QUANT|QTD|FARDO|UTILIZ/, /VEND|ABORD|ACEIT/), abord: col(/ABORD/), aceit: col(/ACEIT/), packs: col(/VENDA|PACK|FARDOSVEND/, /AVULS|UNID/), vUn: col(/VENDA.*UNID|UNIDADESVEND/, /SEMANAANTERIOR|SEMDEGUSTACAO/), base: col(/SEMANAANTERIOR|SEMDEGUSTACAO/), embal: col(/EMBALAGEM/), fb: col(/FEEDBACK|OBS|COMENT/), prom: col(/PROMOTOR/) };
     const saida = [];
     rows.slice(h + 1).forEach(l => {
       const g = k => ix[k] >= 0 && l[ix[k]] != null ? String(l[ix[k]]).trim() : '';
