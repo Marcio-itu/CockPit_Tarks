@@ -4607,20 +4607,20 @@
   // ── Excel: planilha em tabela (cabeçalho com Abordagens e Aceitaram) ──
   function degParseTabela(rows, anoBase) {
     const nm = v => degNorm(v), num = v => { const m = String(v == null ? '' : v).replace(/\./g, '').replace(',', '.').match(/\d+(?:\.\d+)?/); return m ? +m[0] : null; };
-    let h = -1; for (let i = 0; i < Math.min(rows.length, 40); i++) { const c = (rows[i] || []).map(nm); if (c.filter(x => x).length >= 4 && c.some(x => /ABORD/.test(x)) && c.some(x => /ACEIT/.test(x))) { h = i; break; } }
+    let h = -1; for (let i = 0; i < Math.min(rows.length, 40); i++) { const c = (rows[i] || []).map(nm); if (c.filter(x => x).length >= 4 && c.some(x => /ABORD|VENDA/.test(x)) && c.some(x => /ACEIT/.test(x))) { h = i; break; } }
     if (h < 0) return null;
     const cab = rows[h].map(nm), col = (re, ex) => cab.findIndex(x => x && re.test(x) && !(ex && ex.test(x)));
-    const ix = { data: col(/^DATA|DIADAACAO|DATADA/), dia: col(/^DIA(DASEMANA)?$|SEMANA/), loja: col(/LOJA|REDE|LOCAL|ESTABELECIMENTO/), prod: col(/PRODUTO|SKU/, /QUANT/), qtd: col(/QUANT|QTD|FARDO|UTILIZ/, /VEND/), abord: col(/ABORD/), aceit: col(/ACEIT/), packs: col(/VENDA|PACK|FARDOSVEND/, /AVULS|UNID/), vUn: col(/VENDA.*UNID|UNIDADESVEND/), embal: col(/EMBALAGEM/), fb: col(/FEEDBACK|OBS|COMENT/), prom: col(/PROMOTOR/) };
+    const ix = { data: col(/^DATA|DIADAACAO|DATADA/), dia: col(/^DIA(DASEMANA)?$|SEMANA/), loja: col(/LOJA|REDE|LOCAL|ESTABELECIMENTO/), prod: col(/PRODUTO|SKU/, /QUANT/), qtd: col(/QUANT|QTD|FARDO|UTILIZ/, /VEND/), abord: col(/ABORD/), aceit: col(/ACEIT/), packs: col(/VENDA|PACK|FARDOSVEND/, /AVULS|UNID/), vUn: col(/VENDA.*UNID|UNIDADESVEND/, /SEMANAANTERIOR|SEMDEGUSTACAO/), base: col(/SEMANAANTERIOR|SEMDEGUSTACAO/), embal: col(/EMBALAGEM/), fb: col(/FEEDBACK|OBS|COMENT/), prom: col(/PROMOTOR/) };
     const saida = [];
     rows.slice(h + 1).forEach(l => {
       const g = k => ix[k] >= 0 && l[ix[k]] != null ? String(l[ix[k]]).trim() : '';
       if (!g('abord') && !g('aceit') && !g('packs') && !g('vUn')) return;
       if (/^TOTAL/.test(nm(g('loja'))) || /^TOTAL/.test(nm(g('data')))) return;
       const dt = (g('data') + ' ' + g('dia')).trim(), dd = degResolverData(dt, anoBase);
-      const q = g('qtd');
+      const q = g('qtd'), qFardo = ix.qtd >= 0 && /FARDO/.test(cab[ix.qtd]);
       saida.push({ produtoRel: g('prod'), data: dd.data, diaRel: ((dt.match(/(domingo|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado)/i) || [''])[0]).toLowerCase(), duvidaData: dd.duvida, dataOk: !dd.duvida,
-        lojaRel: g('loja'), produto: g('prod'), promotora: g('prom'), qtd: /^\d+(?:[.,]\d+)?$/.test(q) ? q + ' fardos' : q,
-        embal: g('embal'), abord: num(g('abord')), aceit: num(g('aceit')), packs: ix.vUn >= 0 ? num(g('vUn')) : num(g('packs')), avul: null, aprox: { abord: false, aceit: false }, feedback: g('fb'),
+        lojaRel: g('loja'), produto: g('prod'), promotora: g('prom'), qtd: /^\d+(?:[.,]\d+)?$/.test(q) ? q + (qFardo ? ' fardos' : ' unidades') : q,
+        embal: g('embal'), vendasBaseUn: ix.base >= 0 && g('base') !== '' ? num(g('base')) : null, abord: num(g('abord')), aceit: num(g('aceit')), packs: ix.vUn >= 0 ? num(g('vUn')) : num(g('packs')), avul: null, aprox: { abord: false, aceit: false }, feedback: g('fb'),
         ...(ix.vUn < 0 && ix.packs >= 0 ? { jaFardos: true } : {}) });
     });
     return saida;
