@@ -80,8 +80,11 @@
   footer { background-color: var(--cor-primaria); padding: 10px; text-align: center; font-family: var(--fonte-titulo); font-size: 9px; color: var(--cor-destaque); border-top: 2px solid var(--cor-destaque); flex-shrink: 0; letter-spacing: 1px; position: fixed; bottom: 0; width: 100%; z-index: 10; }
 
   @media (min-width: 768px) {
-    nav { justify-content: center; }
-    nav button[data-tela] { font-size: 13px; padding: 16px 20px; }
+    nav { justify-content: flex-start; }
+    nav button:first-child { margin-left: auto; }
+    nav .nav-fonte, nav button:last-of-type { margin-right: auto; }
+    nav button[data-tela] { font-size: clamp(10px, 0.92vw, 13px); padding: 15px clamp(7px, 0.85vw, 18px); letter-spacing: clamp(0.2px, 0.07vw, 1px); }
+    nav button.nav-op { margin-left: clamp(6px, 0.8vw, 14px); }
     .titulo-header h1 { font-size: 24px; }
     .titulo-header span { font-size: 11px; }
     main { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; }
