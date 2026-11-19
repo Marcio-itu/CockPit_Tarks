@@ -4249,6 +4249,7 @@
   let sistRede = '', sistMes = '', sistAtivoVisto = '';
 
   function sistDow(iso) { const p = iso.split('-').map(Number); return (new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay() + 6) % 7; }
+  function sistDataCurta(iso) { return iso.slice(8, 10) + '/' + iso.slice(5, 7); }
   function sistIso(y, m, d) { return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
 
   // Feriados nacionais (fixos + Sexta-feira Santa). Nesses dias a regra semanal não gera visita prevista.
@@ -4309,7 +4310,10 @@
         const vis = dias.filter(d => l.dias.has(d));
         return { l, vis, fotos: vis.reduce((t, d) => t + l.dias.get(d).n, 0), exec: vis.reduce((t, d) => t + l.dias.get(d).proms.size, 0) };
       }).filter(x => x.vis.length), g = dg.get(r.rk);
-      mapa.set(r.rk, { r, lojas, degDias: g ? g.dias : new Map(), gLojas: gLojasDe(r.rk) });
+      // nota de rodapé: promotor por dia (quantas lojas visitou naquele dia nesta rede)
+      const nt = new Map(); lojas.forEach(x => x.vis.forEach(d => x.l.dias.get(d).proms.forEach(p => { const k = d + '|' + p; nt.set(k, (nt.get(k) || 0) + 1); })));
+      const notas = Array.from(nt.entries()).map(([k, n]) => { const i = k.indexOf('|'); return { d: k.slice(0, i), prom: k.slice(i + 1), n }; }).sort((a, b) => a.d.localeCompare(b.d) || String(a.prom).localeCompare(String(b.prom), 'pt-BR'));
+      mapa.set(r.rk, { r, lojas, notas, degDias: g ? g.dias : new Map(), gLojas: gLojasDe(r.rk) });
     });
     dg.forEach((g, rk) => { if (!mapa.has(rk)) mapa.set(rk, { r: { rk, nome: g.nome, lojas: new Map() }, lojas: [], degDias: g.dias, gLojas: gLojasDe(rk) }); });
     gr.forEach((a, rk) => { if (!mapa.has(rk)) mapa.set(rk, { r: { rk, nome: a.nome, lojas: new Map() }, lojas: [], degDias: new Map(), gLojas: gLojasDe(rk) }); });
@@ -4382,8 +4386,9 @@
           ${caixa('Lojas visitadas', nfD(lojas.filter(z => z.vis.length).length), '#0A3D2E', 'na rede, no mês')}${caixa('Visitas', nfD(totExec), '#27AE60', 'promotor × loja × dia')}${caixa('% do total', pct(totExec), '#E67E22', nfD(totExec) + ' de ' + nfD(execMes) + ' do mês')}${caixa('Valor (R$)', valorRede(sel) != null ? moedaK(valorRede(sel)) : 'sem preço', '#8E44AD', valorRede(sel) != null ? pctValor(valorRede(sel)) + ' do valor · ' + moedaBR(precos[sel.r.rk].preco) + '/visita' : 'rede fora do Fechamento')}${caixa('Promotores', nfD(proms.size), '#7F8C8D', 'nessa rede')}${caixa('Fotos', nfD(totFotos), '#1E8449', 'nas visitas')}
         </div>
         ${sel && sel.gLojas.length ? grpToggle('sist') : ''}
-        <div class="sv-leg"><span><i class="sv-q" style="background:#27AE60"></i>✓ dia com foto da loja</span><span><i class="sv-q" style="background:#2980B9"></i>D dia de degustação na rede</span><span><i class="sv-q" style="background:#E67E22"></i>G visita via Grupo (WhatsApp, a conferir)</span><span><i class="sv-q" style="box-shadow:inset 0 0 0 2px #E67E22;background:#fff"></i>✓ com foto em feriado nacional</span><span><i class="sv-q" style="background:#D9DEE2"></i>F feriado nacional</span><span><i class="sv-q" style="background:#EDEDED"></i>domingo</span></div>
+        <div class="sv-leg"><span><i class="sv-q" style="background:#27AE60"></i>✓ dia com foto da loja</span><span><i class="sv-q" style="background:#2980B9"></i>D dia de degustação na rede</span><span><i class="sv-q" style="background:#E67E22"></i>G visita via Grupo (WhatsApp)</span><span><i class="sv-q" style="box-shadow:inset 0 0 0 2px #E67E22;background:#fff"></i>✓ com foto em feriado nacional</span><span><i class="sv-q" style="background:#D9DEE2"></i>F feriado nacional</span><span><i class="sv-q" style="background:#EDEDED"></i>domingo</span></div>
         <div style="overflow-x:auto;"><table><thead><tr><th style="text-align:left;padding-left:8px;position:sticky;left:0;background:#F0F2F1;">Loja</th>${cab}<th>Dias</th></tr></thead><tbody>${degLinha}${grpModo === 'grupo' ? '' : linhas}${grpModo === 'books' ? '' : gLinhas}</tbody></table></div>
+        ${sel && sel.notas && sel.notas.length && grpModo !== 'grupo' ? `<div style="margin-top:12px;font-size:11px;color:var(--cor-texto-secundario);line-height:1.5;"><div style="font-weight:bold;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Promotores por dia (Books)</div><ul style="margin:0;padding-left:16px;columns:2 260px;">${sel.notas.map(n => `<li>${esc(sistDataCurta(n.d))} - ${esc(String(n.prom || 'promotor não identificado'))}${n.n > 1 ? ' (' + n.n + ' lojas)' : ''}</li>`).join('')}</ul></div>` : ''}
         <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:10px;">Valor = visitas comprovadas por foto × preço da visita da rede no Fechamento da Pacto; é o que as fotos sustentam, não o valor cobrado. Passe o mouse sobre um dia verde para ver quantas fotos e qual promotor. Dia sem verde significa que não há foto nos Books importados, o que também pode ser um Book que ainda não chegou.</p>
       </div>`;
     grpLigarToggle(container, renderizarSistematica);
