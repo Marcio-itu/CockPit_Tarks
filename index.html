@@ -4359,7 +4359,7 @@
       return `<tr><td class="sv-n"><b>${esc(l.nome)}</b></td>${cel}<td class="sv-t">${vis.length}</td></tr>`;
     }).join('');
     const degLinha = sel && sel.degDias.size ? `<tr><td class="sv-n" style="color:#1F618D;"><b>Degustação (rede toda)</b></td>${dias.map(d => `<td class="sv ${sel.degDias.has(d) ? 'sv-deg' : (sistDow(d) === 6 ? 'sv-dom' : '')}" title="${sel.degDias.has(d) ? esc('Degustação em ' + rotuloData(d) + ' (' + sel.degDias.get(d) + ' ação/ões)') : ''}">${sel.degDias.has(d) ? 'D' : ''}</td>`).join('')}<td class="sv-t" style="color:#2471A3;">${sel.degDias.size}</td></tr>` : '';
-    const gLinhas = sel ? sel.gLojas.map(gl => `<tr><td class="sv-n" style="color:#B9770E;"><b>${esc(gl.nome)}</b> <small>(Grupo)</small></td>${dias.map(d => `<td class="sv ${gl.dias.has(d) ? 'sv-grp' : (sistDow(d) === 6 ? 'sv-dom' : '')}" title="${gl.dias.has(d) ? esc('Via Grupo (WhatsApp) em ' + rotuloData(d)) : ''}">${gl.dias.has(d) ? 'G' : ''}</td>`).join('')}<td class="sv-t" style="color:#B9770E;">${gl.dias.size}</td></tr>`).join('') : '';
+    const gLinhas = sel ? sel.gLojas.map(gl => `<tr><td class="sv-n" style="color:#B9770E;"><b>${esc(gl.nome)}</b> <small>(Grupo)</small></td>${dias.map(d => { const tem = gl.dias.has(d), fe = fer.get(d); const cls = tem ? (fe ? 'sv-fora' : 'sv-grp') : (fe ? 'sv-fer' : (sistDow(d) === 6 ? 'sv-dom' : '')); const tit = tem ? 'Via Grupo (WhatsApp) em ' + rotuloData(d) + (fe ? ' · feriado: ' + fe : '') : (fe || ''); return `<td class="sv ${cls}" title="${esc(tit)}">${tem ? 'G' : (fe ? 'F' : '')}</td>`; }).join('')}<td class="sv-t" style="color:#B9770E;">${gl.dias.size}</td></tr>`).join('') : '';
     const cab = dias.map(d => { const w = sistDow(d); return `<th class="${w === 6 ? 'sv-dom' : ''}">${Number(d.slice(8))}<br><small>${SIST_DOW[w]}</small></th>`; }).join('');
     const caixa = (rot, val, cor, sub) => `<div style="flex:1;min-width:110px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:${cor};">${val}</div><div style="font-size:10px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
     container.innerHTML = `<style>
@@ -4453,7 +4453,10 @@
         doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(185, 119, 14); doc.text(cortar(gl.nome + ' (Grupo)', WL - 3), MG + 1.5, y + 3.6);
         dias.forEach((d, i) => {
           const cx = MG + WL + i * WD;
-          if (gl.dias.has(d)) { doc.setFillColor(230, 126, 34); doc.rect(cx, y, WD, RH, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(255, 255, 255); doc.text('G', cx + WD / 2, y + 3.4, { align: 'center' }); }
+          const fe = fer.get(d);
+          if (gl.dias.has(d) && fe) { doc.setFillColor(255, 255, 255); doc.rect(cx, y, WD, RH, 'F'); doc.setDrawColor(230, 126, 34); doc.setLineWidth(0.5); doc.rect(cx + 0.3, y + 0.3, WD - 0.6, RH - 0.6, 'S'); doc.setDrawColor(228, 230, 229); doc.setLineWidth(0.1); doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(211, 84, 0); doc.text('G', cx + WD / 2, y + 3.4, { align: 'center' }); }
+          else if (gl.dias.has(d)) { doc.setFillColor(230, 126, 34); doc.rect(cx, y, WD, RH, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(255, 255, 255); doc.text('G', cx + WD / 2, y + 3.4, { align: 'center' }); }
+          else if (fe) { doc.setFillColor(217, 222, 226); doc.rect(cx, y, WD, RH, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(90, 90, 90); doc.text('F', cx + WD / 2, y + 3.4, { align: 'center' }); }
           else if (sistDow(d) === 6) { doc.setFillColor(237, 237, 237); doc.rect(cx, y, WD, RH, 'F'); }
           doc.rect(cx, y, WD, RH, 'S');
         });
