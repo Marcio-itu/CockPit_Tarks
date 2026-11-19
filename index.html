@@ -3949,8 +3949,12 @@
       });
       Object.keys(por).forEach(k => { if (!mapa[k]) mapa[k] = { preco: por[k].soma / por[k].peso, mes, varia: por[k].min !== por[k].max }; });
     });
+    // Rede sem preço no Fechamento: usa a média simples dos preços das redes que têm (marcada como estimada).
+    const vals = Object.keys(mapa).map(k => mapa[k].preco);
+    if (vals.length) mapa.__media = { preco: vals.reduce((t, n) => t + n, 0) / vals.length, mes: null, varia: false, estimado: true };
     return mapa;
   }
+  const precoDe = (precos, k) => precos[k] || precos.__media || null;
   const moedaBR = v => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const moedaK = v => Math.abs(v || 0) >= 1000 ? 'R$ ' + (v / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'K' : moedaBR(v);
   const brDia = d => d.slice(8) + '/' + d.slice(5, 7);
@@ -4000,7 +4004,7 @@
     // Valor das visitas comprovadas por foto = visitas × preço da rede no Fechamento
     const precos = precosPorRede();
     let valorTotal = 0, visSemPreco = 0; const mesesPreco = new Set();
-    porRede.forEach(a => { const p = precos[a.chave]; if (p) { a.preco = p.preco; a.valor = a.exec * p.preco; a.precoVaria = p.varia; valorTotal += a.valor; mesesPreco.add(p.mes); } else { a.preco = null; a.valor = null; visSemPreco += a.exec; } });
+    porRede.forEach(a => { const p = precoDe(precos, a.chave); if (p) { a.preco = p.preco; a.valor = a.exec * p.preco; a.precoVaria = p.varia; a.estimado = !!p.estimado; valorTotal += a.valor; if (p.estimado) visSemPreco += a.exec; else mesesPreco.add(p.mes); } else { a.preco = null; a.valor = null; visSemPreco += a.exec; } });
     const porProm = agr(x => x.pk, x => novo(x.prom)).map(a => {
       const pd = {}; execs.forEach(x => { if (x.pk === Array.from(a.proms)[0]) pd[x.d] = (pd[x.d] || 0) + 1; });
       a.maxDia = Math.max(0, ...Object.values(pd)); a.media = a.nDias ? a.exec / a.nDias : 0; return a;
@@ -4008,7 +4012,7 @@
     // Por promotor: redes, valor estimado e ocorrências de contestação
     {
       const extra = {};
-      execs.forEach(x => { const e = extra[x.pk] || (extra[x.pk] = { redes: new Set(), valor: 0, semPreco: 0 }); e.redes.add(x.rk); const p = precos[x.rk]; if (p) e.valor += p.preco; else e.semPreco++; });
+      execs.forEach(x => { const e = extra[x.pk] || (extra[x.pk] = { redes: new Set(), valor: 0, semPreco: 0 }); e.redes.add(x.rk); const p = precoDe(precos, x.rk); if (p) { e.valor += p.preco; if (p.estimado) e.semPreco++; } else e.semPreco++; });
       const ocs = ocorrenciasContestacao(mes).reduce((a, sec) => a.concat(sec.itens), []), ocPor = {};
       ocs.forEach(o => { const k = chaveCompacta(o.promotor || ''); const e = ocPor[k] || (ocPor[k] = { rep: 0, dup: 0, outras: 0 }); if (o.tipo === 'repetida') e.rep++; else if (o.tipo === 'dupla') e.dup++; else e.outras++; });
       porProm.forEach(a => { const pk = Array.from(a.proms)[0], e = extra[pk] || { redes: new Set(), valor: 0, semPreco: 0 }, c = ocPor[chaveCompacta(a.nome)] || { rep: 0, dup: 0, outras: 0 };
@@ -4082,7 +4086,7 @@
     const th = (t, l) => `<th style="padding:6px;${l ? 'text-align:left;' : ''}">${t}</th>`;
     const td = (t, l, b) => `<td style="padding:6px;${l ? '' : 'text-align:center;'}${b ? 'font-weight:bold;' : ''}">${t}</td>`;
     const tabela = (cab, linhas, vazio) => linhas.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;">${cab.map((c, i) => th(c, i === 0)).join('')}</tr></thead><tbody>${linhas.join('')}</tbody></table></div>` : `<p style="font-size:13px;">${vazio}</p>`;
-    const lRede = M.porRede.map(a => `<tr>${td(esc(a.nome), 1)}${td(nfD(a.exec), 0, 1)}${td(pct(a.exec, M.nExec).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%')}${td(a.preco != null ? moedaBR(a.preco) + (a.precoVaria ? '*' : '') : '<span style="color:#B9770E;">sem preço</span>')}${td(a.valor != null ? '<strong>' + moedaBR(a.valor) + '</strong>' : '-')}${td(nfD(a.nLojas))}${td(nfD(a.nProms))}${td(nfD(a.nDias))}${td(nfD(a.fotos))}${td(nfD1(a.exec ? a.fotos / a.exec : 0))}</tr>`);
+    const lRede = M.porRede.map(a => `<tr>${td(esc(a.nome), 1)}${td(nfD(a.exec), 0, 1)}${td(pct(a.exec, M.nExec).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%')}${td(a.preco != null ? moedaBR(a.preco) + (a.precoVaria ? '*' : '') + (a.estimado ? ' <small style="color:#B9770E;">(média)</small>' : '') : '<span style="color:#B9770E;">sem preço</span>')}${td(a.valor != null ? '<strong>' + moedaBR(a.valor) + '</strong>' : '-')}${td(nfD(a.nLojas))}${td(nfD(a.nProms))}${td(nfD(a.nDias))}${td(nfD(a.fotos))}${td(nfD1(a.exec ? a.fotos / a.exec : 0))}</tr>`);
     const lProm = M.porProm.map(a => `<tr>${td(esc(a.nome), 1)}${td(nfD(a.exec), 0, 1)}${td(nfD(a.nDias))}${td(nfD1(a.media))}${td(nfD(a.maxDia))}${td(nfD(a.nLojas))}${td(nfD(a.fotos))}</tr>`);
     const lLoja = M.porLoja.slice(0, 600).map(a => `<tr>${td(esc(a.rede), 1)}${td(esc(a.nome), 1)}${td(nfD(a.exec), 0, 1)}${td(nfD(a.nDias))}${td(nfD(a.nProms))}${td(nfD(a.fotos))}</tr>`);
     const lArq = M.arquivos.map(a => `<tr>${td(esc(nomeArquivoCurto(a.nome)), 1)}${td(nfD(a.fotos))}${td(a.ini ? brDia(a.ini) + ' a ' + brDia(a.fim) : '-')}</tr>`);
@@ -4105,7 +4109,7 @@
         <h2>Fotos e visitas</h2>
         <p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;margin-bottom:10px;"><strong>Foto</strong> = uma imagem do Book. <strong>Visita</strong> = uma loja, num dia, por um promotor, e pode ter 1 ou várias fotos. Todos os números abaixo dizem se são fotos ou visitas.</p>
         ${periodo}
-        ${gOk ? grpBlocos(GG.grupos) : `<div style="display:flex;gap:6px;flex-wrap:wrap;">${card('Visitas', nfD(M.nExec), 'loja + dia + promotor', '#0A3D2E')}${card('Valor das visitas', moedaK(M.valorTotal), moedaBR(M.valorTotal) + (M.visSemPreco ? ' · ' + nfD(M.visSemPreco) + ' sem preço' : ''), '#8E44AD')}${card('Redes', nfD(M.nRede), '', '#C58B2B')}${card('Lojas atendidas', nfD(M.nLoja), 'com 1+ visita', '#27AE60')}}</div>`}
+        ${gOk ? grpBlocos(GG.grupos) : `<div style="display:flex;gap:6px;flex-wrap:wrap;">${card('Visitas', nfD(M.nExec), 'loja + dia + promotor', '#0A3D2E')}${card('Valor das visitas', moedaK(M.valorTotal), moedaBR(M.valorTotal) + (M.visSemPreco ? ' · ' + nfD(M.visSemPreco) + ' c/ preço médio' : ''), '#8E44AD')}${card('Redes', nfD(M.nRede), '', '#C58B2B')}${card('Lojas atendidas', nfD(M.nLoja), 'com 1+ visita', '#27AE60')}</div>`}
       </div>
       <div class="card"><h2>Visitas por dia</h2>${htmlLinhaDoTempo(M)}</div>
       ${typeof grpCardDash === 'function' ? grpCardDash(M, mes) : ''}
@@ -4244,7 +4248,8 @@
   // Fase 1: só a realidade (nenhuma regra, nenhuma previsão). A sistemática das planilhas entra depois, como camada de referência.
   // ═══════════════════════════════════════════════════════════════
   const SIST_DOW = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
-  let sistBusca = '', sistOrd = 'alfa'; const sistCmp = (na, nb, fa, fb) => (sistOrd === 'freq' ? (fb - fa) : 0) || String(na).localeCompare(String(nb), 'pt-BR', { numeric: true });
+  let sistBusca = '', sistOrd = 'alfa';
+  const segSv = (attr, itens, atual) => `<span style="display:inline-flex;border:1px solid #CFD4D9;border-radius:6px;overflow:hidden;">${itens.map(([k, t]) => `<button type="button" ${attr}="${k}" style="padding:5px 10px;border:none;background:${atual === k ? 'var(--cor-primaria)' : '#fff'};color:${atual === k ? 'var(--cor-destaque)' : '#444'};font-weight:bold;cursor:pointer;font-size:11.5px;">${t}</button>`).join('')}</span>`; const sistCmp = (na, nb, fa, fb) => (sistOrd === 'freq' ? (fb - fa) : 0) || String(na).localeCompare(String(nb), 'pt-BR', { numeric: true });
   let sistRede = '', sistMes = '', sistAtivoVisto = '';
 
   function sistDow(iso) { const p = iso.split('-').map(Number); return (new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay() + 6) % 7; }
@@ -4329,7 +4334,7 @@
     if (!sistMes || !meses.includes(sistMes)) sistMes = meses.includes(Estado.config.mesAtivo) ? Estado.config.mesAtivo : meses[meses.length - 1];
     const { dias, fer, redes } = sistMontarMes(sistMes);
     const execRede = x => x.lojas.reduce((t, l) => t + l.exec, 0), execMes = redes.reduce((t, x) => t + execRede(x), 0);
-    const precos = precosPorRede(), valorRede = x => { const p = precos[x.r.rk]; return p ? execRede(x) * p.preco : null; };
+    const precos = precosPorRede(), valorRede = x => { const p = precoDe(precos, x.r.rk); return p ? execRede(x) * p.preco : null; };
     const valorMes = redes.reduce((t, x) => t + (valorRede(x) || 0), 0);
     const pctValor = v => valorMes && v != null ? (v / valorMes * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : '-';
     const pct = v => execMes ? (v / execMes * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : '0%';
@@ -4347,8 +4352,8 @@
     try {
       const G = grpResumo(sistMes, null, metricasBooks(sistMes, true).execs), pr = G.porRede.find(a => a.k === sistRede), pl = G.porLoja.filter(l => l.rk === sistRede), nz = (arr, f) => arr.filter(f).length;
       if (G.temGrupo && pr) {
-        const sp = pr.preco == null;
-        blocosRede = grpBlocos({ t: { v: pr.b + pr.g, val: sp ? 0 : pr.vB + pr.vG, l: nz(pl, l => l.b + l.g > 0), sp: sp ? pr.b + pr.g : 0 }, m: { v: pr.b, val: sp ? 0 : pr.vB, l: nz(pl, l => l.b > 0), sp: sp ? pr.b : 0 }, w: { v: pr.g, val: sp ? 0 : pr.vG, l: nz(pl, l => l.g > 0), sp: sp ? pr.g : 0 } }, { semRedes: true });
+        const nul = pr.preco == null, fl = nul || !!pr.estimado, vb = nul ? 0 : pr.vB, vg = nul ? 0 : pr.vG;
+        blocosRede = grpBlocos({ t: { v: pr.b + pr.g, val: vb + vg, l: nz(pl, l => l.b + l.g > 0), sp: fl ? pr.b + pr.g : 0 }, m: { v: pr.b, val: vb, l: nz(pl, l => l.b > 0), sp: fl ? pr.b : 0 }, w: { v: pr.g, val: vg, l: nz(pl, l => l.g > 0), sp: fl ? pr.g : 0 } }, { semRedes: true, compacto: true });
       }
     } catch (e) { blocosRede = ''; }
     const lojas = sel ? sel.lojas.slice().sort((a, b) => sistCmp(a.l.nome, b.l.nome, a.vis.length, b.vis.length)) : [];
@@ -4363,10 +4368,10 @@
         else if (dom) cls = 'sv-dom';
         return `<td class="sv ${cls}" title="${esc(tit.join(' | '))}">${txt}</td>`;
       }).join('');
-      return `<tr><td class="sv-n" style="border-left:5px solid #27AE60;"><b>${esc(l.nome)}</b> <small>(Mob2con)</small></td>${cel}<td class="sv-t">${vis.length}</td></tr>`;
+      return `<tr><td class="sv-n" style="border-left:5px solid #27AE60;"><b>${esc(l.nome)}</b></td>${cel}<td class="sv-t">${vis.length}</td></tr>`;
     }).join('');
     const degLinha = sel && sel.degDias.size ? `<tr><td class="sv-n" style="color:#1F618D;"><b>Degustação (rede toda)</b></td>${dias.map(d => `<td class="sv ${sel.degDias.has(d) ? 'sv-deg' : (sistDow(d) === 6 ? 'sv-dom' : '')}" title="${sel.degDias.has(d) ? esc('Degustação em ' + rotuloData(d) + ' (' + sel.degDias.get(d) + ' ação/ões)') : ''}">${sel.degDias.has(d) ? 'D' : ''}</td>`).join('')}<td class="sv-t" style="color:#2471A3;">${sel.degDias.size}</td></tr>` : '';
-    const gLinhas = sel ? sel.gLojas.map(gl => `<tr><td class="sv-n" style="color:#B9770E;border-left:5px solid #E67E22;"><b>${esc(gl.nome)}</b> <small>(Grupo)</small></td>${dias.map(d => { const tem = gl.dias.has(d), fe = fer.get(d); const cls = tem ? (fe ? 'sv-fora' : 'sv-grp') : (fe ? 'sv-fer' : (sistDow(d) === 6 ? 'sv-dom' : '')); const tit = tem ? 'Via Grupo (WhatsApp) em ' + rotuloData(d) + (fe ? ' · feriado: ' + fe : '') : (fe || ''); return `<td class="sv ${cls}" title="${esc(tit)}">${tem ? 'G' : (fe ? 'F' : '')}</td>`; }).join('')}<td class="sv-t" style="color:#B9770E;">${gl.dias.size}</td></tr>`).join('') : '';
+    const gLinhas = sel ? sel.gLojas.map(gl => `<tr><td class="sv-n" style="color:#B9770E;border-left:5px solid #E67E22;"><b>${esc(gl.nome)}</b></td>${dias.map(d => { const tem = gl.dias.has(d), fe = fer.get(d); const cls = tem ? (fe ? 'sv-fora' : 'sv-grp') : (fe ? 'sv-fer' : (sistDow(d) === 6 ? 'sv-dom' : '')); const tit = tem ? 'Via Grupo (WhatsApp) em ' + rotuloData(d) + (fe ? ' · feriado: ' + fe : '') : (fe || ''); return `<td class="sv ${cls}" title="${esc(tit)}">${tem ? 'G' : (fe ? 'F' : '')}</td>`; }).join('')}<td class="sv-t" style="color:#B9770E;">${gl.dias.size}</td></tr>`).join('') : '';
     const cab = dias.map(d => { const w = sistDow(d); return `<th class="${w === 6 ? 'sv-dom' : ''}">${Number(d.slice(8))}<br><small>${SIST_DOW[w]}</small></th>`; }).join('');
     const caixa = (rot, val, cor, sub) => `<div style="flex:1;min-width:110px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:${cor};">${val}</div><div style="font-size:10px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
     container.innerHTML = `<style>
@@ -4379,23 +4384,24 @@
         .sv-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin:8px 0 12px;align-items:center}.sv-q{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:4px;border:1px solid #ccc}
       </style>
       <div class="card" style="border-left-color:#27AE60;">
-        <h2>Sistemática de visitas</h2>
-        <p style="font-size:12px;margin-bottom:10px;line-height:1.5;">Como as visitas <strong>realmente aconteceram</strong>, loja a loja e dia a dia, segundo as fotos dos Books. Não há regra nem previsão aqui: cada quadro verde é um dia com pelo menos uma foto da loja.</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-          <select id="sv-rede" style="flex:2;min-width:220px;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;font-weight:bold;">${optR}</select>
-          <select id="sv-mes" style="flex:1;min-width:150px;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;">${optM}</select>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-          <button type="button" id="sv-pdf-rede" style="padding:9px 14px;background:var(--cor-primaria);color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:12px;">⬇ PDF desta rede</button>
-          <button type="button" id="sv-pdf-todas" style="padding:9px 14px;background:#fff;color:var(--cor-primaria);border:1px solid var(--cor-primaria);border-radius:6px;font-weight:bold;cursor:pointer;font-size:12px;">⬇ PDF de todas as redes</button>
+        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px;"><h2 style="margin:0;">Sistemática de visitas</h2><span style="font-size:12px;color:var(--cor-texto-secundario);">dia a dia, loja a loja, pelas fotos (Mob2con) e pela planilha do Grupo (WhatsApp)</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:stretch;">
+          <select id="sv-rede" style="flex:3 1 240px;padding:8px 10px;border:1px solid #CCC;border-radius:6px;font-size:13px;font-weight:bold;">${optR}</select>
+          <select id="sv-mes" style="flex:1 1 130px;padding:8px 10px;border:1px solid #CCC;border-radius:6px;font-size:13px;">${optM}</select>
+          <button type="button" id="sv-pdf-rede" style="padding:8px 12px;background:var(--cor-primaria);color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:12px;">⬇ PDF da rede</button>
+          <button type="button" id="sv-pdf-todas" style="padding:8px 12px;background:#fff;color:var(--cor-primaria);border:1px solid var(--cor-primaria);border-radius:6px;font-weight:bold;cursor:pointer;font-size:12px;">⬇ PDF geral</button>
         </div>
         ${blocosRede}
         <div style="display:${blocosRede ? 'none' : 'flex'};gap:6px;flex-wrap:wrap;margin-bottom:6px;">
           ${caixa('Lojas visitadas', nfD(lojas.filter(z => z.vis.length).length), '#0A3D2E', 'na rede, no mês')}${caixa('Visitas', nfD(totExec), '#27AE60', 'promotor × loja × dia')}${caixa('% do total', pct(totExec), '#E67E22', nfD(totExec) + ' de ' + nfD(execMes) + ' do mês')}${caixa('Valor (R$)', valorRede(sel) != null ? moedaK(valorRede(sel)) : 'sem preço', '#8E44AD', valorRede(sel) != null ? pctValor(valorRede(sel)) + ' do valor · ' + moedaBR(precos[sel.r.rk].preco) + '/visita' : 'rede fora do Fechamento')}${caixa('Promotores', nfD(proms.size), '#7F8C8D', 'nessa rede')}${caixa('Fotos', nfD(totFotos), '#1E8449', 'nas visitas')}
         </div>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:12px;"><input type="search" id="sv-busca" value="${esc(sistBusca)}" placeholder="Buscar loja desta rede…" autocomplete="off" style="padding:8px 10px;border:1px solid #CCC;border-radius:6px;font-size:13px;min-width:220px;"><span id="sv-busca-n" style="color:var(--cor-texto-secundario);"></span><span style="color:var(--cor-texto-secundario);margin-left:8px;">Ordenar por:</span>${[['alfa', 'A–Z'], ['freq', 'Frequência']].map(([k, t]) => `<button type="button" data-ord="${k}" style="padding:7px 12px;border-radius:6px;border:1px solid ${sistOrd === k ? 'var(--cor-primaria)' : '#CFD4D9'};background:${sistOrd === k ? 'var(--cor-primaria)' : '#fff'};color:${sistOrd === k ? 'var(--cor-destaque)' : '#333'};font-weight:bold;cursor:pointer;font-size:12px;">${t}</button>`).join('')}</div>
-        ${sel && sel.gLojas.length ? grpToggle('sist') : ''}
-        <div class="sv-leg"><span><i class="sv-q" style="background:#27AE60"></i>✓ dia com foto da loja (Mob2con)</span><span><i class="sv-q" style="background:#2980B9"></i>D dia de degustação na rede</span><span><i class="sv-q" style="background:#E67E22"></i>G visita via Grupo (WhatsApp)</span><span><i class="sv-q" style="box-shadow:inset 0 0 0 2px #E67E22;background:#fff"></i>✓ com foto em feriado nacional</span><span><i class="sv-q" style="background:#D9DEE2"></i>F feriado nacional</span><span><i class="sv-q" style="background:#EDEDED"></i>domingo</span></div>
+        <div class="no-pdf" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:2px 0 6px;">
+          <input type="search" id="sv-busca" value="${esc(sistBusca)}" placeholder="Buscar loja…" autocomplete="off" style="padding:6px 10px;border:1px solid #CCC;border-radius:6px;font-size:12px;width:170px;"><span id="sv-busca-n" style="font-size:11px;color:var(--cor-texto-secundario);"></span>
+          <span style="flex:1;"></span>
+          ${segSv('data-ord', [['alfa', 'A–Z'], ['freq', 'Mais visitadas']], sistOrd)}
+          ${sel && sel.gLojas.length ? segSv('data-grp', [['tudo', 'Tudo'], ['books', 'Mob2con'], ['grupo', 'WhatsApp']], grpModo) : ''}
+        </div>
+        <div class="sv-leg" style="gap:12px;margin:4px 0 8px;font-size:10.5px;color:#666;"><span><i class="sv-q" style="background:#27AE60"></i>✓ foto (Mob2con)</span><span><i class="sv-q" style="background:#E67E22"></i>G WhatsApp</span><span><i class="sv-q" style="background:#2980B9"></i>D degustação</span><span><i class="sv-q" style="box-shadow:inset 0 0 0 2px #E67E22;background:#fff"></i>visita em feriado</span><span><i class="sv-q" style="background:#D9DEE2"></i>F feriado</span><span><i class="sv-q" style="background:#EDEDED"></i>domingo</span></div>
         <div style="overflow-x:auto;"><table><thead><tr><th style="text-align:left;padding-left:8px;position:sticky;left:0;background:#F0F2F1;">Loja</th>${cab}<th>Dias</th></tr></thead><tbody>${degLinha}${grpModo === 'grupo' ? '' : linhas}${grpModo === 'books' ? '' : gLinhas}</tbody></table></div>
         ${sel && sel.notas && sel.notas.length && grpModo !== 'grupo' ? `<div style="margin-top:12px;font-size:11px;color:var(--cor-texto-secundario);line-height:1.5;"><div style="font-weight:bold;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Promotores por dia (Books)</div><ul style="margin:0;padding-left:16px;columns:2 260px;">${sel.notas.map(n => `<li>${esc(sistDataCurta(n.d))} - ${esc(String(n.prom || 'promotor não identificado'))}${n.n > 1 ? ' (' + n.n + ' lojas)' : ''}</li>`).join('')}</ul></div>` : ''}
         <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:10px;">Valor = visitas comprovadas por foto × preço da visita da rede no Fechamento da Pacto; é o que as fotos sustentam, não o valor cobrado. Passe o mouse sobre um dia verde para ver quantas fotos e qual promotor. Dia sem verde significa que não há foto nos Books importados, o que também pode ser um Book que ainda não chegou.</p>
@@ -4420,7 +4426,7 @@
   function baixarSistematicaPDF(todas) {
     if (!(window.jspdf && window.jspdf.jsPDF)) { alert('A biblioteca de PDF não carregou. Verifique a conexão e tente de novo.'); return; }
     const mes = sistMes, { dias, fer, redes } = sistMontarMes(mes), execMes = redes.reduce((t, r) => t + r.lojas.reduce((a, l) => a + l.exec, 0), 0);
-    const precos = precosPorRede(), valorMes = redes.reduce((t, x) => t + (precos[x.r.rk] ? x.lojas.reduce((a, l) => a + l.exec, 0) * precos[x.r.rk].preco : 0), 0);
+    const precos = precosPorRede(), valorMes = redes.reduce((t, x) => t + (precoDe(precos, x.r.rk) ? x.lojas.reduce((a, l) => a + l.exec, 0) * precoDe(precos, x.r.rk).preco : 0), 0);
     const pctValor = v => valorMes ? (v / valorMes * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : '-';
     const lista = todas ? redes : redes.filter(x => x.r.rk === sistRede);
     if (!lista.length) { alert('Não há visitas com foto neste mês.'); return; }
@@ -5091,7 +5097,7 @@
       <div class="card"><h2>Top 10 por visitas</h2>${barras || '<p>Sem visitas.</p>'}</div>
       <div class="card"><h2>Todos os promotores</h2>${L.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="${th}text-align:left;">#</th><th style="${th}text-align:left;">Promotor</th><th style="${th}">Visitas</th><th style="${th}">% do total</th><th style="${th}">Lojas</th><th style="${th}">Redes</th><th style="${th}">Dias</th><th style="${th}">Fotos / visita</th><th style="${th}">Máx. / dia</th><th style="${th}">Valor (R$)</th><th style="${th}">Ocorrências</th></tr></thead><tbody>${linhas}
         <tr style="border-top:2px solid #CCC;font-weight:bold;"><td></td><td style="${td}text-align:left;">TOTAL</td><td style="${td}">${totV}</td><td style="${td}">100%</td><td style="${td}">${promPN(M.nLoja)}</td><td style="${td}">${promPN(M.nRede)}</td><td style="${td}">${promPN(M.nDias)}</td><td style="${td}">${promP1(M.fotosPorExec)}</td><td style="${td}"></td><td style="${td}">${M.valorTotal != null ? moedaBR(M.valorTotal) : ''}</td><td style="${td}">${promPN(M.nOcorr)}</td></tr></tbody></table></div>
-        <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">Valor = visitas × preço da visita da rede no Fechamento da Pacto (estimativa do que as fotos sustentam; * inclui visitas de rede sem preço, que não entram na soma). Ocorrências = fotos repetidas, dois promotores na mesma loja/dia e demais itens do Book de contestação. ⚠ = mais de ${maxDia} visitas num dia.${temDet ? ' Toque numa linha para ver as visitas dia a dia.' : ''}</p>` : '<p>Sem visitas nos Books deste período.</p>'}</div>`;
+        <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">Valor = visitas × preço da visita da rede no Fechamento da Pacto (estimativa do que as fotos sustentam; * inclui visitas de rede sem preço no Fechamento, calculadas pela média dos preços das demais redes). Ocorrências = fotos repetidas, dois promotores na mesma loja/dia e demais itens do Book de contestação. ⚠ = mais de ${maxDia} visitas num dia.${temDet ? ' Toque numa linha para ver as visitas dia a dia.' : ''}</p>` : '<p>Sem visitas nos Books deste período.</p>'}</div>`;
     if (temDet) container.querySelectorAll('tr.prom-linha').forEach(tr => tr.onclick = () => { promAberto = promAberto === tr.dataset.pk ? '' : tr.dataset.pk; renderizarPromotores(); });
     const b1 = container.querySelector('#prom-pdf'), b2 = container.querySelector('#prom-xlsx');
     if (b1) b1.onclick = baixarRankingPDF; if (b2) b2.onclick = baixarRankingXLSX;
@@ -5240,25 +5246,30 @@
     const meta = Object.values((g.metas && g.metas[mes]) || {}).reduce((t, n) => t + n, 0);
     const arq = g.arquivos.filter(a => (a.meses || []).includes(mes)).sort((a, b) => (b.importadoEm || '').localeCompare(a.importadoEm || ''))[0] || null;
     const precos = typeof precosPorRede === 'function' ? precosPorRede() : {};
-    const porRede = Array.from(redes.values()).map(a => { const p = precos[a.k]; return { k: a.k, nome: a.nome, b: a.b, g: a.g, dup: a.dup, lojas: a.lojas.size, preco: p ? p.preco : null, vB: p ? a.b * p.preco : null, vG: p ? a.g * p.preco : null }; });
+    const porRede = Array.from(redes.values()).map(a => { const p = typeof precoDe === 'function' ? precoDe(precos, a.k) : precos[a.k]; return { k: a.k, nome: a.nome, b: a.b, g: a.g, dup: a.dup, lojas: a.lojas.size, estimado: !!(p && p.estimado), preco: p ? p.preco : null, vB: p ? a.b * p.preco : null, vG: p ? a.g * p.preco : null }; });
     const pL = Array.from(lojas.values()), nz = (arr, f) => arr.filter(f).length;
-    const spB = porRede.reduce((t, a) => t + (a.preco == null ? a.b : 0), 0), spG = porRede.reduce((t, a) => t + (a.preco == null ? a.g : 0), 0);
+    const spB = porRede.reduce((t, a) => t + (a.preco == null || a.estimado ? a.b : 0), 0), spG = porRede.reduce((t, a) => t + (a.preco == null || a.estimado ? a.g : 0), 0);
     const bT = porRede.reduce((t, a) => t + a.b, 0), gT = porRede.reduce((t, a) => t + a.g, 0), vB = porRede.reduce((t, a) => t + (a.vB || 0), 0), vG = porRede.reduce((t, a) => t + (a.vG || 0), 0);
     const grupos = { t: { v: bT + gT, val: vB + vG, r: nz(porRede, a => a.b + a.g > 0), l: nz(pL, a => a.b + a.g > 0), sp: spB + spG }, m: { v: bT, val: vB, r: nz(porRede, a => a.b > 0), l: nz(pL, a => a.b > 0), sp: spB }, w: { v: gT, val: vG, r: nz(porRede, a => a.g > 0), l: nz(pL, a => a.g > 0), sp: spG } };
     return { grupos, temGrupo: vs.length > 0, gTotal: porRede.reduce((t, a) => t + a.g, 0), dupTotal: porRede.reduce((t, a) => t + a.dup, 0), bTotal: porRede.reduce((t, a) => t + a.b, 0), meta: meta || null,
-      valorB: porRede.reduce((t, a) => t + (a.vB || 0), 0), valorG: porRede.reduce((t, a) => t + (a.vG || 0), 0), gSemPreco: porRede.reduce((t, a) => t + (a.preco == null ? a.g : 0), 0),
+      valorB: porRede.reduce((t, a) => t + (a.vB || 0), 0), valorG: porRede.reduce((t, a) => t + (a.vG || 0), 0), gSemPreco: porRede.reduce((t, a) => t + (a.preco == null || a.estimado ? a.g : 0), 0),
       arquivo: arq ? arq.nome : '', importadoEm: arq ? arq.importadoEm : '',
       porRede: porRede.sort((a, b) => (b.b + b.g) - (a.b + a.g) || a.nome.localeCompare(b.nome)),
       porLoja: Array.from(lojas.values()).sort((a, b) => a.r.localeCompare(b.r) || (b.b + b.g) - (a.b + a.g) || a.nome.localeCompare(b.nome, 'pt-BR', { numeric: true })) };
   }
   // Três faixas (Total / Mob2con / WhatsApp), cada uma com Visitas, Valor, Redes e Lojas. opt.sem = lista de campos a omitir (ex.: 'r' na Sistemática, que olha uma rede só).
   function grpBlocos(g, opt) {
-    opt = opt || {}; const nf = n => (n || 0).toLocaleString('pt-BR'), mo = v => { v = v || 0; return Math.abs(v) >= 1000 ? 'R$ ' + (v / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'K' : v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }); };
+    opt = opt || {}; const nf = n => (n || 0).toLocaleString('pt-BR'), mo = v => { v = v || 0; return Math.abs(v) >= 1000 ? (v / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'K' : Math.round(v).toLocaleString('pt-BR'); };
     const mini = (rot, val, cor, sub) => `<div style="flex:1 1 0;min-width:0;padding:5px 3px;background:#fff;border-radius:5px;text-align:center;border:1px solid #E3E6E8;"><div style="font-size:9px;line-height:1.2;color:var(--cor-texto-secundario);text-transform:uppercase;white-space:nowrap;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:clamp(13px,1.25vw,18px);font-weight:900;color:${cor};white-space:nowrap;">${val}</div>${sub ? `<div style="font-size:9px;color:var(--cor-texto-secundario);white-space:nowrap;">${sub}</div>` : ''}</div>`;
     const faixa = (tit, sub, cor, bg, minis, peso, larg) => `<div style="flex:${peso} 1 ${larg}px;min-width:0;padding:6px 7px;background:${bg};border-left:5px solid ${cor};border-radius:6px;"><div style="font-size:11px;line-height:1.25;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><b style="color:${cor};">${tit}</b> <span style="color:var(--cor-texto-secundario);">${sub}</span></div><div style="display:flex;gap:4px;">${minis}</div></div>`;
-    const cols = (x, cor) => mini('Visitas', nf(x.v), cor) + mini('Valor', mo(x.val), cor, x.sp ? nf(x.sp) + ' s/ preço' : '') + (opt.semRedes ? '' : mini('Redes', nf(x.r), cor)) + mini('Lojas', nf(x.l), cor);
+    const cols = (x, cor) => mini('Visitas', nf(x.v), cor) + mini('Valor (R$)', mo(x.val), cor, x.sp ? nf(x.sp) + ' c/ preço médio' : '') + (opt.semRedes ? '' : mini('Redes', nf(x.r), cor)) + mini('Lojas', nf(x.l), cor);
     const n = opt.semRedes ? 3 : 4;
-    return `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">` + faixa('Visitas totais', '', '#0A3D2E', '#EAF1EE', mini('Valor total das visitas', mo(g.t.val), '#0A3D2E', g.t.sp ? nf(g.t.sp) + ' s/ preço' : ''), 1, 170) + faixa('Comprovadas Mob2con', '', '#27AE60', '#EEF8F2', cols(g.m, '#27AE60'), n, n * 90) + faixa('Comprovadas WhatsApp', '', '#E67E22', '#FDF1E6', cols(g.w, '#E67E22'), n, n * 90) + '</div>';
+    if (opt.compacto) {
+      const chip = (tit, cor, bg, partes) => `<div style="flex:1 1 auto;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:6px 10px;background:${bg};border-left:4px solid ${cor};border-radius:6px;font-size:12px;"><b style="color:${cor};">${tit}</b>${partes.map(p => `<span style="color:#333;">${p}</span>`).join('')}</div>`;
+      const val = x => '<b>R$ ' + mo(x.val) + '</b>' + (x.sp ? `<sup title="${nf(x.sp)} visita(s) calculada(s) com o preço médio das redes" style="color:#B9770E;cursor:help;"> *</sup>` : '');
+      return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">` + chip('Total', '#0A3D2E', '#EAF1EE', [val(g.t)]) + chip('Mob2con', '#27AE60', '#EEF8F2', [nf(g.m.v) + ' visitas', val(g.m), nf(g.m.l) + ' lojas']) + chip('WhatsApp', '#E67E22', '#FDF1E6', [nf(g.w.v) + ' visitas', val(g.w), nf(g.w.l) + ' lojas']) + '</div>';
+    }
+    return `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">` + faixa('Visitas totais', '', '#0A3D2E', '#EAF1EE', mini('Valor total das visitas (R$)', mo(g.t.val), '#0A3D2E', g.t.sp ? nf(g.t.sp) + ' c/ preço médio' : ''), 1, 170) + faixa('Comprovadas Mob2con', '', '#27AE60', '#EEF8F2', cols(g.m, '#27AE60'), n, n * 90) + faixa('Comprovadas WhatsApp', '', '#E67E22', '#FDF1E6', cols(g.w, '#E67E22'), n, n * 90) + '</div>';
   }
   function grpDoMes(M, mes) { const pub = typeof Modo !== 'undefined' && Modo === 'publicado'; return pub ? (M && M.grupo) : grpResumo(mes, M && M.vis, M && M.execs); }
 
@@ -5281,7 +5292,7 @@
     const nf = n => (n || 0).toLocaleString('pt-BR');
     const lista = G.porRede.filter(e => grpVal(e)).sort((a, b) => grpVal(b) - grpVal(a) || a.nome.localeCompare(b.nome));
     const tB = lista.reduce((t, e) => t + e.b, 0), tG = lista.reduce((t, e) => t + e.g, 0), tD = lista.reduce((t, e) => t + e.dup, 0);
-    const vTB = lista.reduce((t, e) => t + (e.vB || 0), 0), vTG = lista.reduce((t, e) => t + (e.vG || 0), 0), semP = lista.reduce((t, e) => t + (e.preco == null ? (grpModo === 'books' ? e.b : grpModo === 'grupo' ? e.g : e.b + e.g) : 0), 0);
+    const vTB = lista.reduce((t, e) => t + (e.vB || 0), 0), vTG = lista.reduce((t, e) => t + (e.vG || 0), 0), semP = lista.reduce((t, e) => t + (e.preco == null || e.estimado ? (grpModo === 'books' ? e.b : grpModo === 'grupo' ? e.g : e.b + e.g) : 0), 0);
     const caixa = (rot, val, sub, cor) => `<div style="flex:1;min-width:130px;padding:12px 8px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:clamp(20px,2.4vw,28px);font-weight:900;color:var(--cor-primaria);">${val}</div><div style="font-size:11px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
     const th = (t, l) => `<th style="padding:6px;${l ? 'text-align:left;' : ''}">${t}</th>`, td = (t, l, b) => `<td style="padding:6px;${l ? '' : 'text-align:center;'}${b ? 'font-weight:bold;' : ''}">${t}</td>`;
     const pc = (a, b) => b ? (a / b * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : '';
@@ -5297,7 +5308,7 @@
     return `<div class="card" id="grp-card"><h2>Visitas por rede: Books + Grupo</h2>
       <p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;">Books = visitas comprovadas por foto. Grupo = visitas que a Pacto marcou na planilha com a palavra GRUPO, com foto no WhatsApp; entram como <strong>informadas</strong>; valor = visitas × preço da visita da rede no Fechamento, igual ao dos Books. A mesma loja e o mesmo dia nos dois lados contam uma vez só (ver a aba Associação).${G.arquivo ? ' Planilha: <strong>' + esc(G.arquivo) + '</strong>.' : ''}</p>
       ${semDados ? '<p style="font-size:13px;margin-top:8px;">Nenhuma planilha de visitas via Grupo importada para este mês. Anexe em <strong>Admin</strong>, em <em>Visitas via Grupo</em>.</p>' : `${grpToggle('dash')}
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">${grpModo === 'grupo' ? '' : caixa('Books', nf(tB), 'comprovadas por foto', '#0A3D2E')}${grpModo === 'books' ? '' : caixa('Grupo', nf(tG), 'foto no WhatsApp', '#E67E22')}${grpModo === 'tudo' ? caixa('Somadas', nf(tB + tG), pc(tG, tB + tG) + ' via Grupo', 'var(--cor-destaque)') : ''}${caixa('Valor', mo(grpModo === 'books' ? vTB : grpModo === 'grupo' ? vTG : vTB + vTG), grpModo === 'tudo' ? 'Books ' + mo(vTB) + ' + Grupo ' + mo(vTG) : (semP ? nf(semP) + ' sem preço' : '&nbsp;'), '#8E44AD')}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">${grpModo === 'grupo' ? '' : caixa('Books', nf(tB), 'comprovadas por foto', '#0A3D2E')}${grpModo === 'books' ? '' : caixa('Grupo', nf(tG), 'foto no WhatsApp', '#E67E22')}${grpModo === 'tudo' ? caixa('Somadas', nf(tB + tG), pc(tG, tB + tG) + ' via Grupo', 'var(--cor-destaque)') : ''}${caixa('Valor', mo(grpModo === 'books' ? vTB : grpModo === 'grupo' ? vTG : vTB + vTG), grpModo === 'tudo' ? 'Books ' + mo(vTB) + ' + Grupo ' + mo(vTG) : (semP ? nf(semP) + ' c/ preço médio' : '&nbsp;'), '#8E44AD')}</div>
       <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;">${cabR.map((c, i) => th(c, i === 0)).join('')}</tr></thead><tbody>${lista.map(lr).join('')}${lista.length ? totR : ''}</tbody></table></div>
       ${tD && grpModo !== 'books' ? `<p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;">${nf(tD)} marcação(ões) de Grupo coincidem com visitas já comprovadas nos Books (loja associada, mesmo dia) e não foram somadas.</p>` : ''}
       <details style="margin-top:10px;"><summary style="cursor:pointer;font-weight:bold;font-size:13px;">Por loja (${nf(lojas.length)})</summary><div style="overflow-x:auto;margin-top:6px;max-height:520px;overflow-y:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;">${cabL.map((c, i) => th(c, i < 2)).join('')}</tr></thead><tbody>${lojas.slice(0, 800).map(ll).join('')}</tbody></table></div></details>`}
