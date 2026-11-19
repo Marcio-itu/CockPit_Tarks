@@ -4484,7 +4484,19 @@
       if (y + 8 > FUNDO) { doc.addPage(); y = TOPO; }
       y += 3; let lx = MG;
       const leg = (cor, borda, txt) => { if (borda) { doc.setDrawColor(230, 126, 34); doc.setLineWidth(0.5); doc.setFillColor(255, 255, 255); doc.rect(lx, y, 4, 3, 'FD'); } else { doc.setFillColor(cor[0], cor[1], cor[2]); doc.rect(lx, y, 4, 3, 'F'); } doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(80, 80, 80); doc.text(txt, lx + 5.5, y + 2.4); lx += 6 + doc.getTextWidth(txt) + 6; };
-      leg([39, 174, 96], false, 'dia com foto da loja'); leg(null, true, 'com foto em feriado nacional'); leg([217, 222, 226], false, 'F feriado nacional'); leg([41, 128, 185], false, 'D dia de degustação na rede'); leg([237, 237, 237], false, 'domingo');
+      leg([39, 174, 96], false, 'dia com foto da loja'); leg(null, true, 'com foto em feriado nacional'); leg([217, 222, 226], false, 'F feriado nacional'); leg([41, 128, 185], false, 'D dia de degustação na rede'); leg([237, 237, 237], false, 'domingo'); leg([230, 126, 34], false, 'G visita via Grupo (WhatsApp)');
+      // nota de rodapé: promotor por dia (Books)
+      if (x.notas && x.notas.length && grpModo !== 'grupo') {
+        y += 8; if (y + 10 > FUNDO) { doc.addPage(); y = TOPO; }
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(90, 100, 105); doc.text('PROMOTORES POR DIA (BOOKS)', MG, y); y += 4;
+        const col = (PW - 2 * MG) / 2, linhas = Math.ceil(x.notas.length / 2);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5);
+        for (let i = 0; i < linhas; i++) {
+          if (y + 3.5 > FUNDO) { doc.addPage(); y = TOPO; }
+          [0, 1].forEach(c => { const n = x.notas[i + c * linhas]; if (!n) return; doc.text('• ' + sistDataCurta(n.d) + ' - ' + cortar(String(n.prom || 'promotor não identificado') + (n.n > 1 ? ' (' + n.n + ' lojas)' : ''), col - 8), MG + c * col, y); });
+          y += 3.4;
+        }
+      }
     });
     const n = doc.getNumberOfPages(), agora = new Date(), p2 = v => String(v).padStart(2, '0');
     const quando = p2(agora.getDate()) + '/' + p2(agora.getMonth() + 1) + '/' + agora.getFullYear() + ' ' + p2(agora.getHours()) + ':' + p2(agora.getMinutes());
