@@ -4382,7 +4382,7 @@
       return `<tr><td class="sv-n" style="border-left:5px solid #27AE60;"><b>${esc(l.nome)}</b></td>${cel}<td class="sv-t">${vis.length}</td></tr>`;
     }).join('');
     const degLinha = sel && sel.degDias.size ? `<tr><td class="sv-n" style="color:#1F618D;"><b>Degustação</b></td>${dias.map(d => `<td class="sv ${sel.degDias.has(d) ? 'sv-deg' : (sistDow(d) === 6 ? 'sv-dom' : '')}" title="${sel.degDias.has(d) ? esc('Degustação em ' + rotuloData(d) + ' (' + sel.degDias.get(d) + ' ação/ões)') : ''}">${sel.degDias.has(d) ? 'D' : ''}</td>`).join('')}<td class="sv-t" style="color:#2471A3;">${sel.degDias.size}</td></tr>` : '';
-    const gLinhas = sel ? sel.gLojas.map(gl => `<tr><td class="sv-n" style="color:#B9770E;border-left:5px solid #E67E22;"><b>${esc(gl.nome)}</b></td>${dias.map(d => { const tem = gl.dias.has(d), fe = fer.get(d); const cls = tem ? (fe ? 'sv-fora' : 'sv-grp') : (fe ? 'sv-fer' : (sistDow(d) === 6 ? 'sv-dom' : '')); const tit = tem ? 'Via Grupo (WhatsApp) em ' + rotuloData(d) + (fe ? ' · feriado: ' + fe : '') : (fe || ''); return `<td class="sv ${cls}" title="${esc(tit)}">${tem ? 'G' : (fe ? 'F' : '')}</td>`; }).join('')}<td class="sv-t" style="color:#B9770E;">${gl.dias.size}</td></tr>`).join('') : '';
+    const gLinhas = sel ? sel.gLojas.map(gl => `<tr><td class="sv-n" style="color:#B9770E;border-left:5px solid #E67E22;"><b>${esc(gl.nome)}</b></td>${dias.map(d => { const tem = gl.dias.has(d), fe = fer.get(d); const cls = tem ? (fe ? 'sv-fora' : 'sv-grp') : (fe ? 'sv-fer' : (sistDow(d) === 6 ? 'sv-dom' : '')); const tit = tem ? 'Via WhatsApp em ' + rotuloData(d) + (fe ? ' · feriado: ' + fe : '') : (fe || ''); return `<td class="sv ${cls}" title="${esc(tit)}">${tem ? 'G' : (fe ? 'F' : '')}</td>`; }).join('')}<td class="sv-t" style="color:#B9770E;">${gl.dias.size}</td></tr>`).join('') : '';
     const cab = dias.map(d => { const w = sistDow(d); return `<th class="${w === 6 ? 'sv-dom' : ''}">${Number(d.slice(8))}<br><small>${SIST_DOW[w]}</small></th>`; }).join('');
     const caixa = (rot, val, cor, sub) => `<div style="flex:1;min-width:110px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:${cor};">${val}</div><div style="font-size:10px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
     container.innerHTML = `<style>
@@ -4395,7 +4395,7 @@
         .sv-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin:8px 0 12px;align-items:center}.sv-q{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:4px;border:1px solid #ccc}
       </style>
       <div class="card" style="border-left-color:#27AE60;">
-        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px;"><h2 style="margin:0;">Sistemática de visitas</h2><span style="font-size:12px;color:var(--cor-texto-secundario);">dia a dia, loja a loja, pelas fotos (Mob2con) e pela planilha do Grupo (WhatsApp)</span></div>
+        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px;"><h2 style="margin:0;">Sistemática de visitas</h2><span style="font-size:12px;color:var(--cor-texto-secundario);">dia a dia, loja a loja, pelas fotos (Mob2con) e pela planilha do WhatsApp</span></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:stretch;">
           <div style="position:relative;flex:3 1 240px;min-width:0;"><select id="sv-rede" hidden>${optR}</select>
             <button type="button" id="sv-dd-btn" style="width:100%;text-align:left;padding:8px 30px 8px 10px;border:1px solid #CCC;border-radius:6px;background:#fff;font-size:13px;font-weight:bold;cursor:pointer;position:relative;">${esc(sel ? sel.r.nome : '')}<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;">▾</span></button>
@@ -4491,7 +4491,7 @@
       (grpModo === 'books' ? [] : x.gLojas).forEach(gl => {
         if (y + RH > FUNDO) { doc.addPage(); y = TOPO; cabecalhoTabela(); }
         doc.setDrawColor(228, 230, 229); doc.setLineWidth(0.1);
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(185, 119, 14); doc.text(cortar(gl.nome + ' (Grupo)', WL - 3), MG + 1.5, y + 3.6);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(185, 119, 14); doc.text(cortar(gl.nome + ' (WhatsApp)', WL - 3), MG + 1.5, y + 3.6);
         dias.forEach((d, i) => {
           const cx = MG + WL + i * WD;
           const fe = fer.get(d);
@@ -4528,7 +4528,7 @@
       if (y + 8 > FUNDO) { doc.addPage(); y = TOPO; }
       y += 3; let lx = MG;
       const leg = (cor, borda, txt) => { if (borda) { doc.setDrawColor(230, 126, 34); doc.setLineWidth(0.5); doc.setFillColor(255, 255, 255); doc.rect(lx, y, 4, 3, 'FD'); } else { doc.setFillColor(cor[0], cor[1], cor[2]); doc.rect(lx, y, 4, 3, 'F'); } doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(80, 80, 80); doc.text(txt, lx + 5.5, y + 2.4); lx += 6 + doc.getTextWidth(txt) + 6; };
-      leg([39, 174, 96], false, 'dia com foto da loja'); leg(null, true, 'com foto em feriado nacional'); leg([217, 222, 226], false, 'F feriado nacional'); leg([41, 128, 185], false, 'D dia de degustação na rede'); leg([237, 237, 237], false, 'domingo'); leg([230, 126, 34], false, 'G visita via Grupo (WhatsApp)');
+      leg([39, 174, 96], false, 'dia com foto da loja'); leg(null, true, 'com foto em feriado nacional'); leg([217, 222, 226], false, 'F feriado nacional'); leg([41, 128, 185], false, 'D dia de degustação na rede'); leg([237, 237, 237], false, 'domingo'); leg([230, 126, 34], false, 'G visita via WhatsApp');
       // nota de rodapé: promotor por dia (Books)
       if (x.notas && x.notas.length && grpModo !== 'grupo') {
         y += 8; if (y + 10 > FUNDO) { doc.addPage(); y = TOPO; }
@@ -4572,6 +4572,8 @@
     // registros antigos (SKU, "todas as embalagens") viram lista de linhas
     Estado.degustacoes.forEach(r => {
       r.loja = ''; r.lojaManual = false;
+      if (r.vendasUn != null && r.unFardo !== 1) { r.unFardo = 1; r.packs = r.vendasUn; }
+      if (r.fardosConv && r.qtd) { const f = degFardosDe(r.qtd); r.fardos = f.v; r.fardosConv = false; }
       if (!Array.isArray(r.linhas)) {
         const ls = new Set((r.prodCods || (r.prodCod ? [r.prodCod] : [])).map(c => DEG_COD_LINHA[c]).filter(Boolean));
         String(r.linha || '').split(/\s*\+\s*/).forEach(l => { l = l === 'Sabores do RST' ? 'Sabores' : l; if (DEG_LINHAS.includes(l)) ls.add(l); });
@@ -4587,17 +4589,13 @@
   function degDataBR(iso) { return /^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4) : (iso || '-'); }
   function degN(v) { return v == null || v === '' ? '' : Number(v).toLocaleString('pt-BR'); }
   function degF(v) { return v == null || v === '' || !isFinite(v) ? '' : Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 1 }); }
-  // Vendas chegam em UNIDADES; o painel trabalha em FARDOS. 2 L, 1,5 L e lata: fardo de 6; demais embalagens: fardo de 12.
-  function degUnFardo(r) {
-    if (r && (r.unFardo === 6 || r.unFardo === 12)) return r.unFardo;
-    const t = [r && r.embal, r && r.qtd, r && r.produtoRel, r && r.produto].join(' ').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-    return /\b2\s*(?:l|lt|litros?)\b|\b1[.,]5\s*(?:l|lt|litros?)\b|\blatas?\b|fardo\s*de\s*6\b/.test(t) ? 6 : 12;
-  }
-  function degRecalcVendas(r) { r.packs = r.vendasUn == null ? null : Math.round(r.vendasUn / degUnFardo(r) * 100) / 100; }
-  // Registro recém-lido: o número de vendas do relatório é de unidades; guarda as duas coisas.
+  // Tudo em QUANTIDADE (unidades), sem conversão em fardos: a venda do relatório é o número que o painel mostra.
+  function degUnFardo() { return 1; }
+  function degRecalcVendas(r) { r.packs = r.vendasUn == null ? null : r.vendasUn; }
+  // Registro recém-lido: guarda a quantidade como veio.
   function degConverteVendas(r) {
     if (r.unFardo || r.vendasUn != null) return r;
-    r.unFardo = degUnFardo(r); r.vendasUn = r.packs; degRecalcVendas(r); return r;
+    r.unFardo = 1; r.vendasUn = r.packs; degRecalcVendas(r); return r;
   }
   function degVendas(r) { return r.packs == null ? null : r.packs; }
   function degPct(a, b) { return b > 0 && a != null ? (a / b * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : ''; }
@@ -4626,8 +4624,7 @@
     return degRotCache.get(k) || n;
   }
 
-  // ── Produtos: só a linha (Tubaína, Tubaína Zero, Sabores, Tarks Beer, Frutarks). Tudo é medido em fardo. ──
-  const DEG_UN_FARDO = 12;
+  // ── Produtos: só a linha (Tubaína, Tubaína Zero, Sabores, Tarks Beer, Frutarks). Tudo é medido em quantidade. ──
   const DEG_LINHAS = ['Tubaína', 'Tubaína Zero', 'Sabores', 'Tarks Beer', 'Frutarks'];
   // Só para converter registros antigos (que guardavam o código do SKU) para a linha.
   const DEG_COD_LINHA = { '40058': 'Tubaína', '40059': 'Tubaína', '40060': 'Tubaína', '50058': 'Tubaína', '40057': 'Tubaína Zero', '40056': 'Tubaína Zero', '50057': 'Tubaína Zero', '40061': 'Sabores', '40064': 'Sabores', '40070': 'Sabores', '40071': 'Sabores', '40667': 'Sabores', '151001': 'Tarks Beer', '150001': 'Tarks Beer', '40073': 'Frutarks', '40074': 'Frutarks', '40075': 'Frutarks' };
@@ -4647,16 +4644,14 @@
     const ls = DEG_LINHAS.filter(l => (linhas || []).includes(l));
     r.linhas = ls; r.linha = ls.join(' + '); r.produto = r.linha; delete r.prodCods; delete r.prodCod;
   }
-  // "Quantidade utilizada" vem em texto livre: converte o que dá em fardos; o resto fica para conferência.
+  // "Quantidade utilizada" vem em texto livre: lê o número; o resto fica para conferência.
   function degFardosDe(txt) {
     const t = String(txt || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''), num = x => parseFloat(String(x).replace(',', '.'));
     let m = t.match(/(\d+(?:[.,]\d+)?)\s*(?:fardos?|caixas?|cx)\b(\s*e\s*meia)?/);
     if (m) return { v: num(m[1]) + (m[2] ? 0.5 : 0), conv: false };
     if (/\bmeia\s*(?:caixa|fardo)/.test(t)) return { v: 0.5, conv: false };
     m = t.match(/(\d+(?:[.,]\d+)?)\s*(?:unidades?|unids?|un\b|garrafinhas?|garrafas?|latas?|pets?)/);
-    // 2 L e 1,5 L vêm em fardo de 6; as demais embalagens, em fardo de 12
-    const un = /\b2\s*(?:l|lt|litros?)\b|\b1[.,]5\s*(?:l|lt|litros?)\b/.test(t) ? 6 : DEG_UN_FARDO;
-    if (m) return { v: Math.round(num(m[1]) / un * 100) / 100, conv: true };
+    if (m) return { v: num(m[1]), conv: false };
     return { v: null, conv: false };
   }
 
@@ -4874,17 +4869,17 @@
     const inp = (i, campo, v, w, tipo) => `<input data-dg="${i}" data-campo="${campo}" type="${tipo || 'text'}" value="${esc(v == null ? '' : v)}" style="width:${w}px;padding:4px;border:1px solid #CFD4D9;border-radius:4px;font-size:12px;">`;
     const prodBox = (r, i) => { const sel = degLinhasDe(r); return `<div style="font-size:11px;padding:3px;border-radius:4px;${sel.length ? '' : 'background:#FFF6D6;'}">${DEG_LINHAS.map(l => `<label style="display:flex;gap:5px;align-items:center;margin:1px 0;cursor:pointer;white-space:nowrap;"><input type="checkbox" data-dg="${i}" data-campo="prod" data-cod="${esc(l)}" ${sel.includes(l) ? 'checked' : ''}>${esc(l)}</label>`).join('')}</div>`; };
     const pend = degPend.length ? `<h3 style="margin:14px 0 6px;font-size:14px;">Conferir antes de salvar (${degPend.length})</h3>
-      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-bottom:8px;">Leitura automática. Rede vem da lista dos Books e produto é só a linha; campos em amarelo precisam da sua atenção. Tudo é medido em <strong>fardos</strong>; as vendas avulsas não entram.</p>
+      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-bottom:8px;">Leitura automática. Rede vem da lista dos Books e produto é só a linha; campos em amarelo precisam da sua atenção. Tudo é medido em <strong>quantidade</strong> (unidades), sem conversão em fardos.</p>
       ${degPend.some(degFaltaDado) ? '<button type="button" id="dg-est" style="margin-bottom:8px;padding:8px 12px;border-radius:6px;border:1px solid #2F7F6F;background:#fff;color:#2F7F6F;font-weight:bold;cursor:pointer;">Completar dados faltantes (regra de 3)</button>' : ''}
-      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th>Dia da ação</th><th>Rede (Books)</th><th>Produto (linha)</th><th>Fardos utilizados</th><th>Abord.</th><th>Aceitaram</th><th>Vendas (unidades → fardos)</th><th></th></tr></thead><tbody>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th>Dia da ação</th><th>Rede (Books)</th><th>Produto (linha)</th><th>Qtd. utilizada</th><th>Abord.</th><th>Aceitaram</th><th>Vendas (quantidade)</th><th></th></tr></thead><tbody>
       ${degPend.map((r, i) => {
         const dup = todas.some(x => degChave(x) === degChave(r));
         const selRede = `<select data-dg="${i}" data-campo="rede" style="width:140px;padding:4px;font-size:12px;${r.rede ? '' : 'background:#FFF6D6;'}"><option value="">${r.rede ? '(sem rede)' : '(não encontrada: ' + esc(r.lojaRel || '-') + ')'}</option>${redes.map(x => `<option value="${esc(x.k)}" ${x.k === r.rede ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}${r.rede && !redes.some(x => x.k === r.rede) ? `<option value="${esc(r.rede)}" selected>✏ ${esc(r.redeNome)}</option>` : ''}<option value="__novo__">✏ Outra rede (digitar)…</option></select>`;
         const selProd = prodBox(r, i) + `${r.produtoRel ? `<div style="font-size:9px;color:var(--cor-texto-secundario);">relatório: ${esc(r.produtoRel)}</div>` : ''}`;
         const dia = `<div>${inp(i, 'data', r.data, 128, 'date')} <span style="font-size:11px;color:var(--cor-texto-secundario);">${esc(degDiaSemana(r.data))}</span></div>${r.duvidaData ? `<div style="margin-top:3px;padding:4px 6px;background:#FFF6D6;border-radius:4px;font-size:11px;max-width:230px;">${esc(r.duvidaData)}<label style="display:block;margin-top:3px;font-weight:bold;"><input type="checkbox" data-dg="${i}" data-campo="dataOk" ${r.dataOk ? 'checked' : ''}> Confirmo este dia</label></div>` : ''}`;
-        const fard = `<div style="${r.fardos == null ? 'background:#FFF6D6;' : ''}padding:2px;border-radius:4px;"><input data-dg="${i}" data-campo="fardos" type="number" step="0.5" min="0" value="${r.fardos == null ? '' : r.fardos}" style="width:62px;padding:4px;border:1px solid #CFD4D9;border-radius:4px;font-size:12px;">${r.qtd ? `<div style="font-size:10px;color:var(--cor-texto-secundario);max-width:110px;">relatório: ${esc(r.qtd)}${r.fardosConv ? ' (convertido de unidades)' : ''}</div>` : ''}</div>`;
+        const fard = `<div style="${r.fardos == null ? 'background:#FFF6D6;' : ''}padding:2px;border-radius:4px;"><input data-dg="${i}" data-campo="fardos" type="number" step="0.5" min="0" value="${r.fardos == null ? '' : r.fardos}" style="width:62px;padding:4px;border:1px solid #CFD4D9;border-radius:4px;font-size:12px;">${r.qtd ? `<div style="font-size:10px;color:var(--cor-texto-secundario);max-width:110px;">relatório: ${esc(r.qtd)}${r.fardosConv ? '' : ''}</div>` : ''}</div>`;
         return `<tr style="border-top:1px solid #ECEFF1;vertical-align:top;"><td style="padding:4px;">${dia}</td><td style="padding:4px;">${selRede}</td><td style="padding:4px;">${selProd}</td><td style="padding:4px;">${fard}</td>
-          <td style="padding:4px;white-space:nowrap;${r.abord == null ? 'background:#FFF6D6;' : ''}">${inp(i, 'abord', r.abord, 54, 'number')}${r.aviso ? `<div style="font-size:9px;color:#B9770E;max-width:110px;white-space:normal;">${esc(r.aviso)}</div>` : ''}</td><td style="padding:4px;white-space:nowrap;">${inp(i, 'aceit', r.aceit, 54, 'number')}</td><td style="padding:4px;white-space:nowrap;">${inp(i, 'vendasUn', r.vendasUn, 60, 'number')}<select data-dg="${i}" data-campo="unFardo" style="padding:3px;font-size:11px;"><option value="12" ${degUnFardo(r) === 12 ? 'selected' : ''}>fardo 12</option><option value="6" ${degUnFardo(r) === 6 ? 'selected' : ''}>fardo 6</option></select><div style="font-size:10px;color:var(--cor-texto-secundario);">${r.packs == null ? '' : '= ' + degF(r.packs) + ' fardo(s)'}</div></td>
+          <td style="padding:4px;white-space:nowrap;${r.abord == null ? 'background:#FFF6D6;' : ''}">${inp(i, 'abord', r.abord, 54, 'number')}${r.aviso ? `<div style="font-size:9px;color:#B9770E;max-width:110px;white-space:normal;">${esc(r.aviso)}</div>` : ''}</td><td style="padding:4px;white-space:nowrap;">${inp(i, 'aceit', r.aceit, 54, 'number')}</td><td style="padding:4px;white-space:nowrap;">${inp(i, 'vendasUn', r.vendasUn, 60, 'number')}<div style="font-size:10px;color:var(--cor-texto-secundario);">${r.packs == null ? '' : degF(r.packs) + ' unid.'}</div></td>
           <td style="padding:4px;white-space:nowrap;font-size:11px;">${dup ? '<span style="color:#B9770E;">já salva (será atualizada)</span> ' : ''}<button type="button" data-dg-rem="${i}" style="border:none;background:none;color:#C0392B;cursor:pointer;">remover</button></td></tr>`;
       }).join('')}</tbody></table></div>
       ${pool.size ? '' : '<p style="font-size:12px;color:#B9770E;margin-top:6px;">Ainda não há fotos de Books importadas, então não há redes para vincular.</p>'}
@@ -4907,7 +4902,7 @@
       let lidos = 0, sem = []; degAvisos = [];
       for (const f of arqs) {
         msg('Lendo ' + f.name + '…'); if (degLista().some(r => r.arquivo === f.name)) degAvisos.push(f.name + ' já tinha sido anexado antes (ações iguais serão atualizadas, não duplicadas)');
-        try { const r = await degLerArquivo(f); if (!r.length && !degAvisos.some(a => a.startsWith(f.name + ':'))) sem.push(f.name); r.forEach(x => { if (x.jaFardos) { delete x.jaFardos; x.unFardo = degUnFardo(x); x.vendasUn = x.packs == null ? null : Math.round(x.packs * x.unFardo * 100) / 100; } else degConverteVendas(x); degPend.push(x); }); lidos += r.length; } catch (e) { sem.push(f.name + ' (' + (e.message || 'erro') + ')'); }
+        try { const r = await degLerArquivo(f); if (!r.length && !degAvisos.some(a => a.startsWith(f.name + ':'))) sem.push(f.name); r.forEach(x => { delete x.jaFardos; degConverteVendas(x); degPend.push(x); }); lidos += r.length; } catch (e) { sem.push(f.name + ' (' + (e.message || 'erro') + ')'); }
       }
       degMsg = lidos + ' relatório(s) lido(s)' + (degAvisos.length ? '. Atenção: ' + degAvisos.join('; ') : '') + (sem.length ? '. Sem relatório reconhecido em: ' + sem.join(', ') : '') + '. Confira abaixo e salve.';
       refaz();
@@ -4925,7 +4920,7 @@
       if (k === 'prod') { const cs = new Set(degLinhasDe(r)); if (x.checked) cs.add(x.dataset.cod); else cs.delete(x.dataset.cod); degAplicaProduto(r, [...cs]); refaz(); return; }
       if (k === 'fardos') { r.fardos = x.value === '' ? null : +x.value; r.fardosConv = false; refaz(); return; }
       if ((k === 'abord' || k === 'aceit') && r.est) { r.est[k] = false; if (!degEstimado(r)) r.aviso = ''; }
-      if (k === 'vendasUn') { r.vendasUn = x.value === '' ? null : +x.value; if (!r.unFardo) r.unFardo = degUnFardo(r); degRecalcVendas(r); refaz(); return; }
+      if (k === 'vendasUn') { r.vendasUn = x.value === '' ? null : +x.value; r.unFardo = 1; degRecalcVendas(r); refaz(); return; }
       if (k === 'unFardo') { r.unFardo = +x.value; degRecalcVendas(r); refaz(); return; }
       if (k === 'packs' || k === 'avul') { r[k] = x.value === '' ? null : +x.value; refaz(); return; }
       if (k === 'data') {
@@ -4969,7 +4964,7 @@
     const mx = Math.max(0, ...linhas.map(x => x.tot));
     if (!mx) return `<div class="card" style="flex:1 1 440px;min-width:0;"><h2>${titulo}</h2><p style="font-size:12px;color:var(--cor-texto-secundario);">Nenhuma venda em packs informada neste período.</p></div>`;
     return `<div class="card" style="flex:1 1 440px;min-width:0;"><h2>${titulo}</h2>
-      ${linhas.filter(x => x.tot > 0).map(x => `<div style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;"><div style="width:200px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(x.k)}">${esc(x.k)}</div><div style="flex:1;display:flex;height:16px;gap:1px;">${x.partes.map(p => `<div title="${esc(p.l)}: ${degF(p.v)} fardos" style="width:${p.v / mx * 100}%;min-width:3px;background:${degCor(p.l)};border-radius:3px;"></div>`).join('')}</div><div style="width:40px;flex:none;text-align:right;font-weight:bold;">${degF(x.tot)}</div></div>`).join('')}
+      ${linhas.filter(x => x.tot > 0).map(x => `<div style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;"><div style="width:200px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(x.k)}">${esc(x.k)}</div><div style="flex:1;display:flex;height:16px;gap:1px;">${x.partes.map(p => `<div title="${esc(p.l)}: ${degF(p.v)} un." style="width:${p.v / mx * 100}%;min-width:3px;background:${degCor(p.l)};border-radius:3px;"></div>`).join('')}</div><div style="width:40px;flex:none;text-align:right;font-weight:bold;">${degF(x.tot)}</div></div>`).join('')}
       <div style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">${cols.map(l => `<span style="margin-right:12px;white-space:nowrap;">${degPonto(l)}${esc(l)}</span>`).join('')}</div></div>`;
   }
   const DEG_TH = 'padding:6px;text-align:right;', DEG_TD = 'padding:6px;text-align:right;border-top:1px solid #ECEFF1;';
@@ -4978,7 +4973,7 @@
     const mark = DEG_COR[a.k] ? degPonto(a.k) : '';
     return `<tr style="${b}"><td style="${DEG_TD}text-align:left;">${mark}${esc(a.k)}</td><td style="${DEG_TD}">${a.acoes}</td><td style="${DEG_TD}">${a.abordN ? degN(a.abord) : ''}</td><td style="${DEG_TD}">${degN(a.aceit)}</td><td style="${DEG_TD}${total ? '' : degHeat(a.abord ? a.aceitC / a.abord : null)}">${degPct(a.aceitC, a.abord)}</td><td style="${DEG_TD}">${degF(a.util)}</td><td style="${DEG_TD}font-weight:bold;">${a.vendasN ? degF(a.vendas) : ''}</td>${extra || ''}</tr>`;
   }
-  const DEG_CAB = rot => `<th style="${DEG_TH}text-align:left;">${rot}</th><th style="${DEG_TH}">Ações</th><th style="${DEG_TH}">Abordagens</th><th style="${DEG_TH}">Aceitaram</th><th style="${DEG_TH}">% aceit.</th><th style="${DEG_TH}">Fardos utilizados</th><th style="${DEG_TH}">Vendas (fardos)</th>`;
+  const DEG_CAB = rot => `<th style="${DEG_TH}text-align:left;">${rot}</th><th style="${DEG_TH}">Ações</th><th style="${DEG_TH}">Abordagens</th><th style="${DEG_TH}">Aceitaram</th><th style="${DEG_TH}">% aceit.</th><th style="${DEG_TH}">Qtd. utilizada</th><th style="${DEG_TH}">Vendas (qtd.)</th>`;
   function renderizarDegustacoes() {
     const c = document.getElementById('tela-degustacoes'); if (!c) return;
     degReconciliar();
@@ -4987,7 +4982,7 @@
     const bt = (id, txt, on) => `<button type="button" id="${id}" style="padding:8px 14px;border-radius:6px;border:1px solid ${on ? 'var(--cor-primaria)' : '#CFD4D9'};background:${on ? 'var(--cor-primaria)' : '#fff'};color:${on ? 'var(--cor-destaque)' : '#333'};font-weight:bold;cursor:pointer;">${txt}</button>`;
     const topo = `<div class="card"><h2>Degustações</h2><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${bt('dg-m-mes', 'Mês: ' + esc(rotuloMes(Estado.config.mesAtivo)), degModo === 'mes')}${bt('dg-m-sem', 'Última semana', degModo === 'sem')}${bt('dg-m-acum', esc(Estado.config.mesAtivo.slice(0, 4)) + ' - Acumulado', degModo === 'acum')}${bt('dg-m-dia', 'Dia', degModo === 'dia')}${degModo === 'dia' ? `<input type="date" id="dg-dia" value="${degDiaSel()}" style="padding:8px;border:1px solid #CCC;border-radius:6px;font-size:13px;">` : ''}
       <button type="button" id="dg-xlsx" style="padding:9px 14px;border-radius:6px;border:none;background:#1E7B4A;color:#fff;font-weight:bold;cursor:pointer;" ${lista.length ? '' : 'disabled'}>⬇ Baixar Excel</button>${lista.some(degFaltaDado) ? `<button type="button" id="dg-est" style="padding:9px 14px;border-radius:6px;border:1px solid #2F7F6F;background:#fff;color:#2F7F6F;font-weight:bold;cursor:pointer;">Completar dados faltantes (regra de 3)</button>` : ''}</div>
-      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;">Período: <strong>${esc(per)}</strong>. Tudo em fardos. Os relatórios da agência são anexados em Admin.</p></div>`;
+      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;">Período: <strong>${esc(per)}</strong>. Tudo em quantidade. Os relatórios da agência são anexados em Admin.</p></div>`;
     if (!lista.length) { c.innerHTML = '<style>#tela-degustacoes{text-transform:uppercase}</style>' + topo + `<div class="card"><p>${total ? 'Sem degustações neste período. Troque o período acima.' : 'Nenhuma degustação salva ainda. Anexe os relatórios da agência em Admin.'}</p></div>`; degLigar(c); return; }
     const porLinha = degAgrega(lista, r => r.linha), porRede = degAgrega(lista, degRedeRot).sort((a, b) => b.vendas - a.vendas || b.acoes - a.acoes || a.k.localeCompare(b.k));
     // colunas de vendas por linha dentro da tabela de redes (só as que aparecem no período)
@@ -4997,17 +4992,17 @@
     const thL = cols.map(l => `<th style="${DEG_TH}color:${degCor(l)};">${esc(l)}</th>`).join('');
     const tdL = rede => cols.map(l => { const v = rede === null ? lista.filter(r => (r.linha || '(sem produto)') === l).reduce((n, r) => n + (degVendas(r) || 0), 0) : vendaRL(rede, l); return `<td style="${DEG_TD}color:${degCor(l)};font-weight:bold;">${v ? degF(v) : ''}</td>`; }).join('');
     c.innerHTML = '<style>#tela-degustacoes{text-transform:uppercase}#tela-degustacoes .dg-fb{text-transform:none}</style>' + topo + `
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">${cx('Ações', t.acoes, porRede.length + ' rede(s)')}${cx('Abordagens', degN(t.abord))}${cx('Aceitaram', degN(t.aceit), degPct(t.aceitC, t.abord))}${cx('Vendas', degF(t.vendas), 'fardos')}${cx('Fardos utilizados', degF(t.util))}${cx('Vendas por ação', degF(t.acoes ? t.vendas / t.acoes : null), 'fardos')}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">${cx('Ações', t.acoes, porRede.length + ' rede(s)')}${cx('Abordagens', degN(t.abord))}${cx('Aceitaram', degN(t.aceit), degPct(t.aceitC, t.abord))}${cx('Vendas', degF(t.vendas), 'quantidade')}${cx('Qtd. utilizada', degF(t.util))}${cx('Vendas por ação', degF(t.acoes ? t.vendas / t.acoes : null), 'quantidade')}</div>
       ${lista.some(degEstimado) ? `<p style="font-size:12px;color:#2F7F6F;margin:-4px 0 10px;">${lista.filter(degEstimado).length} ação(ões) com abordagens ou aceitaram estimados por regra de 3 (marcados como "est." no detalhe).</p>` : ''}${semVinc ? `<p style="font-size:12px;color:#B9770E;margin:-4px 0 10px;">${semVinc} ação(ões) sem rede dos Books vinculada: ${esc(lista.filter(r => !r.rede).map(r => degDataBR(r.data).slice(0, 5) + ' ' + (r.lojaRel || '?')).join('; '))}. Abra o detalhe abaixo (linha em amarelo), clique em editar e escolha a rede na lista ou use "Outra rede (digitar)".</p>` : ''}${semProd ? `<p style="font-size:12px;color:#B9770E;margin:-4px 0 10px;">${semProd} ação(ões) sem linha de produto: ${esc(lista.filter(r => !r.linha).map(r => degDataBR(r.data).slice(0, 5) + ' ' + degRedeRot(r)).join('; '))}. Abra o detalhe abaixo, clique em editar e marque a linha.</p>` : ''}
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;">${degGraficoAceitacao('Abordagens e aceitação por rede', porRede)}${degGraficoVendas('Vendas por rede (fardos)', lista, porRede, cols)}</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;">${degGraficoAceitacao('Abordagens e aceitação por rede', porRede)}${degGraficoVendas('Vendas por rede (quantidade)', lista, porRede, cols)}</div>
       <div class="card"><h2>Por rede</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:10px;text-transform:uppercase;">${DEG_CAB('Rede')}${thL}</tr></thead><tbody>${porRede.map(a => degLinhaTab(a, tdL(a.k))).join('')}${degLinhaTab(Object.assign({ k: 'Total' }, t), tdL(null), true)}</tbody></table></div>
-        <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:6px;">As colunas coloridas mostram as vendas (fardos) de cada linha de produto em cada rede; quanto mais verde o % de aceitação, maior a aceitação.</p></div>
+        <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:6px;">As colunas coloridas mostram as vendas (quantidade) de cada linha de produto em cada rede; quanto mais verde o % de aceitação, maior a aceitação.</p></div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;">
         <div class="card" style="flex:1 1 420px;min-width:0;"><h2>Por linha de produto</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:10px;text-transform:uppercase;">${DEG_CAB('Linha')}</tr></thead><tbody>${porLinha.map(a => degLinhaTab(a)).join('')}${degLinhaTab(Object.assign({ k: 'Total' }, t), '', true)}</tbody></table></div></div>
       </div>
-      <details class="card"><summary style="cursor:pointer;font-weight:bold;">Ver detalhe das ${lista.length} ação(ões)</summary><div style="overflow-x:auto;margin-top:8px;"><table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#F8F9FA;font-size:10px;text-transform:uppercase;"><th style="${DEG_TH}text-align:left;">Dia</th><th style="${DEG_TH}text-align:left;">Rede</th><th style="${DEG_TH}text-align:left;">Produto</th><th style="${DEG_TH}">Fardos utilizados</th><th style="${DEG_TH}">Abord.</th><th style="${DEG_TH}">Aceitaram</th><th style="${DEG_TH}">% aceit.</th><th style="${DEG_TH}">Vendas (fardos)</th><th style="${DEG_TH}text-align:left;">Feedback</th><th style="${DEG_TH}"></th></tr></thead><tbody>
+      <details class="card"><summary style="cursor:pointer;font-weight:bold;">Ver detalhe das ${lista.length} ação(ões)</summary><div style="overflow-x:auto;margin-top:8px;"><table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:#F8F9FA;font-size:10px;text-transform:uppercase;"><th style="${DEG_TH}text-align:left;">Dia</th><th style="${DEG_TH}text-align:left;">Rede</th><th style="${DEG_TH}text-align:left;">Produto</th><th style="${DEG_TH}">Qtd. utilizada</th><th style="${DEG_TH}">Abord.</th><th style="${DEG_TH}">Aceitaram</th><th style="${DEG_TH}">% aceit.</th><th style="${DEG_TH}">Vendas (qtd.)</th><th style="${DEG_TH}text-align:left;">Feedback</th><th style="${DEG_TH}"></th></tr></thead><tbody>
       ${lista.map(r => `<tr><td style="${DEG_TD}text-align:left;white-space:nowrap;">${degDataBR(r.data).slice(0, 5)} ${esc(degDiaSemana(r.data).slice(0, 3))}</td><td style="${DEG_TD}text-align:left;${r.rede ? '' : 'background:#FFF6D6;'}">${esc(degRedeRot(r))}</td><td style="${DEG_TD}text-align:left;">${esc(r.produto)}</td><td style="${DEG_TD}">${degF(r.fardos)}</td><td style="${DEG_TD}" ${r.est && r.est.abord ? `title="${esc(r.aviso)}"` : ''}>${degN(r.abord)}${r.est && r.est.abord ? '<sup style="color:#2F7F6F;"> est.</sup>' : ''}</td><td style="${DEG_TD}" ${r.est && r.est.aceit ? `title="${esc(r.aviso)}"` : ''}>${degN(r.aceit)}${r.est && r.est.aceit ? '<sup style="color:#2F7F6F;"> est.</sup>' : ''}</td><td style="${DEG_TD}">${r.abord != null ? degPct(r.aceit, r.abord) : ''}</td><td style="${DEG_TD}font-weight:bold;">${degF(degVendas(r))}</td><td class="dg-fb" style="${DEG_TD}text-align:left;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.feedback)}">${esc(r.feedback)}</td><td style="${DEG_TD}white-space:nowrap;font-size:11px;"><button type="button" data-dg-edit="${esc(r.id)}" style="border:none;background:none;color:#2980B9;cursor:pointer;">editar</button> <button type="button" data-dg-del="${esc(r.id)}" style="border:none;background:none;color:#C0392B;cursor:pointer;">excluir</button></td></tr>`).join('')}</tbody></table></div>
-      <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">Vendas = unidades informadas pela agência, convertidas em fardos (2 L, 1,5 L e lata = 6; demais = 12). Editar leva a ação de volta para a conferência em Admin.</p></details>`;
+      <p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:8px;">Vendas = quantidade informada pela agência, sem conversão em fardos. Editar leva a ação de volta para a conferência em Admin.</p></details>`;
     degLigar(c);
   }
 
@@ -5023,7 +5018,7 @@
     c.querySelectorAll('[data-dg-del]').forEach(b => b.onclick = () => { if (!confirm('Excluir esta degustação da base?')) return; Estado.degustacoes = degLista().filter(r => r.id !== b.dataset.dgDel); salvarEstado(); renderizarDegustacoes(); });
     c.querySelectorAll('[data-dg-edit]').forEach(b => b.onclick = () => {
       const r = degLista().find(x => x.id === b.dataset.dgEdit); if (!r) return;
-      Estado.degustacoes = degLista().filter(x => x.id !== r.id); r.dataOk = true; if (!r.unFardo) { r.unFardo = 12; r.vendasUn = r.packs == null ? null : r.packs * 12; } degPend.push(r); degMsg = 'Ação enviada para conferência. Ajuste e salve de novo.'; salvarEstado();
+      Estado.degustacoes = degLista().filter(x => x.id !== r.id); r.dataOk = true; if (!r.unFardo) { r.unFardo = 1; r.vendasUn = r.packs; } degPend.push(r); degMsg = 'Ação enviada para conferência. Ajuste e salve de novo.'; salvarEstado();
       const a = document.querySelector('nav button[data-tela="admin"]'); if (a) a.click();
     });
   }
@@ -5031,7 +5026,7 @@
   function baixarDegustacoesXLSX() {
     const lista = degFiltrada(); if (!lista.length) return;
     if (typeof XLSX === 'undefined') { alert('Biblioteca de Excel não carregou. Confira a internet.'); return; }
-    const t = degTot(lista), cab = ['Ações', 'Abordagens', 'Aceitaram', '% aceitação', 'Fardos utilizados', 'Vendas (fardos)', 'Vendas por ação'];
+    const t = degTot(lista), cab = ['Ações', 'Abordagens', 'Aceitaram', '% aceitação', 'Qtd. utilizada', 'Vendas (qtd.)', 'Vendas por ação'];
     const lin = a => [a.acoes, a.abord, a.aceit, a.abord ? a.aceitC / a.abord : null, a.util, a.vendas, a.acoes ? a.vendas / a.acoes : null];
     const grupo = (rot, fn) => [[rot].concat(cab)].concat(degAgrega(lista, fn).map(a => [a.k].concat(lin(a)))).concat([['Total'].concat(lin(t))]);
     const wb = XLSX.utils.book_new();
@@ -5041,18 +5036,18 @@
       Object.keys(ws).forEach(k => {
         if (k[0] === '!' || typeof ws[k].v !== 'number') return;
         const pos = XLSX.utils.decode_cell(k), h = String(nome === 'Resumo' ? (aoa[pos.r] || [])[0] : aoa[0][pos.c] || '');
-        if (/%/.test(h)) ws[k].z = '0.0%'; else if (/fardos|por ação/i.test(h)) ws[k].z = '0.0';
+        if (/%/.test(h)) ws[k].z = '0.0%'; else if (/qtd|por ação/i.test(h)) ws[k].z = '0.0';
       });
       XLSX.utils.book_append_sheet(wb, ws, nome);
     };
     const per = degPeriodoRot().replace(/^./, x => x.toUpperCase());
-    add('Resumo', [['Degustações Tarks | ' + per], [], ['Indicador', 'Valor']].concat([['Ações', t.acoes], ['Redes', degAgrega(lista, degRedeRot).length], ['Abordagens', t.abord], ['Aceitaram a degustação', t.aceit], ['% de aceitação', t.abord ? t.aceitC / t.abord : null], ['Fardos utilizados', t.util], ['Vendas (fardos)', t.vendas], ['Vendas por ação (fardos)', t.acoes ? t.vendas / t.acoes : null], [], ['Obs.', 'Vendas = unidades informadas pela agência, convertidas em fardos (2 L, 1,5 L e lata = 6; demais = 12). Fardos utilizados: unidades do relatório ÷ 12 (÷ 6 para 2 L e 1,5 L). Números "média de" do relatório entram como informados. % de aceitação considera só as ações com total de abordagens informado.']]), [30, 22]);
+    add('Resumo', [['Degustações Tarks | ' + per], [], ['Indicador', 'Valor']].concat([['Ações', t.acoes], ['Redes', degAgrega(lista, degRedeRot).length], ['Abordagens', t.abord], ['Aceitaram a degustação', t.aceit], ['% de aceitação', t.abord ? t.aceitC / t.abord : null], ['Qtd. utilizada', t.util], ['Vendas (qtd.)', t.vendas], ['Vendas por ação (qtd.)', t.acoes ? t.vendas / t.acoes : null], [], ['Obs.', 'Vendas = quantidade informada pela agência, sem conversão em fardos. Qtd. utilizada: número informado no relatório. Números "média de" do relatório entram como informados. % de aceitação considera só as ações com total de abordagens informado.']]), [30, 22]);
     add('Por linha', grupo('Linha', r => r.linha), [24, 8, 13, 11, 12, 16, 15, 15]);
-    // Por rede: mesmas colunas + vendas (fardos) de cada linha de produto
+    // Por rede: mesmas colunas + vendas (quantidade) de cada linha de produto
     const linhasCol = [...new Set(lista.map(r => r.linha || '(sem produto)'))].sort((a, b) => { const ia = DEG_LINHAS.indexOf(a), ib = DEG_LINHAS.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b); });
     const vRL = (rede, l) => lista.filter(r => (rede === null || degRedeRot(r) === rede) && (r.linha || '(sem produto)') === l).reduce((n, r) => n + (degVendas(r) || 0), 0);
-    add('Por rede', [['Rede'].concat(cab, linhasCol.map(l => 'Vendas (fardos): ' + l))].concat(degAgrega(lista, degRedeRot).map(a => [a.k].concat(lin(a), linhasCol.map(l => vRL(a.k, l))))).concat([['Total'].concat(lin(t), linhasCol.map(l => vRL(null, l)))]), [28, 8, 13, 11, 12, 16, 15, 15].concat(linhasCol.map(() => 20)));
-    const det = [['Data', 'Dia', 'Rede (Books)', 'Produto (linha)', 'Fardos utilizados', 'Abordagens', 'Aceitaram', '% aceitação', 'Vendas (fardos)', 'Dado estimado (regra de 3)', 'Feedback dos clientes']];
+    add('Por rede', [['Rede'].concat(cab, linhasCol.map(l => 'Vendas (qtd.): ' + l))].concat(degAgrega(lista, degRedeRot).map(a => [a.k].concat(lin(a), linhasCol.map(l => vRL(a.k, l))))).concat([['Total'].concat(lin(t), linhasCol.map(l => vRL(null, l)))]), [28, 8, 13, 11, 12, 16, 15, 15].concat(linhasCol.map(() => 20)));
+    const det = [['Data', 'Dia', 'Rede (Books)', 'Produto (linha)', 'Qtd. utilizada', 'Abordagens', 'Aceitaram', '% aceitação', 'Vendas (qtd.)', 'Dado estimado (regra de 3)', 'Feedback dos clientes']];
     lista.forEach(r => det.push([degDataBR(r.data), degDiaSemana(r.data), r.redeNome || r.lojaRel || '', r.produto, r.fardos, r.abord, r.aceit, r.abord ? r.aceit / r.abord : null, degVendas(r), r.est && r.est.abord ? 'Abordagens' : (r.est && r.est.aceit ? 'Aceitaram' : ''), r.feedback]));
     add('Detalhe', det, [12, 10, 26, 22, 12, 12, 11, 12, 14, 22, 90]);
     XLSX.writeFile(wb, degNomeArquivo(lista, 'xlsx'));
@@ -5291,7 +5286,7 @@
   }
   function grpDoMes(M, mes) { const pub = typeof Modo !== 'undefined' && Modo === 'publicado'; return pub ? (M && M.grupo) : grpResumo(mes, M && M.vis, M && M.execs); }
 
-  const grpToggle = pref => { const b = (id, t, on) => `<button type="button" data-grp="${id}" style="padding:7px 12px;border-radius:6px;border:1px solid ${on ? 'var(--cor-primaria)' : '#CFD4D9'};background:${on ? 'var(--cor-primaria)' : '#fff'};color:${on ? 'var(--cor-destaque)' : '#333'};font-weight:bold;cursor:pointer;font-size:12px;">${t}</button>`; return `<div class="no-pdf" data-grp-pref="${pref}" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px;">${b('tudo', 'Consolidado', grpModo === 'tudo')}${b('books', 'Só Books (comprovadas por foto)', grpModo === 'books')}${b('grupo', 'Só Grupo (WhatsApp)', grpModo === 'grupo')}</div>`; };
+  const grpToggle = pref => { const b = (id, t, on) => `<button type="button" data-grp="${id}" style="padding:7px 12px;border-radius:6px;border:1px solid ${on ? 'var(--cor-primaria)' : '#CFD4D9'};background:${on ? 'var(--cor-primaria)' : '#fff'};color:${on ? 'var(--cor-destaque)' : '#333'};font-weight:bold;cursor:pointer;font-size:12px;">${t}</button>`; return `<div class="no-pdf" data-grp-pref="${pref}" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px;">${b('tudo', 'Consolidado', grpModo === 'tudo')}${b('books', 'Só Mob2con', grpModo === 'books')}${b('grupo', 'Só WhatsApp', grpModo === 'grupo')}</div>`; };
   function grpLigarToggle(raiz, refaz) { raiz.querySelectorAll('[data-grp]').forEach(b => b.onclick = () => { grpModo = b.dataset.grp; refaz(); }); }
   const grpVal = (o) => grpModo === 'books' ? o.b : grpModo === 'grupo' ? o.g : o.b + o.g;
 
@@ -5299,8 +5294,8 @@
   function grpPonteiro(M, mes) {
     const G = grpDoMes(M, mes); if (!G || !G.temGrupo) return null;
     const v = grpModo === 'books' ? G.bTotal : grpModo === 'grupo' ? G.gTotal : G.bTotal + G.gTotal;
-    const rot = grpModo === 'books' ? 'Visitas Books' : grpModo === 'grupo' ? 'Visitas Grupo' : 'Visitas somadas';
-    return { v, rot, p: G.meta ? v / G.meta * 100 : null, sub: `${G.bTotal.toLocaleString('pt-BR')} Books + ${G.gTotal.toLocaleString('pt-BR')} Grupo${G.dupTotal ? ' (' + G.dupTotal + ' em comum, contadas uma vez)' : ''}${G.meta ? '; meta da planilha: ' + G.meta.toLocaleString('pt-BR') : '; sem meta: anexe a planilha de novo em Admin para o ponteiro calcular o percentual'}` };
+    const rot = grpModo === 'books' ? 'Visitas Mob2con' : grpModo === 'grupo' ? 'Visitas WhatsApp' : 'Visitas somadas';
+    return { v, rot, p: G.meta ? v / G.meta * 100 : null, sub: `${G.bTotal.toLocaleString('pt-BR')} Mob2con + ${G.gTotal.toLocaleString('pt-BR')} WhatsApp${G.dupTotal ? ' (' + G.dupTotal + ' em comum, contadas uma vez)' : ''}${G.meta ? '; meta da planilha: ' + G.meta.toLocaleString('pt-BR') : '; sem meta: anexe a planilha de novo em Admin para o ponteiro calcular o percentual'}` };
   }
 
   // Quadro do Dashboard: visitas por rede e por loja, Books + Grupo.
@@ -5314,21 +5309,21 @@
     const caixa = (rot, val, sub, cor) => `<div style="flex:1;min-width:130px;padding:12px 8px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:clamp(20px,2.4vw,28px);font-weight:900;color:var(--cor-primaria);">${val}</div><div style="font-size:11px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
     const th = (t, l) => `<th style="padding:6px;${l ? 'text-align:left;' : ''}">${t}</th>`, td = (t, l, b) => `<td style="padding:6px;${l ? '' : 'text-align:center;'}${b ? 'font-weight:bold;' : ''}">${t}</td>`;
     const pc = (a, b) => b ? (a / b * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : '';
-    const cabR = grpModo === 'tudo' ? ['Rede', 'Books (foto)', 'Grupo (WhatsApp)', 'Total', '% via Grupo', 'Valor Books (R$)', 'Valor Grupo (R$)', 'Valor total (R$)'] : grpModo === 'books' ? ['Rede', 'Visitas com foto nos Books', 'Valor (R$)'] : ['Rede', 'Visitas via Grupo', 'Valor (R$)'];
+    const cabR = grpModo === 'tudo' ? ['Rede', 'Mob2con', 'WhatsApp', 'Total', '% do total', 'Valor Mob2con (R$)', 'Valor WhatsApp (R$)', 'Valor total (R$)'] : grpModo === 'books' ? ['Rede', 'Visitas Mob2con', 'Valor (R$)'] : ['Rede', 'Visitas WhatsApp', 'Valor (R$)'];
     const mo = v => v == null ? '-' : v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const vv = o => o.preco == null ? null : (grpModo === 'books' ? o.vB : grpModo === 'grupo' ? o.vG : o.vB + o.vG);
-    const lr = o => '<tr>' + (grpModo === 'tudo' ? td(esc(o.nome), 1) + td(nf(o.b)) + td(nf(o.g)) + td(nf(o.b + o.g), 0, 1) + td(pc(o.g, o.b + o.g)) + td(mo(o.vB)) + td(mo(o.vG)) + td(mo(vv(o)), 0, 1) : td(esc(o.nome), 1) + td(nf(grpVal(o)), 0, 1) + td(mo(vv(o)))) + '</tr>';
-    const totR = '<tr style="border-top:2px solid #DDD;font-weight:bold;">' + (grpModo === 'tudo' ? td('Total', 1) + td(nf(tB)) + td(nf(tG)) + td(nf(tB + tG)) + td(pc(tG, tB + tG)) + td(mo(vTB)) + td(mo(vTG)) + td(mo(vTB + vTG)) : td('Total', 1) + td(nf(grpModo === 'books' ? tB : tG)) + td(mo(grpModo === 'books' ? vTB : vTG))) + '</tr>';
+    const lr = o => '<tr>' + (grpModo === 'tudo' ? td(esc(o.nome), 1) + td(nf(o.b)) + td(nf(o.g)) + td(nf(o.b + o.g), 0, 1) + td(pc(o.b + o.g, tB + tG)) + td(mo(o.vB)) + td(mo(o.vG)) + td(mo(vv(o)), 0, 1) : td(esc(o.nome), 1) + td(nf(grpVal(o)), 0, 1) + td(mo(vv(o)))) + '</tr>';
+    const totR = '<tr style="border-top:2px solid #DDD;font-weight:bold;">' + (grpModo === 'tudo' ? td('Total', 1) + td(nf(tB)) + td(nf(tG)) + td(nf(tB + tG)) + td('100%') + td(mo(vTB)) + td(mo(vTG)) + td(mo(vTB + vTG)) : td('Total', 1) + td(nf(grpModo === 'books' ? tB : tG)) + td(mo(grpModo === 'books' ? vTB : vTG))) + '</tr>';
     const lojas = G.porLoja.filter(e => grpVal(e));
-    const cabL = grpModo === 'tudo' ? ['Rede', 'Loja', 'Books', 'Grupo', 'Total'] : ['Rede', 'Loja', 'Visitas'];
+    const cabL = grpModo === 'tudo' ? ['Rede', 'Loja', 'Mob2con', 'WhatsApp', 'Total'] : ['Rede', 'Loja', 'Visitas'];
     const ll = o => '<tr>' + td(esc(o.r), 1) + td(esc(o.nome), 1) + (grpModo === 'tudo' ? td(nf(o.b)) + td(nf(o.g)) + td(nf(o.b + o.g), 0, 1) : td(nf(grpVal(o)), 0, 1)) + '</tr>';
     const semDados = !G.temGrupo;
-    return `<div class="card" id="grp-card"><h2>Visitas por rede: Books + Grupo</h2>
-      <p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;">Books = visitas comprovadas por foto. Grupo = visitas que a Pacto marcou na planilha com a palavra GRUPO, a confirmar no WhatsApp; entram como <strong>informadas</strong>; valor = visitas × preço da visita da rede no Fechamento, igual ao dos Books. A mesma loja e o mesmo dia nos dois lados contam uma vez só (ver a aba Associação).${G.arquivo ? ' Planilha: <strong>' + esc(G.arquivo) + '</strong>.' : ''}</p>
-      ${semDados ? '<p style="font-size:13px;margin-top:8px;">Nenhuma planilha de visitas via Grupo importada para este mês. Anexe em <strong>Admin</strong>, em <em>Visitas via Grupo</em>.</p>' : `${grpToggle('dash')}
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">${grpModo === 'grupo' ? '' : caixa('Books', nf(tB), 'comprovadas por foto', '#0A3D2E')}${grpModo === 'books' ? '' : caixa('Grupo', nf(tG), 'a confirmar no WhatsApp', '#E67E22')}${grpModo === 'tudo' ? caixa('Somadas', nf(tB + tG), pc(tG, tB + tG) + ' via Grupo', 'var(--cor-destaque)') : ''}${caixa('Valor', mo(grpModo === 'books' ? vTB : grpModo === 'grupo' ? vTG : vTB + vTG), grpModo === 'tudo' ? 'Books ' + mo(vTB) + ' + Grupo ' + mo(vTG) : (semP ? nf(semP) + ' c/ preço médio' : '&nbsp;'), '#8E44AD')}</div>
+    return `<div class="card" id="grp-card"><h2>Visitas por rede: Mob2con + WhatsApp</h2>
+      <p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;">Mob2con = visitas comprovadas por foto no sistema. WhatsApp = visitas que a Pacto marcou na planilha com a palavra GRUPO, ou seja, com a comprovação no grupo de WhatsApp (a confirmar); entram como <strong>informadas</strong>. Valor = visitas × preço da visita da rede no Fechamento. A mesma loja e o mesmo dia nos dois lados contam uma vez só (ver a aba Associação).${G.arquivo ? ' Planilha: <strong>' + esc(G.arquivo) + '</strong>.' : ''}</p>
+      ${semDados ? '<p style="font-size:13px;margin-top:8px;">Nenhuma planilha de visitas via WhatsApp importada para este mês. Anexe em <strong>Admin</strong>, em <em>Visitas via WhatsApp</em>.</p>' : `${grpToggle('dash')}
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">${grpModo === 'grupo' ? '' : caixa('Mob2con', nf(tB), 'comprovadas por foto', '#0A3D2E')}${grpModo === 'books' ? '' : caixa('WhatsApp', nf(tG), 'a confirmar', '#E67E22')}${grpModo === 'tudo' ? caixa('Somadas', nf(tB + tG), 'Mob2con + WhatsApp', 'var(--cor-destaque)') : ''}${caixa('Valor', mo(grpModo === 'books' ? vTB : grpModo === 'grupo' ? vTG : vTB + vTG), grpModo === 'tudo' ? 'Mob2con ' + mo(vTB) + ' + WhatsApp ' + mo(vTG) : (semP ? nf(semP) + ' c/ preço médio' : '&nbsp;'), '#8E44AD')}</div>
       <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;">${cabR.map((c, i) => th(c, i === 0)).join('')}</tr></thead><tbody>${lista.map(lr).join('')}${lista.length ? totR : ''}</tbody></table></div>
-      ${tD && grpModo !== 'books' ? `<p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;">${nf(tD)} marcação(ões) de Grupo coincidem com visitas já comprovadas nos Books (loja associada, mesmo dia) e não foram somadas.</p>` : ''}
+      ${tD && grpModo !== 'books' ? `<p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;">${nf(tD)} marcação(ões) de WhatsApp coincidem com visitas já comprovadas no Mob2con (loja associada, mesmo dia) e não foram somadas.</p>` : ''}
       <details style="margin-top:10px;"><summary style="cursor:pointer;font-weight:bold;font-size:13px;">Por loja (${nf(lojas.length)})</summary><div style="overflow-x:auto;margin-top:6px;max-height:520px;overflow-y:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;">${cabL.map((c, i) => th(c, i < 2)).join('')}</tr></thead><tbody>${lojas.slice(0, 800).map(ll).join('')}</tbody></table></div></details>`}
     </div>`;
   }
@@ -5339,11 +5334,11 @@
   function grpAdminCard(el) {
     const g = grpBase(), fmt = iso => iso ? new Date(iso).toLocaleDateString('pt-BR') : '';
     const arqs = g.arquivos.slice().sort((a, b) => (b.importadoEm || '').localeCompare(a.importadoEm || ''));
-    el.innerHTML = `<div class="card"><h2>Visitas via Grupo (WhatsApp)</h2>
+    el.innerHTML = `<div class="card"><h2>Visitas via WhatsApp</h2>
       <p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;margin-bottom:10px;">Anexe a planilha mensal de visitas da Pacto (Excel, uma aba por rede). Célula com a palavra <strong>GRUPO</strong> = visita a confirmar no WhatsApp, que passa a ser somada às visitas dos Books no Dashboard e na Sistemática. Qualquer outra marca = visita comprovada no Book (já contada pelas fotos). Anexar de novo o mesmo mês substitui a versão anterior. Depois, confira as lojas na aba <strong>Associação</strong>.</p>
       <label style="display:inline-block;padding:10px 16px;border-radius:6px;background:var(--cor-primaria);color:var(--cor-destaque);font-weight:bold;cursor:pointer;">📎 Anexar planilha de visitas (Excel)<input id="grp-arq" type="file" accept=".xlsx,.xls" style="display:none;"></label>
       <div id="grp-msg" style="margin-top:8px;font-size:13px;font-weight:bold;">${esc(grpMsg)}</div>
-      ${arqs.length ? `<div style="overflow-x:auto;margin-top:10px;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="text-align:left;padding:5px;">Arquivo</th><th>Meses</th><th>Datas</th><th>Grupo</th><th>Books (outras marcas)</th><th>Anexado em</th><th></th></tr></thead><tbody>${arqs.map((a, i) => `<tr style="border-top:1px solid #ECEFF1;text-align:center;"><td style="text-align:left;padding:5px;">${esc(a.nome)}</td><td>${esc((a.meses || []).map(m => rotuloMes(m)).join(', '))}</td><td>${grpBR(a.ini).slice(0, 5)} a ${grpBR(a.fim).slice(0, 5)}</td><td><b>${a.nGrupo}</b></td><td>${a.nSistema}</td><td>${fmt(a.importadoEm)}</td><td><button type="button" data-grp-rem="${i}" style="border:none;background:none;color:#C0392B;cursor:pointer;">remover</button></td></tr>`).join('')}</tbody></table></div>` : ''}
+      ${arqs.length ? `<div style="overflow-x:auto;margin-top:10px;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="text-align:left;padding:5px;">Arquivo</th><th>Meses</th><th>Datas</th><th>WhatsApp</th><th>Mob2con (outras marcas)</th><th>Anexado em</th><th></th></tr></thead><tbody>${arqs.map((a, i) => `<tr style="border-top:1px solid #ECEFF1;text-align:center;"><td style="text-align:left;padding:5px;">${esc(a.nome)}</td><td>${esc((a.meses || []).map(m => rotuloMes(m)).join(', '))}</td><td>${grpBR(a.ini).slice(0, 5)} a ${grpBR(a.fim).slice(0, 5)}</td><td><b>${a.nGrupo}</b></td><td>${a.nSistema}</td><td>${fmt(a.importadoEm)}</td><td><button type="button" data-grp-rem="${i}" style="border:none;background:none;color:#C0392B;cursor:pointer;">remover</button></td></tr>`).join('')}</tbody></table></div>` : ''}
     </div>`;
     const inp = el.querySelector('#grp-arq');
     inp.onchange = async () => {
@@ -5351,7 +5346,7 @@
       try {
         const r = await grpLerArquivo(f);
         if (!r.visitas.length && !r.sistema) { grpMsg = 'Não encontrei visitas nesta planilha (esperava abas com as datas na primeira linha e uma loja por linha).'; }
-        else { grpImportar(f.name, r); grpMsg = r.visitas.length + ' visita(s) via Grupo; ' + r.sistema + ' outras marcas (visitas dos Books). ' + r.abas.length + ' rede(s) lidas' + (r.ignoradas.length ? ' (abas ignoradas: ' + r.ignoradas.join(', ') + ')' : '') + '.'; }
+        else { grpImportar(f.name, r); grpMsg = r.visitas.length + ' visita(s) via WhatsApp; ' + r.sistema + ' outras marcas (visitas do Mob2con). ' + r.abas.length + ' rede(s) lidas' + (r.ignoradas.length ? ' (abas ignoradas: ' + r.ignoradas.join(', ') + ')' : '') + '.'; }
       } catch (e) { grpMsg = 'Não consegui ler o arquivo: ' + (e.message || e); }
       grpAdminCard(el);
     };
@@ -5368,7 +5363,7 @@
     const c = document.getElementById('tela-associacao'); if (!c) return;
     const mes = Estado.config.mesAtivo, g = grpBase();
     const vs = g.visitas.filter(x => x.d.slice(0, 7) === mes);
-    if (!vs.length) { c.innerHTML = `<div class="card"><h2>Associação de lojas</h2><p>Nenhuma visita via Grupo em ${esc(rotuloMes(mes))}. Anexe a planilha em <strong>Admin</strong>, em <em>Visitas via Grupo</em>.</p></div>`; return; }
+    if (!vs.length) { c.innerHTML = `<div class="card"><h2>Associação de lojas</h2><p>Nenhuma visita via WhatsApp em ${esc(rotuloMes(mes))}. Anexe a planilha em <strong>Admin</strong>, em <em>Visitas via WhatsApp</em>.</p></div>`; return; }
     const Mx = typeof metricasBooks === 'function' ? metricasBooks(mes, true) : { execs: [] }, bl = grpLojasBooks(Mx.execs);
     const redes = new Map(); vs.forEach(x => { let a = redes.get(x.r); if (!a) redes.set(x.r, a = { k: x.r, nome: x.rn, lojas: new Map() }); const l = a.lojas.get(x.l) || a.lojas.set(x.l, new Set()).get(x.l); l.add(x.d); });
     const info = a => { let ok = 0, sem = 0; a.lojas.forEach((_, l) => { grpPar(a.k, l, bl).key ? ok++ : sem++; }); return { ok, sem }; };
@@ -5383,13 +5378,13 @@
       const opt = `<option value="">(automático)</option><option value="-" ${g.assoc[sel.k + '|' + l] === '-' ? 'selected' : ''}>Sem par nos Books</option>` + booksR.map(x => `<option value="${esc(x.key)}" ${g.assoc[sel.k + '|' + l] === x.key ? 'selected' : ''}>${esc(x.nome)} (${x.dias.size} dia(s))</option>`).join('');
       return `<tr style="border-top:1px solid #ECEFF1;"><td style="padding:5px;font-weight:bold;">${esc(l)}</td><td style="text-align:center;">${dias.size}</td><td><select data-grp-as="${esc(l)}" style="padding:5px;font-size:12px;max-width:300px;">${opt}</select></td><td style="font-size:12px;">${b ? esc(b.nome) : '<span style="color:#B9770E;">sem par</span>'}${p.origem === 'auto' ? ' <small style="color:#777;">(automático)</small>' : p.origem === 'manual' && b ? ' <small style="color:#1F618D;">(manual)</small>' : ''}</td><td style="text-align:center;">${b ? coinc : ''}</td></tr>`;
     }).join('');
-    c.innerHTML = `<div class="card"><h2>Associação de lojas: Grupo × Books</h2>
-      <p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;margin-bottom:10px;">A planilha da Pacto e os Books escrevem o nome da loja de formas diferentes. Aqui você diz qual loja da planilha é qual loja dos Books. Quando a loja é a mesma e o dia coincide, a visita é somada uma vez só. O sistema sugere o par quando o nome da planilha aparece dentro do nome de uma única loja dos Books; escolha à mão onde ele não achou.</p>
+    c.innerHTML = `<div class="card"><h2>Associação de lojas: WhatsApp × Mob2con</h2>
+      <p style="font-size:12px;color:var(--cor-texto-secundario);line-height:1.5;margin-bottom:10px;">A planilha da Pacto e o Mob2con escrevem o nome da loja de formas diferentes. Aqui você diz qual loja da planilha é qual loja do Mob2con. Quando a loja é a mesma e o dia coincide, a visita é somada uma vez só. O sistema sugere o par quando o nome da planilha aparece dentro do nome de uma única loja dos Books; escolha à mão onde ele não achou.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
         <select id="as-rede" style="flex:1;min-width:240px;padding:10px;border:1px solid #CCC;border-radius:6px;font-size:13px;font-weight:bold;">${lista.map(a => { const i = info(a); return `<option value="${esc(a.k)}" ${a.k === sel.k ? 'selected' : ''}>${esc(a.nome)} (${i.ok} com par · ${i.sem} sem par)</option>`; }).join('')}</select>
         <span style="font-size:12px;color:var(--cor-texto-secundario);">${rotuloMes(mes)}: ${tot.ok} loja(s) com par, ${tot.sem} sem par</span>
       </div>
-      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="text-align:left;padding:5px;">Loja na planilha (Grupo)</th><th>Dias Grupo</th><th style="text-align:left;">Associar à loja dos Books</th><th style="text-align:left;">Par atual</th><th>Dias em comum</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="text-align:left;padding:5px;">Loja na planilha (WhatsApp)</th><th>Dias WhatsApp</th><th style="text-align:left;">Associar à loja do Mob2con</th><th style="text-align:left;">Par atual</th><th>Dias em comum</th></tr></thead><tbody>${rows}</tbody></table></div>
       <button type="button" id="as-aceitar" style="margin-top:10px;padding:8px 12px;border-radius:6px;border:1px solid var(--cor-primaria);background:#fff;color:var(--cor-primaria);font-weight:bold;cursor:pointer;">Confirmar como manuais os pares automáticos desta rede</button>
       <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:10px;">Lojas dos Books desta rede sem par na planilha: ${booksR.filter(b => !usados.has(b.key)).length} de ${booksR.length}.${booksR.length ? '' : ' (Esta rede ainda não tem Book importado no mês.)'}</p>
     </div>`;
