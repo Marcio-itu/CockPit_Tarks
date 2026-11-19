@@ -4346,11 +4346,13 @@
     if (sistRede && !redes.some(x => x.r.rk === sistRede)) sistRede = '';
     if (!sistRede) sistRede = redes[0].r.rk;
     const optM = meses.map(m => `<option value="${m}" ${m === sistMes ? 'selected' : ''}>${esc(rotuloMes(m))}</option>`).join('');
-    const optR = redes.map(x => `<option value="${esc(x.r.rk)}" ${x.r.rk === sistRede ? 'selected' : ''}>${esc(x.r.nome)} (${x.nVis} lojas · ${pct(execRede(x))}${valorRede(x) != null ? ' · ' + moedaBR(valorRede(x)) : ''})</option>`).join('');
+    let Gs = null; try { Gs = grpResumo(sistMes, null, metricasBooks(sistMes, true).execs); if (!Gs.temGrupo) Gs = null; } catch (e) { Gs = null; }
+    const rotR = x => x.r.nome;
+    const optR = redes.map(x => `<option value="${esc(x.r.rk)}" ${x.r.rk === sistRede ? 'selected' : ''}>${esc(rotR(x))}</option>`).join('');
     const sel = redes.find(x => x.r.rk === sistRede);
     let blocosRede = '';
     try {
-      const G = grpResumo(sistMes, null, metricasBooks(sistMes, true).execs), pr = G.porRede.find(a => a.k === sistRede), pl = G.porLoja.filter(l => l.rk === sistRede), nz = (arr, f) => arr.filter(f).length;
+      const G = Gs || { temGrupo: false, porRede: [], porLoja: [] }, pr = G.porRede.find(a => a.k === sistRede), pl = G.porLoja.filter(l => l.rk === sistRede), nz = (arr, f) => arr.filter(f).length;
       if (G.temGrupo && pr) {
         const nul = pr.preco == null, fl = nul || !!pr.estimado, vb = nul ? 0 : pr.vB, vg = nul ? 0 : pr.vG;
         blocosRede = grpBlocos({ t: { v: pr.b + pr.g, val: vb + vg, l: nz(pl, l => l.b + l.g > 0), sp: fl ? pr.b + pr.g : 0 }, m: { v: pr.b, val: vb, l: nz(pl, l => l.b > 0), sp: fl ? pr.b : 0 }, w: { v: pr.g, val: vg, l: nz(pl, l => l.g > 0), sp: fl ? pr.g : 0 } }, { semRedes: true, compacto: true });
