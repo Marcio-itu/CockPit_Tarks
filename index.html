@@ -4498,7 +4498,7 @@
   // DEGUSTAÇÕES — relatórios de ação da agência (PDF/Word) entram pelo Admin, viram linhas ligadas às redes/lojas dos Books,
   // acumulam mês a mês e aparecem num dashboard na aba Degustações, com exportação em Excel.
   // ═══════════════════════════════════════════════════
-  let degPend = [], degMsg = '', degModo = 'mes', degAvisos = [];
+  let degPend = [], degMsg = '', degModo = 'mes', degAvisos = [], degDia = '';
   const DEG_MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
   const DEG_DOW = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 
@@ -4780,9 +4780,13 @@
     const l = degLista().slice().sort((a, b) => (a.data || '').localeCompare(b.data || '') || degRedeRot(a).localeCompare(degRedeRot(b)));
     if (degModo === 'mes') return l.filter(r => (r.data || '').slice(0, 7) === Estado.config.mesAtivo);
     if (degModo === 'sem') { const w = degJanelaSemana(); return w ? l.filter(r => r.data >= w.de && r.data <= w.ate) : []; }
+    if (degModo === 'dia') { const d = degDiaSel(); return l.filter(r => r.data === d); }
     return l;
   }
+  // Dia escolhido (padrão: o da ação mais recente)
+  function degDiaSel() { return degDia || degLista().map(r => r.data).filter(Boolean).sort().pop() || ''; }
   function degPeriodoRot() {
+    if (degModo === 'dia') return 'dia ' + degDataBR(degDiaSel());
     if (degModo === 'mes') return rotuloMes(Estado.config.mesAtivo);
     if (degModo === 'sem') { const w = degJanelaSemana(); return w ? 'última semana (' + degDataBR(w.de).slice(0, 5) + ' a ' + degDataBR(w.ate).slice(0, 5) + ')' : 'última semana'; }
     return Estado.config.mesAtivo.slice(0, 4) + ' - Acumulado';
@@ -4917,7 +4921,7 @@
     const lista = degFiltrada(), t = degTot(lista), per = degPeriodoRot(), total = degLista().length;
     const cx = (rot, val, sub) => `<div style="flex:1;min-width:110px;padding:12px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid var(--cor-destaque);"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:clamp(18px,2vw,26px);font-weight:900;color:var(--cor-primaria);white-space:nowrap;">${val}</div><div style="font-size:11px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
     const bt = (id, txt, on) => `<button type="button" id="${id}" style="padding:8px 14px;border-radius:6px;border:1px solid ${on ? 'var(--cor-primaria)' : '#CFD4D9'};background:${on ? 'var(--cor-primaria)' : '#fff'};color:${on ? 'var(--cor-destaque)' : '#333'};font-weight:bold;cursor:pointer;">${txt}</button>`;
-    const topo = `<div class="card"><h2>Degustações</h2><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${bt('dg-m-mes', 'Mês: ' + esc(rotuloMes(Estado.config.mesAtivo)), degModo === 'mes')}${bt('dg-m-sem', 'Última semana', degModo === 'sem')}${bt('dg-m-acum', esc(Estado.config.mesAtivo.slice(0, 4)) + ' - Acumulado', degModo === 'acum')}
+    const topo = `<div class="card"><h2>Degustações</h2><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${bt('dg-m-mes', 'Mês: ' + esc(rotuloMes(Estado.config.mesAtivo)), degModo === 'mes')}${bt('dg-m-sem', 'Última semana', degModo === 'sem')}${bt('dg-m-acum', esc(Estado.config.mesAtivo.slice(0, 4)) + ' - Acumulado', degModo === 'acum')}${bt('dg-m-dia', 'Dia', degModo === 'dia')}${degModo === 'dia' ? `<input type="date" id="dg-dia" value="${degDiaSel()}" style="padding:8px;border:1px solid #CCC;border-radius:6px;font-size:13px;">` : ''}
       <button type="button" id="dg-xlsx" style="padding:9px 14px;border-radius:6px;border:none;background:#1E7B4A;color:#fff;font-weight:bold;cursor:pointer;" ${lista.length ? '' : 'disabled'}>⬇ Baixar Excel</button>${lista.some(degFaltaDado) ? `<button type="button" id="dg-est" style="padding:9px 14px;border-radius:6px;border:1px solid #2F7F6F;background:#fff;color:#2F7F6F;font-weight:bold;cursor:pointer;">Completar dados faltantes (regra de 3)</button>` : ''}</div>
       <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;">Período: <strong>${esc(per)}</strong>. Tudo em fardos. Os relatórios da agência são anexados em Admin.</p></div>`;
     if (!lista.length) { c.innerHTML = '<style>#tela-degustacoes{text-transform:uppercase}</style>' + topo + `<div class="card"><p>${total ? 'Sem degustações neste período. Troque o período acima.' : 'Nenhuma degustação salva ainda. Anexe os relatórios da agência em Admin.'}</p></div>`; degLigar(c); return; }
@@ -4948,6 +4952,8 @@
     on('dg-m-mes', () => { degModo = 'mes'; renderizarDegustacoes(); });
     on('dg-m-sem', () => { degModo = 'sem'; renderizarDegustacoes(); });
     on('dg-m-acum', () => { degModo = 'acum'; renderizarDegustacoes(); });
+    on('dg-m-dia', () => { degModo = 'dia'; renderizarDegustacoes(); });
+    const idia = document.getElementById('dg-dia'); if (idia) idia.onchange = () => { degDia = idia.value; renderizarDegustacoes(); };
     on('dg-xlsx', () => baixarDegustacoesXLSX());
     on('dg-est', () => { const n = degEstimar(degFiltrada()); if (n) salvarEstado(); alert(n ? n + ' ação(ões) completada(s) por regra de 3, usando a taxa de aceitação das outras ações. Elas aparecem marcadas com "est." no detalhe.' : 'Não deu para estimar: faltam outras ações com abordagens e aceitaram informados.'); renderizarDegustacoes(); });
     c.querySelectorAll('[data-dg-del]').forEach(b => b.onclick = () => { if (!confirm('Excluir esta degustação da base?')) return; Estado.degustacoes = degLista().filter(r => r.id !== b.dataset.dgDel); salvarEstado(); renderizarDegustacoes(); });
