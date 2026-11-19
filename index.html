@@ -4345,13 +4345,13 @@
     }
     if (sistRede && !redes.some(x => x.r.rk === sistRede)) sistRede = '';
     let Gs = null; try { Gs = grpResumo(sistMes, null, metricasBooks(sistMes, true).execs); if (!Gs.temGrupo) Gs = null; } catch (e) { Gs = null; }
-    // Redes em ordem alfabética, com % das visitas somadas (Mob2con + WhatsApp) e valor somado.
+    // Redes da mais para a menos representativa (valor somado), com % das visitas somadas (Mob2con + WhatsApp) e valor somado.
     const totV = Gs ? Gs.grupos.t.v : execMes;
     const rank = redes.map(x => {
       const pr = Gs && Gs.porRede.find(a => a.k === x.r.rk);
       const v = pr ? pr.b + pr.g : execRede(x), val = pr ? (pr.vB || 0) + (pr.vG || 0) : (valorRede(x) || 0);
       return { x, v, val, p: totV ? v / totV * 100 : 0 };
-    }).sort((a, b) => a.x.r.nome.localeCompare(b.x.r.nome, 'pt-BR', { numeric: true }));
+    }).sort((a, b) => b.val - a.val || b.v - a.v || a.x.r.nome.localeCompare(b.x.r.nome, 'pt-BR', { numeric: true }));
     if (!sistRede) sistRede = rank[0].x.r.rk;
     const optM = meses.map(m => `<option value="${m}" ${m === sistMes ? 'selected' : ''}>${esc(rotuloMes(m))}</option>`).join('');
     const pctR = n => n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%', rsR = n => 'R$ ' + Math.round(n).toLocaleString('pt-BR');
