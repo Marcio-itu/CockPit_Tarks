@@ -4344,9 +4344,18 @@
       return;
     }
     if (sistRede && !redes.some(x => x.r.rk === sistRede)) sistRede = '';
-    if (!sistRede) sistRede = redes[0].r.rk;
-    const optM = meses.map(m => `<option value="${m}" ${m === sistMes ? 'selected' : ''}>${esc(rotuloMes(m))}</option>`).join('');
     let Gs = null; try { Gs = grpResumo(sistMes, null, metricasBooks(sistMes, true).execs); if (!Gs.temGrupo) Gs = null; } catch (e) { Gs = null; }
+    // Redes em ordem alfabética, com % das visitas somadas (Mob2con + WhatsApp) e valor somado.
+    const totV = Gs ? Gs.grupos.t.v : execMes;
+    const rank = redes.map(x => {
+      const pr = Gs && Gs.porRede.find(a => a.k === x.r.rk);
+      const v = pr ? pr.b + pr.g : execRede(x), val = pr ? (pr.vB || 0) + (pr.vG || 0) : (valorRede(x) || 0);
+      return { x, v, val, p: totV ? v / totV * 100 : 0 };
+    }).sort((a, b) => a.x.r.nome.localeCompare(b.x.r.nome, 'pt-BR', { numeric: true }));
+    if (!sistRede) sistRede = rank[0].x.r.rk;
+    const optM = meses.map(m => `<option value="${m}" ${m === sistMes ? 'selected' : ''}>${esc(rotuloMes(m))}</option>`).join('');
+    const pctR = n => n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%', rsR = n => 'R$ ' + Math.round(n).toLocaleString('pt-BR');
+    const ddItens = rank.map(r => `<div class="sv-dd-i" data-rk="${esc(r.x.r.rk)}" style="display:grid;grid-template-columns:minmax(0,1fr) 64px 96px;gap:10px;padding:7px 10px;cursor:pointer;font-size:13px;${r.x.r.rk === sistRede ? 'background:#EAF1EE;font-weight:bold;' : ''}"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.x.r.nome)}</span><span style="text-align:right;font-variant-numeric:tabular-nums;color:#555;">${pctR(r.p)}</span><span style="text-align:right;font-variant-numeric:tabular-nums;">${rsR(r.val)}</span></div>`).join('');
     const rotR = x => x.r.nome;
     const optR = redes.map(x => `<option value="${esc(x.r.rk)}" ${x.r.rk === sistRede ? 'selected' : ''}>${esc(rotR(x))}</option>`).join('');
     const sel = redes.find(x => x.r.rk === sistRede);
@@ -4372,7 +4381,7 @@
       }).join('');
       return `<tr><td class="sv-n" style="border-left:5px solid #27AE60;"><b>${esc(l.nome)}</b></td>${cel}<td class="sv-t">${vis.length}</td></tr>`;
     }).join('');
-    const degLinha = sel && sel.degDias.size ? `<tr><td class="sv-n" style="color:#1F618D;"><b>Degustação (rede toda)</b></td>${dias.map(d => `<td class="sv ${sel.degDias.has(d) ? 'sv-deg' : (sistDow(d) === 6 ? 'sv-dom' : '')}" title="${sel.degDias.has(d) ? esc('Degustação em ' + rotuloData(d) + ' (' + sel.degDias.get(d) + ' ação/ões)') : ''}">${sel.degDias.has(d) ? 'D' : ''}</td>`).join('')}<td class="sv-t" style="color:#2471A3;">${sel.degDias.size}</td></tr>` : '';
+    const degLinha = sel && sel.degDias.size ? `<tr><td class="sv-n" style="color:#1F618D;"><b>Degustação</b></td>${dias.map(d => `<td class="sv ${sel.degDias.has(d) ? 'sv-deg' : (sistDow(d) === 6 ? 'sv-dom' : '')}" title="${sel.degDias.has(d) ? esc('Degustação em ' + rotuloData(d) + ' (' + sel.degDias.get(d) + ' ação/ões)') : ''}">${sel.degDias.has(d) ? 'D' : ''}</td>`).join('')}<td class="sv-t" style="color:#2471A3;">${sel.degDias.size}</td></tr>` : '';
     const gLinhas = sel ? sel.gLojas.map(gl => `<tr><td class="sv-n" style="color:#B9770E;border-left:5px solid #E67E22;"><b>${esc(gl.nome)}</b></td>${dias.map(d => { const tem = gl.dias.has(d), fe = fer.get(d); const cls = tem ? (fe ? 'sv-fora' : 'sv-grp') : (fe ? 'sv-fer' : (sistDow(d) === 6 ? 'sv-dom' : '')); const tit = tem ? 'Via Grupo (WhatsApp) em ' + rotuloData(d) + (fe ? ' · feriado: ' + fe : '') : (fe || ''); return `<td class="sv ${cls}" title="${esc(tit)}">${tem ? 'G' : (fe ? 'F' : '')}</td>`; }).join('')}<td class="sv-t" style="color:#B9770E;">${gl.dias.size}</td></tr>`).join('') : '';
     const cab = dias.map(d => { const w = sistDow(d); return `<th class="${w === 6 ? 'sv-dom' : ''}">${Number(d.slice(8))}<br><small>${SIST_DOW[w]}</small></th>`; }).join('');
     const caixa = (rot, val, cor, sub) => `<div style="flex:1;min-width:110px;padding:10px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:24px;font-weight:900;color:${cor};">${val}</div><div style="font-size:10px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
@@ -4388,7 +4397,10 @@
       <div class="card" style="border-left-color:#27AE60;">
         <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px;"><h2 style="margin:0;">Sistemática de visitas</h2><span style="font-size:12px;color:var(--cor-texto-secundario);">dia a dia, loja a loja, pelas fotos (Mob2con) e pela planilha do Grupo (WhatsApp)</span></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:stretch;">
-          <select id="sv-rede" style="flex:3 1 240px;padding:8px 10px;border:1px solid #CCC;border-radius:6px;font-size:13px;font-weight:bold;">${optR}</select>
+          <div style="position:relative;flex:3 1 240px;min-width:0;"><select id="sv-rede" hidden>${optR}</select>
+            <button type="button" id="sv-dd-btn" style="width:100%;text-align:left;padding:8px 30px 8px 10px;border:1px solid #CCC;border-radius:6px;background:#fff;font-size:13px;font-weight:bold;cursor:pointer;position:relative;">${esc(sel ? sel.r.nome : '')}<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;">▾</span></button>
+            <div id="sv-dd-lista" hidden style="position:absolute;z-index:40;left:0;right:0;top:calc(100% + 2px);max-height:380px;overflow-y:auto;background:#fff;border:1px solid #CCC;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.15);">
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) 64px 96px;gap:10px;padding:5px 10px;font-size:10px;text-transform:uppercase;color:#888;position:sticky;top:0;background:#F8F9FA;border-bottom:1px solid #E4E6E5;"><span>Rede</span><span style="text-align:right;">% visitas</span><span style="text-align:right;">Valor</span></div>${ddItens}</div></div>
           <select id="sv-mes" style="flex:1 1 130px;padding:8px 10px;border:1px solid #CCC;border-radius:6px;font-size:13px;">${optM}</select>
           <button type="button" id="sv-pdf-rede" style="padding:8px 12px;background:#fff;color:var(--cor-primaria);border:1px solid var(--cor-primaria);border-radius:6px;font-weight:bold;cursor:pointer;font-size:12px;">⬇ PDF da rede</button>
           <button type="button" id="sv-pdf-todas" style="padding:8px 12px;background:#fff;color:var(--cor-primaria);border:1px solid var(--cor-primaria);border-radius:6px;font-weight:bold;cursor:pointer;font-size:12px;">⬇ PDF geral</button>
@@ -4412,11 +4424,15 @@
     const norm = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const filtrar = () => {
       const q = norm(sistBusca).trim().split(/\s+/).filter(Boolean); let tot = 0, ok = 0;
-      container.querySelectorAll('tbody tr').forEach(tr => { const td = tr.firstElementChild; if (!td || !td.classList.contains('sv-n') || td.textContent.indexOf('(rede toda)') >= 0) return; tot++; const m = !q.length || q.every(w => norm(td.textContent).includes(w)); tr.style.display = m ? '' : 'none'; if (m) ok++; });
+      container.querySelectorAll('tbody tr').forEach(tr => { const td = tr.firstElementChild; if (!td || !td.classList.contains('sv-n') || td.textContent.trim() === 'Degustação') return; tot++; const m = !q.length || q.every(w => norm(td.textContent).includes(w)); tr.style.display = m ? '' : 'none'; if (m) ok++; });
       const n = document.getElementById('sv-busca-n'); if (n) n.textContent = q.length ? ok + ' de ' + tot + ' lojas' : '';
     };
     const bi = document.getElementById('sv-busca'); bi.addEventListener('input', () => { sistBusca = bi.value; filtrar(); }); filtrar();
     container.querySelectorAll('[data-ord]').forEach(b => b.onclick = () => { sistOrd = b.dataset.ord; renderizarSistematica(); });
+    const ddBtn = document.getElementById('sv-dd-btn'), ddLista = document.getElementById('sv-dd-lista');
+    ddBtn.addEventListener('click', e => { e.stopPropagation(); ddLista.hidden = !ddLista.hidden; });
+    ddLista.querySelectorAll('.sv-dd-i').forEach(it => { it.onmouseenter = () => { it.style.background = '#F0F2F1'; }; it.onmouseleave = () => { it.style.background = it.dataset.rk === sistRede ? '#EAF1EE' : ''; }; it.onclick = () => { const se = document.getElementById('sv-rede'); se.value = it.dataset.rk; se.dispatchEvent(new Event('change')); }; });
+    if (!window.__svDdFecha) { window.__svDdFecha = true; document.addEventListener('click', () => { const l = document.getElementById('sv-dd-lista'); if (l) l.hidden = true; }); }
     document.getElementById('sv-rede').addEventListener('change', e => { sistRede = e.target.value; sistBusca = ''; renderizarSistematica(); });
     document.getElementById('sv-mes').addEventListener('change', e => { sistMes = e.target.value; renderizarSistematica(); });
     document.getElementById('sv-pdf-rede').addEventListener('click', () => baixarSistematicaPDF(false));
@@ -4460,7 +4476,7 @@
       if (x.degDias.size) {
         if (y + RH > FUNDO) { doc.addPage(); y = TOPO; cabecalhoTabela(); }
         doc.setDrawColor(228, 230, 229); doc.setLineWidth(0.1);
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(31, 97, 141); doc.text('Degustação (rede toda)', MG + 1.5, y + 3.6);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(31, 97, 141); doc.text('Degustação', MG + 1.5, y + 3.6);
         dias.forEach((d, i) => {
           const cx = MG + WL + i * WD;
           if (x.degDias.has(d)) { doc.setFillColor(41, 128, 185); doc.rect(cx, y, WD, RH, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(255, 255, 255); doc.text('D', cx + WD / 2, y + 3.4, { align: 'center' }); }
