@@ -4564,7 +4564,7 @@
   // DEGUSTAÇÕES — relatórios de ação da agência (PDF/Word) entram pelo Admin, viram linhas ligadas às redes/lojas dos Books,
   // acumulam mês a mês e aparecem num dashboard na aba Degustações, com exportação em Excel.
   // ═══════════════════════════════════════════════════
-  let degPend = [], degMsg = '', degModo = 'mes', degAvisos = [], degDia = '';
+  let degPend = [], degMsg = '', degAvisos = [];
   const DEG_MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
   const DEG_DOW = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 
@@ -4841,26 +4841,11 @@
   }
   function degTot(lista) { return degAgrega(lista, () => 'Total')[0] || { acoes: 0, abord: 0, aceit: 0, aceitC: 0, util: 0, vendas: 0, abordN: 0, vendasN: 0 }; }
   // Janela da "última semana": os 7 dias que terminam na data da ação mais recente.
-  function degJanelaSemana() {
-    const ult = degLista().map(r => r.data).filter(Boolean).sort().pop(); if (!ult) return null;
-    const p = ult.split('-').map(Number), d = new Date(Date.UTC(p[0], p[1] - 1, p[2] - 6));
-    return { de: d.toISOString().slice(0, 10), ate: ult };
-  }
   function degFiltrada() {
     const l = degLista().slice().sort((a, b) => (a.data || '').localeCompare(b.data || '') || degRedeRot(a).localeCompare(degRedeRot(b)));
-    if (degModo === 'mes') return l.filter(r => (r.data || '').slice(0, 7) === Estado.config.mesAtivo);
-    if (degModo === 'sem') { const w = degJanelaSemana(); return w ? l.filter(r => r.data >= w.de && r.data <= w.ate) : []; }
-    if (degModo === 'dia') { const d = degDiaSel(); return l.filter(r => r.data === d); }
-    return l;
+    return l.filter(r => promoDataNoPeriodo(r.data));
   }
-  // Dia escolhido (padrão: o da ação mais recente)
-  function degDiaSel() { return degDia || degLista().map(r => r.data).filter(Boolean).sort().pop() || ''; }
-  function degPeriodoRot() {
-    if (degModo === 'dia') return 'dia ' + degDataBR(degDiaSel());
-    if (degModo === 'mes') return rotuloMes(Estado.config.mesAtivo);
-    if (degModo === 'sem') { const w = degJanelaSemana(); return w ? 'última semana (' + degDataBR(w.de).slice(0, 5) + ' a ' + degDataBR(w.ate).slice(0, 5) + ')' : 'última semana'; }
-    return Estado.config.mesAtivo.slice(0, 4) + ' - Acumulado';
-  }
+  function degPeriodoRot() { return promoPerTxt(); }
   function degNomeArquivo(lista, ext) {
     const ult = lista.map(r => r.data).filter(Boolean).sort().pop() || new Date().toISOString().slice(0, 10);
     return ult.slice(0, 4) + '_Trade_Degustacoes_até ' + ult.slice(8, 10) + ' de ' + DEG_MESES[+ult.slice(5, 7) - 1] + '.' + ext;
@@ -4993,8 +4978,7 @@
     degReconciliar();
     const lista = degFiltrada(), t = degTot(lista), per = degPeriodoRot(), total = degLista().length;
     const cx = (rot, val, sub) => `<div style="flex:1;min-width:110px;padding:12px 6px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:3px solid var(--cor-destaque);"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:clamp(18px,2vw,26px);font-weight:900;color:var(--cor-primaria);white-space:nowrap;">${val}</div><div style="font-size:11px;color:var(--cor-texto-secundario);">${sub || '&nbsp;'}</div></div>`;
-    const bt = (id, txt, on) => `<button type="button" id="${id}" style="padding:8px 14px;border-radius:6px;border:1px solid ${on ? 'var(--cor-primaria)' : '#CFD4D9'};background:${on ? 'var(--cor-primaria)' : '#fff'};color:${on ? 'var(--cor-destaque)' : '#333'};font-weight:bold;cursor:pointer;">${txt}</button>`;
-    const topo = `<div class="card"><h2>Degustações</h2><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${bt('dg-m-mes', 'Mês: ' + esc(rotuloMes(Estado.config.mesAtivo)), degModo === 'mes')}${bt('dg-m-sem', 'Última semana', degModo === 'sem')}${bt('dg-m-acum', esc(Estado.config.mesAtivo.slice(0, 4)) + ' - Acumulado', degModo === 'acum')}${bt('dg-m-dia', 'Dia', degModo === 'dia')}${degModo === 'dia' ? `<input type="date" id="dg-dia" value="${degDiaSel()}" style="padding:8px;border:1px solid #CCC;border-radius:6px;font-size:13px;">` : ''}
+    const topo = `<div class="card"><h2>Abordagens, aceitação e vendas</h2><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${promoControles('dgt')}
       <button type="button" id="dg-xlsx" style="padding:9px 14px;border-radius:6px;border:none;background:#1E7B4A;color:#fff;font-weight:bold;cursor:pointer;" ${lista.length ? '' : 'disabled'}>⬇ Baixar Excel</button>${lista.some(degFaltaDado) ? `<button type="button" id="dg-est" style="padding:9px 14px;border-radius:6px;border:1px solid #2F7F6F;background:#fff;color:#2F7F6F;font-weight:bold;cursor:pointer;">Completar dados faltantes (regra de 3)</button>` : ''}</div>
       <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;">Período: <strong>${esc(per)}</strong>. Tudo em unidades. Os relatórios da agência são anexados em Admin.</p></div>`;
     if (!lista.length) { c.innerHTML = '<style>#tela-degustacoes{text-transform:uppercase}</style>' + topo + `<div class="card"><p>${total ? 'Sem degustações neste período. Troque o período acima.' : 'Nenhuma degustação salva ainda. Anexe os relatórios da agência em Admin.'}</p></div>`; degLigar(c); return; }
@@ -5022,11 +5006,7 @@
 
   function degLigar(c) {
     const on = (id, fn) => { const e = c.querySelector('#' + id); if (e) e.onclick = fn; };
-    on('dg-m-mes', () => { degModo = 'mes'; renderizarDegustacoes(); });
-    on('dg-m-sem', () => { degModo = 'sem'; renderizarDegustacoes(); });
-    on('dg-m-acum', () => { degModo = 'acum'; renderizarDegustacoes(); });
-    on('dg-m-dia', () => { degModo = 'dia'; renderizarDegustacoes(); });
-    const idia = document.getElementById('dg-dia'); if (idia) idia.onchange = () => { degDia = idia.value; renderizarDegustacoes(); };
+    promoLigarControles(c, 'dgt', renderizarDegustacoes);
     on('dg-xlsx', () => baixarDegustacoesXLSX());
     on('dg-est', () => { const n = degEstimar(degFiltrada()); if (n) salvarEstado(); alert(n ? n + ' ação(ões) completada(s) por regra de 3, usando a taxa de aceitação das outras ações. Elas aparecem marcadas com "est." no detalhe.' : 'Não deu para estimar: faltam outras ações com abordagens e aceitaram informados.'); renderizarDegustacoes(); });
     c.querySelectorAll('[data-dg-del]').forEach(b => b.onclick = () => { if (!confirm('Excluir esta degustação da base?')) return; Estado.degustacoes = degLista().filter(r => r.id !== b.dataset.dgDel); salvarEstado(); renderizarDegustacoes(); });
@@ -5447,6 +5427,7 @@
   // ── Planilha da JS Conecta: colunas K (estoque inicial) e L (estoque final). Linhas só com loja + estoque (sem degustação) ficam em Estado.promo.semDeg ──
   function promoGuardaSem(lista) {
     const P = promoBase(); P.semDeg = P.semDeg || [];
+    const arqs = new Set(lista.map(x => x.arquivo).filter(Boolean)); P.semDeg = P.semDeg.filter(y => !arqs.has(y.arquivo)); // recarregar o mesmo arquivo substitui o que veio dele antes
     lista.forEach(x => {
       const k = promoNorm(x.lojaRel), i = P.semDeg.findIndex(y => promoNorm(y.lojaRel) === k && promoSegunda(y.data) === promoSegunda(x.data));
       const n = Object.assign({ id: 'sd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5) }, x);
@@ -5538,9 +5519,7 @@
   const promoSemRot = m => 'Semana ' + promoDataBR(m).slice(0, 2) + ' a ' + promoDataBR(promoSomaDias(m, 6));
   // Monta as linhas loja a loja da visão escolhida (o estoque é fechado por semana; períodos maiores somam as semanas confirmadas de cada loja).
   function promoVisao() {
-    const todos = promoItens(), mes = String((Estado.config && Estado.config.mesAtivo) || '').slice(0, 7), semanas = promoSemanas(todos);
-    if (promoModo === 'semana' && !semanas.includes(promoSemSel)) promoSemSel = semanas[0] || '';
-    if (!promoDe || !promoAte) { const ds = todos.map(x => x.data).sort(); promoDe = promoDe || ds[0] || ''; promoAte = promoAte || ds[ds.length - 1] || ''; }
+    const todos = promoItens(), mes = promoMesAtivo(), semanas = promoAjusta();
     let itens, rot, per;
     if (promoModo === 'semana') { itens = todos.filter(x => promoSegundaDe(x.data) === promoSemSel); rot = promoSemRot(promoSemSel); per = 'segunda ' + promoDataBR(promoSemSel) + ' a domingo ' + promoDataBR(promoSomaDias(promoSemSel, 6)); }
     else if (promoModo === 'mes') { itens = todos.filter(x => x.data.slice(0, 7) === mes); rot = 'Mês ' + mes.slice(5) + '/' + mes.slice(0, 4); per = rot.toLowerCase(); }
@@ -5563,6 +5542,44 @@
     L.sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR', { numeric: true }));
     return { L, rot, per, semanas, mes, parcial: L.filter(l => l.st === 'ok' && (l.nver || l.nconf)).length, semRede: L.filter(l => !l.rede).length, vazio: !todos.length && !promoBase().acoes.length };
   }
+
+  // Controles de período compartilhados pelas duas áreas (ações promocionais e detalhe das degustações)
+  function promoSemanasTodas() { return [...new Set(promoItens().map(x => x.data).concat(degLista().map(r => r.data)).filter(Boolean).map(promoSegundaDe))].sort().reverse(); }
+  function promoAjusta() {
+    const sem = promoSemanasTodas(), ds = promoItens().map(x => x.data).concat(degLista().map(r => r.data)).filter(Boolean).sort();
+    if (promoModo === 'semana' && !sem.includes(promoSemSel)) promoSemSel = (promoBase().acoes.some(a => a.id === promoSemSel) ? promoSemSel : sem[0]) || '';
+    if (!promoDe || !promoAte) { promoDe = promoDe || ds[0] || ''; promoAte = promoAte || ds[ds.length - 1] || ''; }
+    return sem;
+  }
+  function promoMesAtivo() { return String((Estado.config && Estado.config.mesAtivo) || '').slice(0, 7); }
+  function promoDataNoPeriodo(iso) {
+    if (!iso) return false;
+    if (promoModo === 'semana') return promoSegundaDe(iso) === promoSemSel;
+    if (promoModo === 'mes') return iso.slice(0, 7) === promoMesAtivo();
+    if (promoModo === 'dias') return iso >= promoDe && iso <= promoAte;
+    return true;
+  }
+  function promoPerTxt() {
+    const mes = promoMesAtivo();
+    if (promoModo === 'semana') return promoSemSel && /^\d{4}/.test(promoSemSel) ? 'segunda ' + promoDataBR(promoSemSel) + ' a domingo ' + promoDataBR(promoSomaDias(promoSemSel, 6)) : 'semana';
+    if (promoModo === 'mes') return 'mês ' + mes.slice(5) + '/' + mes.slice(0, 4);
+    if (promoModo === 'dias') return 'dias ' + promoDataBR(promoDe) + ' a ' + promoDataBR(promoAte);
+    return 'acumulado de todas as semanas carregadas';
+  }
+  function promoControles(px) {
+    const sem = promoAjusta(), mes = promoMesAtivo(), ctl = 'padding:8px 10px;border:1px solid #CCC;border-radius:6px;font-size:13px;text-transform:none;';
+    const optM = (v, t) => `<option value="${v}" ${promoModo === v ? 'selected' : ''}>${t}</option>`;
+    const manuais = promoBase().acoes.map(x => `<option value="${esc(x.id)}" ${x.id === promoSemSel ? 'selected' : ''}>${esc(x.nome || ('Ação ' + promoDataBR(x.ini)))}</option>`).join('');
+    return `<select id="${px}-modo" style="${ctl}font-weight:bold;">${optM('semana', 'Semana (segunda a domingo)')}${optM('mes', 'Mês ' + mes.slice(5) + '/' + mes.slice(0, 4))}${optM('acum', 'Acumulado')}${optM('dias', 'Dias selecionados')}</select>`
+      + (promoModo === 'semana' ? `<select id="${px}-sem" style="${ctl}">${sem.map(m => `<option value="${m}" ${m === promoSemSel ? 'selected' : ''}>${promoSemRot(m)}</option>`).join('')}${manuais}</select>` : '')
+      + (promoModo === 'dias' ? `<label style="font-size:12px;">de <input type="date" id="${px}-de" value="${esc(promoDe)}" style="${ctl}"></label><label style="font-size:12px;">até <input type="date" id="${px}-ate" value="${esc(promoAte)}" style="${ctl}"></label>` : '');
+  }
+  function promoLimpaAbertos() { [...promoAbre].forEach(k => { if (k !== '__deg') promoAbre.delete(k); }); }
+  function promoLigarControles(c, px, refaz) {
+    const on = (s, fn) => { const e = c.querySelector('#' + px + '-' + s); if (e) e.onchange = fn; };
+    on('modo', function () { promoModo = this.value; promoLimpaAbertos(); refaz(); }); on('sem', function () { promoSemSel = this.value; promoLimpaAbertos(); refaz(); });
+    on('de', function () { promoDe = this.value; refaz(); }); on('ate', function () { promoAte = this.value; refaz(); });
+  }
   function promoHTML() {
     const V = promoVisao();
     if (V.vazio) return `<div class="card"><h2>Ações promocionais</h2><p style="font-size:13px;text-transform:none;">Nenhuma ação promocional ainda. Carregue o template das degustações com <strong>Estoque inicial (coluna K)</strong> e <strong>Estoque final (coluna L)</strong> preenchidos em fardos; lojas sem degustação entram como linhas só com loja e estoque. O resultado aparece aqui em fardos, loja a loja.</p></div>`;
@@ -5577,13 +5594,7 @@
       const fimTxt = l.st === 'ver' ? 'verificando' : promoPF(l.fim), vTxt = l.st === 'ver' ? 'verificando' : l.st === 'conf' ? '⚠ conferir' : promoPF(l.v);
       return `<tr style="${l.st === 'ver' ? 'background:#F6F6F6;' : ''}"><td style="${td}text-align:left;font-weight:bold;">${esc(l.nome)} ${/^L:/.test(l.cod) ? '' : `<span style="color:#999;font-weight:normal;font-size:11px;">${esc(l.cod)}</span>`}<div style="font-weight:normal;font-size:11px;${l.rede ? 'color:#8A9AA5;' : 'color:#B9770E;'}">${l.rede ? esc(l.redeNome) + (l.lojaSis ? ' · ' + esc(l.lojaSis) : '') : 'sem rede no sistema'}</div></td><td style="${td}text-align:center;">${l.degs.length ? `<button type="button" data-promo-d="${esc(l.cod)}" title="Ver a degustação desta loja" style="border:none;background:none;cursor:pointer;padding:0;">${D()}</button>` : ''}</td><td style="${td}">${promoPF(l.ini) || '-'}</td><td style="${td}${bad}">${fimTxt}</td><td style="${td}font-weight:bold;${bad}">${vTxt}</td></tr>${ab && l.degs.length ? `<tr><td colspan="5" style="padding:8px 14px;background:#F1FAF4;font-size:12px;text-transform:none;border-bottom:1px solid #D5EBDD;"><div style="font-weight:bold;color:#1E7B4A;margin-bottom:2px;">Degustação nesta loja</div>${l.degs.map(linhaDeg).join('')}</td></tr>` : ''}`;
     }).join('');
-    const ctl = 'padding:8px 10px;border:1px solid #CCC;border-radius:6px;font-size:13px;text-transform:none;';
-    const optM = (v, t) => `<option value="${v}" ${promoModo === v ? 'selected' : ''}>${t}</option>`;
-    const manuais = promoBase().acoes.map(x => `<option value="${esc(x.id)}" ${x.id === promoSemSel ? 'selected' : ''}>${esc(x.nome || ('Ação ' + promoDataBR(x.ini)))}</option>`).join('');
-    const seletor = `<select id="promo-modo" style="${ctl}font-weight:bold;">${optM('semana', 'Semana (segunda a domingo)')}${optM('mes', 'Mês ' + V.mes.slice(5) + '/' + V.mes.slice(0, 4))}${optM('acum', 'Acumulado')}${optM('dias', 'Dias selecionados')}</select>`
-      + (promoModo === 'semana' ? `<select id="promo-sem" style="${ctl}">${V.semanas.map(m => `<option value="${m}" ${m === promoSemSel ? 'selected' : ''}>${promoSemRot(m)}</option>`).join('')}${manuais}</select>` : '')
-      + (promoModo === 'dias' ? `<label style="font-size:12px;">de <input type="date" id="promo-de" value="${esc(promoDe)}" style="${ctl}"></label><label style="font-size:12px;">até <input type="date" id="promo-ate" value="${esc(promoAte)}" style="${ctl}"></label>` : '')
-      + `<input id="promo-busca" type="search" placeholder="Buscar rede ou loja…" value="${esc(promoBusca)}" style="${ctl}width:190px;">`;
+    const seletor = promoControles('promo') + `<input id="promo-busca" type="search" placeholder="Buscar rede ou loja…" value="${esc(promoBusca)}" style="padding:8px 10px;border:1px solid #CCC;border-radius:6px;font-size:13px;text-transform:none;width:190px;">`;
     const cmp = T.com.n || T.sem.n ? `<div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 0;">
       <div style="flex:1;min-width:220px;padding:10px 12px;border-radius:6px;background:#F1FAF4;border-left:5px solid #27AE60;text-transform:none;font-size:13px;"><strong style="color:#1E7B4A;">Lojas com degustação</strong><br>${T.com.n} loja(s) · ${promoPF(T.com.v)} fardos vendidos · <strong>${T.com.n ? promoPF(T.com.v / T.com.n) : '-'} por loja</strong></div>
       <div style="flex:1;min-width:220px;padding:10px 12px;border-radius:6px;background:#F4F5F6;border-left:5px solid #8A9AA5;text-transform:none;font-size:13px;"><strong style="color:#555;">Lojas sem degustação</strong><br>${T.sem.n} loja(s) · ${promoPF(T.sem.v)} fardos vendidos · <strong>${T.sem.n ? promoPF(T.sem.v / T.sem.n) : '-'} por loja</strong></div></div>` : '';
@@ -5600,17 +5611,16 @@
     renderizarDegustacoesBase();
     const c = document.getElementById('tela-degustacoes'); if (!c) return;
     const det = document.createElement('details'); det.className = 'card'; det.id = 'promo-det-deg'; if (promoAbre.has('__deg')) det.open = true;
-    det.innerHTML = '<summary style="cursor:pointer;font-weight:bold;">Detalhes das degustações (abordagens, aceitação, vendas por rede e produto)</summary>';
+    det.innerHTML = '<summary style="cursor:pointer;font-weight:bold;">Detalhes das degustações</summary>';
     const corpo = document.createElement('div'); corpo.style.marginTop = '10px';
     while (c.firstChild) corpo.appendChild(c.firstChild);
     det.appendChild(corpo); c.appendChild(det);
     const topo = document.createElement('div'); topo.innerHTML = promoHTML(); c.insertBefore(topo, det);
     det.addEventListener('toggle', () => { if (det.open) promoAbre.add('__deg'); else promoAbre.delete('__deg'); });
-    const ref = () => { promoAbre.clear(); renderizarDegustacoes(); };
+    const ref = () => { promoLimpaAbertos(); renderizarDegustacoes(); };
     const on = (id, ev, fn) => { const e = c.querySelector(id); if (e) e[ev] = fn; };
-    on('#promo-modo', 'onchange', function () { promoModo = this.value; ref(); }); on('#promo-sem', 'onchange', function () { promoSemSel = this.value; ref(); });
-    on('#promo-de', 'onchange', function () { promoDe = this.value; ref(); }); on('#promo-ate', 'onchange', function () { promoAte = this.value; ref(); });
     on('#promo-busca', 'oninput', function () { promoBusca = this.value; const pos = this.selectionStart; ref(); const n = c.querySelector('#promo-busca'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* ignora */ } } });
+    promoLigarControles(c, 'promo', ref);
     c.querySelectorAll('[data-promo-d]').forEach(b => b.onclick = () => { const k = b.dataset.promoD; if (promoAbre.has(k)) promoAbre.delete(k); else promoAbre.add(k); renderizarDegustacoes(); });
     const x = c.querySelector('#promo-xlsx'); if (x) x.onclick = () => promoXLSX();
   }
