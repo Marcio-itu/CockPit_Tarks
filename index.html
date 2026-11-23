@@ -121,7 +121,7 @@
   <button data-tela="soltas">Livres</button>
   <button data-tela="contestacao">Contestação</button>
   <button data-tela="sistematica">Sistemática</button>
-  <button data-tela="degustacoes">Degustações</button>
+  <button data-tela="degustacoes">Ações promocionais</button>
   <button data-tela="associacao">Associação</button>
   <button data-tela="revisao">Revisão</button>
   <button data-tela="relatorio">Relatório</button>
@@ -340,6 +340,7 @@
       if (dados.sistematica) Estado.sistematica = dados.sistematica;
       if (dados.degustacoes) Estado.degustacoes = dados.degustacoes;
       if (dados.grupo) Estado.grupo = dados.grupo;
+      if (dados.promo) Estado.promo = dados.promo;
       migrarImagensLegadas(Estado.meses).then(mudou => { if (mudou) salvarEstado(); }).catch(() => {});
     } catch (e) {
       console.error("Erro ao carregar estado:", e);
@@ -568,7 +569,7 @@
 
     document.getElementById('btn-exportar').addEventListener('click', async () => {
       const comImagens = confirm('Incluir as imagens das fotos no backup?\n\nOK = backup completo (arquivo grande)\nCancelar = só os dados, sem imagens');
-      const pacote = { config: Estado.config, meses: Estado.meses, lojasReg: Estado.lojasReg || {}, carimbos: Estado.carimbos || {}, contestacao: Estado.contestacao || {}, sistematica: Estado.sistematica || { lojas: {} }, degustacoes: Estado.degustacoes || [], imagens: comImagens ? await BancoImagens.todas() : {} };
+      const pacote = { config: Estado.config, meses: Estado.meses, lojasReg: Estado.lojasReg || {}, carimbos: Estado.carimbos || {}, contestacao: Estado.contestacao || {}, sistematica: Estado.sistematica || { lojas: {} }, degustacoes: Estado.degustacoes || [], promo: Estado.promo || null, imagens: comImagens ? await BancoImagens.todas() : {} };
       const blob = new Blob([JSON.stringify(pacote)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -596,6 +597,7 @@
             Estado.contestacao = dados.contestacao || {};
             Estado.sistematica = dados.sistematica || { lojas: {} };
             Estado.degustacoes = dados.degustacoes || [];
+            Estado.promo = dados.promo || null;
             if (dados.imagens) {
               for (const [id, url] of Object.entries(dados.imagens)) await BancoImagens.salvar(id, url);
             }
@@ -4706,17 +4708,23 @@
     let h = -1; for (let i = 0; i < Math.min(rows.length, 40); i++) { const c = (rows[i] || []).map(nm); if (c.filter(x => x).length >= 4 && c.some(x => /ABORD|ACEIT|VENDA/.test(x)) && c.some(x => /^DATA/.test(x)) && c.some(x => /LOJA|REDE/.test(x))) { h = i; break; } }
     if (h < 0) return null;
     const cab = rows[h].map(nm), col = (re, ex) => cab.findIndex(x => x && re.test(x) && !(ex && ex.test(x)));
-    const ix = { data: col(/^DATA|DIADAACAO|DATADA/), dia: col(/^DIA(DASEMANA)?$|SEMANA/), loja: col(/LOJA|REDE|LOCAL|ESTABELECIMENTO/), prod: col(/PRODUTO|SKU/, /QUANT/), qtd: col(/QUANT|QTD|FARDO|UTILIZ/, /VEND|ABORD|ACEIT/), abord: col(/ABORD/), aceit: col(/ACEIT/), packs: col(/VENDA|PACK|FARDOSVEND/, /AVULS|UNID/), vUn: col(/VENDA.*UNID|UNIDADESVEND/, /SEMANAANTERIOR|SEMDEGUSTACAO/), base: col(/SEMANAANTERIOR|SEMDEGUSTACAO/), embal: col(/EMBALAGEM/), fb: col(/FEEDBACK|OBS|COMENT/), prom: col(/PROMOTOR/) };
+    const ix = { data: col(/^DATA|DIADAACAO|DATADA/), dia: col(/^DIA(DASEMANA)?$|SEMANA/), loja: col(/LOJA|REDE|LOCAL|ESTABELECIMENTO/), prod: col(/PRODUTO|SKU/, /QUANT/), qtd: col(/QUANT|QTD|FARDO|UTILIZ/, /VEND|ABORD|ACEIT/), abord: col(/ABORD/), aceit: col(/ACEIT/), packs: col(/VENDA|PACK|FARDOSVEND/, /AVULS|UNID/), vUn: col(/VENDA.*UNID|UNIDADESVEND/, /SEMANAANTERIOR|SEMDEGUSTACAO/), base: col(/SEMANAANTERIOR|SEMDEGUSTACAO/), embal: col(/EMBALAGEM/), fb: col(/FEEDBACK|OBS|COMENT/), prom: col(/PROMOTOR/), eI: col(/^ESTOQUEINICIAL/), eF: col(/^ESTOQUEFINAL/) };
     const saida = [];
     rows.slice(h + 1).forEach(l => {
       const g = k => ix[k] >= 0 && l[ix[k]] != null ? String(l[ix[k]]).trim() : '';
-      if (!g('abord') && !g('aceit') && !g('packs') && !g('vUn')) return;
       if (/^TOTAL/.test(nm(g('loja'))) || /^TOTAL/.test(nm(g('data')))) return;
+      // Estoque (colunas K e L do template): em fardos; vazio ou "-" = sem informação. Guardado em unidades (1 fardo = 12).
+      const est = k => { if (ix[k] < 0) return null; const t = g(k); if (t === '' || /^[-–—]+$/.test(t)) return null; const raw = l[ix[k]], v = typeof raw === 'number' ? raw : (/^\d+,\d+$/.test(t) ? +t.replace(',', '.') : num(t)); return v == null || isNaN(v) ? null : v * 12; };
+      const eI = est('eI'), eF = est('eF');
+      if (!g('abord') && !g('aceit') && !g('packs') && !g('vUn')) {
+        if (g('loja') && (ix.eI >= 0 || ix.eF >= 0) && !/^(LOJA|NOMEDALOJA)$/.test(nm(g('loja')))) { const dd0 = g('data') ? degResolverData((g('data') + ' ' + g('dia')).trim(), anoBase) : { data: '' }; saida.push({ semDeg: true, lojaRel: g('loja'), data: dd0.data || '', estIni: eI, estFim: eF }); }
+        return;
+      }
       const dt = (g('data') + ' ' + g('dia')).trim(), dd = degResolverData(dt, anoBase);
       const q = g('qtd'), qFardo = ix.qtd >= 0 && /FARDO/.test(cab[ix.qtd]);
       saida.push({ produtoRel: g('prod'), data: dd.data, diaRel: ((dt.match(/(domingo|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado)/i) || [''])[0]).toLowerCase(), duvidaData: dd.duvida, dataOk: !dd.duvida,
         lojaRel: g('loja'), produto: g('prod'), promotora: g('prom'), qtd: /^\d+(?:[.,]\d+)?$/.test(q) ? q + (qFardo ? ' fardos' : ' unidades') : q,
-        embal: g('embal'), vendasBaseUn: ix.base >= 0 && g('base') !== '' ? num(g('base')) : null, abord: num(g('abord')), aceit: num(g('aceit')), packs: ix.vUn >= 0 ? num(g('vUn')) : num(g('packs')), avul: null, aprox: { abord: false, aceit: false }, feedback: g('fb'),
+        embal: g('embal'), vendasBaseUn: ix.base >= 0 && g('base') !== '' ? num(g('base')) : null, abord: num(g('abord')), aceit: num(g('aceit')), packs: ix.vUn >= 0 ? num(g('vUn')) : num(g('packs')), avul: null, aprox: { abord: false, aceit: false }, feedback: g('fb'), estIni: eI, estFim: eF,
         ...(ix.vUn < 0 && ix.packs >= 0 ? { jaFardos: true } : {}) });
     });
     return saida;
@@ -4787,7 +4795,9 @@
     const pool = degPoolBooks();
     const lidos = (pronto || degParseTexto(txt, ano)), pend = lidos.filter(r => r.pendente);
     pend.forEach(r => degAvisos.push(file.name + ': ' + (r.lojaRel || 'ação') + (r.data ? ' (' + degDataBR(r.data).slice(0, 5) + ')' : '') + ' está com dados pendentes de envio e não foi incluída'));
-    return lidos.filter(r => !r.pendente).map((r, i) => {
+    const sems = lidos.filter(r => r.semDeg), maxData = lidos.filter(r => !r.semDeg && r.data).map(r => r.data).sort().pop() || '';
+    if (sems.length && typeof promoGuardaSem === 'function') promoGuardaSem(sems.map(r => { const p = degAcharRede(r.lojaRel, pool); return { lojaRel: r.lojaRel, data: r.data || maxData, rede: p ? p.k : '', estIni: r.estIni, estFim: r.estFim, arquivo: file.name }; }));
+    return lidos.filter(r => !r.pendente && !r.semDeg).map((r, i) => {
       r.id = 'dg' + Date.now().toString(36) + i + Math.random().toString(36).slice(2, 5); r.arquivo = file.name;
       degAplicaProduto(r, degAcharProduto(r.produtoRel)); const f = degFardosDe(r.qtd); r.fardos = f.v; r.fardosConv = f.conv;
       return degVincular(r, pool);
@@ -4864,6 +4874,8 @@
     if (typeof grpAdminCard === 'function') grpAdminCard(eg);
     let el = document.getElementById('deg-admin'); if (!el) { el = document.createElement('div'); el.id = 'deg-admin'; c.appendChild(el); }
     degAdminCard(el);
+    let ep = document.getElementById('promo-admin'); if (!ep) { ep = document.createElement('div'); ep.id = 'promo-admin'; c.appendChild(ep); }
+    if (typeof promoAdminCard === 'function') promoAdminCard(ep);
   }
   function degAdminCard(el) {
     const todas = degLista(), pool = degPoolBooks(), redes = [...pool.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
@@ -4976,7 +4988,7 @@
     return `<tr style="${b}"><td style="${DEG_TD}text-align:left;">${mark}${esc(a.k)}</td><td style="${DEG_TD}">${a.acoes}</td><td style="${DEG_TD}">${a.abordN ? degN(a.abord) : ''}</td><td style="${DEG_TD}">${degN(a.aceit)}</td><td style="${DEG_TD}${total ? '' : degHeat(a.abord ? a.aceitC / a.abord : null)}">${degPct(a.aceitC, a.abord)}</td><td style="${DEG_TD}">${degF(a.util)}</td><td style="${DEG_TD}font-weight:bold;">${a.vendasN ? degF(a.vendas) : ''}</td><td style="${DEG_TD}">${a.vendasN ? degRat(a.vendas, a.util) : ''}</td>${extra || ''}</tr>`;
   }
   const DEG_CAB = rot => `<th style="${DEG_TH}text-align:left;">${rot}</th><th style="${DEG_TH}">Ações</th><th style="${DEG_TH}">Abordagens</th><th style="${DEG_TH}">Aceitaram</th><th style="${DEG_TH}">% aceit.</th><th style="${DEG_TH}">Utilizada Demonstração</th><th style="${DEG_TH}">Vendas (unidades)</th><th style="${DEG_TH}" title="Demo vs Vendas: a cada 1 unidade utilizada na demonstração, quantas unidades foram vendidas">Demo vs Vendas</th>`;
-  function renderizarDegustacoes() {
+  function renderizarDegustacoesBase() {
     const c = document.getElementById('tela-degustacoes'); if (!c) return;
     degReconciliar();
     const lista = degFiltrada(), t = degTot(lista), per = degPeriodoRot(), total = degLista().length;
@@ -5396,6 +5408,216 @@
   }
 </script>
 <!-- ═══ FIM SUBBLOCO 15 ═══ -->
+<!-- ═══ SUBBLOCO 16 — AÇÕES PROMOCIONAIS ═══ -->
+<script>
+  // ═══ SUBBLOCO 16 — AÇÕES PROMOCIONAIS (estoque inicial × final, em fardos; degustação como detalhe) ═══
+  // Estado.promo = { acoes: [{ id, nome, ini, fim, est: { COD: { ini, fim } } }], mapa: { COD: { nome, rede, loja } } }
+  // Quantidades guardadas em UNIDADES; fardo = 12 unidades. Vendido = estoque inicial − final. Loja sem estoque final (ou com "-") fica "verificando" e fora dos totais.
+  const PROMO_FARDO = 12;
+  let promoSel = '', promoAbre = new Set(), promoMsg = '';
+  function promoBase() { if (!Estado.promo || !Array.isArray(Estado.promo.acoes)) Estado.promo = { acoes: [], mapa: {} }; if (!Estado.promo.mapa) Estado.promo.mapa = {}; return Estado.promo; }
+  const promoPF = n => n == null || !isFinite(n) ? '' : (n / PROMO_FARDO).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+  const promoUN = n => n == null || !isFinite(n) ? '' : Math.round(n).toLocaleString('pt-BR');
+  const promoNorm = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  function promoDataBR(iso) { return /^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : ''; }
+  function promoNum(t) {
+    t = String(t == null ? '' : t).trim(); if (!t || /^[-–—]+$/.test(t)) return null;
+    if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) return +t.replace(/\./g, '').replace(',', '.');
+    if (/^-?\d+,\d+$/.test(t)) return +t.replace(',', '.');
+    if (/^-?\d+(\.\d+)?$/.test(t)) return +t;
+    return NaN;
+  }
+  // Lê linhas coladas do Excel: código (CT03, CAMP…), nome da loja (opcional) e a quantidade. Se vier mais de um número, usa o primeiro; "-" ou vazio = sem informação.
+  function promoLer(txt, emFardos) {
+    const out = [];
+    String(txt || '').split(/\r?\n/).forEach(l => {
+      const cel = l.split(/\t|;/).map(x => x.trim()).filter((x, i, a) => x !== '' || a.length > 1);
+      if (!cel.length) return;
+      const cod = cel.find(x => /^[A-Za-z]{2,5}\d{0,3}$/.test(x) && !/^(TOTAL|GERAL|SOMA|LOJA)/i.test(x));
+      if (!cod) return;
+      const iCod = cel.indexOf(cod), resto = cel.filter((x, i) => i !== iCod);
+      const nome = resto.find(x => /[A-Za-zÀ-ú]{3,}/.test(x) && isNaN(promoNum(x)) && !/^(TOTAL|GERAL)/i.test(x)) || '';
+      const nums = resto.filter(x => !isNaN(promoNum(x)) || /^[-–—]+$/.test(x));
+      let q = nums.length ? promoNum(nums[0]) : null; if (q != null && isNaN(q)) q = null;
+      if (q != null && emFardos) q = q * PROMO_FARDO;
+      out.push({ cod: cod.toUpperCase(), nome: nome.toUpperCase(), q });
+    });
+    return out;
+  }
+  // ── Planilha da JS Conecta: colunas K (estoque inicial) e L (estoque final). Linhas só com loja + estoque (sem degustação) ficam em Estado.promo.semDeg ──
+  function promoGuardaSem(lista) {
+    const P = promoBase(); P.semDeg = P.semDeg || [];
+    lista.forEach(x => {
+      const k = promoNorm(x.lojaRel), i = P.semDeg.findIndex(y => promoNorm(y.lojaRel) === k && promoSegunda(y.data) === promoSegunda(x.data));
+      const n = Object.assign({ id: 'sd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5) }, x);
+      if (i >= 0) { n.id = P.semDeg[i].id; P.semDeg[i] = n; } else P.semDeg.push(n);
+    });
+    if (typeof salvarEstado === 'function') try { salvarEstado(); } catch (e) { /* ignora */ }
+  }
+  function promoSegunda(iso) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return '';
+    const d = new Date(iso + 'T12:00:00'), dw = d.getDay(); d.setDate(d.getDate() + ((8 - dw) % 7));
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  // Ações montadas sozinhas a partir da planilha: fim de semana = até a segunda-feira seguinte.
+  function promoAutoAcoes() {
+    const itens = [];
+    degLista().forEach(r => { if (r.data && (r.estIni != null || r.estFim != null)) itens.push({ data: r.data, lojaRel: r.lojaRel, rede: r.rede, estIni: r.estIni, estFim: r.estFim, deg: r }); });
+    (promoBase().semDeg || []).forEach(r => { if (r.data) itens.push({ data: r.data, lojaRel: r.lojaRel, rede: r.rede, estIni: r.estIni, estFim: r.estFim, deg: null }); });
+    const grupos = {};
+    itens.forEach(x => { const m = promoSegunda(x.data); (grupos[m] = grupos[m] || []).push(x); });
+    return Object.keys(grupos).map(m => {
+      const lojas = {};
+      grupos[m].forEach(x => {
+        const k = promoNorm(x.lojaRel), l = lojas[k] = lojas[k] || { cod: 'L:' + k, nome: x.lojaRel, rede: x.rede, ini: null, fim: null, degs: [] };
+        if (l.ini == null && x.estIni != null) l.ini = x.estIni; if (l.fim == null && x.estFim != null) l.fim = x.estFim;
+        if (x.deg) l.degs.push(x.deg);
+      });
+      const ini = grupos[m].map(x => x.data).sort()[0];
+      return { id: 'auto-' + m, auto: true, ini, fim: m, nome: 'Fim de semana ' + promoDataBR(ini).slice(0, 2) + ' a ' + promoDataBR(m), est: {}, lojas: Object.values(lojas) };
+    });
+  }
+  const promoTodas = () => promoBase().acoes.concat(promoAutoAcoes());
+
+  // Degustações ligadas a uma loja da ação (rede dos Books + janela de datas; com mais de uma loja na mesma rede, compara o nome).
+  function promoDegs(a, cod, todasCods) {
+    const mp = promoBase().mapa[cod] || {}; if (!mp.rede) return [];
+    const nomeLoja = promoNorm(mp.loja || mp.nome);
+    const mesmaRede = todasCods.filter(c => (promoBase().mapa[c] || {}).rede === mp.rede);
+    return degLista().filter(r => r.rede === mp.rede && r.data && r.data >= a.ini && r.data <= a.fim).filter(r => {
+      if (mesmaRede.length <= 1) return true;
+      const rl = promoNorm(r.lojaRel); return nomeLoja.length >= 3 && (rl.includes(nomeLoja) || nomeLoja.includes(rl));
+    });
+  }
+  function promoLinhas(a) {
+    const proprias = (a.lojas || []).filter(l => l.ini != null || l.fim != null || true).map(l => {
+      let st = 'ok', v = null; if (l.ini == null || l.fim == null) st = 'ver'; else { v = l.ini - l.fim; if (v < 0) st = 'conf'; }
+      return { cod: l.cod, nome: l.nome, rede: l.rede || '', ini: l.ini, fim: l.fim, v, st, degs: l.degs };
+    });
+    return proprias.concat(promoLinhasCod(a)).sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR', { numeric: true }));
+  }
+  function promoLinhasCod(a) {
+    const cods = Object.keys(a.est || {}).filter(c => a.est[c].ini != null || a.est[c].fim != null);
+    return cods.map(cod => {
+      const e = a.est[cod], mp = promoBase().mapa[cod] || {}, ini = e.ini, fim = e.fim;
+      const nome = mp.loja || mp.nome || cod, degs = promoDegs(a, cod, cods);
+      let st = 'ok', v = null;
+      if (ini == null || fim == null) st = 'ver'; else { v = ini - fim; if (v < 0) st = 'conf'; }
+      return { cod, nome, rede: mp.rede || '', ini, fim, v, st, degs };
+    }).sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR', { numeric: true }));
+  }
+  function promoTot(linhas) {
+    const ok = linhas.filter(l => l.st === 'ok'), soma = (arr, f) => arr.reduce((n, l) => n + f(l), 0);
+    const com = ok.filter(l => l.degs.length), sem = ok.filter(l => !l.degs.length);
+    return { n: ok.length, ini: soma(ok, l => l.ini), fim: soma(ok, l => l.fim), v: soma(ok, l => l.v), ver: linhas.filter(l => l.st === 'ver').length, conf: linhas.filter(l => l.st === 'conf').length,
+      com: { n: com.length, v: soma(com, l => l.v) }, sem: { n: sem.length, v: soma(sem, l => l.v) } };
+  }
+
+  // ── Tela: topo da aba (antes do detalhe das degustações) ──
+  function promoHTML() {
+    const P = promoBase(), acoes = promoTodas().sort((a, b) => (b.ini || '').localeCompare(a.ini || ''));
+    if (!acoes.length) return `<div class="card"><h2>Ações promocionais</h2><p style="font-size:13px;text-transform:none;">Nenhuma ação promocional ainda. Carregue o template das degustações com <strong>Estoque inicial (coluna K)</strong> e <strong>Estoque final (coluna L)</strong> preenchidos em fardos; lojas sem degustação entram como linhas só com loja e estoque. O resultado aparece aqui em fardos, loja a loja.</p></div>`;
+    if (!promoSel || !acoes.some(a => a.id === promoSel)) promoSel = acoes[0].id;
+    const a = acoes.find(x => x.id === promoSel), L = promoLinhas(a), T = promoTot(L);
+    const cx = (rot, val, sub, cor) => `<div style="flex:1;min-width:150px;padding:14px 8px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:4px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:clamp(22px,2.6vw,34px);font-weight:900;color:${cor};white-space:nowrap;">${val}</div><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:none;">${sub || '&nbsp;'}</div></div>`;
+    const D = n => `<span style="display:inline-block;min-width:22px;padding:2px 6px;border-radius:4px;background:#27AE60;color:#fff;font-weight:bold;font-size:11px;">D</span>`;
+    const th = 'padding:7px 8px;text-align:right;white-space:nowrap;', td = 'padding:7px 8px;text-align:right;border-bottom:1px solid #EEF0EF;';
+    const linhaDeg = r => `<div style="padding:6px 0;border-bottom:1px dashed #E4E6E5;"><div><strong>${esc(degDataBR(r.data))} ${esc(degDiaSemana(r.data))}</strong> · ${esc(r.produto || r.produtoRel || '')} · promotora ${esc(r.promotora || '-')}</div><div style="color:#555;">Abordagens ${degN(r.abord) || '-'} · Aceitaram ${degN(r.aceit) || '-'} · Utilizada Demonstração ${degF(r.fardos) || '-'} · Vendas ${degF(degVendas(r)) || '-'} · Demo vs Vendas ${degRat(degVendas(r), r.fardos) || '-'} · Sem ação (mesmo PDV) ${r.vendasBaseUn != null ? degF(r.vendasBaseUn) : 's/info'}</div>${r.feedback ? `<div style="color:#555;font-style:italic;">${esc(r.feedback)}</div>` : ''}</div>`;
+    const lin = L.map(l => {
+      const ab = promoAbre.has(l.cod);
+      const bad = l.st === 'ver' ? 'color:#888;font-style:italic;' : l.st === 'conf' ? 'color:#B9770E;' : '';
+      const fimTxt = l.st === 'ver' ? 'verificando' : promoPF(l.fim), vTxt = l.st === 'ver' ? 'verificando' : l.st === 'conf' ? '⚠ conferir' : promoPF(l.v);
+      return `<tr style="${l.st === 'ver' ? 'background:#F6F6F6;' : ''}"><td style="${td}text-align:left;font-weight:bold;">${esc(l.nome)} ${/^L:/.test(l.cod) ? '' : `<span style="color:#999;font-weight:normal;font-size:11px;">${esc(l.cod)}</span>`}</td><td style="${td}text-align:center;">${l.degs.length ? `<button type="button" data-promo-d="${esc(l.cod)}" title="Ver a degustação desta loja" style="border:none;background:none;cursor:pointer;padding:0;">${D()}</button>` : ''}</td><td style="${td}">${promoPF(l.ini) || '-'}</td><td style="${td}${bad}">${fimTxt}</td><td style="${td}font-weight:bold;${bad}">${vTxt}</td></tr>${ab && l.degs.length ? `<tr><td colspan="5" style="padding:8px 14px;background:#F1FAF4;font-size:12px;text-transform:none;border-bottom:1px solid #D5EBDD;"><div style="font-weight:bold;color:#1E7B4A;margin-bottom:2px;">Degustação nesta loja</div>${l.degs.map(linhaDeg).join('')}</td></tr>` : ''}`;
+    }).join('');
+    const seletor = `<select id="promo-sel" style="padding:8px 10px;border:1px solid #CCC;border-radius:6px;font-size:13px;font-weight:bold;text-transform:none;">${acoes.map(x => `<option value="${esc(x.id)}" ${x.id === a.id ? 'selected' : ''}>${esc(x.nome || ('Ação ' + promoDataBR(x.ini)))}</option>`).join('')}</select>`;
+    const cmp = T.com.n || T.sem.n ? `<div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 0;">
+      <div style="flex:1;min-width:220px;padding:10px 12px;border-radius:6px;background:#F1FAF4;border-left:5px solid #27AE60;text-transform:none;font-size:13px;"><strong style="color:#1E7B4A;">Lojas com degustação</strong><br>${T.com.n} loja(s) · ${promoPF(T.com.v)} fardos vendidos · <strong>${T.com.n ? promoPF(T.com.v / T.com.n) : '-'} por loja</strong></div>
+      <div style="flex:1;min-width:220px;padding:10px 12px;border-radius:6px;background:#F4F5F6;border-left:5px solid #8A9AA5;text-transform:none;font-size:13px;"><strong style="color:#555;">Lojas sem degustação</strong><br>${T.sem.n} loja(s) · ${promoPF(T.sem.v)} fardos vendidos · <strong>${T.sem.n ? promoPF(T.sem.v / T.sem.n) : '-'} por loja</strong></div></div>` : '';
+    const avisos = [T.ver ? `${T.ver} loja(s) em verificação (sem estoque final), fora dos totais` : '', T.conf ? `${T.conf} loja(s) com estoque final maior que o inicial (reposição?), fora dos totais` : ''].filter(Boolean).join(' · ');
+    return `<div class="card"><h2>Ações promocionais</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${seletor}<button type="button" id="promo-xlsx" style="padding:9px 14px;border-radius:6px;border:none;background:#1E7B4A;color:#fff;font-weight:bold;cursor:pointer;">⬇ Baixar Excel</button></div>
+      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;text-transform:none;">Estoque inicial em <strong>${esc(promoDataBR(a.ini))}</strong>, final em <strong>${esc(promoDataBR(a.fim))}</strong>. Vendido = estoque inicial − final. Fardo = 12 unidades.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">${cx('Estoque inicial', promoPF(T.ini) || '0', 'fardos · ' + T.n + ' loja(s)', '#2980B9')}${cx('Estoque final', promoPF(T.fim) || '0', 'fardos', '#8E44AD')}${cx('Vendido', promoPF(T.v) || '0', 'fardos no fim de semana', '#1E7B4A')}</div>
+      ${avisos ? `<p style="font-size:12px;color:#B9770E;margin-top:8px;text-transform:none;">${esc(avisos)}.</p>` : ''}${cmp}</div>
+      <div class="card"><h2>Loja a loja</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="${th}text-align:left;">Loja</th><th style="${th}text-align:center;" title="Verde = houve degustação nesta loja. Clique para ver.">D</th><th style="${th}">Estoque inicial (fardos)</th><th style="${th}">Estoque final (fardos)</th><th style="${th}">Vendido (fardos)</th></tr></thead><tbody>${lin}<tr style="background:#F8F9FA;font-weight:bold;"><td style="${td}text-align:left;">Total (lojas confirmadas)</td><td style="${td}"></td><td style="${td}">${promoPF(T.ini)}</td><td style="${td}">${promoPF(T.fim)}</td><td style="${td}">${promoPF(T.v)}</td></tr></tbody></table></div></div>`;
+  }
+  // Moldura da aba: ações promocionais em cima; o painel antigo de degustações vai para um bloco recolhido.
+  function renderizarDegustacoes() {
+    renderizarDegustacoesBase();
+    const c = document.getElementById('tela-degustacoes'); if (!c) return;
+    const det = document.createElement('details'); det.className = 'card'; det.id = 'promo-det-deg'; if (promoAbre.has('__deg')) det.open = true;
+    det.innerHTML = '<summary style="cursor:pointer;font-weight:bold;">Detalhes das degustações (abordagens, aceitação, vendas por rede e produto)</summary>';
+    const corpo = document.createElement('div'); corpo.style.marginTop = '10px';
+    while (c.firstChild) corpo.appendChild(c.firstChild);
+    det.appendChild(corpo); c.appendChild(det);
+    const topo = document.createElement('div'); topo.innerHTML = promoHTML(); c.insertBefore(topo, det);
+    det.addEventListener('toggle', () => { if (det.open) promoAbre.add('__deg'); else promoAbre.delete('__deg'); });
+    const s = c.querySelector('#promo-sel'); if (s) s.onchange = () => { promoSel = s.value; promoAbre.clear(); renderizarDegustacoes(); };
+    c.querySelectorAll('[data-promo-d]').forEach(b => b.onclick = () => { const k = b.dataset.promoD; if (promoAbre.has(k)) promoAbre.delete(k); else promoAbre.add(k); renderizarDegustacoes(); });
+    const x = c.querySelector('#promo-xlsx'); if (x) x.onclick = () => promoXLSX();
+  }
+  function promoXLSX() {
+    const a = promoTodas().find(x => x.id === promoSel); if (!a || typeof XLSX === 'undefined') return;
+    const L = promoLinhas(a), T = promoTot(L), f = n => n == null ? null : Math.round(n / PROMO_FARDO * 10) / 10;
+    const wb = XLSX.utils.book_new();
+    const resumo = [['Ações promocionais: ' + (a.nome || '')], ['Estoque inicial em', promoDataBR(a.ini), 'final em', promoDataBR(a.fim)], ['Fardo = 12 unidades. Vendido = estoque inicial − final. Lojas em verificação ficam fora dos totais.'], [],
+      ['Indicador', 'Fardos'], ['Estoque inicial (lojas confirmadas)', f(T.ini)], ['Estoque final', f(T.fim)], ['Vendido', f(T.v)], ['Lojas com degustação: vendido', f(T.com.v)], ['Lojas com degustação: por loja', T.com.n ? f(T.com.v / T.com.n) : null], ['Lojas sem degustação: vendido', f(T.sem.v)], ['Lojas sem degustação: por loja', T.sem.n ? f(T.sem.v / T.sem.n) : null], ['Lojas em verificação', T.ver]];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumo), 'Resumo');
+    const det = [['Loja', 'Código', 'Degustação', 'Estoque inicial (fardos)', 'Estoque final (fardos)', 'Vendido (fardos)', 'Situação']].concat(L.map(l => [l.nome, l.cod, l.degs.length ? 'D' : '', f(l.ini), l.st === 'ver' ? 'verificando' : f(l.fim), l.st === 'ver' ? 'verificando' : l.st === 'conf' ? 'conferir' : f(l.v), l.st === 'ok' ? 'ok' : l.st === 'ver' ? 'verificando' : 'estoque final maior que o inicial']));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(det), 'Loja a loja');
+    XLSX.writeFile(wb, 'Acoes_Promocionais_' + (a.ini || '').replace(/-/g, '') + '.xlsx');
+  }
+
+  // ── Admin: carregar estoque e associar o código da loja à loja cadastrada ──
+  function promoAdminCard(el) {
+    const P = promoBase(), pool = degPoolBooks(), redes = [...pool.values()].sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR'));
+    if (!P.acoes.some(a => a.id === promoSel)) promoSel = P.acoes.length ? P.acoes.slice().sort((a, b) => (b.ini || '').localeCompare(a.ini || ''))[0].id : '';
+    const a = P.acoes.find(x => x.id === promoSel), cods = a ? Object.keys(a.est) : [];
+    const i = 'padding:5px;border:1px solid #CFD4D9;border-radius:4px;font-size:12px;';
+    const opAcoes = P.acoes.slice().sort((x, y) => (y.ini || '').localeCompare(x.ini || '')).map(x => `<option value="${esc(x.id)}" ${a && x.id === a.id ? 'selected' : ''}>${esc(x.nome || x.ini)}</option>`).join('');
+    const linhas = cods.map(c => {
+      const e = a.est[c], mp = P.mapa[c] || {}, rd = mp.rede ? pool.get(mp.rede) : null;
+      const selR = `<select data-pm="${esc(c)}" data-k="rede" style="${i}max-width:170px;${mp.rede ? '' : 'background:#FFF6D6;'}"><option value="">(sem vínculo)</option>${redes.map(r => `<option value="${esc(r.k)}" ${r.k === mp.rede ? 'selected' : ''}>${esc(r.nome)}</option>`).join('')}</select>`;
+      const selL = `<select data-pm="${esc(c)}" data-k="loja" style="${i}max-width:200px;"><option value="">(loja do estoque: ${esc(mp.nome || c)})</option>${rd ? rd.listaLojas.map(l => `<option value="${esc(l)}" ${l === mp.loja ? 'selected' : ''}>${esc(l)}</option>`).join('') : ''}</select>`;
+      return `<tr><td style="padding:4px;font-weight:bold;">${esc(c)}</td><td style="padding:4px;"><input data-pm="${esc(c)}" data-k="nome" value="${esc(mp.nome || '')}" placeholder="nome da loja" style="${i}width:150px;"></td><td style="padding:4px;">${selR}</td><td style="padding:4px;">${selL}</td><td style="padding:4px;"><input data-pe="${esc(c)}" data-k="ini" type="number" value="${e.ini == null ? '' : e.ini}" placeholder="s/info" style="${i}width:82px;"></td><td style="padding:4px;"><input data-pe="${esc(c)}" data-k="fim" type="number" value="${e.fim == null ? '' : e.fim}" placeholder="verificando" style="${i}width:92px;"></td><td style="padding:4px;"><button type="button" data-pdel="${esc(c)}" title="Tirar esta loja da ação" style="border:none;background:none;cursor:pointer;color:#C0392B;">✕</button></td></tr>`;
+    }).join('');
+    el.innerHTML = `<div class="card"><h2>Ações promocionais (estoque)</h2>
+      <p style="font-size:12px;color:var(--cor-texto-secundario);">Cole as linhas do Excel com <strong>código da loja, nome (opcional) e quantidade</strong>. Estoque inicial na quinta/sexta; final na segunda. Quantidade vazia ou "-" vira "verificando". Se a primeira coluna numérica for fardos, troque a unidade abaixo.</p>
+      ${promoMsg ? `<p style="font-size:12px;padding:6px 8px;background:#EAF1EE;border-radius:4px;">${esc(promoMsg)}</p>` : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0;"><select id="pa-sel" style="${i}"><option value="">Nova ação…</option>${opAcoes}</select>
+        <input id="pa-nome" placeholder="Nome da ação (ex.: Fim de semana 21 a 23/11)" value="${esc(a ? a.nome : '')}" style="${i}width:260px;">
+        <label style="font-size:12px;">Estoque inicial em <input id="pa-ini" type="date" value="${esc(a ? a.ini : '')}" style="${i}"></label>
+        <label style="font-size:12px;">final em <input id="pa-fim" type="date" value="${esc(a ? a.fim : '')}" style="${i}"></label>
+        <select id="pa-un" style="${i}"><option value="un">quantidades em unidades</option><option value="fd">quantidades em fardos</option></select>
+        ${a ? '<button type="button" id="pa-apaga" style="padding:6px 10px;border:1px solid #C0392B;background:#fff;color:#C0392B;border-radius:4px;cursor:pointer;font-size:12px;">Excluir ação</button>' : ''}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div style="flex:1 1 300px;"><div style="font-size:12px;font-weight:bold;">Estoque inicial</div><textarea id="pa-t-ini" rows="5" placeholder="CT03&#9;AMOREIRA CAMPINAS&#9;650" style="width:100%;${i}"></textarea><button type="button" id="pa-l-ini" style="margin-top:4px;padding:6px 10px;border:none;background:var(--cor-primaria);color:#fff;border-radius:4px;font-weight:bold;cursor:pointer;font-size:12px;">Ler estoque inicial</button></div>
+        <div style="flex:1 1 300px;"><div style="font-size:12px;font-weight:bold;">Estoque final</div><textarea id="pa-t-fim" rows="5" placeholder="CT03&#9;AMOREIRA CAMPINAS&#9;512" style="width:100%;${i}"></textarea><button type="button" id="pa-l-fim" style="margin-top:4px;padding:6px 10px;border:none;background:var(--cor-primaria);color:#fff;border-radius:4px;font-weight:bold;cursor:pointer;font-size:12px;">Ler estoque final</button></div></div>
+      ${cods.length ? `<div style="overflow-x:auto;margin-top:12px;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-align:left;"><th>Código</th><th>Nome da loja</th><th>Rede cadastrada (Books)</th><th>Loja cadastrada</th><th>Inicial (un.)</th><th>Final (un.)</th><th></th></tr></thead><tbody>${linhas}</tbody></table></div><p style="font-size:11px;color:var(--cor-texto-secundario);margin-top:6px;">A rede e a loja cadastradas ligam o código do Tenda às degustações (mostradas com o D verde). O vínculo fica guardado para as próximas ações.</p>` : ''}</div>`;
+    const q = id => el.querySelector('#' + id), salvaRe = () => { salvarEstado(); promoAdminCard(el); };
+    const cria = () => { const cur = P.acoes.find(x => x.id === promoSel); if (cur) return cur; const n = { id: 'pa' + Date.now().toString(36), nome: q('pa-nome').value.trim(), ini: q('pa-ini').value, fim: q('pa-fim').value, est: {} }; P.acoes.push(n); promoSel = n.id; return n; };
+    q('pa-sel').onchange = e => { promoSel = e.target.value; promoMsg = ''; promoAdminCard(el); };
+    q('pa-nome').onchange = e => { const x = cria(); x.nome = e.target.value.trim(); salvaRe(); };
+    q('pa-ini').onchange = e => { const x = cria(); x.ini = e.target.value; salvaRe(); };
+    q('pa-fim').onchange = e => { const x = cria(); x.fim = e.target.value; salvaRe(); };
+    const ler = (qual) => {
+      const txt = q('pa-t-' + qual).value; if (!txt.trim()) { promoMsg = 'Cole as linhas do Excel antes de ler.'; promoAdminCard(el); return; }
+      const rows = promoLer(txt, q('pa-un').value === 'fd'); if (!rows.length) { promoMsg = 'Não achei nenhum código de loja (ex.: CT03) nas linhas coladas.'; promoAdminCard(el); return; }
+      const x = cria(); if (!x.nome) x.nome = q('pa-nome').value.trim() || ('Ação ' + promoDataBR(x.ini));
+      rows.forEach(r => { if (!x.est[r.cod]) x.est[r.cod] = { ini: null, fim: null }; x.est[r.cod][qual] = r.q; const m = P.mapa[r.cod] || (P.mapa[r.cod] = { nome: '', rede: '', loja: '' }); if (r.nome && !m.nome) m.nome = r.nome; });
+      promoMsg = rows.length + ' loja(s) lidas no estoque ' + (qual === 'ini' ? 'inicial' : 'final') + (rows.some(r => r.q == null) ? '; ' + rows.filter(r => r.q == null).length + ' sem quantidade (verificando)' : '') + '.'; salvaRe();
+    };
+    q('pa-l-ini').onclick = () => ler('ini'); q('pa-l-fim').onclick = () => ler('fim');
+    const ap = q('pa-apaga'); if (ap) ap.onclick = () => { if (!confirm('Excluir esta ação promocional?')) return; P.acoes = P.acoes.filter(x => x.id !== a.id); promoSel = ''; salvaRe(); };
+    el.querySelectorAll('[data-pm]').forEach(s => s.onchange = () => {
+      const c = s.dataset.pm, m = P.mapa[c] || (P.mapa[c] = { nome: '', rede: '', loja: '' }), k = s.dataset.k;
+      m[k] = s.value; if (k === 'rede') m.loja = ''; salvaRe();
+    });
+    el.querySelectorAll('[data-pe]').forEach(s => s.onchange = () => { a.est[s.dataset.pe][s.dataset.k] = s.value === '' ? null : +s.value; salvaRe(); });
+    el.querySelectorAll('[data-pdel]').forEach(b => b.onclick = () => { delete a.est[b.dataset.pdel]; salvaRe(); });
+  }
+</script>
+<!-- ═══ FIM SUBBLOCO 16 ═══ -->
 <!-- ═══ SUBBLOCO 09 — PUBLICAÇÃO DOS RESULTADOS + MODO LEITURA ═══ -->
 <script>
   // Os resultados publicados ficam em resultados/indice.json e resultados/AAAA-MM.json, na raiz do repositório
