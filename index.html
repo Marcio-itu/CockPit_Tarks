@@ -5512,7 +5512,9 @@
       return { rede: p ? p.k : '', redeNome: p ? p.nome : '', lojaSis };
     };
     degLista().forEach(r => { if (r.data && (r.estIni != null || r.estFim != null)) out.push(Object.assign({ data: r.data, lojaRel: r.lojaRel, estIni: r.estIni, estFim: r.estFim, deg: r }, liga(r.lojaRel, r.rede))); });
-    (promoBase().semDeg || []).forEach(r => { if (r.data) out.push(Object.assign({ data: r.data, lojaRel: r.lojaRel, estIni: r.estIni, estFim: r.estFim, deg: null }, liga(r.lojaRel, r.rede))); });
+    // Linha sem degustação com data muito distante de qualquer degustação carregada é data digitada errada (ex.: 22/01 no lugar de 22/11): fica de fora.
+    const dts = degLista().map(r => r.data).filter(Boolean), perto = iso => !dts.length || dts.some(d => Math.abs(new Date(d + 'T12:00:00') - new Date(iso + 'T12:00:00')) <= 31 * 864e5);
+    (promoBase().semDeg || []).filter(r => r.data && perto(r.data)).forEach(r => { if (r.data) out.push(Object.assign({ data: r.data, lojaRel: r.lojaRel, estIni: r.estIni, estFim: r.estFim, deg: null }, liga(r.lojaRel, r.rede))); });
     return out;
   }
   function promoSemanas(itens) { return [...new Set(itens.map(x => promoSegundaDe(x.data)))].sort().reverse(); }
@@ -5553,14 +5555,14 @@
   }
   function promoMesAtivo() { return String((Estado.config && Estado.config.mesAtivo) || '').slice(0, 7); }
   function promoDataNoPeriodo(iso) {
-    if (!iso) return false;
+    if (!iso) return false; promoAjusta();
     if (promoModo === 'semana') return promoSegundaDe(iso) === promoSemSel;
     if (promoModo === 'mes') return iso.slice(0, 7) === promoMesAtivo();
     if (promoModo === 'dias') return iso >= promoDe && iso <= promoAte;
     return true;
   }
   function promoPerTxt() {
-    const mes = promoMesAtivo();
+    promoAjusta(); const mes = promoMesAtivo();
     if (promoModo === 'semana') return promoSemSel && /^\d{4}/.test(promoSemSel) ? 'segunda ' + promoDataBR(promoSemSel) + ' a domingo ' + promoDataBR(promoSomaDias(promoSemSel, 6)) : 'semana';
     if (promoModo === 'mes') return 'mês ' + mes.slice(5) + '/' + mes.slice(0, 4);
     if (promoModo === 'dias') return 'dias ' + promoDataBR(promoDe) + ' a ' + promoDataBR(promoAte);
