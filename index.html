@@ -5514,11 +5514,59 @@
   }
 
   // ── Tela: topo da aba (antes do detalhe das degustações) ──
+
+  // ── Visões: semana (segunda a domingo), mês, acumulado e dias selecionados; busca por rede/loja ──
+  let promoModo = 'semana', promoSemSel = '', promoDe = '', promoAte = '', promoBusca = '';
+  function promoSegundaDe(iso) { // segunda-feira da semana (segunda a domingo) que contém a data
+    const d = new Date(iso + 'T12:00:00'), dw = (d.getDay() + 6) % 7; d.setDate(d.getDate() - dw);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function promoSomaDias(iso, n) { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  // Itens lidos da planilha. A rede é procurada de novo na base do sistema a cada tela (pega redes cadastradas depois do upload).
+  function promoItens() {
+    const pool = degPoolBooks(), out = [];
+    const liga = (lojaRel, redeSalva) => {
+      let p = redeSalva ? pool.get(redeSalva) : null; if (!p) p = degAcharRede(lojaRel, pool);
+      let lojaSis = ''; if (p && p.listaLojas) { const n = promoNorm(lojaRel); lojaSis = p.listaLojas.find(l => { const x = promoNorm(l); return x.length >= 4 && (n.includes(x) || x.includes(n)); }) || ''; }
+      return { rede: p ? p.k : '', redeNome: p ? p.nome : '', lojaSis };
+    };
+    degLista().forEach(r => { if (r.data && (r.estIni != null || r.estFim != null)) out.push(Object.assign({ data: r.data, lojaRel: r.lojaRel, estIni: r.estIni, estFim: r.estFim, deg: r }, liga(r.lojaRel, r.rede))); });
+    (promoBase().semDeg || []).forEach(r => { if (r.data) out.push(Object.assign({ data: r.data, lojaRel: r.lojaRel, estIni: r.estIni, estFim: r.estFim, deg: null }, liga(r.lojaRel, r.rede))); });
+    return out;
+  }
+  function promoSemanas(itens) { return [...new Set(itens.map(x => promoSegundaDe(x.data)))].sort().reverse(); }
+  const promoSemRot = m => 'Semana ' + promoDataBR(m).slice(0, 2) + ' a ' + promoDataBR(promoSomaDias(m, 6));
+  // Monta as linhas loja a loja da visão escolhida (o estoque é fechado por semana; períodos maiores somam as semanas confirmadas de cada loja).
+  function promoVisao() {
+    const todos = promoItens(), mes = String((Estado.config && Estado.config.mesAtivo) || '').slice(0, 7), semanas = promoSemanas(todos);
+    if (promoModo === 'semana' && !semanas.includes(promoSemSel)) promoSemSel = semanas[0] || '';
+    if (!promoDe || !promoAte) { const ds = todos.map(x => x.data).sort(); promoDe = promoDe || ds[0] || ''; promoAte = promoAte || ds[ds.length - 1] || ''; }
+    let itens, rot, per;
+    if (promoModo === 'semana') { itens = todos.filter(x => promoSegundaDe(x.data) === promoSemSel); rot = promoSemRot(promoSemSel); per = 'segunda ' + promoDataBR(promoSemSel) + ' a domingo ' + promoDataBR(promoSomaDias(promoSemSel, 6)); }
+    else if (promoModo === 'mes') { itens = todos.filter(x => x.data.slice(0, 7) === mes); rot = 'Mês ' + mes.slice(5) + '/' + mes.slice(0, 4); per = rot.toLowerCase(); }
+    else if (promoModo === 'dias') { itens = todos.filter(x => x.data >= promoDe && x.data <= promoAte); rot = promoDataBR(promoDe) + ' a ' + promoDataBR(promoAte); per = 'dias ' + rot; }
+    else { itens = todos; rot = 'Acumulado'; per = 'acumulado de todas as semanas carregadas'; }
+    const sem = {}; // semana + loja
+    itens.forEach(x => {
+      const wk = promoSegundaDe(x.data), k = wk + '|' + promoNorm(x.lojaRel), l = sem[k] = sem[k] || { wk, nome: x.lojaRel, rede: x.rede, redeNome: x.redeNome, lojaSis: x.lojaSis, ini: null, fim: null, degs: [] };
+      if (l.ini == null && x.estIni != null) l.ini = x.estIni; if (l.fim == null && x.estFim != null) l.fim = x.estFim; if (x.deg) l.degs.push(x.deg);
+    });
+    const porLoja = {};
+    Object.values(sem).forEach(w => {
+      const k = promoNorm(w.nome), l = porLoja[k] = porLoja[k] || { cod: 'L:' + k, nome: w.nome, rede: w.rede, redeNome: w.redeNome, lojaSis: w.lojaSis, ini: 0, fim: 0, v: 0, nok: 0, nver: 0, nconf: 0, degs: [] };
+      l.degs = l.degs.concat(w.degs);
+      if (w.ini == null || w.fim == null) l.nver++; else if (w.ini - w.fim < 0) l.nconf++; else { l.nok++; l.ini += w.ini; l.fim += w.fim; l.v += w.ini - w.fim; }
+    });
+    let L = Object.values(porLoja).map(l => Object.assign(l, { st: l.nok ? 'ok' : (l.nconf ? 'conf' : 'ver'), ini: l.nok ? l.ini : null, fim: l.nok ? l.fim : null, v: l.nok ? l.v : null }));
+    if (promoModo === 'semana') { const man = promoBase().acoes.find(a => a.id === promoSemSel); if (man) L = L.concat(promoLinhasCod(man)); }
+    const b = promoNorm(promoBusca); if (b) L = L.filter(l => promoNorm(l.nome + ' ' + (l.redeNome || '') + ' ' + (l.lojaSis || '')).includes(b));
+    L.sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR', { numeric: true }));
+    return { L, rot, per, semanas, mes, parcial: L.filter(l => l.st === 'ok' && (l.nver || l.nconf)).length, semRede: L.filter(l => !l.rede).length, vazio: !todos.length && !promoBase().acoes.length };
+  }
   function promoHTML() {
-    const P = promoBase(), acoes = promoTodas().sort((a, b) => (b.ini || '').localeCompare(a.ini || ''));
-    if (!acoes.length) return `<div class="card"><h2>Ações promocionais</h2><p style="font-size:13px;text-transform:none;">Nenhuma ação promocional ainda. Carregue o template das degustações com <strong>Estoque inicial (coluna K)</strong> e <strong>Estoque final (coluna L)</strong> preenchidos em fardos; lojas sem degustação entram como linhas só com loja e estoque. O resultado aparece aqui em fardos, loja a loja.</p></div>`;
-    if (!promoSel || !acoes.some(a => a.id === promoSel)) promoSel = acoes[0].id;
-    const a = acoes.find(x => x.id === promoSel), L = promoLinhas(a), T = promoTot(L);
+    const V = promoVisao();
+    if (V.vazio) return `<div class="card"><h2>Ações promocionais</h2><p style="font-size:13px;text-transform:none;">Nenhuma ação promocional ainda. Carregue o template das degustações com <strong>Estoque inicial (coluna K)</strong> e <strong>Estoque final (coluna L)</strong> preenchidos em fardos; lojas sem degustação entram como linhas só com loja e estoque. O resultado aparece aqui em fardos, loja a loja.</p></div>`;
+    const L = V.L, T = promoTot(L);
     const cx = (rot, val, sub, cor) => `<div style="flex:1;min-width:150px;padding:14px 8px;background:#F8F9FA;border-radius:6px;text-align:center;border-top:4px solid ${cor};"><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:uppercase;">${rot}</div><div style="font-family:var(--fonte-titulo);font-size:clamp(22px,2.6vw,34px);font-weight:900;color:${cor};white-space:nowrap;">${val}</div><div style="font-size:11px;color:var(--cor-texto-secundario);text-transform:none;">${sub || '&nbsp;'}</div></div>`;
     const D = n => `<span style="display:inline-block;min-width:22px;padding:2px 6px;border-radius:4px;background:#27AE60;color:#fff;font-weight:bold;font-size:11px;">D</span>`;
     const th = 'padding:7px 8px;text-align:right;white-space:nowrap;', td = 'padding:7px 8px;text-align:right;border-bottom:1px solid #EEF0EF;';
@@ -5527,19 +5575,25 @@
       const ab = promoAbre.has(l.cod);
       const bad = l.st === 'ver' ? 'color:#888;font-style:italic;' : l.st === 'conf' ? 'color:#B9770E;' : '';
       const fimTxt = l.st === 'ver' ? 'verificando' : promoPF(l.fim), vTxt = l.st === 'ver' ? 'verificando' : l.st === 'conf' ? '⚠ conferir' : promoPF(l.v);
-      return `<tr style="${l.st === 'ver' ? 'background:#F6F6F6;' : ''}"><td style="${td}text-align:left;font-weight:bold;">${esc(l.nome)} ${/^L:/.test(l.cod) ? '' : `<span style="color:#999;font-weight:normal;font-size:11px;">${esc(l.cod)}</span>`}</td><td style="${td}text-align:center;">${l.degs.length ? `<button type="button" data-promo-d="${esc(l.cod)}" title="Ver a degustação desta loja" style="border:none;background:none;cursor:pointer;padding:0;">${D()}</button>` : ''}</td><td style="${td}">${promoPF(l.ini) || '-'}</td><td style="${td}${bad}">${fimTxt}</td><td style="${td}font-weight:bold;${bad}">${vTxt}</td></tr>${ab && l.degs.length ? `<tr><td colspan="5" style="padding:8px 14px;background:#F1FAF4;font-size:12px;text-transform:none;border-bottom:1px solid #D5EBDD;"><div style="font-weight:bold;color:#1E7B4A;margin-bottom:2px;">Degustação nesta loja</div>${l.degs.map(linhaDeg).join('')}</td></tr>` : ''}`;
+      return `<tr style="${l.st === 'ver' ? 'background:#F6F6F6;' : ''}"><td style="${td}text-align:left;font-weight:bold;">${esc(l.nome)} ${/^L:/.test(l.cod) ? '' : `<span style="color:#999;font-weight:normal;font-size:11px;">${esc(l.cod)}</span>`}<div style="font-weight:normal;font-size:11px;${l.rede ? 'color:#8A9AA5;' : 'color:#B9770E;'}">${l.rede ? esc(l.redeNome) + (l.lojaSis ? ' · ' + esc(l.lojaSis) : '') : 'sem rede no sistema'}</div></td><td style="${td}text-align:center;">${l.degs.length ? `<button type="button" data-promo-d="${esc(l.cod)}" title="Ver a degustação desta loja" style="border:none;background:none;cursor:pointer;padding:0;">${D()}</button>` : ''}</td><td style="${td}">${promoPF(l.ini) || '-'}</td><td style="${td}${bad}">${fimTxt}</td><td style="${td}font-weight:bold;${bad}">${vTxt}</td></tr>${ab && l.degs.length ? `<tr><td colspan="5" style="padding:8px 14px;background:#F1FAF4;font-size:12px;text-transform:none;border-bottom:1px solid #D5EBDD;"><div style="font-weight:bold;color:#1E7B4A;margin-bottom:2px;">Degustação nesta loja</div>${l.degs.map(linhaDeg).join('')}</td></tr>` : ''}`;
     }).join('');
-    const seletor = `<select id="promo-sel" style="padding:8px 10px;border:1px solid #CCC;border-radius:6px;font-size:13px;font-weight:bold;text-transform:none;">${acoes.map(x => `<option value="${esc(x.id)}" ${x.id === a.id ? 'selected' : ''}>${esc(x.nome || ('Ação ' + promoDataBR(x.ini)))}</option>`).join('')}</select>`;
+    const ctl = 'padding:8px 10px;border:1px solid #CCC;border-radius:6px;font-size:13px;text-transform:none;';
+    const optM = (v, t) => `<option value="${v}" ${promoModo === v ? 'selected' : ''}>${t}</option>`;
+    const manuais = promoBase().acoes.map(x => `<option value="${esc(x.id)}" ${x.id === promoSemSel ? 'selected' : ''}>${esc(x.nome || ('Ação ' + promoDataBR(x.ini)))}</option>`).join('');
+    const seletor = `<select id="promo-modo" style="${ctl}font-weight:bold;">${optM('semana', 'Semana (segunda a domingo)')}${optM('mes', 'Mês ' + V.mes.slice(5) + '/' + V.mes.slice(0, 4))}${optM('acum', 'Acumulado')}${optM('dias', 'Dias selecionados')}</select>`
+      + (promoModo === 'semana' ? `<select id="promo-sem" style="${ctl}">${V.semanas.map(m => `<option value="${m}" ${m === promoSemSel ? 'selected' : ''}>${promoSemRot(m)}</option>`).join('')}${manuais}</select>` : '')
+      + (promoModo === 'dias' ? `<label style="font-size:12px;">de <input type="date" id="promo-de" value="${esc(promoDe)}" style="${ctl}"></label><label style="font-size:12px;">até <input type="date" id="promo-ate" value="${esc(promoAte)}" style="${ctl}"></label>` : '')
+      + `<input id="promo-busca" type="search" placeholder="Buscar rede ou loja…" value="${esc(promoBusca)}" style="${ctl}width:190px;">`;
     const cmp = T.com.n || T.sem.n ? `<div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 0;">
       <div style="flex:1;min-width:220px;padding:10px 12px;border-radius:6px;background:#F1FAF4;border-left:5px solid #27AE60;text-transform:none;font-size:13px;"><strong style="color:#1E7B4A;">Lojas com degustação</strong><br>${T.com.n} loja(s) · ${promoPF(T.com.v)} fardos vendidos · <strong>${T.com.n ? promoPF(T.com.v / T.com.n) : '-'} por loja</strong></div>
       <div style="flex:1;min-width:220px;padding:10px 12px;border-radius:6px;background:#F4F5F6;border-left:5px solid #8A9AA5;text-transform:none;font-size:13px;"><strong style="color:#555;">Lojas sem degustação</strong><br>${T.sem.n} loja(s) · ${promoPF(T.sem.v)} fardos vendidos · <strong>${T.sem.n ? promoPF(T.sem.v / T.sem.n) : '-'} por loja</strong></div></div>` : '';
-    const avisos = [T.ver ? `${T.ver} loja(s) em verificação (sem estoque final), fora dos totais` : '', T.conf ? `${T.conf} loja(s) com estoque final maior que o inicial (reposição?), fora dos totais` : ''].filter(Boolean).join(' · ');
+    const avisos = [T.ver ? `${T.ver} loja(s) em verificação (sem estoque final), fora dos totais` : '', T.conf ? `${T.conf} loja(s) com estoque final maior que o inicial (reposição?), fora dos totais` : '', V.parcial ? `${V.parcial} loja(s) com semana(s) sem estoque completo, que ficaram fora da soma` : '', V.semRede ? `${V.semRede} loja(s) sem rede encontrada no sistema (cadastre a rede ou ajuste o nome e recarregue a planilha)` : ''].filter(Boolean).join(' · ');
     return `<div class="card"><h2>Ações promocionais</h2>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${seletor}<button type="button" id="promo-xlsx" style="padding:9px 14px;border-radius:6px;border:none;background:#1E7B4A;color:#fff;font-weight:bold;cursor:pointer;">⬇ Baixar Excel</button></div>
-      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;text-transform:none;">Estoque inicial em <strong>${esc(promoDataBR(a.ini))}</strong>, final em <strong>${esc(promoDataBR(a.fim))}</strong>. Vendido = estoque inicial − final. Fardo = 12 unidades.</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">${cx('Estoque inicial', promoPF(T.ini) || '0', 'fardos · ' + T.n + ' loja(s)', '#2980B9')}${cx('Estoque final', promoPF(T.fim) || '0', 'fardos', '#8E44AD')}${cx('Vendido', promoPF(T.v) || '0', 'fardos no fim de semana', '#1E7B4A')}</div>
+      <p style="font-size:12px;color:var(--cor-texto-secundario);margin-top:8px;text-transform:none;">Período: <strong>${esc(V.per)}</strong>${promoBusca ? ' · filtro: <strong>' + esc(promoBusca) + '</strong>' : ''}. Vendido = estoque inicial − final, fechado por semana. Fardo = 12 unidades.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">${cx('Estoque inicial', promoPF(T.ini) || '0', 'fardos · ' + T.n + ' loja(s)', '#2980B9')}${cx('Estoque final', promoPF(T.fim) || '0', 'fardos', '#8E44AD')}${cx('Vendido', promoPF(T.v) || '0', 'fardos no período', '#1E7B4A')}</div>
       ${avisos ? `<p style="font-size:12px;color:#B9770E;margin-top:8px;text-transform:none;">${esc(avisos)}.</p>` : ''}${cmp}</div>
-      <div class="card"><h2>Loja a loja</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="${th}text-align:left;">Loja</th><th style="${th}text-align:center;" title="Verde = houve degustação nesta loja. Clique para ver.">D</th><th style="${th}">Estoque inicial (fardos)</th><th style="${th}">Estoque final (fardos)</th><th style="${th}">Vendido (fardos)</th></tr></thead><tbody>${lin}<tr style="background:#F8F9FA;font-weight:bold;"><td style="${td}text-align:left;">Total (lojas confirmadas)</td><td style="${td}"></td><td style="${td}">${promoPF(T.ini)}</td><td style="${td}">${promoPF(T.fim)}</td><td style="${td}">${promoPF(T.v)}</td></tr></tbody></table></div></div>`;
+      <div class="card"><h2>Loja a loja</h2><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#F8F9FA;font-size:11px;text-transform:uppercase;"><th style="${th}text-align:left;">Loja</th><th style="${th}text-align:center;" title="Verde = houve degustação nesta loja. Clique para ver.">Lojas com degustação</th><th style="${th}">Estoque inicial (fardos)</th><th style="${th}">Estoque final (fardos)</th><th style="${th}">Vendido (fardos)</th></tr></thead><tbody>${lin}<tr style="background:#F8F9FA;font-weight:bold;"><td style="${td}text-align:left;">Total (lojas confirmadas)</td><td style="${td}"></td><td style="${td}">${promoPF(T.ini)}</td><td style="${td}">${promoPF(T.fim)}</td><td style="${td}">${promoPF(T.v)}</td></tr></tbody></table></div></div>`;
   }
   // Moldura da aba: ações promocionais em cima; o painel antigo de degustações vai para um bloco recolhido.
   function renderizarDegustacoes() {
@@ -5552,20 +5606,24 @@
     det.appendChild(corpo); c.appendChild(det);
     const topo = document.createElement('div'); topo.innerHTML = promoHTML(); c.insertBefore(topo, det);
     det.addEventListener('toggle', () => { if (det.open) promoAbre.add('__deg'); else promoAbre.delete('__deg'); });
-    const s = c.querySelector('#promo-sel'); if (s) s.onchange = () => { promoSel = s.value; promoAbre.clear(); renderizarDegustacoes(); };
+    const ref = () => { promoAbre.clear(); renderizarDegustacoes(); };
+    const on = (id, ev, fn) => { const e = c.querySelector(id); if (e) e[ev] = fn; };
+    on('#promo-modo', 'onchange', function () { promoModo = this.value; ref(); }); on('#promo-sem', 'onchange', function () { promoSemSel = this.value; ref(); });
+    on('#promo-de', 'onchange', function () { promoDe = this.value; ref(); }); on('#promo-ate', 'onchange', function () { promoAte = this.value; ref(); });
+    on('#promo-busca', 'oninput', function () { promoBusca = this.value; const pos = this.selectionStart; ref(); const n = c.querySelector('#promo-busca'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* ignora */ } } });
     c.querySelectorAll('[data-promo-d]').forEach(b => b.onclick = () => { const k = b.dataset.promoD; if (promoAbre.has(k)) promoAbre.delete(k); else promoAbre.add(k); renderizarDegustacoes(); });
     const x = c.querySelector('#promo-xlsx'); if (x) x.onclick = () => promoXLSX();
   }
   function promoXLSX() {
-    const a = promoTodas().find(x => x.id === promoSel); if (!a || typeof XLSX === 'undefined') return;
-    const L = promoLinhas(a), T = promoTot(L), f = n => n == null ? null : Math.round(n / PROMO_FARDO * 10) / 10;
+    if (typeof XLSX === 'undefined') return;
+    const V = promoVisao(), a = { nome: V.rot, ini: '', fim: '' }, L = V.L, T = promoTot(L), f = n => n == null ? null : Math.round(n / PROMO_FARDO * 10) / 10;
     const wb = XLSX.utils.book_new();
-    const resumo = [['Ações promocionais: ' + (a.nome || '')], ['Estoque inicial em', promoDataBR(a.ini), 'final em', promoDataBR(a.fim)], ['Fardo = 12 unidades. Vendido = estoque inicial − final. Lojas em verificação ficam fora dos totais.'], [],
+    const resumo = [['Ações promocionais: ' + (a.nome || '')], ['Período', V.per], ['Fardo = 12 unidades. Vendido = estoque inicial − final. Lojas em verificação ficam fora dos totais.'], [],
       ['Indicador', 'Fardos'], ['Estoque inicial (lojas confirmadas)', f(T.ini)], ['Estoque final', f(T.fim)], ['Vendido', f(T.v)], ['Lojas com degustação: vendido', f(T.com.v)], ['Lojas com degustação: por loja', T.com.n ? f(T.com.v / T.com.n) : null], ['Lojas sem degustação: vendido', f(T.sem.v)], ['Lojas sem degustação: por loja', T.sem.n ? f(T.sem.v / T.sem.n) : null], ['Lojas em verificação', T.ver]];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumo), 'Resumo');
     const det = [['Loja', 'Código', 'Degustação', 'Estoque inicial (fardos)', 'Estoque final (fardos)', 'Vendido (fardos)', 'Situação']].concat(L.map(l => [l.nome, l.cod, l.degs.length ? 'D' : '', f(l.ini), l.st === 'ver' ? 'verificando' : f(l.fim), l.st === 'ver' ? 'verificando' : l.st === 'conf' ? 'conferir' : f(l.v), l.st === 'ok' ? 'ok' : l.st === 'ver' ? 'verificando' : 'estoque final maior que o inicial']));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(det), 'Loja a loja');
-    XLSX.writeFile(wb, 'Acoes_Promocionais_' + (a.ini || '').replace(/-/g, '') + '.xlsx');
+    XLSX.writeFile(wb, 'Acoes_Promocionais_' + V.rot.replace(/[^A-Za-z0-9]+/g, '_') + '.xlsx');
   }
 
   // ── Admin: carregar estoque e associar o código da loja à loja cadastrada ──
