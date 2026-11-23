@@ -5518,7 +5518,11 @@
     return out;
   }
   function promoSemanas(itens) { return [...new Set(itens.map(x => promoSegundaDe(x.data)))].sort().reverse(); }
-  const promoSemRot = m => 'Semana ' + promoDataBR(m).slice(0, 2) + ' a ' + promoDataBR(promoSomaDias(m, 6));
+  // "Fim de semana N": o sábado da semana é o N-ésimo sábado do seu mês (mês entre parênteses quando não é o mês ativo).
+  const promoSemRot = m => {
+    const sab = promoSomaDias(m, 5), n = Math.ceil(+sab.slice(8, 10) / 7), MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+    return 'Fim de semana ' + n + (sab.slice(0, 7) === promoMesAtivo() ? '' : ' (' + MES[+sab.slice(5, 7) - 1] + ')');
+  };
   // Monta as linhas loja a loja da visão escolhida (o estoque é fechado por semana; períodos maiores somam as semanas confirmadas de cada loja).
   function promoVisao() {
     const todos = promoItens(), mes = promoMesAtivo(), semanas = promoAjusta();
@@ -5572,7 +5576,7 @@
     const sem = promoAjusta(), mes = promoMesAtivo(), ctl = 'padding:8px 10px;border:1px solid #CCC;border-radius:6px;font-size:13px;text-transform:none;';
     const optM = (v, t) => `<option value="${v}" ${promoModo === v ? 'selected' : ''}>${t}</option>`;
     const manuais = promoBase().acoes.map(x => `<option value="${esc(x.id)}" ${x.id === promoSemSel ? 'selected' : ''}>${esc(x.nome || ('Ação ' + promoDataBR(x.ini)))}</option>`).join('');
-    return `<select id="${px}-modo" style="${ctl}font-weight:bold;">${optM('semana', 'Semana (segunda a domingo)')}${optM('mes', 'Mês ' + mes.slice(5) + '/' + mes.slice(0, 4))}${optM('acum', 'Acumulado')}${optM('dias', 'Dias selecionados')}</select>`
+    return `<select id="${px}-modo" style="${ctl}font-weight:bold;">${optM('semana', 'Fim de semana')}${optM('mes', 'Mês ' + mes.slice(5) + '/' + mes.slice(0, 4))}${optM('acum', 'Acumulado')}${optM('dias', 'Dias selecionados')}</select>`
       + (promoModo === 'semana' ? `<select id="${px}-sem" style="${ctl}">${sem.map(m => `<option value="${m}" ${m === promoSemSel ? 'selected' : ''}>${promoSemRot(m)}</option>`).join('')}${manuais}</select>` : '')
       + (promoModo === 'dias' ? `<label style="font-size:12px;">de <input type="date" id="${px}-de" value="${esc(promoDe)}" style="${ctl}"></label><label style="font-size:12px;">até <input type="date" id="${px}-ate" value="${esc(promoAte)}" style="${ctl}"></label>` : '');
   }
