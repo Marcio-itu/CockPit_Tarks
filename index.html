@@ -4796,7 +4796,7 @@
     const lidos = (pronto || degParseTexto(txt, ano)), pend = lidos.filter(r => r.pendente);
     pend.forEach(r => degAvisos.push(file.name + ': ' + (r.lojaRel || 'ação') + (r.data ? ' (' + degDataBR(r.data).slice(0, 5) + ')' : '') + ' está com dados pendentes de envio e não foi incluída'));
     const sems = lidos.filter(r => r.semDeg), maxData = lidos.filter(r => !r.semDeg && r.data).map(r => r.data).sort().pop() || '';
-    if (sems.length && typeof promoGuardaSem === 'function') promoGuardaSem(sems.map(r => { const p = degAcharRede(r.lojaRel, pool); return { lojaRel: r.lojaRel, data: r.data || maxData, rede: p ? p.k : '', estIni: r.estIni, estFim: r.estFim, arquivo: file.name }; }));
+    if (sems.length && typeof promoGuardaSem === 'function') promoGuardaSem(sems.map(r => { const p = degAcharRede(r.lojaRel, pool); return { lojaRel: r.lojaRel, data: maxData || r.data, rede: p ? p.k : '', estIni: r.estIni, estFim: r.estFim, arquivo: file.name }; }));
     return lidos.filter(r => !r.pendente && !r.semDeg).map((r, i) => {
       r.id = 'dg' + Date.now().toString(36) + i + Math.random().toString(36).slice(2, 5); r.arquivo = file.name;
       degAplicaProduto(r, degAcharProduto(r.produtoRel)); const f = degFardosDe(r.qtd); r.fardos = f.v; r.fardosConv = f.conv;
