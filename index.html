@@ -1079,9 +1079,16 @@
 
   // Foto principal da página = maior imagem (a página também tem barra e logo pequenos).
   // Imagens repetidas entre páginas ficam em commonObjs (nome "g_..."), por isso olhamos nos dois lugares.
-  async function extrairImagemPrincipal(pagina) {
-    const ops = await pagina.getOperatorList();
-    let melhor = null;
+  // Template novo (Mob2con, nov/2026): cada página traz, além da foto, uma imagem de fundo enorme que se repete em todas as páginas.
+  // Sem tratar isso, o fundo era escolhido como "a foto" e todas as páginas pareciam repetidas. Imagens que aparecem na quase totalidade das páginas amostradas são tratadas como decoração.
+  let decorSigs = null;
+  function assinaturaImagem(im) {
+    let h = im.width + 'x' + im.height;
+    try { const d = im.data; if (d && d.length) { const passo = Math.max(1, Math.floor(d.length / 64)); let x = 0; for (let k = 0; k < d.length; k += passo) x = (x * 31 + d[k]) % 1000003; h += ':' + d.length + ':' + x; } } catch (e) { /* sem dados: só dimensões */ }
+    return h;
+  }
+  async function listarImagens(pagina) {
+    const ops = await pagina.getOperatorList(), out = [];
     for (let j = 0; j < ops.fnArray.length; j++) {
       if (ops.fnArray[j] !== pdfjsLib.OPS.paintImageXObject) continue;
       const nome = ops.argsArray[j][0];
@@ -1090,10 +1097,26 @@
         try {
           if (!lugar.has(nome)) continue;
           const im = lugar.get(nome);
-          if (im && im.width > 150 && im.height > 150 && (!melhor || im.width * im.height > melhor.width * melhor.height)) melhor = im;
+          if (im && im.width > 150 && im.height > 150) out.push(im);
           break;
         } catch (e) { /* tenta o outro lugar */ }
       }
+    }
+    return out;
+  }
+  async function detectarDecoracao(pdf) {
+    const cont = new Map(); let n = 0;
+    for (let i = 2; i <= Math.min(pdf.numPages - 1, 13); i++) {
+      try { const ims = await listarImagens(await pdf.getPage(i)); n++; new Set(ims.map(assinaturaImagem)).forEach(sg => cont.set(sg, (cont.get(sg) || 0) + 1)); } catch (e) { /* ignora a página */ }
+    }
+    const dec = new Set(); if (n >= 4) cont.forEach((v, sg) => { if (v >= Math.max(3, Math.ceil(n * 0.8))) dec.add(sg); });
+    return dec;
+  }
+  async function extrairImagemPrincipal(pagina) {
+    let melhor = null;
+    for (const im of await listarImagens(pagina)) {
+      if (decorSigs && decorSigs.size && decorSigs.has(assinaturaImagem(im))) continue;
+      if (!melhor || im.width * im.height > melhor.width * melhor.height) melhor = im;
     }
     return melhor;
   }
@@ -1168,6 +1191,7 @@
     const arrayBuffer = await arquivo.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const totalPaginas = pdf.numPages;
+    decorSigs = await detectarDecoracao(pdf);
     const fotosExtraidas = [];
     let periodo = null, ignoradas = 0;
     const paginasIgnoradas = [];
