@@ -1158,7 +1158,7 @@
   
   function extrairPeriodoCapa(itens) {
     const t = itens.map(i => i.str).join('').replace(/\s+/g, '');
-    const m = t.match(/(\d{2})\/(\d{2})\/(\d{4})at[ée]?(\d{2})\/(\d{2})\/(\d{4})/i);
+    const m = t.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\D{0,60}?)at[ée]?:?(\d{2})\/(\d{2})\/(\d{4})/i); // aceita "até" e "Até:" (capa nova: De: dd/mm/aaaa Até: dd/mm/aaaa)
     if (!m) return null;
     return { inicio: `${m[3]}-${m[2]}-${m[1]}`, fim: `${m[6]}-${m[5]}-${m[4]}` };
   }
@@ -1187,7 +1187,7 @@
         // Página sem rodapé: se tiver foto grande, guarda como "sem legenda" (não some); senão é capa/divisória
         let imgSL = null;
         try { imgSL = await extrairImagemPrincipal(pagina); } catch (e) { /* sem imagem legível: cai na regra de página ignorada logo abaixo */ }
-        if (!imgSL || Math.max(imgSL.width, imgSL.height) < 500 || Math.min(imgSL.width, imgSL.height) < 250) { ignoradas++; paginasIgnoradas.push({ pagina: i, motivo: imgSL ? `sem legenda e imagem pequena (${imgSL.width}×${imgSL.height})` : 'sem legenda e sem imagem' }); pagina.cleanup(); continue; } // logos/capas são pequenos
+        if (/BookDi[aá]rio/i.test(texto.items.map(i => i.str).join('').replace(/\s+/g, '')) || !imgSL || Math.max(imgSL.width, imgSL.height) < 500 || Math.min(imgSL.width, imgSL.height) < 250) { ignoradas++; paginasIgnoradas.push({ pagina: i, motivo: imgSL ? `sem legenda e imagem pequena (${imgSL.width}×${imgSL.height})` : 'sem legenda e sem imagem' }); pagina.cleanup(); continue; } // logos/capas são pequenos
         const idSL = Date.now() + '-' + i + '-' + Math.random().toString(36).slice(2, 7);
         let hashSL = null, temImgSL = false;
         try {
@@ -5690,6 +5690,12 @@
     el.querySelectorAll('[data-pe]').forEach(s => s.onchange = () => { a.est[s.dataset.pe][s.dataset.k] = s.value === '' ? null : +s.value; salvaRe(); });
     el.querySelectorAll('[data-pdel]').forEach(b => b.onclick = () => { delete a.est[b.dataset.pdel]; salvaRe(); });
   }
+  // Auditoria → atalho para a lista de fotos repetidas (que fica na Contestação)
+  document.addEventListener('click', e => {
+    const a = e.target && e.target.closest ? e.target.closest('#aud-ver-rep') : null;
+    if (!a) return;
+    e.preventDefault(); const b = document.querySelector('nav button[data-tela="contestacao"]'); if (b) b.click();
+  });
 </script>
 <!-- ═══ FIM SUBBLOCO 16 ═══ -->
 <!-- ═══ SUBBLOCO 09 — PUBLICAÇÃO DOS RESULTADOS + MODO LEITURA ═══ -->
